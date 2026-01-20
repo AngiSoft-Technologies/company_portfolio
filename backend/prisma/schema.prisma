@@ -1,0 +1,244 @@
+// Prisma schema for AngiSoft backend (Postgres)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Employee {
+  id                  String   @id @default(uuid())
+  firstName           String
+  lastName            String
+  email               String   @unique
+  phone               String?
+  role                Role     @default(DEVELOPER)
+  username            String?  @unique
+  passwordHash        String?
+  invitedAt           DateTime?
+  inviteToken         String?  @unique
+  inviteExpiry        DateTime?
+  twoFactorSecret     String?
+  twoFactorEnabled    Boolean  @default(false)
+  acceptedAt          DateTime?
+  bio                 String?
+  avatarUrl           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  posts               BlogPost[]
+  services            Service[]
+  projectsAuthored    Project[]   @relation("authoredProjects")
+  bookingsAssigned    Booking[]   @relation("assignedTo")
+  refreshTokens       RefreshToken[]
+  backupCodes         TwoFactorBackupCode[]
+}
+
+enum Role {
+  ADMIN
+  MARKETING
+  DEVELOPER
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  phone     String?
+  org       String?
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Booking {
+  id              String       @id @default(uuid())
+  clientId        String
+  client          Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  projectType     ProjectType
+  details         Json?
+  status          BookingStatus @default(SUBMITTED)
+  priceEstimate   Float?
+  assignedToId    String?
+  assignedTo      Employee?    @relation("assignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  termsAcceptedAt DateTime?
+  depositPaidAt   DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  files           File[]
+  payments        Payment[]
+  notes           Note[]
+}
+
+enum ProjectType {
+  SOFTWARE
+  RESUME
+  DOCUMENT_EDIT
+  REPORT
+  OTHER
+}
+
+enum BookingStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  TERMS_ACCEPTED
+  DEPOSIT_PAID
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+model Payment {
+  id              String      @id @default(uuid())
+  bookingId       String?
+  booking         Booking?    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  clientId        String?
+  amount          Float
+  currency        String      @default("KES")
+  provider        PaymentProvider
+  providerId      String
+  status          PaymentStatus
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  MPESA
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  priceFrom   Float?
+  images      String[]
+  authorId    String?
+  author      Employee? @relation(fields: [authorId], references: [id])
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  type        String
+  images      String[]
+  demoUrl     String?
+  repoUrl     String?
+  techStack   String[]
+  authorId    String?
+  author      Employee? @relation("authoredProjects", fields: [authorId], references: [id], onDelete: SetNull)
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  authorId    String
+  author      Employee @relation(fields: [authorId], references: [id])
+  tags        String[]
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model File {
+  id         String  @id @default(uuid())
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ownerType  String
+  ownerId    String?
+  filename   String
+  url        String
+  mime       String
+  size       Int
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+}
+
+model Setting {
+  key       String @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(uuid())
+  name      String
+  company   String?
+  role      String?
+  text      String
+  rating    Int?
+  imageUrl  String?
+  confirmed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  authorId  String?
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  ip         String?
+  userAgent  String?
+  fingerprint String?
+  revoked    Boolean  @default(false)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  actorRole Role?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model TwoFactorBackupCode {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  codeHash   String
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}

@@ -1,0 +1,290 @@
+AngiSoft — Full Product Implementation Plan
+===========================================
+
+Purpose
+-------
+This document records all required implementation details for the full product (backend, frontend, integration, hosting and operations). We'll use this canonical file to refer to tasks, progress, and implementation decisions. Update this file after each completed todo with a short note and date.
+
+Quick index
+-----------
+1) Backend: scope & implementation
+2) Frontend: scope & implementation
+3) Integration: API contracts & auth
+4) Hosting & deployment (Cloudflare Pages, Supabase, recommended backend hosting)
+5) Environment variables (required)
+6) CI / Tests / Monitoring / Backups
+7) Rollout & runbook (basics)
+8) Progress tracking format (how to mark items done)
+
+
+1) Backend — full scope & how we'll implement
+------------------------------------------------
+Goal: Production-grade Node + TypeScript API that uses Postgres via Prisma and implements all business flows.
+
+Primary responsibilities
+- Employee/identity management (invite, accept, password, 2FA, roles)
+- Client model & booking intake flows (project-type specific forms, file uploads)
+- Admin CMS (services, projects, blog, testimonials, settings)
+- Payments (Stripe primary, adapters for PayPal & M-Pesa later)
+- File/media management (S3/R2 signed uploads, thumbnails, CDN-ready URLs)
+- Background processing for email, file processing, reconciliation
+- Audit logging, sessions, refresh-token rotation & revocation
+
+Core architecture decisions
+- Runtime: Node 18+ with TypeScript and Express. Export app for tests.
+- ORM: Prisma (Postgres). Keep Prisma schema authoritative in `prisma/schema.prisma`.
+- Auth: JWT access tokens (short-lived) + rotating refresh tokens stored hashed in DB. RS256 support via KMS or file fallback.
+- 2FA: TOTP (otplib) + hashed backup codes stored; enable per-employee.
+- Payments: Provider adapters. Stripe first: server creates PaymentIntent and a Payment row with status PENDING. Webhook updates status and booking.
+- File storage: Cloudflare R2 or AWS S3. Backend will issue signed PUT/POST upload URLs; files saved in `File` model.
+- Background queue: Redis + BullMQ for email, file processing, reconciliation, and retry with dead-letter queue.
+- Email: SendGrid preferred; fallback SMTP via nodemailer.
+
+API routes (main)
+- POST /api/invite — admin creates employee invite; sends email with token
+- POST /api/invite/accept — accept invite and set password
+- POST /api/auth/login — email/password (+ TOTP if enabled) → returns access token; sets refresh cookie
+- POST /api/auth/refresh — rotates refresh token, returns new access
+- POST /api/auth/logout — revoke refresh token
+- GET /api/auth/sessions — list refresh-token sessions
+- POST /api/bookings — create booking; optional deposit creation; accept files
+- GET /api/bookings/:id — view booking
+- POST /api/bookings/:id/accept-terms — accept terms (admin action triggers email)
+- POST /api/payments/create-intent — optional separate route (or embed in bookings)
+- POST /api/payments/webhook — Stripe webhook handler (raw body)
+- CRUD APIs for admin CMS: /api/services, /api/projects, /api/blogs, /api/testimonials, /api/settings
+- File signed upload endpoints: /api/uploads/sign (returns signed PUT/POST URL)
+
+Data contract highlights (examples)
+- Booking create payload (multipart or JSON + signed file URLs):
+  { name, email, phone, title, description, projectType, details: JSON, depositRequired: boolean, depositAmount: number, currency }
+- Booking response: { bookingId, clientSecret (if deposit) }
+- Payment DB record: { id, bookingId, clientId, amount, currency, provider, providerId, status, metadata }
+
+Security & validation
+- Input validation: zod for all API inputs + express middleware
+- Rate limiting: express-rate-limit per IP and per-account where appropriate
+- Password policy: zxcvbn + server-side minimums + optional password-history to prevent reuse
+- Refresh tokens: hashed with SHA256 before DB; rotation on refresh; revoke on logout
+- 2FA backup codes: generated and hashed (one-time use) — show once to user
+- Audit log: store actor, action, entity, timestamp for important events
+
+Testing
+- Unit tests: Vitest for services & utilities
+- Integration tests: Supertest + Vitest using a test Postgres (CI DB container) — run migrations and seed during test setup
+- E2E tests: Playwright or Cypress for UI flows (invite->accept, booking->payment)
+
+Deliverables (backend) — initial full list
+- All endpoints above implemented + validation/error handling
+- Prisma migrations & seed
+- Background worker and queue for emails & recon jobs
+- Webhook security & reconciliation job
+- File upload signed URL implementation (R2/S3)
+- Detailed API docs (OpenAPI or small MD file)
+
+
+2) Frontend — full scope & how we'll implement
+------------------------------------------------
+Goal: Production-quality React + Vite frontend that is responsive, accessible, and provides both public pages and admin UI.
+
+Main pages & components
+- Public site:
+  - Home (hero, about, featured services, contact widget)
+  - Services listing + service detail
+  - Projects/Portfolio listing + detail
+  - Blog listing + article page
+  - Contact page (contact form → saves as message + sends email to admin)
+  - Booking pages
+- Booking multi-step flow:
+  - Step 1: project type + basic details
+  - Step 2: project-specific inputs (resume fields / doc edit metadata / report summary)
+  - Step 3: file uploads (drag/drop; preview)
+  - Step 4: terms & deposit (if admin has requested deposit) -> call backend to create PaymentIntent
+  - Step 5: payment confirmation (Stripe.js or PayPal SDK) and final confirmation
+- Auth UI (for employees/admins): invite accept, login, 2FA setup/verify, sessions management, profile editor
+- Admin dashboard:
+  - CRUD pages for services, projects, blogs, testimonials, employees
+  - Bookings queue (review pending bookings, accept/reject, request changes)
+  - Payments dashboard (view payments, refunds, reconcile)
+  - Settings & site content editor (WYSIWYG blocks for home page)
+
+Frontend technical choices
+- React + Vite (already in repo), TypeScript
+- UI: MUI or Tailwind + components already scaffolded (use existing theme.js)
+- State: React Query (tanstack) for server state + caching; local state for forms
+- Forms: react-hook-form + zod resolver for client-side validation consistent with backend
+- Files: upload to signed URLs from backend directly (no server relay) — show progress and retry
+- Payments: Stripe Elements + Stripe.js (client side) for card payments; PayPal SDK for PayPal; M-Pesa via provider widget or redirect as needed
+- Auth: store access token in memory/React Query; refresh via HTTP-only cookie; guard routes via private route wrappers
+
+Testing & QA
+- Unit tests: Vitest + React Testing Library
+- E2E tests: Playwright to verify booking + payment flow end-to-end (using Stripe test keys)
+
+Deliverables (frontend)
+- All public & admin pages implemented and connected to backend
+- Responsive UI, accessibility basics, client-side validation
+- Stripe client flow implemented and tested against backend
+- Production build ready for Cloudflare Pages
+
+
+3) Integration — API contracts & auth handshake
+------------------------------------------------
+Auth flow (concise)
+- Login (POST /api/auth/login) returns access token in body and sets httpOnly refresh cookie
+- Access token sent in Authorization: Bearer <token> for protected AJAX calls
+- Refresh endpoint rotates token and sets new refresh cookie
+- Admin pages require role=ADMIN access in token payload
+
+CORS and cookies
+- Frontend origin (e.g., https://www.angisoft.com) must be allowed in backend CORS
+- Backend should set cookies with: SameSite=None; Secure; Path=/api/auth; Domain as appropriate
+
+File uploads
+- Frontend requests a signed upload URL from backend (/api/uploads/sign) and PUTs the file directly to R2/S3
+- Backend validates upload completion webhook (optional) and stores metadata in `File` model
+
+Payments integration
+- Booking creation (server) returns { clientSecret } when deposit is required
+- Frontend calls Stripe.js to confirm a PaymentIntent using the clientSecret
+- Stripe webhook on server updates Payment and Booking records and sends emails via background job
+
+Webhooks & reconciliation
+- Webhook events must be verified using STRIPE_WEBHOOK_SECRET
+- If webhook is missed, a periodic reconciliation job uses the Stripe API to fetch PaymentIntents for a time window and reconcile DB
+
+
+4) Hosting & deployment — Cloudflare Pages + Supabase (recommended approach)
+------------------------------------------------------------------------------
+Goal: Host frontend on Cloudflare Pages (fast CDN) and use Supabase for Postgres DB and auth features; host backend on a Node-capable host that connects to Supabase Postgres.
+
+Recommended topology (practical and compatible with Prisma)
+- Database: Supabase Postgres (managed Postgres)
+- Object storage: Cloudflare R2 (S3 compatible) or Supabase Storage (also S3-compatible)
+- Frontend: Cloudflare Pages (deploy Vite build output)
+- Backend API: container-hosted Node service (Render, Fly.io, AWS ECS Fargate, DigitalOcean App Platform) that connects to Supabase Postgres. (Why: Prisma's Node runtime requires Node; Supabase Edge Functions use Deno and Prisma is not supported there without heavy changes.)
+- Redis: Managed Redis (Upstash or provider of choice) for BullMQ workers — workers can be deployed as separate background services (Render or Fly workers)
+- Domain: Configure DNS in Cloudflare (authoritative), set TLS via Cloudflare-managed certs
+
+Steps to deploy frontend to Cloudflare Pages
+- Build the frontend:
+  cd frontend
+  npm install
+  npm run build
+- Create Cloudflare Pages project pointing to repo or upload build output
+- Set environment variables for static rendering if needed (FRONTEND_URL)
+- Configure routes and Workers if needed for server-side rendering (optional)
+
+Steps to host backend and database
+- Create Supabase project; note DATABASE_URL (connection string)
+- On backend host (Render or Fly): create service, connect to git repository, add environment variables (DATABASE_URL, STRIPE_SECRET, STRIPE_WEBHOOK_SECRET, SENDGRID_API_KEY, STORAGE keys)
+- Run `npm install`, `npx prisma generate`, and `npx prisma migrate deploy` on deploy or via startup commands
+- Create a background worker service (Redis + BullMQ) to run email workers and reconciliation jobs
+
+Why not run Node API as Supabase Edge Function
+- Prisma relies on Node and native bindings that are not currently compatible with Supabase Edge (Deno). To use Supabase Functions you'd need to rewrite the backend in Deno or use Supabase's alternative hosting for containers (if available). For rapid, full-featured product, use Render/Fly or Cloud Run for Node API and Supabase Postgres for DB.
+
+Alternative (all-in-Supabase):
+- If you prefer a pure Supabase solution, tasks:
+  - Rewrite API to use Supabase edge functions (Deno) and replace Prisma with direct Postgres SQL or use Drizzle ORM (compatible with Deno)
+  - Tradeoff: significant code rewrite; avoid if you want to reuse current Node/Prisma codebase.
+
+
+5) Environment variables (required list)
+---------------------------------------
+At minimum, set these in backend deploy environment and locally in `.env`:
+- DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+- NODE_ENV=production
+- JWT_SECRET=... (or JWT_PRIVATE_KEY & JWT_PUBLIC_KEY for RS256)
+- STRIPE_SECRET=sk_test_xxx
+- STRIPE_WEBHOOK_SECRET=whsec_xxx
+- SENDGRID_API_KEY=...
+- S3_R2_ENDPOINT (if using R2) or S3 endpoint
+- S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET
+- REDIS_URL=redis://...
+- FRONTEND_URL=https://www.yourdomain.com
+- ADMIN_EMAIL=admin@yourdomain.com
+
+Optional:
+- SENTRY_DSN
+- KMS credentials (if using cloud KMS)
+
+
+6) CI / Tests / Monitoring / Backups
+------------------------------------
+CI pipeline (GitHub Actions recommended):
+- Steps:
+  1. Checkout
+  2. Setup Node
+  3. Install deps
+  4. Start Postgres service (docker) or use GitHub services container
+  5. npx prisma generate
+  6. npx prisma migrate deploy or migrate dev for tests
+  7. npm run test (unit + integration)
+  8. Build frontend and artifacts
+  9. Deploy to Cloudflare Pages (frontend) and Docker image to Render/Fly (backend)
+
+Monitoring & logging
+- Errors: Sentry (server + client), plus structured logs to stdout captured by hosting platform
+- Metrics: Prometheus + Grafana or hosted (Datadog) — track latency, errors, bookings, payments, queue lengths
+- Alerts: email/Slack for critical errors and failed webhooks
+
+Backups & DR
+- Use Supabase managed backups or schedule pg_dump and upload to R2/S3 daily
+- Test restores monthly
+
+
+7) Rollout & runbook (short)
+----------------------------
+Pre-launch checklist
+- All env vars set in production
+- DB migrations applied and seed run
+- Stripe keys active and webhook configured
+- SendGrid verified sender and test emails working
+- Domain & TLS deployed and pages accessible
+- Run integration smoke tests (invite→accept, booking→create intent→payment confirmation)
+
+Post-launch monitoring (first 72h)
+- Watch error rate, webhooks failure metric, failed payments
+- Monitor background job backlogs and retries
+
+Incidents
+- If webhooks miss events: run reconciliation job to re-sync stripe payment intents with DB
+- For payment disputes: use Payments dashboard to create refund via provider adapter
+
+
+8) Progress tracking & update format
+-----------------------------------
+Update this file after you complete any item. Use the format below so CI/automation can parse it later if needed.
+
+[YYYY-MM-DD] [COMPONENT] [TASK] — STATUS — Notes
+Example:
+2025-10-12 BACKEND prisma:migrate dev — DONE — ran migrations against test DB and seeded admin user
+
+Initial tasks to mark immediately (examples we will perform first):
+- Install deps and generate Prisma client
+- Run Prisma migrations and seed
+- Configure STRIPE_SECRET and STRIPE_WEBHOOK_SECRET (test keys)
+- Implement Stripe idempotency and webhook signature verification
+- Implement signed uploads to R2 and connect to File model
+- Implement background email queue (BullMQ) and move sendMail to queue
+
+[2025-10-12] BACKEND payments:webhook,reconcile — DONE — Improved Stripe webhook handler to verify signature, create missing Payment records when events arrive, and added `scripts/reconcile-stripe.js` plus `src/services/payments/stripeService.ts` to reconcile PaymentIntents with the DB.
+[2025-10-12] BACKEND uploads:signed_urls — DONE — Implemented S3/R2 presigned PUT URL helper (`src/services/storage/s3.ts`) and upload routes (`/api/uploads/sign` and `/api/uploads/confirm`) to persist `File` records after client upload.
+[2025-10-12] BACKEND queue:email — DONE — Added BullMQ-based queue wrapper and email worker (`src/queue`, `src/workers/emailWorker.ts`); `sendMail` enqueues jobs when `REDIS_URL` is configured and a worker will send emails.
+[2025-10-12] BACKEND cms:services — DONE — Implemented Services CRUD (`src/controllers/servicesController.ts`, `src/routes/services.ts`) and generic CRUD helper `src/utils/crud.ts`, plus audit logging on changes.
+[2025-10-12] BACKEND tokens:rs256-scaffold — DONE — Added KMS/private-key scaffolding to `src/utils/token.ts` to allow RS256 via KMS or env PEM; falls back to HS256.
+[2025-10-12] BACKEND security:middleware — DONE — Added helmet and improved CORS configuration in `src/app.ts`. Add rate-limiter scaffolding exists and per-route limiters are still used.
+
+
+
+Contact & ownership
+-------------------
+- Repo: current workspace (this project)
+- Primary engineer: TBD (you can assign)
+- For any sensitive creds, set them in the host's environment variables or a secure vault — DO NOT commit them to git.
+
+
+-- END OF DOCUMENT --
+
+Update this file each time a task is completed with the date and short note.

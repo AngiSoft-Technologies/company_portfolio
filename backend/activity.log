@@ -1,0 +1,5 @@
+{"event":"admin_create","ip":"::1","level":"info","message":"Admin created","newUser":"s_angera","timestamp":"2025-07-02T13:05:28.247Z"}
+{"event":"admin_login","ip":"::1","level":"info","message":"Admin login","timestamp":"2025-07-02T13:06:21.089Z","userId":"68652e976d3459b9672fbffc","userType":"admin"}
+{"event":"admin_login","ip":"::1","level":"info","message":"Admin login","timestamp":"2025-07-03T20:50:15.976Z","userId":"68652e976d3459b9672fbffc","userType":"admin"}
+{"event":"admin_login","ip":"::1","level":"info","message":"Admin login","timestamp":"2025-07-04T06:42:30.154Z","userId":"68652e976d3459b9672fbffc","userType":"admin"}
+{"event":"admin_login","ip":"::1","level":"info","message":"Admin login","timestamp":"2025-07-04T09:55:09.491Z","userId":"68652e976d3459b9672fbffc","userType":"admin"}

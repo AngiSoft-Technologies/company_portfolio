@@ -1,0 +1,17 @@
+{
+  "sectionVisibility": {
+    "about": true,
+    "projects": true,
+    "skills": true,
+    "services": true,
+    "testimonials": true,
+    "education": true,
+    "experience": true,
+    "hobbies": true,
+    "interests": true,
+    "social": true,
+    "quotes": true
+  },
+  "theme": "light",
+  "contactEmail": "angerasilas@gmail.com"
+} 

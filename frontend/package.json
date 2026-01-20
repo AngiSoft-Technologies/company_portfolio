@@ -1,0 +1,82 @@
+{
+  "name": "angisoft-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@fullcalendar/core": "",
+    "@fullcalendar/daygrid": "",
+    "@fullcalendar/interaction": "",
+    "@fullcalendar/list": "",
+    "@fullcalendar/react": "",
+    "@fullcalendar/timegrid": "",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/material": "^7.2.0",
+    "@mui/x-data-grid": "",
+    "@mui/x-date-pickers": "^8.6.0",
+    "@nivo/bar": "",
+    "@nivo/core": "",
+    "@nivo/geo": "",
+    "@nivo/line": "",
+    "@nivo/pie": "",
+    "@reduxjs/toolkit": "",
+    "@testing-library/jest-dom": "",
+    "@testing-library/react": "",
+    "@testing-library/user-event": "",
+    "axios": "",
+    "bcrypt": "",
+    "chart.js": "",
+    "date-fns": "^4.1.0",
+    "formik": "",
+    "jsonwebtoken": "",
+    "react": "",
+    "react-chartjs-2": "",
+    "react-dom": "",
+    "react-icons": "^5.5.0",
+    "react-pro-sidebar": "",
+    "react-redux": "",
+    "react-router-dom": "",
+    "rippleui": "",
+    "web-vitals": "",
+    "yup": ""
+  },
+  "devDependencies": {
+    "@eslint/js": "",
+    "@tailwindcss/postcss": "",
+    "@types/react": "",
+    "@types/react-dom": "",
+    "@vitejs/plugin-react": "",
+    "autoprefixer": "",
+    "eslint": "",
+    "eslint-plugin-react-hooks": "",
+    "eslint-plugin-react-refresh": "",
+    "globals": "",
+    "postcss": "",
+    "tailwindcss": "",
+    "vite": "",
+    "vitest": ""
+  },
+  "description": "Frontend for AngiSoft Technologies website",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
