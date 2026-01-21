@@ -1,0 +1,15 @@
+[build]
+  base = "frontend"
+  command = "npm ci --prefix frontend && npm run build --prefix frontend"
+  publish = "frontend/dist"
+
+# Redirect all routes to index.html for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# NOTE: Set VITE_API_BASE_URL and any other env vars in the Netlify UI or via CLI/Netlify team settings.
+# Example (do NOT commit secrets here):
+#[context.production.environment]
+#  VITE_API_BASE_URL = "https://api.yourdomain.com/api"

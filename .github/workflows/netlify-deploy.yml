@@ -1,0 +1,34 @@
+name: Netlify Deploy
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+
+            - name: Install dependencies (frontend)
+              run: npm ci --prefix frontend
+
+            - name: Build frontend
+              run: npm run build --prefix frontend
+
+            - name: Deploy to Netlify
+              uses: netlify/actions/cli@master
+              with:
+                  args: deploy --dir=frontend/dist --prod --site=$NETLIFY_SITE_ID
+              env:
+                  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+                  NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+# Requirements:
+# - Add NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID to this repo's Secrets (Settings → Secrets & variables → Actions)
+# - Keep Vite env vars (e.g. VITE_API_BASE_URL) configured in Netlify UI or as GitHub secrets and injected into Netlify environment

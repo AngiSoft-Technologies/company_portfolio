@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import ProjectCard from '../components/cards/ProjectCard';
-import placeholderImg from '../assets/images/portfolioImg.jpeg';
+const placeholderImg = '/angisoft_logo.png';
 
 const ProjectDetails = ({ theme }) => {
     const { id } = useParams();

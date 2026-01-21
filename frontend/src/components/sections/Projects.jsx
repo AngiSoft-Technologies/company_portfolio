@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectCard from '../cards/ProjectCard';
-import placeholderImg from '../../assets/images/portfolioImg.jpeg'; // Use existing image as placeholder
+const placeholderImg = '/angisoft_logo.png'; // Fallback placeholder image from public folder
 import { apiGet } from '../../js/httpClient';
 
 const Projects = ({ theme }) => {

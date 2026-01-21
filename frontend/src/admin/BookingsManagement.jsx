@@ -3,7 +3,7 @@ import { apiGet, apiPost } from '../js/httpClient';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { PaginationControls } from '../utils/pagination';
+import PaginationControls from '../components/PaginationControls';
 import { toast } from '../utils/toast';
 
 const BookingsManagement = ({ theme }) => {
