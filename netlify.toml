@@ -3,6 +3,10 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
+[build.environment]
+  # Skip secrets scanning for public VITE_ env vars (they're meant to be embedded in frontend)
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
+
 # Redirect all routes to index.html for SPA routing
 [[redirects]]
   from = "/*"
