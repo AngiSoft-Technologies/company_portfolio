@@ -1,16 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { Prisma } from '@prisma/client';
 
 export interface AppError extends Error {
     statusCode?: number;
     code?: string;
 }
 
+// Helper to check Prisma errors without relying on Prisma namespace
+function isPrismaKnownError(err: any): err is { code: string; message: string } {
+    return err && typeof err.code === 'string' && err.code.startsWith('P');
+}
+
 export function errorHandler(err: AppError, req: Request, res: Response, next: NextFunction) {
     console.error('Error:', err);
 
     // Prisma errors
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownError(err)) {
         if (err.code === 'P2002') {
             return res.status(409).json({
                 error: 'Duplicate entry',

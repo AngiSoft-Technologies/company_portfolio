@@ -16,12 +16,12 @@ export function startReconciliationWorker() {
                 const providerId = pi.id;
                 const existing = await prisma.payment.findUnique({ where: { providerId } });
                 if (!existing) {
-                    await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING', metadata: { raw: pi } } });
+                    await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING', metadata: JSON.parse(JSON.stringify(pi)) } });
                     count++;
                 } else {
                     const status = pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING';
                     if (existing.status !== status) {
-                        await prisma.payment.update({ where: { id: existing.id }, data: { status, metadata: { raw: pi } } });
+                        await prisma.payment.update({ where: { id: existing.id }, data: { status, metadata: JSON.parse(JSON.stringify(pi)) } });
                         count++;
                     }
                 }

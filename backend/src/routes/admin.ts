@@ -256,8 +256,8 @@ export default function adminRouter(prisma: PrismaClient) {
     router.get('/settings', requireAdmin, async (req, res) => {
         try {
             const settings = await prisma.setting.findMany();
-            const settingsObj: any = {};
-            settings.forEach(s => {
+            const settingsObj: Record<string, any> = {};
+            settings.forEach((s) => {
                 settingsObj[s.key] = s.value;
             });
             res.json(settingsObj);

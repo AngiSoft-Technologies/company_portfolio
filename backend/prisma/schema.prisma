@@ -21,6 +21,8 @@ model Employee {
   invitedAt           DateTime?
   inviteToken         String?  @unique
   inviteExpiry        DateTime?
+  resetToken          String?  @unique
+  resetExpiry         DateTime?
   twoFactorSecret     String?
   twoFactorEnabled    Boolean  @default(false)
   acceptedAt          DateTime?
@@ -102,7 +104,7 @@ model Payment {
   amount          Float
   currency        String      @default("KES")
   provider        PaymentProvider
-  providerId      String
+  providerId      String      @unique
   status          PaymentStatus
   metadata        Json?
   createdAt       DateTime    @default(now())
@@ -169,7 +171,7 @@ model BlogPost {
 }
 
 model File {
-  id         String  @id @default(uuid())
+  id         String   @id @default(uuid())
   bookingId  String?
   booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   ownerType  String
@@ -179,11 +181,12 @@ model File {
   mime       String
   size       Int
   uploadedBy String?
+  metadata   Json?
   createdAt  DateTime @default(now())
 }
 
 model Setting {
-  key       String @id
+  key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
 }

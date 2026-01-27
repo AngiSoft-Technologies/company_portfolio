@@ -1,4 +1,5 @@
 import prisma from '../db';
+import { Role } from '@prisma/client';
 
 export async function logAudit(entry: {
     actorId?: string | null;
@@ -16,7 +17,7 @@ export async function logAudit(entry: {
         return prisma.auditLog.create({
             data: {
                 actorId: entry.actorId || null,
-                actorRole: entry.actorRole || null,
+                actorRole: (entry.actorRole as Role) || null,
                 action: entry.action,
                 entity: entry.entity,
                 entityId: entry.entityId || null,

@@ -38,9 +38,9 @@ export default function paymentsRouter(prisma: PrismaClient) {
                     let payment = await prisma.payment.findUnique({ where: { providerId } });
                     if (!payment) {
                         // create a payment record so reconciliation works reliably
-                        payment = await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: 'SUCCEEDED', metadata: { raw: pi } } });
+                        payment = await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: 'SUCCEEDED', metadata: JSON.parse(JSON.stringify(pi)) } });
                     } else {
-                        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'SUCCEEDED', metadata: { raw: pi } } });
+                        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'SUCCEEDED', metadata: JSON.parse(JSON.stringify(pi)) } });
                     }
                     // mark booking deposit
                     if (payment.bookingId) {
@@ -56,7 +56,7 @@ export default function paymentsRouter(prisma: PrismaClient) {
                     const providerId = pi.id;
                     const payment = await prisma.payment.findUnique({ where: { providerId } });
                     if (payment) {
-                        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED', metadata: { raw: pi } } });
+                        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED', metadata: JSON.parse(JSON.stringify(pi)) } });
                     }
                 } catch (err) {
                     console.error('Error handling payment_failed', err);
@@ -77,7 +77,7 @@ export default function paymentsRouter(prisma: PrismaClient) {
         try {
             const pi = await createPaymentIntent(Number(amount), currency);
             // persist payment in DB (idempotency based on providerId)
-            await prisma.payment.create({ data: { bookingId: bookingId || undefined, clientId: undefined, amount: Number(amount), currency, provider: 'STRIPE', providerId: pi.id, status: 'PENDING', metadata: { raw: pi } } }).catch(() => { });
+            await prisma.payment.create({ data: { bookingId: bookingId || undefined, clientId: undefined, amount: Number(amount), currency, provider: 'STRIPE', providerId: pi.id, status: 'PENDING', metadata: JSON.parse(JSON.stringify(pi)) } }).catch(() => { });
             res.json({ clientSecret: pi.client_secret, providerId: pi.id });
         } catch (err: any) {
             console.error('Error creating payment intent', err);

@@ -1,14 +1,12 @@
-import { Queue, Worker, QueueScheduler } from 'bullmq';
-import IORedis from 'ioredis';
+import { Queue, Worker } from 'bullmq';
+import Redis from 'ioredis';
 
 const connectionString = process.env.REDIS_URL || '';
-let connection: IORedis.Redis | null = null;
-if (connectionString) connection = new IORedis(connectionString);
+let connection: Redis | null = null;
+if (connectionString) connection = new Redis(connectionString);
 
 export function getQueue(name: string) {
     if (!connection) throw new Error('REDIS_URL not configured');
-    // ensure scheduler
-    new QueueScheduler(name, { connection });
     return new Queue(name, { connection });
 }
 

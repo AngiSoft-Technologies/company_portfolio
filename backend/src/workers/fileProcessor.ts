@@ -7,7 +7,7 @@ export function startFileProcessor() {
             const { fileId } = job.data;
             console.log('processing file', fileId);
             // TODO: download file from storage, generate thumbnail, upload, update DB
-            await prisma.file.update({ where: { id: fileId }, data: { metadata: { processedAt: new Date() } } }).catch(() => null);
+            await prisma.file.update({ where: { id: fileId }, data: { metadata: { processedAt: new Date().toISOString() } } }).catch(() => null);
         });
         worker.on('completed', (job: any) => console.log('file job completed', job.id));
         worker.on('failed', (job: any, err: any) => console.error('file job failed', job.id, err));

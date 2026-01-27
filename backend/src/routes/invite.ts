@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import { signAccessToken, createRefreshToken, hashToken } from '../utils/token';
@@ -24,7 +24,7 @@ export default function inviteRouter(prisma: PrismaClient) {
         if (existing) return res.status(409).json({ error: 'Email already exists' });
         const token = uuidv4();
         const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        const employee = await prisma.employee.create({ data: { firstName, lastName, email, phone, role: role || 'DEVELOPER', inviteToken: token, inviteExpiry: expiry } });
+        const employee = await prisma.employee.create({ data: { firstName, lastName, email, phone, role: (role as Role) || 'DEVELOPER', inviteToken: token, inviteExpiry: expiry } });
         const acceptUrl = `${process.env.FRONTEND_URL}/invite/accept?token=${token}`;
         await sendMail({ to: email, subject: 'You are invited to AngiSoft', html: `<p>Click <a href="${acceptUrl}">here</a> to accept your invite.</p>` });
         await logAudit({ action: 'create_invite', entity: 'Employee', entityId: employee.id, actorId: req.user?.sub || null, actorRole: req.user?.role || null });

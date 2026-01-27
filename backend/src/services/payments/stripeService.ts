@@ -20,6 +20,7 @@ export async function getPaymentIntent(id: string) {
 }
 
 export async function reconcilePaymentsWindow(start: Date, end: Date) {
+    if (!stripe) throw new Error('Stripe not configured');
     // fetch payments from stripe and reconcile
     const results: any[] = [];
     const it = stripe.paymentIntents.list({ created: { gte: Math.floor(start.getTime() / 1000), lte: Math.floor(end.getTime() / 1000) }, limit: 100 });
@@ -29,13 +30,13 @@ export async function reconcilePaymentsWindow(start: Date, end: Date) {
         const existing = await prisma.payment.findUnique({ where: { providerId } }).catch(() => null);
         if (!existing) {
             // create a payment record to reconcile
-            await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: pi.status === 'succeeded' ? 'SUCCEEDED' : (pi.status === 'requires_payment_method' ? 'FAILED' : 'PENDING'), metadata: { raw: pi } } });
+            await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: pi.status === 'succeeded' ? 'SUCCEEDED' : (pi.status === 'requires_payment_method' ? 'FAILED' : 'PENDING'), metadata: JSON.parse(JSON.stringify(pi)) } });
             results.push({ providerId, action: 'created' });
         } else {
             // update status if different
             const status = pi.status === 'succeeded' ? 'SUCCEEDED' : (pi.status === 'requires_payment_method' ? 'FAILED' : 'PENDING');
             if (existing.status !== status) {
-                await prisma.payment.update({ where: { id: existing.id }, data: { status, metadata: { raw: pi } } });
+                await prisma.payment.update({ where: { id: existing.id }, data: { status, metadata: JSON.parse(JSON.stringify(pi)) } });
                 results.push({ providerId, action: 'updated', from: existing.status, to: status });
             }
         }
