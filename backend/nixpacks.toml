@@ -6,7 +6,7 @@ nixPkgs = ["nodejs_22", "openssl"]
 cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["npx prisma generate && npm run build"]
+cmds = ["npx prisma generate", "npm run build"]
 
 [start]
 cmd = "node dist/index.js"
