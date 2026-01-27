@@ -18,6 +18,7 @@ import staffRouter from './routes/staff';
 import adminRouter from './routes/admin';
 import staffDashboardRouter from './routes/staff-dashboard';
 import healthRouter from './routes/health';
+import siteRouter from './routes/site';
 import { authRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/auth';
 import { sanitizeMiddleware } from './middleware/validation';
@@ -61,6 +62,7 @@ app.use('/api/settings', requireAuth, settingsRouter());
 app.use('/api/staff', staffRouter(prisma));
 app.use('/api/admin', adminRouter(prisma));
 app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
+app.use('/api/site', siteRouter(prisma));
 app.use('/health', healthRouter(prisma));
 
 // Legacy admin route (kept for compatibility)

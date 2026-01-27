@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import ToastContainer from './components/ToastContainer';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
@@ -11,8 +12,10 @@ if (rootElement) {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <App />
-        <ToastContainer />
+        <ThemeProvider>
+          <App />
+          <ToastContainer />
+        </ThemeProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );

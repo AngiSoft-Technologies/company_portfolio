@@ -15,8 +15,14 @@ import { checkPasswordStrength } from '../utils/passwordPolicy';
 
 const router = Router();
 
-// per-account limiter (simple)
-const accountLimiter = rateLimit({ windowMs: 60 * 1000, max: 6, keyGenerator: (req) => req.body.email || req.ip, message: { status: 429, message: 'Too many attempts' } });
+// per-account limiter (simple) - using email as key to avoid IPv6 issues
+const accountLimiter = rateLimit({ 
+    windowMs: 60 * 1000, 
+    max: 6, 
+    keyGenerator: (req) => req.body?.email || 'anonymous', 
+    message: { status: 429, message: 'Too many attempts' },
+    validate: false  // Disable all validations to avoid IPv6 warning
+});
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
 const login2FASchema = z.object({ email: z.string().email(), password: z.string().min(8), totp: z.string().optional() });

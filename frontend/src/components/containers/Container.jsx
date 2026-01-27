@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-const Container = ({ theme, children }) => {
+const Container = ({ theme, children, className = '' }) => {
     return (
         <div
             className={`${
                 theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
-            } rounded-md shadow-md container justify-center items-center flex flex-col space-y-4 transition-transform transform hover:scale-101 hover:shadow-xl`} 
+            } rounded-2xl shadow-lg p-6 md:p-8 transition-all duration-300 hover:shadow-xl ${className}`} 
         >
             {children}
         </div>

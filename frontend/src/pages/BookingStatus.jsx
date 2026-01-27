@@ -1,9 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiGet, apiPost } from '../js/httpClient';
+import { apiGet } from '../js/httpClient';
+import { useTheme } from '../contexts/ThemeContext';
+import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { 
+    FaCheckCircle, FaClock, FaTimesCircle, FaSpinner, FaCreditCard,
+    FaFileAlt, FaDownload, FaHome, FaPlus, FaArrowRight,
+    FaEnvelope, FaMoneyBillWave
+} from 'react-icons/fa';
 
-const BookingStatus = ({ theme }) => {
+const statusConfig = {
+    SUBMITTED: { color: '#eab308', icon: FaClock, text: 'Submitted' },
+    UNDER_REVIEW: { color: '#3b82f6', icon: FaSpinner, text: 'Under Review' },
+    ACCEPTED: { color: '#22c55e', icon: FaCheckCircle, text: 'Accepted' },
+    REJECTED: { color: '#ef4444', icon: FaTimesCircle, text: 'Rejected' },
+    TERMS_ACCEPTED: { color: '#8b5cf6', icon: FaCheckCircle, text: 'Terms Accepted' },
+    DEPOSIT_PAID: { color: '#10b981', icon: FaMoneyBillWave, text: 'Deposit Paid' },
+    IN_PROGRESS: { color: '#6366f1', icon: FaSpinner, text: 'In Progress' },
+    DELIVERED: { color: '#14b8a6', icon: FaCheckCircle, text: 'Delivered' },
+    COMPLETED: { color: '#22c55e', icon: FaCheckCircle, text: 'Completed' },
+    CANCELLED: { color: '#6b7280', icon: FaTimesCircle, text: 'Cancelled' }
+};
+
+const statusMessages = {
+    SUBMITTED: 'Your booking has been submitted and is awaiting review.',
+    UNDER_REVIEW: 'Your booking is currently under review by our team.',
+    ACCEPTED: 'Your booking has been accepted! Please proceed with payment.',
+    REJECTED: 'Unfortunately, your booking has been rejected.',
+    TERMS_ACCEPTED: 'Terms accepted. Please proceed with payment.',
+    DEPOSIT_PAID: 'Deposit payment received. Work will begin soon!',
+    IN_PROGRESS: 'Your project is currently in progress.',
+    DELIVERED: 'Your project has been delivered!',
+    COMPLETED: 'Project completed successfully!',
+    CANCELLED: 'This booking has been cancelled.'
+};
+
+const BookingStatus = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
+    const { colors, mode } = useTheme();
     const [email, setEmail] = useState('');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -12,7 +47,6 @@ const BookingStatus = ({ theme }) => {
     const [paymentLoading, setPaymentLoading] = useState(false);
 
     useEffect(() => {
-        // Check if booking ID is in URL params or localStorage
         const storedBookingId = localStorage.getItem('lastBookingId');
         const storedEmail = localStorage.getItem('lastBookingEmail');
         if (id || storedBookingId) {
@@ -50,11 +84,8 @@ const BookingStatus = ({ theme }) => {
         if (!booking) return;
         setPaymentLoading(true);
         try {
-            // Find pending payment
             const pendingPayment = booking.payments?.find(p => p.status === 'PENDING');
             if (pendingPayment && pendingPayment.metadata?.raw?.client_secret) {
-                // Redirect to payment page or open Stripe checkout
-                // For now, we'll show a message
                 alert('Payment integration will be implemented here. Payment Intent ID: ' + pendingPayment.providerId);
             } else {
                 setError('No pending payment found');
@@ -66,102 +97,146 @@ const BookingStatus = ({ theme }) => {
         }
     };
 
-    const bgColor = theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
-    const cardBg = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50';
-    const statusColors = {
-        SUBMITTED: 'bg-yellow-500',
-        UNDER_REVIEW: 'bg-blue-500',
-        ACCEPTED: 'bg-green-500',
-        REJECTED: 'bg-red-500',
-        TERMS_ACCEPTED: 'bg-purple-500',
-        DEPOSIT_PAID: 'bg-green-600',
-        IN_PROGRESS: 'bg-indigo-500',
-        DELIVERED: 'bg-teal-500',
-        COMPLETED: 'bg-green-700',
-        CANCELLED: 'bg-gray-500'
+    const inputStyle = {
+        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        borderColor: mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+        color: colors.text
     };
 
-    const getStatusMessage = (status) => {
-        const messages = {
-            SUBMITTED: 'Your booking has been submitted and is awaiting review.',
-            UNDER_REVIEW: 'Your booking is currently under review by our team.',
-            ACCEPTED: 'Your booking has been accepted! Please proceed with payment.',
-            REJECTED: 'Unfortunately, your booking has been rejected.',
-            TERMS_ACCEPTED: 'Terms accepted. Please proceed with payment.',
-            DEPOSIT_PAID: 'Deposit payment received. Work will begin soon!',
-            IN_PROGRESS: 'Your project is currently in progress.',
-            DELIVERED: 'Your project has been delivered!',
-            COMPLETED: 'Project completed successfully!',
-            CANCELLED: 'This booking has been cancelled.'
-        };
-        return messages[status] || 'Status unknown';
-    };
-
+    // Email Form View
     if (showEmailForm) {
         return (
-            <div className={`min-h-screen p-8 ${bgColor}`}>
-                <div className="max-w-2xl mx-auto">
-                    <div className={`${cardBg} rounded-lg p-8`}>
-                        <h1 className="text-3xl font-bold mb-6">View Booking Status</h1>
-                        <p className="mb-6 text-gray-600 dark:text-gray-400">
-                            Enter your email address to view your booking status
-                        </p>
-                        <form onSubmit={handleEmailSubmit}>
-                            <div className="mb-4">
-                                <label className="block mb-2 font-semibold">Email Address</label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className={`w-full p-3 border rounded-lg ${
-                                        theme === 'dark' 
-                                            ? 'bg-gray-700 border-gray-600 text-white' 
-                                            : 'bg-white border-gray-300'
-                                    }`}
-                                    required
+            <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+                <div className="max-w-lg mx-auto px-4 py-20">
+                    <ScrollReveal animation="scaleUp">
+                        <GlassmorphismCard className="p-8">
+                            <div 
+                                className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center"
+                                style={{ backgroundColor: `${colors.primary}20` }}
+                            >
+                                <FaFileAlt 
+                                    className="text-2xl"
+                                    style={{ color: colors.primary }}
                                 />
                             </div>
-                            {error && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                    {error}
-                                </div>
-                            )}
-                            <button
-                                type="submit"
-                                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                            
+                            <h1 
+                                className="text-2xl font-bold mb-4 text-center"
+                                style={{ color: colors.text }}
                             >
-                                View Status
-                            </button>
-                        </form>
-                    </div>
+                                View Booking Status
+                            </h1>
+                            
+                            <p 
+                                className="text-center mb-8"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                Enter your email address to view your booking status
+                            </p>
+                            
+                            <form onSubmit={handleEmailSubmit} className="space-y-6">
+                                <div>
+                                    <label 
+                                        className="block mb-2 font-medium"
+                                        style={{ color: colors.text }}
+                                    >
+                                        <FaEnvelope className="inline mr-2" style={{ color: colors.primary }} />
+                                        Email Address
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                        style={inputStyle}
+                                        placeholder="Enter your email"
+                                        required
+                                    />
+                                </div>
+                                
+                                {error && (
+                                    <div 
+                                        className="p-4 rounded-lg border"
+                                        style={{ 
+                                            backgroundColor: `${colors.danger || '#ef4444'}15`,
+                                            borderColor: colors.danger || '#ef4444',
+                                            color: colors.danger || '#ef4444'
+                                        }}
+                                    >
+                                        {error}
+                                    </div>
+                                )}
+                                
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 rounded-full font-semibold transition-all hover:scale-105"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                        color: 'white'
+                                    }}
+                                >
+                                    View Status
+                                </button>
+                            </form>
+                        </GlassmorphismCard>
+                    </ScrollReveal>
                 </div>
             </div>
         );
     }
 
+    // Loading State
     if (loading) {
         return (
-            <div className={`min-h-screen p-8 ${bgColor}`}>
-                <div className="max-w-4xl mx-auto text-center py-16">
-                    <p>Loading booking status...</p>
-                </div>
+            <div 
+                style={{ backgroundColor: colors.background, color: colors.text }} 
+                className="min-h-screen flex items-center justify-center"
+            >
+                <div 
+                    className="w-16 h-16 border-4 rounded-full animate-spin"
+                    style={{ 
+                        borderColor: `${colors.primary}30`,
+                        borderTopColor: colors.primary
+                    }}
+                />
             </div>
         );
     }
 
+    // Error State
     if (error && !booking) {
         return (
-            <div className={`min-h-screen p-8 ${bgColor}`}>
-                <div className="max-w-4xl mx-auto">
-                    <div className={`${cardBg} rounded-lg p-8 text-center`}>
-                        <p className="text-red-500 mb-4">{error}</p>
-                        <button
-                            onClick={() => setShowEmailForm(true)}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            Try Again
-                        </button>
-                    </div>
+            <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+                <div className="max-w-lg mx-auto px-4 py-20">
+                    <ScrollReveal animation="scaleUp">
+                        <GlassmorphismCard className="p-8 text-center">
+                            <div 
+                                className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center"
+                                style={{ backgroundColor: `${colors.danger || '#ef4444'}20` }}
+                            >
+                                <FaTimesCircle 
+                                    className="text-2xl"
+                                    style={{ color: colors.danger || '#ef4444' }}
+                                />
+                            </div>
+                            <p 
+                                className="text-lg mb-6"
+                                style={{ color: colors.danger || '#ef4444' }}
+                            >
+                                {error}
+                            </p>
+                            <button
+                                onClick={() => setShowEmailForm(true)}
+                                className="px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                    color: 'white'
+                                }}
+                            >
+                                Try Again
+                            </button>
+                        </GlassmorphismCard>
+                    </ScrollReveal>
                 </div>
             </div>
         );
@@ -169,145 +244,359 @@ const BookingStatus = ({ theme }) => {
 
     if (!booking) return null;
 
+    const currentStatus = statusConfig[booking.status] || statusConfig.SUBMITTED;
+    const StatusIcon = currentStatus.icon;
     const pendingPayment = booking.payments?.find(p => p.status === 'PENDING');
     const needsPayment = booking.status === 'ACCEPTED' || booking.status === 'TERMS_ACCEPTED';
 
+    // Timeline steps
+    const timelineSteps = [
+        { status: 'SUBMITTED', label: 'Submitted' },
+        { status: 'UNDER_REVIEW', label: 'Review' },
+        { status: 'ACCEPTED', label: 'Accepted' },
+        { status: 'IN_PROGRESS', label: 'In Progress' },
+        { status: 'DELIVERED', label: 'Delivered' },
+        { status: 'COMPLETED', label: 'Completed' },
+    ];
+
+    const currentStepIndex = timelineSteps.findIndex(s => s.status === booking.status);
+
     return (
-        <div className={`min-h-screen p-8 ${bgColor}`}>
-            <div className="max-w-4xl mx-auto">
-                <h1 className="text-4xl font-bold mb-8">Booking Status</h1>
+        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+            {/* Hero */}
+            <ParallaxSection
+                speed={0.3}
+                className="relative py-16 overflow-hidden"
+            >
+                <div 
+                    className="absolute inset-0 z-0"
+                    style={{
+                        background: `linear-gradient(135deg, ${currentStatus.color}20 0%, ${colors.secondary}10 100%)`
+                    }}
+                />
 
-                {/* Status Card */}
-                <div className={`${cardBg} rounded-lg p-6 mb-6`}>
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 className="text-2xl font-bold mb-2">{booking.title}</h2>
-                            <p className="text-sm text-gray-500">
-                                Booking ID: {booking.id}
-                            </p>
-                        </div>
-                        <div className={`px-4 py-2 rounded-full text-white font-semibold ${
-                            statusColors[booking.status] || 'bg-gray-500'
-                        }`}>
-                            {booking.status.replace('_', ' ')}
-                        </div>
-                    </div>
-                    <p className="text-lg mb-4">{getStatusMessage(booking.status)}</p>
-                    <p className="text-sm text-gray-500">
-                        Created: {new Date(booking.createdAt).toLocaleString()}
-                    </p>
-                </div>
-
-                {/* Payment Prompt */}
-                {needsPayment && pendingPayment && (
-                    <div className={`${cardBg} rounded-lg p-6 mb-6 border-2 border-blue-500`}>
-                        <h3 className="text-xl font-bold mb-4">Payment Required</h3>
-                        <div className="mb-4">
-                            <p className="text-lg mb-2">
-                                Deposit Amount: <span className="font-bold">
-                                    {pendingPayment.currency} {pendingPayment.amount}
-                                </span>
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Please complete your deposit payment to proceed with the project.
-                            </p>
-                        </div>
-                        <button
-                            onClick={handlePayDeposit}
-                            disabled={paymentLoading}
-                            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50"
+                <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+                    <ScrollReveal animation="fadeUp">
+                        <h1 className="text-4xl font-bold mb-4" style={{ color: colors.text }}>
+                            Booking Status
+                        </h1>
+                        <div 
+                            className="inline-block px-4 py-2 rounded-lg"
+                            style={{ backgroundColor: `${colors.primary}10` }}
                         >
-                            {paymentLoading ? 'Processing...' : 'Pay Deposit Now'}
-                        </button>
-                    </div>
-                )}
-
-                {/* Booking Details */}
-                <div className={`${cardBg} rounded-lg p-6 mb-6`}>
-                    <h3 className="text-xl font-bold mb-4">Project Details</h3>
-                    <div className="space-y-2">
-                        <p><span className="font-semibold">Type:</span> {booking.projectType}</p>
-                        <p><span className="font-semibold">Description:</span></p>
-                        <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                            {booking.description}
-                        </p>
-                        {booking.priceEstimate && (
-                            <p><span className="font-semibold">Estimated Price:</span> {booking.priceEstimate}</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Files */}
-                {booking.files && booking.files.length > 0 && (
-                    <div className={`${cardBg} rounded-lg p-6 mb-6`}>
-                        <h3 className="text-xl font-bold mb-4">Uploaded Files</h3>
-                        <div className="space-y-2">
-                            {booking.files.map((file) => (
-                                <div key={file.id} className="flex items-center justify-between p-2 bg-gray-700 dark:bg-gray-600 rounded">
-                                    <span>{file.filename}</span>
-                                    <a
-                                        href={file.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-400 hover:underline"
-                                    >
-                                        Download
-                                    </a>
-                                </div>
-                            ))}
+                            <span style={{ color: colors.textSecondary }}>ID: </span>
+                            <span 
+                                className="font-mono font-bold"
+                                style={{ color: colors.primary }}
+                            >
+                                {booking.id}
+                            </span>
                         </div>
-                    </div>
-                )}
+                    </ScrollReveal>
+                </div>
+            </ParallaxSection>
 
-                {/* Payment History */}
-                {booking.payments && booking.payments.length > 0 && (
-                    <div className={`${cardBg} rounded-lg p-6`}>
-                        <h3 className="text-xl font-bold mb-4">Payment History</h3>
-                        <div className="space-y-3">
-                            {booking.payments.map((payment) => (
-                                <div key={payment.id} className="p-4 bg-gray-700 dark:bg-gray-600 rounded">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <p className="font-semibold">
-                                                {payment.currency} {payment.amount}
-                                            </p>
-                                            <p className="text-sm text-gray-400">
-                                                {payment.provider} • {payment.status}
-                                            </p>
+            <section className="py-12 px-4">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    {/* Status Card */}
+                    <ScrollReveal animation="fadeUp">
+                        <GlassmorphismCard className="p-8">
+                            <div className="flex flex-col md:flex-row items-center gap-6">
+                                <div 
+                                    className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{ backgroundColor: `${currentStatus.color}20` }}
+                                >
+                                    <StatusIcon 
+                                        className="text-3xl"
+                                        style={{ color: currentStatus.color }}
+                                    />
+                                </div>
+                                <div className="flex-1 text-center md:text-left">
+                                    <h2 
+                                        className="text-2xl font-bold mb-2"
+                                        style={{ color: colors.text }}
+                                    >
+                                        {booking.title}
+                                    </h2>
+                                    <div 
+                                        className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm font-semibold mb-3"
+                                        style={{ 
+                                            backgroundColor: `${currentStatus.color}20`,
+                                            color: currentStatus.color
+                                        }}
+                                    >
+                                        {currentStatus.text}
+                                    </div>
+                                    <p style={{ color: colors.textSecondary }}>
+                                        {statusMessages[booking.status]}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Progress Timeline */}
+                            {booking.status !== 'REJECTED' && booking.status !== 'CANCELLED' && (
+                                <div className="mt-8 pt-8 border-t" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+                                    <div className="flex items-center justify-between relative">
+                                        <div 
+                                            className="absolute top-4 left-0 right-0 h-1 mx-4"
+                                            style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}
+                                        >
+                                            <div 
+                                                className="h-full transition-all duration-500"
+                                                style={{ 
+                                                    width: `${Math.max(0, (currentStepIndex / (timelineSteps.length - 1)) * 100)}%`,
+                                                    backgroundColor: colors.primary
+                                                }}
+                                            />
                                         </div>
-                                        <span className={`px-3 py-1 rounded ${
-                                            payment.status === 'SUCCEEDED' ? 'bg-green-500' :
-                                            payment.status === 'PENDING' ? 'bg-yellow-500' :
-                                            payment.status === 'FAILED' ? 'bg-red-500' : 'bg-gray-500'
-                                        } text-white text-sm`}>
-                                            {payment.status}
-                                        </span>
+                                        
+                                        {timelineSteps.map((step, idx) => (
+                                            <div key={step.status} className="relative z-10 flex flex-col items-center">
+                                                <div 
+                                                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                                                    style={{
+                                                        backgroundColor: idx <= currentStepIndex ? colors.primary : mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                                        color: idx <= currentStepIndex ? 'white' : colors.textSecondary
+                                                    }}
+                                                >
+                                                    {idx < currentStepIndex ? '✓' : idx + 1}
+                                                </div>
+                                                <span 
+                                                    className="mt-2 text-xs hidden sm:block"
+                                                    style={{ color: idx <= currentStepIndex ? colors.primary : colors.textSecondary }}
+                                                >
+                                                    {step.label}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                            )}
+                        </GlassmorphismCard>
+                    </ScrollReveal>
 
-                {/* Actions */}
-                <div className="mt-8 flex gap-4">
-                    <button
-                        onClick={() => window.location.href = '/book'}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        Create New Booking
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/'}
-                        className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
-                        Back to Home
-                    </button>
+                    {/* Payment Required */}
+                    {needsPayment && pendingPayment && (
+                        <ScrollReveal animation="fadeUp" delay={100}>
+                            <div 
+                                className="rounded-2xl p-6 border-2"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}10`,
+                                    borderColor: colors.primary
+                                }}
+                            >
+                                <div className="flex flex-col md:flex-row items-center gap-6">
+                                    <div 
+                                        className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                                        style={{ backgroundColor: colors.primary }}
+                                    >
+                                        <FaCreditCard className="text-2xl text-white" />
+                                    </div>
+                                    <div className="flex-1 text-center md:text-left">
+                                        <h3 
+                                            className="text-xl font-bold mb-2"
+                                            style={{ color: colors.text }}
+                                        >
+                                            Payment Required
+                                        </h3>
+                                        <p 
+                                            className="text-2xl font-bold mb-2"
+                                            style={{ color: colors.primary }}
+                                        >
+                                            {pendingPayment.currency} {pendingPayment.amount}
+                                        </p>
+                                        <p style={{ color: colors.textSecondary }}>
+                                            Please complete your deposit payment to proceed.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handlePayDeposit}
+                                        disabled={paymentLoading}
+                                        className="px-8 py-4 rounded-full font-semibold transition-all hover:scale-105 disabled:opacity-50"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                            color: 'white'
+                                        }}
+                                    >
+                                        {paymentLoading ? 'Processing...' : 'Pay Now'}
+                                    </button>
+                                </div>
+                            </div>
+                        </ScrollReveal>
+                    )}
+
+                    {/* Booking Details */}
+                    <ScrollReveal animation="fadeUp" delay={150}>
+                        <GlassmorphismCard className="p-6">
+                            <h3 
+                                className="text-lg font-bold mb-4"
+                                style={{ color: colors.text }}
+                            >
+                                Project Details
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between">
+                                    <span style={{ color: colors.textSecondary }}>Type:</span>
+                                    <span className="font-medium" style={{ color: colors.text }}>{booking.projectType}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span style={{ color: colors.textSecondary }}>Created:</span>
+                                    <span className="font-medium" style={{ color: colors.text }}>
+                                        {new Date(booking.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                {booking.priceEstimate && (
+                                    <div className="flex justify-between">
+                                        <span style={{ color: colors.textSecondary }}>Estimated Price:</span>
+                                        <span className="font-medium" style={{ color: colors.primary }}>{booking.priceEstimate}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div 
+                                className="mt-4 pt-4 border-t"
+                                style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}
+                            >
+                                <p 
+                                    className="text-sm font-medium mb-2"
+                                    style={{ color: colors.textSecondary }}
+                                >
+                                    Description:
+                                </p>
+                                <p 
+                                    className="whitespace-pre-line"
+                                    style={{ color: colors.text }}
+                                >
+                                    {booking.description}
+                                </p>
+                            </div>
+                        </GlassmorphismCard>
+                    </ScrollReveal>
+
+                    {/* Files */}
+                    {booking.files && booking.files.length > 0 && (
+                        <ScrollReveal animation="fadeUp" delay={200}>
+                            <GlassmorphismCard className="p-6">
+                                <h3 
+                                    className="text-lg font-bold mb-4"
+                                    style={{ color: colors.text }}
+                                >
+                                    Uploaded Files
+                                </h3>
+                                <div className="space-y-2">
+                                    {booking.files.map((file) => (
+                                        <div 
+                                            key={file.id}
+                                            className="flex items-center justify-between p-3 rounded-xl"
+                                            style={{ backgroundColor: `${colors.primary}10` }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <FaFileAlt style={{ color: colors.primary }} />
+                                                <span style={{ color: colors.text }}>{file.filename}</span>
+                                            </div>
+                                            <a
+                                                href={file.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
+                                                style={{ 
+                                                    backgroundColor: colors.primary,
+                                                    color: 'white'
+                                                }}
+                                            >
+                                                <FaDownload />
+                                                Download
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            </GlassmorphismCard>
+                        </ScrollReveal>
+                    )}
+
+                    {/* Payment History */}
+                    {booking.payments && booking.payments.length > 0 && (
+                        <ScrollReveal animation="fadeUp" delay={250}>
+                            <GlassmorphismCard className="p-6">
+                                <h3 
+                                    className="text-lg font-bold mb-4"
+                                    style={{ color: colors.text }}
+                                >
+                                    Payment History
+                                </h3>
+                                <div className="space-y-3">
+                                    {booking.payments.map((payment) => (
+                                        <div 
+                                            key={payment.id}
+                                            className="flex items-center justify-between p-4 rounded-xl"
+                                            style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }}
+                                        >
+                                            <div>
+                                                <p 
+                                                    className="font-bold"
+                                                    style={{ color: colors.text }}
+                                                >
+                                                    {payment.currency} {payment.amount}
+                                                </p>
+                                                <p 
+                                                    className="text-sm"
+                                                    style={{ color: colors.textSecondary }}
+                                                >
+                                                    {payment.provider}
+                                                </p>
+                                            </div>
+                                            <span 
+                                                className="px-3 py-1 rounded-full text-xs font-semibold"
+                                                style={{ 
+                                                    backgroundColor: `${
+                                                        payment.status === 'SUCCEEDED' ? '#22c55e' :
+                                                        payment.status === 'PENDING' ? '#eab308' :
+                                                        '#ef4444'
+                                                    }20`,
+                                                    color: payment.status === 'SUCCEEDED' ? '#22c55e' :
+                                                           payment.status === 'PENDING' ? '#eab308' : '#ef4444'
+                                                }}
+                                            >
+                                                {payment.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </GlassmorphismCard>
+                        </ScrollReveal>
+                    )}
+
+                    {/* Actions */}
+                    <ScrollReveal animation="fadeUp" delay={300}>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <button
+                                onClick={() => navigate('/book')}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                    color: 'white'
+                                }}
+                            >
+                                <FaPlus />
+                                New Booking
+                            </button>
+                            <button
+                                onClick={() => navigate('/')}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                style={{
+                                    backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                    color: colors.text,
+                                    border: `2px solid ${colors.primary}`
+                                }}
+                            >
+                                <FaHome />
+                                Back to Home
+                            </button>
+                        </div>
+                    </ScrollReveal>
                 </div>
-            </div>
+            </section>
         </div>
     );
 };
 
 export default BookingStatus;
-

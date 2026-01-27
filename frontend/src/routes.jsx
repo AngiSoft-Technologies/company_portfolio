@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -35,13 +35,14 @@ const HobbiesAdmin = lazy(() => import('./admin/crud/HobbiesAdmin'));
 const InterestsAdmin = lazy(() => import('./admin/crud/InterestsAdmin'));
 const SocialMediaAdmin = lazy(() => import('./admin/crud/SocialMediaAdmin'));
 const QuotesAdmin = lazy(() => import('./admin/crud/QuotesAdmin'));
+const SiteSettingsAdmin = lazy(() => import('./admin/crud/SiteSettingsAdmin'));
 
-const AdminProtectedLayout = ({ theme, toggleTheme }) => {
+const AdminProtectedLayout = () => {
   const isLoggedIn = !!localStorage.getItem('adminToken');
   if (!isLoggedIn) return <Navigate to="/admin/login" replace />;
   return (
-    <AdminLayout theme={theme} toggleTheme={toggleTheme}>
-      <Suspense fallback={<div>Loading...</div>}>
+    <AdminLayout>
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Loading...</div>}>
         <Outlet />
       </Suspense>
     </AdminLayout>
@@ -49,65 +50,49 @@ const AdminProtectedLayout = ({ theme, toggleTheme }) => {
 };
 
 const RoutesComponent = () => {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) return savedTheme;
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return systemPrefersDark ? "dark" : "light";
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
   return (
     <Router>
       <Routes>
         {/* User routes */}
-        <Route path="/*" element={<AppLayout theme={theme} toggleTheme={toggleTheme} />} >
-          <Route index element={<Home theme={theme} />} />
-          <Route path="projects" element={<ProjectLists theme={theme} />} />
-          <Route path="services" element={<ServicesList theme={theme} />} />
-          <Route path="service/:slug" element={<ServiceDetail theme={theme} />} />
-          <Route path="project/:id" element={<ProjectDetails theme={theme} />} />
-          <Route path="staff" element={<StaffList theme={theme} />} />
-          <Route path="staff/:id" element={<StaffDetail theme={theme} />} />
-          <Route path="testimonials" element={<TestimonialsList theme={theme} />} />
-          <Route path="book" element={<Booking theme={theme} />} />
-          <Route path="booking/:id" element={<BookingStatus theme={theme} />} />
-          <Route path="*" element={<NotFound theme={theme} />} />
+        <Route path="/*" element={<AppLayout />} >
+          <Route index element={<Home />} />
+          <Route path="projects" element={<ProjectLists />} />
+          <Route path="services" element={<ServicesList />} />
+          <Route path="service/:slug" element={<ServiceDetail />} />
+          <Route path="project/:id" element={<ProjectDetails />} />
+          <Route path="staff" element={<StaffList />} />
+          <Route path="staff/:id" element={<StaffDetail />} />
+          <Route path="testimonials" element={<TestimonialsList />} />
+          <Route path="book" element={<Booking />} />
+          <Route path="booking/:id" element={<BookingStatus />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* Admin routes */}
-        <Route path="/admin/login" element={<AdminLogin theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/admin" element={<AdminProtectedLayout theme={theme} toggleTheme={toggleTheme} />}>
-          <Route index element={<EnhancedAdminDashboard theme={theme}/>} />
-          <Route path="bookings" element={<BookingsManagement theme={theme}/>} />
-          <Route path="bookings/:id" element={<BookingsManagement theme={theme}/>} />
-          <Route path="staff" element={<StaffManagement theme={theme}/>} />
-          <Route path="staff-dashboard" element={<StaffDashboard theme={theme}/>} />
-          <Route path="upload-manager" element={<FileUploadManager theme={theme}/>} />
-          <Route path="about" element={<AboutAdmin theme={theme}/>} />
-          <Route path="projects" element={<ProjectsAdmin theme={theme}/>} />
-          <Route path="skills" element={<SkillsAdmin theme={theme}/>} />
-          <Route path="services" element={<ServicesAdmin theme={theme}/>} />
-          <Route path="education" element={<EducationAdmin theme={theme}/>} />
-          <Route path="experience" element={<ExperienceAdmin theme={theme}/>} />
-          <Route path="contacts" element={<ContactsAdmin theme={theme}/>} />
-          <Route path="testimonials" element={<TestimonialsAdmin theme={theme}/>} />
-          <Route path="upload" element={<FileUpload theme={theme}/>} />
-          <Route path="hobbies" element={<HobbiesAdmin theme={theme}/>} />
-          <Route path="interests" element={<InterestsAdmin theme={theme}/>} />
-          <Route path="social-media" element={<SocialMediaAdmin theme={theme}/>} />
-          <Route path="quotes" element={<QuotesAdmin theme={theme}/>} />
-          <Route path="system" element={<SystemPanel theme={theme}/>} />
-          <Route path="*" element={<NotFoundAdmin theme={theme}/>} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminProtectedLayout />}>
+          <Route index element={<EnhancedAdminDashboard />} />
+          <Route path="bookings" element={<BookingsManagement />} />
+          <Route path="bookings/:id" element={<BookingsManagement />} />
+          <Route path="staff" element={<StaffManagement />} />
+          <Route path="staff-dashboard" element={<StaffDashboard />} />
+          <Route path="upload-manager" element={<FileUploadManager />} />
+          <Route path="about" element={<AboutAdmin />} />
+          <Route path="site-settings" element={<SiteSettingsAdmin />} />
+          <Route path="projects" element={<ProjectsAdmin />} />
+          <Route path="skills" element={<SkillsAdmin />} />
+          <Route path="services" element={<ServicesAdmin />} />
+          <Route path="education" element={<EducationAdmin />} />
+          <Route path="experience" element={<ExperienceAdmin />} />
+          <Route path="contacts" element={<ContactsAdmin />} />
+          <Route path="testimonials" element={<TestimonialsAdmin />} />
+          <Route path="upload" element={<FileUpload />} />
+          <Route path="hobbies" element={<HobbiesAdmin />} />
+          <Route path="interests" element={<InterestsAdmin />} />
+          <Route path="social-media" element={<SocialMediaAdmin />} />
+          <Route path="quotes" element={<QuotesAdmin />} />
+          <Route path="system" element={<SystemPanel />} />
+          <Route path="*" element={<NotFoundAdmin />} />
         </Route>
       </Routes>
     </Router>

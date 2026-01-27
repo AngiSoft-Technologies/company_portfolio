@@ -17,19 +17,23 @@ const ServiceCard = ({ icon, title, description, theme, onClick, slug }) => {
 
     return (
         <div
-            className={`container  rounded-lg shadow-lg transition-transform transform hover:scale-105 
-                hover:shadow-xl cursor-pointer ${bgColor} ${textColor} flex-col justify-center items-center`}
+            className={`p-6 rounded-2xl shadow-lg transition-all duration-300 hover:scale-105 
+                hover:shadow-xl cursor-pointer ${bgColor} ${textColor}`}
             onClick={handleClick}
         >
-            <div className="flex flex-col justify-center items-center gap-4 mb-4">
-                <span className="text-4xl"><i class={icon}></i></span>
-                <h3 className="text-xl font-semibold">{title}</h3>
+            <div className="flex flex-col items-center text-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
+                    <i className={`${icon} text-2xl text-teal-600 dark:text-teal-400`}></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{title}</h3>
             </div>
-            <p className="text-sm">{description}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center leading-relaxed">{description}</p>
             {slug && (
-                <button className="mt-4 text-teal-600 dark:text-teal-400 hover:underline text-sm font-semibold">
-                    Learn More →
-                </button>
+                <div className="mt-4 text-center">
+                    <span className="text-teal-600 dark:text-teal-400 hover:underline text-sm font-semibold">
+                        Learn More →
+                    </span>
+                </div>
             )}
         </div>
     );

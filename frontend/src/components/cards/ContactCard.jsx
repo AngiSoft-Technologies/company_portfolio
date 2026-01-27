@@ -3,24 +3,25 @@ const ContactCard = ({
     subtitle,
     icon,
     theme,
-    link, // URL for the contact method (e.g., tel:, mailto:, https://)
+    link,
 }) => {
     const isDark = theme === "dark";
-    const defaultBg = isDark ? "bg-gray-800" : "bg-white";
-    const defaultText = isDark ? "text-teal-700" : "text-teal-500";
+    const bgColor = isDark ? "bg-gray-800" : "bg-white";
 
     return (
         <a
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className={`container rounded-lg shadow-lg flex items-center gap-4
-          ${defaultBg} ${defaultText} cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl`}
+            className={`${bgColor} p-5 rounded-xl shadow-lg flex items-center gap-4
+                cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:no-underline`}
         >
-            <span className={`text-4xl p-4 ${defaultText}`}><i class={icon}></i></span>
+            <div className="w-12 h-12 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
+                <i className={`${icon} text-xl text-teal-600 dark:text-teal-400`}></i>
+            </div>
             <div>
-                <div className={`text-sm ${defaultText}`}>{title}</div>
-                <div className={`text-lg font-bold ${defaultText}`}>{subtitle}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{title}</div>
+                <div className="text-base font-semibold text-gray-800 dark:text-white">{subtitle}</div>
             </div>
         </a>
     );

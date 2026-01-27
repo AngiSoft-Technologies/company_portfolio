@@ -1,16 +1,21 @@
 import Header from "../components/sections/Header";
 import Footer from "../components/sections/Footer";
+import ChatWidget from "../components/widgets/ChatWidget";
 import { Outlet } from "react-router-dom";
+import { useTheme } from "../contexts/ThemeContext";
 
-const AppLayout = ({ theme, toggleTheme }) => {
+const AppLayout = () => {
+    const { mode } = useTheme();
+    
     return (
         <>
-            <Header theme={theme} toggleTheme={toggleTheme} />
+            <Header />
             <main className="content">
                 {/*display dynamic content */}
                 <Outlet />
             </main>
-            <Footer theme={theme} />
+            <Footer theme={mode} />
+            <ChatWidget theme={mode} />
         </>
     );
 }

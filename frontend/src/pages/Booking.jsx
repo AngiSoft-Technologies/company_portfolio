@@ -1,466 +1,725 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiPost } from '../js/httpClient';
 import { toast } from '../utils/toast';
 import { validators, validateForm } from '../utils/validation';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useTheme } from '../contexts/ThemeContext';
+import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { 
+    FaUser, FaEnvelope, FaPhone, FaProjectDiagram, FaFileAlt,
+    FaCloudUploadAlt, FaCreditCard, FaCheckCircle, FaArrowLeft,
+    FaArrowRight, FaRocket, FaHome
+} from 'react-icons/fa';
 
-const Booking = ({ theme }) => {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [bookingId, setBookingId] = useState(null);
-  const [clientSecret, setClientSecret] = useState(null);
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    title: '',
-    description: '',
-    projectType: 'SOFTWARE',
-    depositRequired: false,
-    depositAmount: '',
-    currency: 'KES'
-  });
-  
-  const [files, setFiles] = useState([]);
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleFileChange = (e) => {
-    setFiles(Array.from(e.target.files));
-  };
-
-  const handleNext = () => {
-    setError('');
+const Booking = () => {
+    const navigate = useNavigate();
+    const { colors, mode } = useTheme();
+    const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+    const [bookingId, setBookingId] = useState(null);
+    const [clientSecret, setClientSecret] = useState(null);
     
-    if (step === 1) {
-      const validation = validateForm(formData, {
-        name: [(v) => validators.required(v, 'Name')],
-        email: [(v) => validators.required(v, 'Email'), validators.email],
-        title: [(v) => validators.required(v, 'Project title')]
-      });
-      
-      if (!validation.isValid) {
-        setError(Object.values(validation.errors)[0]);
-        toast.error(Object.values(validation.errors)[0]);
-        return;
-      }
-    }
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        title: '',
+        description: '',
+        projectType: 'SOFTWARE',
+        depositRequired: false,
+        depositAmount: '',
+        currency: 'KES'
+    });
     
-    if (step === 2) {
-      const validation = validateForm(formData, {
-        description: [(v) => validators.required(v, 'Description'), (v) => validators.minLength(v, 10, 'Description')]
-      });
-      
-      if (!validation.isValid) {
-        setError(Object.values(validation.errors)[0]);
-        toast.error(Object.values(validation.errors)[0]);
-        return;
-      }
-      
-      if (formData.depositRequired && formData.depositAmount) {
-        const amountValidation = validateForm({ depositAmount: formData.depositAmount }, {
-          depositAmount: [(v) => validators.positiveNumber(v, 'Deposit amount')]
-        });
+    const [files, setFiles] = useState([]);
+
+    const steps = [
+        { id: 1, title: 'Basic Info', icon: FaUser },
+        { id: 2, title: 'Details', icon: FaFileAlt },
+        { id: 3, title: 'Files', icon: FaCloudUploadAlt },
+        ...(formData.depositRequired ? [{ id: 4, title: 'Payment', icon: FaCreditCard }] : [])
+    ];
+
+    const projectTypes = [
+        { value: 'SOFTWARE', label: 'Software Development', icon: '💻' },
+        { value: 'RESUME', label: 'Resume/CV Writing', icon: '📄' },
+        { value: 'DOCUMENT_EDIT', label: 'Document Editing', icon: '✏️' },
+        { value: 'REPORT', label: 'Report Writing', icon: '📊' },
+        { value: 'OTHER', label: 'Other', icon: '🎯' },
+    ];
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleFileChange = (e) => {
+        setFiles(Array.from(e.target.files));
+    };
+
+    const handleNext = () => {
+        setError('');
         
-        if (!amountValidation.isValid) {
-          setError(Object.values(amountValidation.errors)[0]);
-          toast.error(Object.values(amountValidation.errors)[0]);
-          return;
+        if (step === 1) {
+            const validation = validateForm(formData, {
+                name: [(v) => validators.required(v, 'Name')],
+                email: [(v) => validators.required(v, 'Email'), validators.email],
+                title: [(v) => validators.required(v, 'Project title')]
+            });
+            
+            if (!validation.isValid) {
+                setError(Object.values(validation.errors)[0]);
+                toast.error(Object.values(validation.errors)[0]);
+                return;
+            }
         }
-      }
-    }
-    
-    setStep(step + 1);
-  };
-
-  const handleBack = () => {
-    setError('');
-    setStep(step - 1);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone || '');
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('projectType', formData.projectType);
-      formDataToSend.append('depositRequired', formData.depositRequired);
-      if (formData.depositRequired && formData.depositAmount) {
-        formDataToSend.append('depositAmount', formData.depositAmount);
-        formDataToSend.append('currency', formData.currency);
-      }
-      
-      files.forEach((file) => {
-        formDataToSend.append('files', file);
-      });
-
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/bookings`, {
-        method: 'POST',
-        body: formDataToSend
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create booking');
-      }
-
-      setBookingId(data.bookingId);
-      // Store booking info for status page
-      localStorage.setItem('lastBookingId', data.bookingId);
-      localStorage.setItem('lastBookingEmail', formData.email);
-      
-      toast.success('Booking submitted successfully!');
-      
-      if (data.clientSecret) {
-        setClientSecret(data.clientSecret);
-        setStep(4); // Go to payment step
-      } else {
-        setSuccess(true);
-      }
-    } catch (err) {
-      const errorMessage = err.message || 'Failed to submit booking';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const bgColor = theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
-  const inputClass = theme === 'dark' 
-    ? 'bg-gray-800 border-gray-700 text-white' 
-    : 'bg-white border-gray-300 text-gray-900';
-
-  if (success && !clientSecret) {
-    return (
-      <div className={`min-h-screen p-8 ${bgColor}`}>
-        <div className="max-w-2xl mx-auto text-center py-16">
-          <div className="text-6xl mb-4">✓</div>
-          <h1 className="text-3xl font-bold mb-4">Booking Submitted Successfully!</h1>
-          <p className="text-lg mb-8">
-            Your booking has been received. We'll review it and get back to you soon.
-          </p>
-          <p className="text-sm text-gray-500 mb-8">Booking ID: {bookingId}</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => navigate(`/booking/${bookingId}`)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              View Booking Status
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              Return Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`min-h-screen p-8 ${bgColor}`}>
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-teal-600 to-teal-400 bg-clip-text text-transparent">
-          Request a Project
-        </h1>
         
-        {/* Progress indicator */}
-        <div className="mb-8">
-          <div className="flex justify-between mb-2">
-            <span className={step >= 1 ? 'text-blue-600 font-semibold' : 'text-gray-400'}>Basic Info</span>
-            <span className={step >= 2 ? 'text-blue-600 font-semibold' : 'text-gray-400'}>Details</span>
-            <span className={step >= 3 ? 'text-blue-600 font-semibold' : 'text-gray-400'}>Files</span>
-            {formData.depositRequired && (
-              <span className={step >= 4 ? 'text-blue-600 font-semibold' : 'text-gray-400'}>Payment</span>
-            )}
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all"
-              style={{ width: `${(step / (formData.depositRequired ? 4 : 3)) * 100}%` }}
-            ></div>
-          </div>
-        </div>
+        if (step === 2) {
+            const validation = validateForm(formData, {
+                description: [(v) => validators.required(v, 'Description'), (v) => validators.minLength(v, 10, 'Description')]
+            });
+            
+            if (!validation.isValid) {
+                setError(Object.values(validation.errors)[0]);
+                toast.error(Object.values(validation.errors)[0]);
+                return;
+            }
+            
+            if (formData.depositRequired && formData.depositAmount) {
+                const amountValidation = validateForm({ depositAmount: formData.depositAmount }, {
+                    depositAmount: [(v) => validators.positiveNumber(v, 'Deposit amount')]
+                });
+                
+                if (!amountValidation.isValid) {
+                    setError(Object.values(amountValidation.errors)[0]);
+                    toast.error(Object.values(amountValidation.errors)[0]);
+                    return;
+                }
+            }
+        }
+        
+        setStep(step + 1);
+    };
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
+    const handleBack = () => {
+        setError('');
+        setStep(step - 1);
+    };
 
-        <form onSubmit={handleSubmit}>
-          {/* Step 1: Basic Information */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold mb-4">Basic Information</h2>
-              <div>
-                <label className="block mb-2 font-semibold">Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold">Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold">Project Title *</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-semibold">Project Type *</label>
-                <select
-                  name="projectType"
-                  value={formData.projectType}
-                  onChange={handleInputChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                  required
-                >
-                  <option value="SOFTWARE">Software Development</option>
-                  <option value="RESUME">Resume/CV Writing</option>
-                  <option value="DOCUMENT_EDIT">Document Editing</option>
-                  <option value="REPORT">Report Writing</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
 
-          {/* Step 2: Project Details */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold mb-4">Project Details</h2>
-              <div>
-                <label className="block mb-2 font-semibold">Description *</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={6}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="depositRequired"
-                  checked={formData.depositRequired}
-                  onChange={handleInputChange}
-                  className="w-4 h-4"
-                />
-                <label>Require deposit payment</label>
-              </div>
-              {formData.depositRequired && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block mb-2 font-semibold">Deposit Amount</label>
-                    <input
-                      type="number"
-                      name="depositAmount"
-                      value={formData.depositAmount}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 border rounded-lg ${inputClass}`}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2 font-semibold">Currency</label>
-                    <select
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 border rounded-lg ${inputClass}`}
-                    >
-                      <option value="KES">KES</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                    </select>
-                  </div>
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('email', formData.email);
+            formDataToSend.append('phone', formData.phone || '');
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('projectType', formData.projectType);
+            formDataToSend.append('depositRequired', formData.depositRequired);
+            if (formData.depositRequired && formData.depositAmount) {
+                formDataToSend.append('depositAmount', formData.depositAmount);
+                formDataToSend.append('currency', formData.currency);
+            }
+            
+            files.forEach((file) => {
+                formDataToSend.append('files', file);
+            });
+
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/bookings`, {
+                method: 'POST',
+                body: formDataToSend
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create booking');
+            }
+
+            setBookingId(data.bookingId);
+            localStorage.setItem('lastBookingId', data.bookingId);
+            localStorage.setItem('lastBookingEmail', formData.email);
+            
+            toast.success('Booking submitted successfully!');
+            
+            if (data.clientSecret) {
+                setClientSecret(data.clientSecret);
+                setStep(4);
+            } else {
+                setSuccess(true);
+            }
+        } catch (err) {
+            const errorMessage = err.message || 'Failed to submit booking';
+            setError(errorMessage);
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const inputStyle = {
+        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        borderColor: mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+        color: colors.text
+    };
+
+    // Success State
+    if (success && !clientSecret) {
+        return (
+            <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+                <div className="max-w-2xl mx-auto px-4 py-20">
+                    <ScrollReveal animation="scaleUp">
+                        <GlassmorphismCard className="p-12 text-center">
+                            <div 
+                                className="w-24 h-24 rounded-full mx-auto mb-8 flex items-center justify-center"
+                                style={{ backgroundColor: `${colors.primary}20` }}
+                            >
+                                <FaCheckCircle 
+                                    className="text-5xl"
+                                    style={{ color: colors.primary }}
+                                />
+                            </div>
+                            
+                            <h1 
+                                className="text-3xl font-bold mb-4"
+                                style={{ color: colors.text }}
+                            >
+                                Booking Submitted!
+                            </h1>
+                            
+                            <p 
+                                className="text-lg mb-4"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                Your booking has been received. We'll review it and get back to you soon.
+                            </p>
+                            
+                            <div 
+                                className="inline-block px-4 py-2 rounded-lg mb-8"
+                                style={{ backgroundColor: `${colors.primary}10` }}
+                            >
+                                <span style={{ color: colors.textSecondary }}>Booking ID: </span>
+                                <span 
+                                    className="font-mono font-bold"
+                                    style={{ color: colors.primary }}
+                                >
+                                    {bookingId}
+                                </span>
+                            </div>
+                            
+                            <div className="flex flex-wrap justify-center gap-4">
+                                <button
+                                    onClick={() => navigate(`/booking/${bookingId}`)}
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                        color: 'white'
+                                    }}
+                                >
+                                    <FaFileAlt />
+                                    View Status
+                                </button>
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                    style={{
+                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                        color: colors.text,
+                                        border: `2px solid ${colors.primary}`
+                                    }}
+                                >
+                                    <FaHome />
+                                    Return Home
+                                </button>
+                            </div>
+                        </GlassmorphismCard>
+                    </ScrollReveal>
                 </div>
-              )}
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Next
-                </button>
-              </div>
             </div>
-          )}
+        );
+    }
 
-          {/* Step 3: File Uploads */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold mb-4">Upload Files (Optional)</h2>
-              <div>
-                <label className="block mb-2 font-semibold">Project Files</label>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className={`w-full p-3 border rounded-lg ${inputClass}`}
+    return (
+        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+            {/* Hero Section */}
+            <ParallaxSection
+                speed={0.3}
+                className="relative py-16 overflow-hidden"
+            >
+                <div 
+                    className="absolute inset-0 z-0"
+                    style={{
+                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
+                    }}
                 />
-                <p className="text-sm text-gray-500 mt-2">
-                  You can upload up to 5 files. Accepted formats: documents, images, archives.
-                </p>
-                {files.length > 0 && (
-                  <div className="mt-4">
-                    <p className="font-semibold mb-2">Selected files:</p>
-                    <ul className="list-disc list-inside">
-                      {files.map((file, idx) => (
-                        <li key={idx}>{file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Back
-                </button>
-                {formData.depositRequired ? (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Review & Pay
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {loading ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    Submitting...
-                  </>
-                ) : 'Submit Booking'}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
-          {/* Step 4: Payment (if deposit required) */}
-          {step === 4 && clientSecret && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold mb-4">Payment</h2>
-              <div className="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg mb-4">
-                <p className="mb-2">Deposit Amount: {formData.currency} {formData.depositAmount}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Complete your payment to finalize your booking.
-                </p>
-              </div>
-              <div id="stripe-payment-element" className="mb-4">
-                {/* Stripe Elements will be mounted here */}
-                <p className="text-gray-600 dark:text-gray-400">
-                  Stripe payment integration will be implemented here. For now, the booking has been created.
-                </p>
-              </div>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSuccess(true);
-                    setClientSecret(null);
-                  }}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Skip Payment (Demo)
-                </button>
-              </div>
-            </div>
-          )}
-        </form>
-      </div>
-    </div>
-  );
+                <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+                    <ScrollReveal animation="fadeUp">
+                        <span 
+                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                            style={{ 
+                                backgroundColor: `${colors.primary}20`,
+                                color: colors.primary,
+                                border: `1px solid ${colors.primary}40`
+                            }}
+                        >
+                            <FaRocket className="inline mr-2" />
+                            Start Your Project
+                        </span>
+                    </ScrollReveal>
+                    
+                    <ScrollReveal animation="fadeUp" delay={100}>
+                        <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                            <span style={{ color: colors.text }}>Request a </span>
+                            <span style={{ 
+                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent'
+                            }}>
+                                Project
+                            </span>
+                        </h1>
+                    </ScrollReveal>
+                </div>
+            </ParallaxSection>
+
+            {/* Form Section */}
+            <section className="py-12 px-4">
+                <div className="max-w-3xl mx-auto">
+                    {/* Progress Steps */}
+                    <ScrollReveal animation="fadeUp">
+                        <div className="mb-12">
+                            <div className="flex items-center justify-between relative">
+                                {/* Progress Line */}
+                                <div 
+                                    className="absolute top-6 left-0 right-0 h-1 mx-8"
+                                    style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}
+                                >
+                                    <div 
+                                        className="h-full transition-all duration-500"
+                                        style={{ 
+                                            width: `${((step - 1) / (steps.length - 1)) * 100}%`,
+                                            background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`
+                                        }}
+                                    />
+                                </div>
+                                
+                                {steps.map((s, idx) => (
+                                    <div 
+                                        key={s.id}
+                                        className="relative z-10 flex flex-col items-center"
+                                    >
+                                        <div 
+                                            className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300"
+                                            style={{
+                                                background: step >= s.id 
+                                                    ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+                                                    : mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                                color: step >= s.id ? 'white' : colors.textSecondary
+                                            }}
+                                        >
+                                            {step > s.id ? (
+                                                <FaCheckCircle />
+                                            ) : (
+                                                <s.icon />
+                                            )}
+                                        </div>
+                                        <span 
+                                            className="mt-2 text-xs font-medium hidden sm:block"
+                                            style={{ 
+                                                color: step >= s.id ? colors.primary : colors.textSecondary
+                                            }}
+                                        >
+                                            {s.title}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </ScrollReveal>
+
+                    {/* Error Display */}
+                    {error && (
+                        <ScrollReveal animation="fadeUp">
+                            <div 
+                                className="mb-6 p-4 rounded-lg border"
+                                style={{ 
+                                    backgroundColor: `${colors.danger || '#ef4444'}15`,
+                                    borderColor: colors.danger || '#ef4444',
+                                    color: colors.danger || '#ef4444'
+                                }}
+                            >
+                                {error}
+                            </div>
+                        </ScrollReveal>
+                    )}
+
+                    <ScrollReveal animation="fadeUp" delay={100}>
+                        <GlassmorphismCard className="p-8">
+                            <form onSubmit={handleSubmit}>
+                                {/* Step 1: Basic Information */}
+                                {step === 1 && (
+                                    <div className="space-y-6">
+                                        <h2 
+                                            className="text-2xl font-bold mb-6"
+                                            style={{ color: colors.text }}
+                                        >
+                                            Basic Information
+                                        </h2>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-2 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                <FaUser className="inline mr-2" style={{ color: colors.primary }} />
+                                                Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                style={{
+                                                    ...inputStyle,
+                                                    borderColor: inputStyle.borderColor
+                                                }}
+                                                placeholder="Enter your full name"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-2 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                <FaEnvelope className="inline mr-2" style={{ color: colors.primary }} />
+                                                Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                style={inputStyle}
+                                                placeholder="Enter your email address"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-2 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                <FaPhone className="inline mr-2" style={{ color: colors.primary }} />
+                                                Phone (Optional)
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                style={inputStyle}
+                                                placeholder="Enter your phone number"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-2 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                <FaProjectDiagram className="inline mr-2" style={{ color: colors.primary }} />
+                                                Project Title *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="title"
+                                                value={formData.title}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                style={inputStyle}
+                                                placeholder="Enter your project title"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-3 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                Project Type *
+                                            </label>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {projectTypes.map((type) => (
+                                                    <button
+                                                        key={type.value}
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ ...prev, projectType: type.value }))}
+                                                        className="p-4 rounded-xl border-2 text-left transition-all hover:scale-[1.02]"
+                                                        style={{
+                                                            backgroundColor: formData.projectType === type.value 
+                                                                ? `${colors.primary}20` 
+                                                                : inputStyle.backgroundColor,
+                                                            borderColor: formData.projectType === type.value 
+                                                                ? colors.primary 
+                                                                : inputStyle.borderColor,
+                                                            color: colors.text
+                                                        }}
+                                                    >
+                                                        <span className="text-2xl block mb-1">{type.icon}</span>
+                                                        <span className="text-sm font-medium">{type.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 2: Project Details */}
+                                {step === 2 && (
+                                    <div className="space-y-6">
+                                        <h2 
+                                            className="text-2xl font-bold mb-6"
+                                            style={{ color: colors.text }}
+                                        >
+                                            Project Details
+                                        </h2>
+                                        
+                                        <div>
+                                            <label 
+                                                className="block mb-2 font-medium"
+                                                style={{ color: colors.text }}
+                                            >
+                                                Description *
+                                            </label>
+                                            <textarea
+                                                name="description"
+                                                value={formData.description}
+                                                onChange={handleInputChange}
+                                                rows={6}
+                                                className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all resize-none"
+                                                style={inputStyle}
+                                                placeholder="Describe your project in detail..."
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div 
+                                            className="p-4 rounded-xl border-2"
+                                            style={{
+                                                backgroundColor: `${colors.primary}10`,
+                                                borderColor: `${colors.primary}30`
+                                            }}
+                                        >
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    name="depositRequired"
+                                                    checked={formData.depositRequired}
+                                                    onChange={handleInputChange}
+                                                    className="w-5 h-5 rounded"
+                                                    style={{ accentColor: colors.primary }}
+                                                />
+                                                <span style={{ color: colors.text }}>
+                                                    I want to pay a deposit upfront
+                                                </span>
+                                            </label>
+                                        </div>
+                                        
+                                        {formData.depositRequired && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label 
+                                                        className="block mb-2 font-medium"
+                                                        style={{ color: colors.text }}
+                                                    >
+                                                        Deposit Amount
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        name="depositAmount"
+                                                        value={formData.depositAmount}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                        style={inputStyle}
+                                                        min="0"
+                                                        step="0.01"
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label 
+                                                        className="block mb-2 font-medium"
+                                                        style={{ color: colors.text }}
+                                                    >
+                                                        Currency
+                                                    </label>
+                                                    <select
+                                                        name="currency"
+                                                        value={formData.currency}
+                                                        onChange={handleInputChange}
+                                                        className="w-full p-4 rounded-xl border-2 focus:outline-none transition-all"
+                                                        style={inputStyle}
+                                                    >
+                                                        <option value="KES">KES (Kenyan Shilling)</option>
+                                                        <option value="USD">USD (US Dollar)</option>
+                                                        <option value="EUR">EUR (Euro)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Step 3: File Uploads */}
+                                {step === 3 && (
+                                    <div className="space-y-6">
+                                        <h2 
+                                            className="text-2xl font-bold mb-6"
+                                            style={{ color: colors.text }}
+                                        >
+                                            Upload Files (Optional)
+                                        </h2>
+                                        
+                                        <div 
+                                            className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-[color:var(--primary)]"
+                                            style={{ 
+                                                borderColor: mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                                                '--primary': colors.primary
+                                            }}
+                                            onClick={() => document.getElementById('file-input').click()}
+                                        >
+                                            <FaCloudUploadAlt 
+                                                className="text-5xl mx-auto mb-4"
+                                                style={{ color: colors.primary }}
+                                            />
+                                            <p className="font-medium mb-2" style={{ color: colors.text }}>
+                                                Click to upload or drag and drop
+                                            </p>
+                                            <p className="text-sm" style={{ color: colors.textSecondary }}>
+                                                Documents, images, or archives (max 5 files)
+                                            </p>
+                                            <input
+                                                id="file-input"
+                                                type="file"
+                                                multiple
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                        
+                                        {files.length > 0 && (
+                                            <div className="space-y-2">
+                                                <p 
+                                                    className="font-medium"
+                                                    style={{ color: colors.text }}
+                                                >
+                                                    Selected files ({files.length}):
+                                                </p>
+                                                {files.map((file, idx) => (
+                                                    <div 
+                                                        key={idx}
+                                                        className="flex items-center gap-3 p-3 rounded-xl"
+                                                        style={{ backgroundColor: `${colors.primary}10` }}
+                                                    >
+                                                        <FaFileAlt style={{ color: colors.primary }} />
+                                                        <span 
+                                                            className="flex-1 truncate"
+                                                            style={{ color: colors.text }}
+                                                        >
+                                                            {file.name}
+                                                        </span>
+                                                        <span 
+                                                            className="text-sm"
+                                                            style={{ color: colors.textSecondary }}
+                                                        >
+                                                            {(file.size / 1024).toFixed(1)} KB
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Navigation Buttons */}
+                                <div className="flex justify-between mt-8 pt-6 border-t" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+                                    {step > 1 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleBack}
+                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                            style={{
+                                                backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                                color: colors.text
+                                            }}
+                                        >
+                                            <FaArrowLeft />
+                                            Back
+                                        </button>
+                                    ) : (
+                                        <div />
+                                    )}
+                                    
+                                    {step < 3 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleNext}
+                                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold transition-all hover:scale-105"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                                color: 'white'
+                                            }}
+                                        >
+                                            Next
+                                            <FaArrowRight />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold transition-all hover:scale-105 disabled:opacity-50"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                                color: 'white'
+                                            }}
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FaRocket />
+                                                    Submit Request
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </GlassmorphismCard>
+                    </ScrollReveal>
+                </div>
+            </section>
+        </div>
+    );
 };
 
 export default Booking;
-
