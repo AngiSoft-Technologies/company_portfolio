@@ -5,15 +5,18 @@ import { getQueue } from '../queue';
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY || '';
 if (SENDGRID_KEY) sendgrid.setApiKey(SENDGRID_KEY);
 
-const SMTP_HOST = process.env.SMTP_HOST || 'localhost';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 1025);
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
+// Zoho SMTP config (or other provider via env)
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.zoho.com';
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_USER = process.env.SMTP_USER || ''; // e.g. info@angisoft.co.ke
+const SMTP_PASS = process.env.SMTP_PASS || ''; // Zoho app password
+const SMTP_SECURE = process.env.SMTP_SECURE !== 'false'; // default true for port 465
 
 const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
-    auth: SMTP_USER || SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    secure: SMTP_SECURE,
+    auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
 });
 
 export async function sendMail(opts: { to: string; subject: string; html: string; text?: string }) {

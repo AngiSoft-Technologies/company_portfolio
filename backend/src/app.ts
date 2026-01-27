@@ -40,7 +40,11 @@ app.use(helmet({
         },
     },
 }));
-const allowed = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
+// Production CORS: allow frontend domains (set CORS_ORIGIN in env or use defaults)
+const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke'];
+const allowed = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+  : defaultOrigins;
 app.use(cors({ origin: allowed, credentials: true } as any));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
