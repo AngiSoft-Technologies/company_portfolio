@@ -17,11 +17,11 @@ COPY prisma ./prisma
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy source code
+# Copy source code - cache bust 20260128
 COPY . .
 
-# Build TypeScript - this happens AFTER all COPY commands
-RUN npm run build
+# Build TypeScript and verify output exists
+RUN npm run build && ls -la dist/
 
 # Expose port
 EXPOSE 5000
