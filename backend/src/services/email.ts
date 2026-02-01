@@ -20,14 +20,17 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendMail(opts: { to: string; subject: string; html: string; text?: string }) {
-    // if REDIS_URL present, enqueue job instead of sending inline
+    // Queue email job asynchronously
     try {
         const q = getQueue('emails');
         await q.add('send', opts);
+        console.log(`📧 Email queued: ${opts.to}`);
         return { queued: true };
     } catch (err) {
-        // fall through to direct send
+        console.warn('Queue error, sending directly:', err);
+        // Fall through to direct send
     }
+    
     if (SENDGRID_KEY) {
         const msg: any = {
             to: opts.to,

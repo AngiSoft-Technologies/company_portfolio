@@ -27,6 +27,7 @@ const AboutAdmin = lazy(() => import('./admin/crud/AboutAdmin'));
 const ProjectsAdmin = lazy(() => import('./admin/crud/ProjectsAdmin'));
 const SkillsAdmin = lazy(() => import('./admin/crud/SkillsAdmin'));
 const ServicesAdmin = lazy(() => import('./admin/crud/ServicesAdmin'));
+const BlogAdmin = lazy(() => import('./admin/crud/BlogAdmin'));
 const EducationAdmin = lazy(() => import('./admin/crud/EducationAdmin'));
 const ExperienceAdmin = lazy(() => import('./admin/crud/ExperienceAdmin'));
 const ContactsAdmin = lazy(() => import('./admin/crud/ContactsAdmin'));
@@ -82,6 +83,7 @@ const RoutesComponent = () => {
           <Route path="projects" element={<ProjectsAdmin />} />
           <Route path="skills" element={<SkillsAdmin />} />
           <Route path="services" element={<ServicesAdmin />} />
+          <Route path="blog" element={<BlogAdmin />} />
           <Route path="education" element={<EducationAdmin />} />
           <Route path="experience" element={<ExperienceAdmin />} />
           <Route path="contacts" element={<ContactsAdmin />} />

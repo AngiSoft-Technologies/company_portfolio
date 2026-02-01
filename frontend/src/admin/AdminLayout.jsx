@@ -5,7 +5,7 @@ import {
     FaGraduationCap, FaBriefcase, FaAddressBook, FaQuoteRight, FaFileUpload, 
     FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar, 
     FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck, 
-    FaTrash, FaChevronDown, FaMoon, FaSun, FaSearch, FaGlobe
+    FaTrash, FaChevronDown, FaMoon, FaSun, FaSearch, FaGlobe, FaBlog
 } from 'react-icons/fa';
 import { apiGet, apiPatch, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,6 +32,7 @@ const navSections = [
         items: [
             { to: '/admin/site-settings', label: 'Site Settings', icon: FaGlobe },
             { to: '/admin/about', label: 'About', icon: FaUser },
+            { to: '/admin/blog', label: 'Blog Posts', icon: FaBlog },
             { to: '/admin/testimonials', label: 'Testimonials', icon: FaCommentDots },
             { to: '/admin/quotes', label: 'Quotes', icon: FaQuoteRight },
         ]

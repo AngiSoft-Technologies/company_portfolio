@@ -5,8 +5,21 @@ import CrudModal from '../../components/CrudModal';
 
 const API_URL = '/services';
 
+const SERVICE_CATEGORIES = [
+  'Development',
+  'Design',
+  'Documents',
+  'DevOps',
+  'Debugging',
+  'Learning',
+  'Cyber',
+  'Quick Solutions',
+  'General'
+];
+
 const columns = [
-  { key: 'name', title: 'Service' },
+  { key: 'title', title: 'Service' },
+  { key: 'category', title: 'Category' },
   { key: 'description', title: 'Description' },
 ];
 
@@ -16,7 +29,16 @@ const ServicesAdmin = ({ theme }) => {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '' });
+  const [form, setForm] = useState({ 
+    title: '', 
+    slug: '',
+    description: '', 
+    category: 'General',
+    priceFrom: '',
+    targetAudience: '',
+    scope: '',
+    published: false
+  });
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -37,19 +59,46 @@ const ServicesAdmin = ({ theme }) => {
 
   const openAddModal = () => {
     setEditing(null);
-    setForm({ name: '', description: '' });
+    setForm({ 
+      title: '', 
+      slug: '',
+      description: '', 
+      category: 'General',
+      priceFrom: '',
+      targetAudience: '',
+      scope: '',
+      published: false
+    });
     setModalOpen(true);
   };
 
   const openEditModal = (row) => {
-    setEditing(row._id);
-    setForm({ name: row.name, description: row.description });
+    setEditing(row.id);
+    setForm({ 
+      title: row.title || '', 
+      slug: row.slug || '',
+      description: row.description || '', 
+      category: row.category || 'General',
+      priceFrom: row.priceFrom || '',
+      targetAudience: row.targetAudience || '',
+      scope: row.scope || '',
+      published: row.published || false
+    });
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
-    setForm({ name: '', description: '' });
+    setForm({ 
+      title: '', 
+      slug: '',
+      description: '', 
+      category: 'General',
+      priceFrom: '',
+      targetAudience: '',
+      scope: '',
+      published: false
+    });
     setEditing(null);
   };
 
@@ -86,6 +135,24 @@ const ServicesAdmin = ({ theme }) => {
     }
   };
 
+  // Auto-generate slug from title
+  const generateSlug = (title) => {
+    return title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  };
+
+  const handleTitleChange = (e) => {
+    const title = e.target.value;
+    setForm({ 
+      ...form, 
+      title,
+      slug: form.slug === '' || form.slug === generateSlug(form.title) ? generateSlug(title) : form.slug
+    });
+  };
+
   return (
     <div className={`services-admin-page ${theme}`}>
       <div className="admin-section-title-bar admin-section-title">
@@ -108,24 +175,116 @@ const ServicesAdmin = ({ theme }) => {
       />
       <CrudModal open={modalOpen} onClose={closeModal} title={editing ? 'Edit Service' : 'Add Service'}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Service Name"
-            className="admin-section-card"
-            required
-          />
-          <input
-            type="text"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description (optional)"
-            className="admin-section-card"
-          />
-          <div style={{display:'flex',gap:'1rem',justifyContent:'flex-end'}}>
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Service Title *</label>
+            <input
+              type="text"
+              name="title"
+              value={form.title}
+              onChange={handleTitleChange}
+              placeholder="e.g., Web Application Development"
+              className="admin-section-card w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          {/* Slug */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Slug (auto-generated)</label>
+            <input
+              type="text"
+              name="slug"
+              value={form.slug}
+              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              placeholder="web-app-development"
+              className="admin-section-card w-full p-2 border rounded"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Category *</label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className="admin-section-card w-full p-2 border rounded"
+            >
+              {SERVICE_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Description *</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Detailed service description..."
+              className="admin-section-card w-full p-2 border rounded"
+              rows="4"
+              required
+            />
+          </div>
+
+          {/* Price From */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Price From ($)</label>
+            <input
+              type="number"
+              name="priceFrom"
+              value={form.priceFrom}
+              onChange={(e) => setForm({ ...form, priceFrom: e.target.value })}
+              placeholder="2000"
+              className="admin-section-card w-full p-2 border rounded"
+              step="0.01"
+            />
+          </div>
+
+          {/* Target Audience */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Target Audience</label>
+            <input
+              type="text"
+              name="targetAudience"
+              value={form.targetAudience}
+              onChange={(e) => setForm({ ...form, targetAudience: e.target.value })}
+              placeholder="e.g., Startups, Businesses, Enterprises"
+              className="admin-section-card w-full p-2 border rounded"
+            />
+          </div>
+
+          {/* Scope/Duration */}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Typical Scope/Duration</label>
+            <input
+              type="text"
+              name="scope"
+              value={form.scope}
+              onChange={(e) => setForm({ ...form, scope: e.target.value })}
+              placeholder="e.g., 2-12 weeks"
+              className="admin-section-card w-full p-2 border rounded"
+            />
+          </div>
+
+          {/* Published */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="published"
+              checked={form.published}
+              onChange={(e) => setForm({ ...form, published: e.target.checked })}
+              id="published"
+            />
+            <label htmlFor="published" className="text-sm">Published</label>
+          </div>
+
+          {/* Buttons */}
+          <div style={{display:'flex',gap:'1rem',justifyContent:'flex-end',marginTop:'1rem'}}>
             <button type="button" className="admin-btn-secondary" onClick={closeModal}>Cancel</button>
             <button type="submit" className="admin-btn-primary">{editing ? 'Update' : 'Add'}</button>
           </div>

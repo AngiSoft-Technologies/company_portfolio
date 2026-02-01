@@ -38,7 +38,7 @@ const Services = () => {
             description: 'Native and cross-platform mobile applications for iOS and Android using Flutter and React Native with seamless user experiences.',
             features: ['Flutter', 'React Native', 'Native iOS/Android', 'App Store Deployment'],
             gradient: 'from-violet-500 to-purple-600',
-            image: '/images/mobile-development.jpg'
+            image: '/images/web-development.jpg'
         },
         {
             id: 3,
@@ -47,7 +47,7 @@ const Services = () => {
             description: 'Scalable cloud architecture, DevOps, and managed services on AWS, Azure, and Google Cloud for maximum reliability.',
             features: ['AWS & Azure', 'DevOps', 'Auto-scaling', 'CI/CD Pipelines'],
             gradient: 'from-cyan-500 to-teal-600',
-            image: '/images/cloud-solutions.jpg'
+            image: '/images/programming-background-with-person-working-with-codes-computer.jpg'
         },
         {
             id: 4,
@@ -56,7 +56,7 @@ const Services = () => {
             description: 'RESTful and GraphQL API design, development, and integration for seamless system connectivity and third-party integrations.',
             features: ['REST APIs', 'GraphQL', 'Webhooks', 'Microservices'],
             gradient: 'from-orange-500 to-red-600',
-            image: '/images/api-development.jpg'
+            image: '/images/web-development.jpg'
         },
         {
             id: 5,
@@ -65,7 +65,7 @@ const Services = () => {
             description: 'Security audits, penetration testing, and implementation of robust security measures to protect your digital assets.',
             features: ['Security Audits', 'Penetration Testing', 'Compliance', 'SIEM Solutions'],
             gradient: 'from-emerald-500 to-green-600',
-            image: '/images/cybersecurity.jpg'
+            image: '/images/developer-8829735_1280.jpg'
         },
         {
             id: 6,
@@ -74,7 +74,7 @@ const Services = () => {
             description: 'User-centered design that combines aesthetics with functionality for exceptional digital experiences that convert.',
             features: ['Figma Design', 'Prototyping', 'User Research', 'Design Systems'],
             gradient: 'from-pink-500 to-rose-600',
-            image: '/images/ui-ux-design.jpg'
+            image: '/images/web-development.jpg'
         }
     ];
 

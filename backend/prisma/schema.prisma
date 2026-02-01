@@ -126,17 +126,20 @@ enum PaymentStatus {
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  description String
-  priceFrom   Float?
-  images      String[]
-  authorId    String?
-  author      Employee? @relation(fields: [authorId], references: [id])
-  published   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id               String   @id @default(uuid())
+  title            String
+  slug             String   @unique
+  description      String
+  category         String   @default("General")  // Development, Design, Documents, DevOps, Debugging, Learning, Cyber, Quick Solutions
+  priceFrom        Float?
+  targetAudience   String?  // Comma-separated or JSON; e.g., "Startups, Businesses, Enterprises"
+  scope            String?  // Project duration/scope; e.g., "2-12 weeks"
+  images           String[]
+  authorId         String?
+  author           Employee? @relation(fields: [authorId], references: [id])
+  published        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Project {

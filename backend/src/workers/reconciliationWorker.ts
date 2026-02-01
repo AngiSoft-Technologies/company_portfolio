@@ -28,11 +28,9 @@ export function startReconciliationWorker() {
             }
             console.log('Reconciliation completed, processed', count, 'payments');
         });
-        worker.on('completed', (job: any) => console.log('reconciliation job completed', job.id));
-        worker.on('failed', (job: any, err: any) => console.error('reconciliation job failed', job.id, err));
         return worker;
     } catch (err) {
-        console.warn('Reconciliation worker not started', err);
+        console.warn('Reconciliation worker error:', err);
         return null;
     }
 }

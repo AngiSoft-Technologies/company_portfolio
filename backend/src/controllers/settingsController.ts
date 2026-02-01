@@ -23,7 +23,7 @@ export const settingsController = {
                 apiVersion: process.env.API_VERSION || '1.0.0',
                 maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
                 stripeEnabled: !!process.env.STRIPE_SECRET,
-                redisEnabled: !!process.env.REDIS_URL,
+                queueType: 'in-memory', // Using in-memory queue (can add Redis later)
                 sentryEnabled: !!process.env.SENTRY_DSN,
             };
             res.json({ data: settings });
