@@ -77,7 +77,7 @@ const ProjectsAdmin = ({ theme }) => {
     setError('');
     try {
       const res = await apiGet(API_URL);
-      setProjects(res.data || []);
+      setProjects(res.data || res || []);
     } catch (err) {
       setError('Failed to fetch projects');
     }
@@ -105,7 +105,7 @@ const ProjectsAdmin = ({ theme }) => {
   };
 
   const openEditModal = (row) => {
-    setEditing(row._id);
+    setEditing(row.id);
     setForm({
       title: row.title || '',
       description: row.description || '',
@@ -240,7 +240,7 @@ const ProjectsAdmin = ({ theme }) => {
         actions={(row) => (
           <>
             <button className="admin-btn-secondary" onClick={() => openEditModal(row)}>Edit</button>
-            <button className="admin-btn-danger" onClick={() => handleDelete(row._id)}>Delete</button>
+            <button className="admin-btn-danger" onClick={() => handleDelete(row.id)}>Delete</button>
           </>
         )}
       />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaFolder, 
     FaExternalLinkAlt, 
@@ -13,104 +14,29 @@ import {
     FaShieldAlt,
     FaChartLine,
     FaEye,
-    FaCalendarAlt,
-    FaTag
+    FaCalendarAlt
 } from 'react-icons/fa';
 import { ScrollReveal, GlassmorphismCard } from '../modern';
 
 const Projects = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [hoveredProject, setHoveredProject] = useState(null);
     const isDark = mode === 'dark';
-
-    const defaultProjects = [
-        {
-            id: 1,
-            title: 'PayQuick Mobile Banking',
-            description: 'A comprehensive mobile banking solution for a leading Kenyan fintech, featuring real-time transactions, biometric authentication, and M-Pesa integration.',
-            category: 'Mobile App',
-            technologies: ['Flutter', 'Node.js', 'PostgreSQL', 'AWS'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: true,
-            year: '2024'
-        },
-        {
-            id: 2,
-            title: 'LogiTrack Fleet Management',
-            description: 'Real-time fleet tracking and management system for logistics companies with GPS tracking, route optimization, and driver performance analytics.',
-            category: 'Web App',
-            technologies: ['React', 'Express', 'MongoDB', 'Google Maps API'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: true,
-            year: '2024'
-        },
-        {
-            id: 3,
-            title: 'SecureVault Enterprise',
-            description: 'Enterprise-grade cybersecurity solution with threat detection, automated response, and compliance reporting for financial institutions.',
-            category: 'Security',
-            technologies: ['Python', 'TensorFlow', 'Kubernetes', 'Azure'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: true,
-            year: '2023'
-        },
-        {
-            id: 4,
-            title: 'HealthConnect Telemedicine',
-            description: 'HIPAA-compliant telemedicine platform enabling remote consultations, prescription management, and health record integration.',
-            category: 'Web App',
-            technologies: ['Next.js', 'GraphQL', 'WebRTC', 'AWS'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: false,
-            year: '2023'
-        },
-        {
-            id: 5,
-            title: 'AgriSmart IoT Platform',
-            description: 'Smart agriculture platform with IoT sensor integration, weather forecasting, and AI-powered crop recommendations for farmers.',
-            category: 'IoT',
-            technologies: ['React', 'Python', 'MQTT', 'TensorFlow'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: false,
-            year: '2023'
-        },
-        {
-            id: 6,
-            title: 'EduLearn LMS',
-            description: 'Modern learning management system with video conferencing, interactive assessments, and progress tracking for educational institutions.',
-            category: 'Web App',
-            technologies: ['Vue.js', 'Laravel', 'MySQL', 'WebRTC'],
-            image: '/images/project-placeholder.png',
-            liveLink: '#',
-            githubLink: '#',
-            featured: false,
-            year: '2022'
-        }
-    ];
-
-    const categories = ['all', 'Web App', 'Mobile App', 'Security', 'IoT'];
+    const sectionCopy = uiCopy?.home?.projects || {};
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 const data = await apiGet('/projects');
                 const published = Array.isArray(data) ? data.filter(p => p.published !== false) : [];
-                setProjects(published.length > 0 ? published : defaultProjects);
+                setProjects(published);
             } catch (err) {
-                setProjects(defaultProjects);
+                setError('No projects available yet.');
             } finally {
                 setLoading(false);
             }
@@ -118,19 +44,30 @@ const Projects = () => {
         fetchProjects();
     }, []);
 
-    const displayProjects = projects.length > 0 ? projects : defaultProjects;
+    const displayProjects = projects;
+    const getProjectCategory = (project) => project.type || project.category || 'Other';
+    const formatCategory = (value) => {
+        if (!value) return 'Other';
+        return value
+            .toString()
+            .replace(/_/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/\b\w/g, (match) => match.toUpperCase());
+    };
+    const categories = ['all', ...new Set(displayProjects.map(getProjectCategory).filter(Boolean))];
     const filteredProjects = activeFilter === 'all' 
         ? displayProjects 
-        : displayProjects.filter(p => p.category === activeFilter);
+        : displayProjects.filter(p => getProjectCategory(p) === activeFilter);
 
     const getCategoryIcon = (category) => {
-        switch(category) {
-            case 'Mobile App': return FaMobileAlt;
-            case 'Security': return FaShieldAlt;
-            case 'IoT': return FaChartLine;
-            case 'Cloud': return FaCloud;
-            default: return FaCode;
-        }
+        const normalized = (category || '').toString().toLowerCase();
+        if (normalized.includes('mobile')) return FaMobileAlt;
+        if (normalized.includes('security') || normalized.includes('cyber')) return FaShieldAlt;
+        if (normalized.includes('data') || normalized.includes('analysis')) return FaChartLine;
+        if (normalized.includes('cloud') || normalized.includes('internet')) return FaCloud;
+        if (normalized.includes('web') || normalized.includes('software')) return FaCode;
+        return FaCode;
     };
 
     return (
@@ -187,33 +124,39 @@ const Projects = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-16">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaFolder />
-                            Our Portfolio
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            Featured Projects
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-3xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Explore our latest work and see how we help businesses achieve their digital goals
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaFolder />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-3xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -237,7 +180,7 @@ const Projects = () => {
                                         : 'none'
                                 }}
                             >
-                                {category === 'all' ? 'All Projects' : category}
+                                {category === 'all' ? 'All Projects' : formatCategory(category)}
                             </button>
                         ))}
                     </div>
@@ -257,10 +200,23 @@ const Projects = () => {
 
                 {!loading && (
                     <>
+                        {error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                {error}
+                            </div>
+                        )}
+                        {filteredProjects.length === 0 && !error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                No projects published yet.
+                            </div>
+                        )}
                         {/* Projects Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8">
                             {filteredProjects.slice(0, 6).map((project, idx) => {
-                                const CategoryIcon = getCategoryIcon(project.category);
+                                const categoryLabel = getProjectCategory(project);
+                                const CategoryIcon = getCategoryIcon(categoryLabel);
+                                const projectYear = project.createdAt ? new Date(project.createdAt).getFullYear() : null;
+                                const primaryImage = Array.isArray(project.images) && project.images.length > 0 ? project.images[0] : null;
                                 const isHovered = hoveredProject === idx;
                                 
                                 return (
@@ -282,10 +238,24 @@ const Projects = () => {
                                         >
                                             {/* Image Container */}
                                             <div className="relative h-48 overflow-hidden">
+                                                {primaryImage ? (
+                                                    <img 
+                                                        src={primaryImage}
+                                                        alt={project.title}
+                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div 
+                                                        className="absolute inset-0 transition-transform duration-700 group-hover:scale-110"
+                                                        style={{
+                                                            background: `linear-gradient(135deg, ${colors.primary}80 0%, ${colors.secondary}80 100%)`
+                                                        }}
+                                                    />
+                                                )}
                                                 <div 
-                                                    className="absolute inset-0 transition-transform duration-700 group-hover:scale-110"
+                                                    className="absolute inset-0"
                                                     style={{
-                                                        background: `linear-gradient(135deg, ${colors.primary}80 0%, ${colors.secondary}80 100%)`
+                                                        background: `linear-gradient(135deg, ${colors.primary}40 0%, ${colors.secondary}40 100%)`
                                                     }}
                                                 />
                                                 
@@ -297,21 +267,37 @@ const Projects = () => {
                                                         opacity: isHovered ? 1 : 0
                                                     }}
                                                 >
-                                                    <a 
-                                                        href={project.liveLink || '#'}
-                                                        className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                                                        style={{
-                                                            backgroundColor: colors.primary
-                                                        }}
-                                                    >
-                                                        <FaEye className="text-white" />
-                                                    </a>
-                                                    <a 
-                                                        href={project.githubLink || '#'}
-                                                        className="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 backdrop-blur transition-transform hover:scale-110"
-                                                    >
-                                                        <FaGithub className="text-white" />
-                                                    </a>
+                                                    {project.id && (
+                                                        <Link 
+                                                            to={`/project/${project.id}`}
+                                                            className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                                                            style={{
+                                                                backgroundColor: colors.primary
+                                                            }}
+                                                        >
+                                                            <FaEye className="text-white" />
+                                                        </Link>
+                                                    )}
+                                                    {project.demoUrl && (
+                                                        <a 
+                                                            href={project.demoUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 backdrop-blur transition-transform hover:scale-110"
+                                                        >
+                                                            <FaExternalLinkAlt className="text-white" />
+                                                        </a>
+                                                    )}
+                                                    {project.repoUrl && (
+                                                        <a 
+                                                            href={project.repoUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 backdrop-blur transition-transform hover:scale-110"
+                                                        >
+                                                            <FaGithub className="text-white" />
+                                                        </a>
+                                                    )}
                                                 </div>
                                                 
                                                 {/* Category Badge */}
@@ -323,7 +309,7 @@ const Projects = () => {
                                                     }}
                                                 >
                                                     <CategoryIcon className="text-xs" />
-                                                    {project.category}
+                                                    {formatCategory(categoryLabel)}
                                                 </div>
                                                 
                                                 {/* Featured Badge */}
@@ -350,7 +336,7 @@ const Projects = () => {
                                                         className="text-xs"
                                                         style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}
                                                     >
-                                                        {project.year || '2024'}
+                                                        {projectYear || ''}
                                                     </span>
                                                 </div>
                                                 
@@ -370,7 +356,7 @@ const Projects = () => {
                                                 
                                                 {/* Tech Stack */}
                                                 <div className="flex flex-wrap gap-1.5 mt-auto">
-                                                    {(project.technologies || []).slice(0, 4).map((tech, tIdx) => (
+                                                    {(project.techStack || []).slice(0, 4).map((tech, tIdx) => (
                                                         <span 
                                                             key={tIdx}
                                                             className="px-2 py-1 rounded-full text-xs font-medium"
@@ -391,21 +377,23 @@ const Projects = () => {
                         </div>
 
                         {/* View All Button */}
-                        <ScrollReveal animation="fadeUp" delay={400}>
-                            <div className="text-center mt-16">
-                                <Link 
-                                    to="/projects"
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                        boxShadow: `0 20px 40px ${colors.primary}40`
-                                    }}
-                                >
-                                    View All Projects
-                                    <FaArrowRight />
-                                </Link>
-                            </div>
-                        </ScrollReveal>
+                        {sectionCopy.ctaLabel && (
+                            <ScrollReveal animation="fadeUp" delay={400}>
+                                <div className="text-center mt-16">
+                                    <Link 
+                                        to="/projects"
+                                        className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                            boxShadow: `0 20px 40px ${colors.primary}40`
+                                        }}
+                                    >
+                                        {sectionCopy.ctaLabel}
+                                        <FaArrowRight />
+                                    </Link>
+                                </div>
+                            </ScrollReveal>
+                        )}
                     </>
                 )}
             </div>

@@ -1,13 +1,12 @@
 import { createWorker } from '../queue';
-import { sendMail as send } from '../services/email';
+import { sendMailDirect } from '../services/email';
 
 export function startEmailWorker() {
     try {
         const worker = createWorker('emails', async (job: any) => {
-            const { to, subject, html, text } = job.data;
-            console.log(`📧 Processing email job: ${job.id}`);
-            await send({ to, subject, html, text });
-            console.log(`✅ Email sent to ${to}`);
+            const { to, subject, html, text, purpose } = job.data;
+            console.log(`📧 Processing email job: ${job.id} → ${to}`);
+            await sendMailDirect({ to, subject, html, text, purpose });
         });
         return worker;
     } catch (err) {

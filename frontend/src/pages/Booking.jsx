@@ -4,6 +4,7 @@ import { toast } from '../utils/toast';
 import { validators, validateForm } from '../utils/validation';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { useBookingSettings } from '../hooks/useBookingSettings';
 import { 
     FaUser, FaEnvelope, FaPhone, FaProjectDiagram, FaFileAlt,
     FaCloudUploadAlt, FaCreditCard, FaCheckCircle, FaArrowLeft,
@@ -13,6 +14,7 @@ import {
 const Booking = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
+    const { settings: bookingSettings } = useBookingSettings();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -26,7 +28,7 @@ const Booking = () => {
         phone: '',
         title: '',
         description: '',
-        projectType: 'SOFTWARE',
+        projectType: '',
         depositRequired: false,
         depositAmount: '',
         currency: 'KES'
@@ -34,20 +36,37 @@ const Booking = () => {
     
     const [files, setFiles] = useState([]);
 
+    const bookingCopy = bookingSettings || {};
+    const heroCopy = bookingCopy.hero || {};
+    const labels = bookingCopy.labels || {};
+    const iconMap = { FaUser, FaFileAlt, FaCloudUploadAlt, FaCreditCard };
+    const baseSteps = Array.isArray(bookingCopy.steps) ? bookingCopy.steps : [];
+    const paymentStep = bookingCopy.paymentStep;
     const steps = [
-        { id: 1, title: 'Basic Info', icon: FaUser },
-        { id: 2, title: 'Details', icon: FaFileAlt },
-        { id: 3, title: 'Files', icon: FaCloudUploadAlt },
-        ...(formData.depositRequired ? [{ id: 4, title: 'Payment', icon: FaCreditCard }] : [])
+        ...baseSteps.map((step, idx) => ({
+            ...step,
+            id: step.id || idx + 1,
+            icon: iconMap[step.icon] || FaUser
+        })),
+        ...(formData.depositRequired && paymentStep
+            ? [{ ...paymentStep, id: paymentStep.id || baseSteps.length + 1, icon: iconMap[paymentStep.icon] || FaCreditCard }]
+            : [])
     ];
+    const totalSteps = Math.max(steps.length, 1);
+    const stepHeadings = {
+        step1: steps[0]?.title,
+        step2: steps[1]?.title,
+        step3: steps[2]?.title
+    };
+    const projectTypes = Array.isArray(bookingCopy.projectTypes) ? bookingCopy.projectTypes : [];
 
-    const projectTypes = [
-        { value: 'SOFTWARE', label: 'Software Development', icon: '💻' },
-        { value: 'RESUME', label: 'Resume/CV Writing', icon: '📄' },
-        { value: 'DOCUMENT_EDIT', label: 'Document Editing', icon: '✏️' },
-        { value: 'REPORT', label: 'Report Writing', icon: '📊' },
-        { value: 'OTHER', label: 'Other', icon: '🎯' },
-    ];
+    React.useEffect(() => {
+        if (!projectTypes.length) return;
+        const isValid = projectTypes.some((type) => type.value === formData.projectType);
+        if (!isValid) {
+            setFormData((prev) => ({ ...prev, projectType: projectTypes[0].value }));
+        }
+    }, [projectTypes]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -188,19 +207,23 @@ const Booking = () => {
                                 />
                             </div>
                             
-                            <h1 
-                                className="text-3xl font-bold mb-4"
-                                style={{ color: colors.text }}
-                            >
-                                Booking Submitted!
-                            </h1>
+                                    {bookingCopy.success?.title && (
+                                        <h1 
+                                            className="text-3xl font-bold mb-4"
+                                            style={{ color: colors.text }}
+                                        >
+                                            {bookingCopy.success.title}
+                                        </h1>
+                            )}
                             
-                            <p 
-                                className="text-lg mb-4"
-                                style={{ color: colors.textSecondary }}
-                            >
-                                Your booking has been received. We'll review it and get back to you soon.
-                            </p>
+                            {bookingCopy.success?.message && (
+                                <p 
+                                    className="text-lg mb-4"
+                                    style={{ color: colors.textSecondary }}
+                                >
+                                    {bookingCopy.success.message}
+                                </p>
+                            )}
                             
                             <div 
                                 className="inline-block px-4 py-2 rounded-lg mb-8"
@@ -225,7 +248,7 @@ const Booking = () => {
                                     }}
                                 >
                                     <FaFileAlt />
-                                    View Status
+                                    {labels.viewStatus}
                                 </button>
                                 <button
                                     onClick={() => navigate('/')}
@@ -237,7 +260,7 @@ const Booking = () => {
                                     }}
                                 >
                                     <FaHome />
-                                    Return Home
+                                    {labels.returnHome}
                                 </button>
                             </div>
                         </GlassmorphismCard>
@@ -263,30 +286,38 @@ const Booking = () => {
 
                 <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
-                        <span 
-                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                            style={{ 
-                                backgroundColor: `${colors.primary}20`,
-                                color: colors.primary,
-                                border: `1px solid ${colors.primary}40`
-                            }}
-                        >
-                            <FaRocket className="inline mr-2" />
-                            Start Your Project
-                        </span>
+                        {heroCopy.badge && (
+                            <span 
+                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}20`,
+                                    color: colors.primary,
+                                    border: `1px solid ${colors.primary}40`
+                                }}
+                            >
+                                <FaRocket className="inline mr-2" />
+                                {heroCopy.badge}
+                            </span>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                            <span style={{ color: colors.text }}>Request a </span>
-                            <span style={{ 
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
-                                Project
-                            </span>
-                        </h1>
+                        {(heroCopy.title || heroCopy.highlight) && (
+                            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                                {heroCopy.title && (
+                                    <span style={{ color: colors.text }}>{heroCopy.title} </span>
+                                )}
+                                {heroCopy.highlight && (
+                                    <span style={{ 
+                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent'
+                                    }}>
+                                        {heroCopy.highlight}
+                                    </span>
+                                )}
+                            </h1>
+                        )}
                     </ScrollReveal>
                 </div>
             </ParallaxSection>
@@ -306,7 +337,7 @@ const Booking = () => {
                                     <div 
                                         className="h-full transition-all duration-500"
                                         style={{ 
-                                            width: `${((step - 1) / (steps.length - 1)) * 100}%`,
+                                            width: `${((step - 1) / (totalSteps - 1 || 1)) * 100}%`,
                                             background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`
                                         }}
                                     />
@@ -368,12 +399,14 @@ const Booking = () => {
                                 {/* Step 1: Basic Information */}
                                 {step === 1 && (
                                     <div className="space-y-6">
-                                        <h2 
-                                            className="text-2xl font-bold mb-6"
-                                            style={{ color: colors.text }}
-                                        >
-                                            Basic Information
-                                        </h2>
+                                        {stepHeadings.step1 && (
+                                            <h2 
+                                                className="text-2xl font-bold mb-6"
+                                                style={{ color: colors.text }}
+                                            >
+                                                {stepHeadings.step1}
+                                            </h2>
+                                        )}
                                         
                                         <div>
                                             <label 
@@ -493,12 +526,14 @@ const Booking = () => {
                                 {/* Step 2: Project Details */}
                                 {step === 2 && (
                                     <div className="space-y-6">
-                                        <h2 
-                                            className="text-2xl font-bold mb-6"
-                                            style={{ color: colors.text }}
-                                        >
-                                            Project Details
-                                        </h2>
+                                        {stepHeadings.step2 && (
+                                            <h2 
+                                                className="text-2xl font-bold mb-6"
+                                                style={{ color: colors.text }}
+                                            >
+                                                {stepHeadings.step2}
+                                            </h2>
+                                        )}
                                         
                                         <div>
                                             <label 
@@ -589,12 +624,14 @@ const Booking = () => {
                                 {/* Step 3: File Uploads */}
                                 {step === 3 && (
                                     <div className="space-y-6">
-                                        <h2 
-                                            className="text-2xl font-bold mb-6"
-                                            style={{ color: colors.text }}
-                                        >
-                                            Upload Files (Optional)
-                                        </h2>
+                                        {stepHeadings.step3 && (
+                                            <h2 
+                                                className="text-2xl font-bold mb-6"
+                                                style={{ color: colors.text }}
+                                            >
+                                                {stepHeadings.step3}
+                                            </h2>
+                                        )}
                                         
                                         <div 
                                             className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all hover:border-[color:var(--primary)]"
@@ -670,7 +707,7 @@ const Booking = () => {
                                             }}
                                         >
                                             <FaArrowLeft />
-                                            Back
+                                            {labels.back}
                                         </button>
                                     ) : (
                                         <div />
@@ -686,7 +723,7 @@ const Booking = () => {
                                                 color: 'white'
                                             }}
                                         >
-                                            Next
+                                            {labels.next}
                                             <FaArrowRight />
                                         </button>
                                     ) : (
@@ -702,12 +739,12 @@ const Booking = () => {
                                             {loading ? (
                                                 <>
                                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    Submitting...
+                                                    {labels.submitting}
                                                 </>
                                             ) : (
                                                 <>
                                                     <FaRocket />
-                                                    Submit Request
+                                                    {labels.submit}
                                                 </>
                                             )}
                                         </button>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { useSiteCopy } from '../hooks/useSiteCopy';
 import { 
     FaStar, FaQuoteLeft, FaUser, FaBuilding,
     FaArrowRight, FaComment
@@ -11,9 +12,11 @@ import {
 const TestimonialsList = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const pageCopy = uiCopy?.pages?.testimonials || {};
 
     useEffect(() => {
         const fetchTestimonials = async () => {
@@ -31,10 +34,10 @@ const TestimonialsList = () => {
     }, []);
 
     const stats = [
-        { value: testimonials.length, label: 'Happy Clients' },
-        { value: Math.round(testimonials.reduce((acc, t) => acc + (t.rating || 5), 0) / testimonials.length * 10) / 10 || 5, label: 'Avg Rating' },
-        { value: '100%', label: 'Satisfaction' },
-    ];
+        { value: testimonials.length, label: pageCopy.stats?.clientsLabel || '' },
+        { value: Math.round(testimonials.reduce((acc, t) => acc + (t.rating || 5), 0) / testimonials.length * 10) / 10 || 5, label: pageCopy.stats?.ratingLabel || '' },
+        { value: '100%', label: pageCopy.stats?.satisfactionLabel || '' },
+    ].filter(stat => stat.label);
 
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
@@ -86,43 +89,42 @@ const TestimonialsList = () => {
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
-                        <span 
-                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                            style={{ 
-                                backgroundColor: `${colors.primary}20`,
-                                color: colors.primary,
-                                border: `1px solid ${colors.primary}40`
-                            }}
-                        >
-                            <FaComment className="inline mr-2" />
-                            Client Reviews
-                        </span>
+                        {pageCopy.badge && (
+                            <span 
+                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}20`,
+                                    color: colors.primary,
+                                    border: `1px solid ${colors.primary}40`
+                                }}
+                            >
+                                <FaComment className="inline mr-2" />
+                                {pageCopy.badge}
+                            </span>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span style={{ color: colors.text }}>What Our </span>
-                            <span style={{ 
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
-                                Clients Say
-                            </span>
-                        </h1>
+                        {pageCopy.title && (
+                            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                                <span style={{ color: colors.text }}>{pageCopy.title}</span>
+                            </h1>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={200}>
-                        <p 
-                            className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            Real feedback from real clients who trusted us with their projects
-                        </p>
+                        {pageCopy.subtitle && (
+                            <p 
+                                className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                {pageCopy.subtitle}
+                            </p>
+                        )}
                     </ScrollReveal>
 
                     {/* Stats */}
-                    {testimonials.length > 0 && (
+                    {stats.length > 0 && (
                         <ScrollReveal animation="fadeUp" delay={300}>
                             <div className="flex flex-wrap justify-center gap-8">
                                 {stats.map((stat, idx) => (
@@ -138,7 +140,7 @@ const TestimonialsList = () => {
                                             className="text-3xl font-bold mb-1"
                                             style={{ color: colors.primary }}
                                         >
-                                            {stat.value}{typeof stat.value === 'number' && stat.label !== 'Avg Rating' ? '+' : ''}
+                                            {stat.value}{typeof stat.value === 'number' && stat.label !== pageCopy.stats?.ratingLabel ? '+' : ''}
                                         </div>
                                         <div 
                                             className="text-sm"

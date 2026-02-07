@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaEnvelope, 
     FaPhone, 
@@ -19,6 +20,7 @@ import { ScrollReveal, GlassmorphismCard } from '../modern';
 
 const Contacts = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -29,46 +31,28 @@ const Contacts = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [contactData, setContactData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const isDark = mode === 'dark';
-
-    const defaultContact = {
-        companyName: "AngiSoft Technologies",
-        email: "info@angisofttechnologies.com",
-        supportEmail: "support@angisofttechnologies.com",
-        phone: "+254 700 000 000",
-        altPhone: "+254 711 111 111",
-        address: {
-            street: "Westlands Business District",
-            city: "Nairobi",
-            country: "Kenya"
-        },
-        hours: {
-            weekdays: "Mon - Fri: 8:00 AM - 6:00 PM",
-            weekends: "Sat: 9:00 AM - 1:00 PM"
-        },
-        social: {
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            facebook: "#",
-            instagram: "#"
-        }
-    };
+    const sectionCopy = uiCopy?.home?.contact || {};
 
     useEffect(() => {
         const fetchContact = async () => {
             try {
                 const data = await apiGet('/site/contact');
-                setContactData(data || defaultContact);
+                setContactData(data || null);
             } catch (err) {
                 console.error(err);
-                setContactData(defaultContact);
+                setError('Contact info not available yet.');
+                setContactData(null);
+            } finally {
+                setLoading(false);
             }
         };
         fetchContact();
     }, []);
 
-    const contact = contactData || defaultContact;
+    const contact = contactData || {};
 
     const contactInfo = [
         {
@@ -98,12 +82,33 @@ const Contacts = () => {
     ];
 
     const socialLinks = [
-        { icon: FaLinkedin, href: contact.social?.linkedin || '#', label: 'LinkedIn' },
-        { icon: FaTwitter, href: contact.social?.twitter || '#', label: 'Twitter' },
-        { icon: FaGithub, href: contact.social?.github || '#', label: 'GitHub' },
-        { icon: FaFacebook, href: contact.social?.facebook || '#', label: 'Facebook' },
-        { icon: FaInstagram, href: contact.social?.instagram || '#', label: 'Instagram' }
-    ];
+        { icon: FaLinkedin, href: contact.social?.linkedin, label: 'LinkedIn' },
+        { icon: FaTwitter, href: contact.social?.twitter, label: 'Twitter' },
+        { icon: FaGithub, href: contact.social?.github, label: 'GitHub' },
+        { icon: FaFacebook, href: contact.social?.facebook, label: 'Facebook' },
+        { icon: FaInstagram, href: contact.social?.instagram, label: 'Instagram' }
+    ].filter(link => !!link.href);
+
+    if (loading) {
+        return (
+            <section id="contact" className="py-28">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <FaSpinner className="animate-spin inline-block mr-2" />
+                    Loading contact info...
+                </div>
+            </section>
+        );
+    }
+
+    if (!contactData) {
+        return (
+            <section id="contact" className="py-28">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    {error || 'Contact info not configured yet.'}
+                </div>
+            </section>
+        );
+    }
 
     const handleChange = (e) => {
         setFormData(prev => ({
@@ -176,33 +181,39 @@ const Contacts = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-16">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaEnvelope />
-                            Get In Touch
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            Contact Us
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-2xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Have a project in mind? Let's discuss how we can help bring your ideas to life
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaEnvelope />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -211,19 +222,22 @@ const Contacts = () => {
                     <div className="lg:col-span-2 space-y-4 md:space-y-5">
                         <ScrollReveal animation="fadeLeft" delay={100}>
                             <div className="mb-8">
-                                <h3 
-                                    className="text-2xl font-bold mb-4"
-                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
-                                >
-                                    Let's Talk
-                                </h3>
-                                <p 
-                                    className="leading-relaxed"
-                                    style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                                >
-                                    We're here to help and answer any questions you might have. 
-                                    We look forward to hearing from you.
-                                </p>
+                                {sectionCopy.introTitle && (
+                                    <h3 
+                                        className="text-2xl font-bold mb-4"
+                                        style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                    >
+                                        {sectionCopy.introTitle}
+                                    </h3>
+                                )}
+                                {sectionCopy.introSubtitle && (
+                                    <p 
+                                        className="leading-relaxed"
+                                        style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                    >
+                                        {sectionCopy.introSubtitle}
+                                    </p>
+                                )}
                             </div>
                         </ScrollReveal>
 
@@ -396,7 +410,7 @@ const Contacts = () => {
                                                     name="phone"
                                                     value={formData.phone}
                                                     onChange={handleChange}
-                                                    placeholder="+254 700 000 000"
+                                                    placeholder="+254710398690"
                                                     className="w-full px-5 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
                                                     style={{
                                                         background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',

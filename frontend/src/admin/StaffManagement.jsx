@@ -7,7 +7,7 @@ import {
     FaCheck, FaBriefcase, FaChevronDown
 } from 'react-icons/fa';
 
-const ROLES = ['ADMIN', 'DEVELOPER', 'DESIGNER', 'MANAGER', 'SUPPORT'];
+const ROLES = ['ADMIN', 'MARKETING', 'DEVELOPER'];
 
 const StaffManagement = () => {
     const { colors, mode } = useTheme();
@@ -155,10 +155,8 @@ const StaffManagement = () => {
     const getRoleColor = (role) => {
         const roleColors = {
             ADMIN: '#EF4444',
-            MANAGER: '#F59E0B',
+            MARKETING: '#F59E0B',
             DEVELOPER: colors.primary,
-            DESIGNER: '#8B5CF6',
-            SUPPORT: '#10B981'
         };
         return roleColors[role] || colors.textSecondary;
     };
@@ -235,7 +233,7 @@ const StaffManagement = () => {
 
             {/* Stats Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                {['Total', 'DEVELOPER', 'DESIGNER', 'MANAGER'].map((stat, idx) => {
+                {['Total', 'ADMIN', 'MARKETING', 'DEVELOPER'].map((stat, idx) => {
                     const count = stat === 'Total' 
                         ? employees.length 
                         : employees.filter(e => e.role === stat).length;
@@ -603,4 +601,3 @@ const StaffManagement = () => {
 };
 
 export default StaffManagement;
-

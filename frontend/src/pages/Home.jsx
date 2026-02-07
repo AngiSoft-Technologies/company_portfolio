@@ -6,6 +6,7 @@ import Services from "../components/sections/Services";
 import Staff from "../components/sections/Staff";
 import Testimonials from "../components/sections/Testimonials";
 import Blog from "../components/sections/Blog";
+import FaqSection from "../components/sections/FaqSection";
 
 const Home = () => {
   return (
@@ -17,6 +18,7 @@ const Home = () => {
       <Staff />
       <Blog />
       <Testimonials />
+      <FaqSection />
       <Contact />
     </>
   );

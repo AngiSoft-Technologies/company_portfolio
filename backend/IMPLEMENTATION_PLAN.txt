@@ -38,7 +38,7 @@ Core architecture decisions
 - Payments: Provider adapters. Stripe first: server creates PaymentIntent and a Payment row with status PENDING. Webhook updates status and booking.
 - File storage: Cloudflare R2 or AWS S3. Backend will issue signed PUT/POST upload URLs; files saved in `File` model.
 - Background queue: Redis + BullMQ for email, file processing, reconciliation, and retry with dead-letter queue.
-- Email: SendGrid preferred; fallback SMTP via nodemailer.
+- Email: Zoho Mail SMTP (smtp.zoho.com:465) via nodemailer.
 
 API routes (main)
 - POST /api/invite — admin creates employee invite; sends email with token
@@ -177,7 +177,7 @@ Steps to deploy frontend to Cloudflare Pages
 
 Steps to host backend and database
 - Create Supabase project; note DATABASE_URL (connection string)
-- On backend host (Render or Fly): create service, connect to git repository, add environment variables (DATABASE_URL, STRIPE_SECRET, STRIPE_WEBHOOK_SECRET, SENDGRID_API_KEY, STORAGE keys)
+- On backend host (Render or Fly): create service, connect to git repository, add environment variables (DATABASE_URL, STRIPE_SECRET, STRIPE_WEBHOOK_SECRET, ZOHO_SMTP credentials, STORAGE keys)
 - Run `npm install`, `npx prisma generate`, and `npx prisma migrate deploy` on deploy or via startup commands
 - Create a background worker service (Redis + BullMQ) to run email workers and reconciliation jobs
 
@@ -198,7 +198,10 @@ At minimum, set these in backend deploy environment and locally in `.env`:
 - JWT_SECRET=... (or JWT_PRIVATE_KEY & JWT_PUBLIC_KEY for RS256)
 - STRIPE_SECRET=sk_test_xxx
 - STRIPE_WEBHOOK_SECRET=whsec_xxx
-- SENDGRID_API_KEY=...
+- SMTP_HOST=smtp.zoho.com
+- SMTP_PORT=465
+- SMTP_USER=info@angisoft.co.ke
+- SMTP_PASS=...
 - S3_R2_ENDPOINT (if using R2) or S3 endpoint
 - S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET
 - REDIS_URL=redis://...
@@ -240,7 +243,7 @@ Pre-launch checklist
 - All env vars set in production
 - DB migrations applied and seed run
 - Stripe keys active and webhook configured
-- SendGrid verified sender and test emails working
+- Zoho Mail SMTP verified and test emails working
 - Domain & TLS deployed and pages accessible
 - Run integration smoke tests (invite→accept, booking→create intent→payment confirmation)
 

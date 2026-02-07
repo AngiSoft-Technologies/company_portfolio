@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaStar, 
     FaQuoteLeft,
@@ -14,78 +15,23 @@ import { ScrollReveal, GlassmorphismCard } from '../modern';
 
 const Testimonials = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const sliderRef = useRef(null);
     const isDark = mode === 'dark';
-
-    const defaultTestimonials = [
-        {
-            id: 1,
-            username: "Sarah Johnson",
-            title: "CEO",
-            company: "TechStart Inc.",
-            rating: 5,
-            message: "AngiSoft Technologies delivered our mobile app ahead of schedule. Their team's expertise and communication were exceptional throughout the project. We've seen a 40% increase in user engagement since launch.",
-            imageLink: null,
-            linkedin: "#",
-            twitter: "#"
-        },
-        {
-            id: 2,
-            username: "Michael Oduya",
-            title: "Founder",
-            company: "PayQuick Kenya",
-            rating: 5,
-            message: "Working with AngiSoft was a game-changer for our fintech startup. They built a secure, scalable payment platform that our customers love. The attention to security and compliance was impressive.",
-            imageLink: null,
-            linkedin: "#",
-            twitter: "#"
-        },
-        {
-            id: 3,
-            username: "Jennifer Wanjiku",
-            title: "Operations Manager",
-            company: "LogiTrack",
-            rating: 5,
-            message: "The fleet management system AngiSoft built for us has reduced our operational costs by 30%. Their ongoing support and maintenance have been invaluable. Highly recommend their services!",
-            imageLink: null,
-            linkedin: "#",
-            twitter: "#"
-        },
-        {
-            id: 4,
-            username: "David Mwangi",
-            title: "CTO",
-            company: "HealthTech Africa",
-            rating: 5,
-            message: "AngiSoft's technical expertise is unmatched. They delivered a HIPAA-compliant telemedicine platform that has transformed healthcare delivery in our region. Professional team with excellent communication.",
-            imageLink: null,
-            linkedin: "#",
-            twitter: "#"
-        },
-        {
-            id: 5,
-            username: "Grace Akinyi",
-            title: "Director",
-            company: "EduLearn Institute",
-            rating: 5,
-            message: "Our LMS platform by AngiSoft has revolutionized how we deliver education. The intuitive design and robust features have increased student engagement by 60%. Exceptional work!",
-            imageLink: null,
-            linkedin: "#",
-            twitter: "#"
-        }
-    ];
+    const sectionCopy = uiCopy?.home?.testimonials || {};
 
     useEffect(() => {
         const fetchTestimonials = async () => {
             try {
                 const data = await apiGet('/testimonials');
-                setTestimonials(data && data.length > 0 ? data : defaultTestimonials);
+                setTestimonials(Array.isArray(data) ? data : []);
             } catch (err) {
-                setTestimonials(defaultTestimonials);
+                setError('No testimonials available yet.');
             } finally {
                 setLoading(false);
             }
@@ -95,7 +41,7 @@ const Testimonials = () => {
 
     // Auto-play slider
     useEffect(() => {
-        if (!isAutoPlaying) return;
+        if (!isAutoPlaying || testimonials.length === 0) return;
         
         const interval = setInterval(() => {
             setActiveIndex(prev => (prev + 1) % displayTestimonials.length);
@@ -104,7 +50,7 @@ const Testimonials = () => {
         return () => clearInterval(interval);
     }, [isAutoPlaying, testimonials.length]);
 
-    const displayTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
+    const displayTestimonials = testimonials;
 
     const handlePrev = () => {
         setIsAutoPlaying(false);
@@ -124,6 +70,12 @@ const Testimonials = () => {
             />
         ));
     };
+
+    const getName = (t) => t.name || t.username || 'Client';
+    const getRole = (t) => t.role || t.title || '';
+    const getMessage = (t) => t.text || t.message || '';
+    const getCompany = (t) => t.company || '';
+    const getAvatar = (t) => t.imageUrl || t.imageLink || null;
 
     return (
         <section 
@@ -178,33 +130,39 @@ const Testimonials = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-16">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaStar />
-                            Testimonials
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            What Our Clients Say
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-2xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Trusted by businesses across Africa and beyond — hear from our satisfied clients
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaStar />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -222,21 +180,33 @@ const Testimonials = () => {
 
                 {!loading && (
                     <>
-                        {/* Featured Testimonial - Large Card */}
-                        <ScrollReveal animation="fadeUp" delay={100}>
-                            <div 
-                                className="relative max-w-4xl mx-auto mb-16 p-8 md:p-12 rounded-3xl"
-                                style={{
-                                    background: isDark 
-                                        ? 'linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
-                                        : 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
-                                    backdropFilter: 'blur(20px)',
-                                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
-                                    boxShadow: isDark 
-                                        ? '0 25px 80px rgba(0,0,0,0.4)'
-                                        : '0 25px 80px rgba(0,0,0,0.1)'
-                                }}
-                            >
+                        {error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                {error}
+                            </div>
+                        )}
+                        {displayTestimonials.length === 0 && !error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                No testimonials published yet.
+                            </div>
+                        )}
+                        {displayTestimonials.length > 0 && (
+                            <>
+                                {/* Featured Testimonial - Large Card */}
+                                <ScrollReveal animation="fadeUp" delay={100}>
+                                    <div 
+                                        className="relative max-w-4xl mx-auto mb-16 p-8 md:p-12 rounded-3xl"
+                                        style={{
+                                            background: isDark 
+                                                ? 'linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
+                                                : 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
+                                            backdropFilter: 'blur(20px)',
+                                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+                                            boxShadow: isDark 
+                                                ? '0 25px 80px rgba(0,0,0,0.4)'
+                                                : '0 25px 80px rgba(0,0,0,0.1)'
+                                        }}
+                                    >
                                 {/* Quote Icon */}
                                 <div 
                                     className="absolute -top-6 left-8 w-12 h-12 rounded-2xl flex items-center justify-center"
@@ -258,14 +228,14 @@ const Testimonials = () => {
                                                 boxShadow: `0 10px 40px ${colors.primary}30`
                                             }}
                                         >
-                                            {displayTestimonials[activeIndex]?.imageLink ? (
+                                            {getAvatar(displayTestimonials[activeIndex]) ? (
                                                 <img 
-                                                    src={displayTestimonials[activeIndex].imageLink}
-                                                    alt={displayTestimonials[activeIndex].username}
+                                                    src={getAvatar(displayTestimonials[activeIndex])}
+                                                    alt={getName(displayTestimonials[activeIndex])}
                                                     className="w-full h-full rounded-full object-cover"
                                                 />
                                             ) : (
-                                                displayTestimonials[activeIndex]?.username?.charAt(0) || 'A'
+                                                getName(displayTestimonials[activeIndex])?.charAt(0) || 'A'
                                             )}
                                         </div>
                                     </div>
@@ -282,9 +252,7 @@ const Testimonials = () => {
                                             className="text-lg md:text-xl leading-relaxed mb-6 italic"
                                             style={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)' }}
                                         >
-                                            "{Array.isArray(displayTestimonials[activeIndex]?.message) 
-                                                ? displayTestimonials[activeIndex].message.join(' ')
-                                                : displayTestimonials[activeIndex]?.message}"
+                                            "{getMessage(displayTestimonials[activeIndex])}"
                                         </p>
                                         
                                         {/* Author Info */}
@@ -294,38 +262,42 @@ const Testimonials = () => {
                                                     className="font-bold text-lg"
                                                     style={{ color: isDark ? '#fff' : '#1e293b' }}
                                                 >
-                                                    {displayTestimonials[activeIndex]?.username}
+                                                    {getName(displayTestimonials[activeIndex])}
                                                 </h4>
                                                 <p 
                                                     className="text-sm"
                                                     style={{ color: colors.primary }}
                                                 >
-                                                    {displayTestimonials[activeIndex]?.title}, {displayTestimonials[activeIndex]?.company}
+                                                    {[getRole(displayTestimonials[activeIndex]), getCompany(displayTestimonials[activeIndex])].filter(Boolean).join(', ')}
                                                 </p>
                                             </div>
                                             
                                             {/* Social Links */}
                                             <div className="flex gap-2 justify-center md:justify-start">
-                                                <a 
-                                                    href={displayTestimonials[activeIndex]?.linkedin || '#'}
-                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                                                    style={{
-                                                        backgroundColor: `${colors.primary}15`,
-                                                        color: colors.primary
-                                                    }}
-                                                >
-                                                    <FaLinkedin className="text-sm" />
-                                                </a>
-                                                <a 
-                                                    href={displayTestimonials[activeIndex]?.twitter || '#'}
-                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                                                    style={{
-                                                        backgroundColor: `${colors.primary}15`,
-                                                        color: colors.primary
-                                                    }}
-                                                >
-                                                    <FaTwitter className="text-sm" />
-                                                </a>
+                                                {displayTestimonials[activeIndex]?.linkedin && (
+                                                    <a 
+                                                        href={displayTestimonials[activeIndex]?.linkedin}
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                                        style={{
+                                                            backgroundColor: `${colors.primary}15`,
+                                                            color: colors.primary
+                                                        }}
+                                                    >
+                                                        <FaLinkedin className="text-sm" />
+                                                    </a>
+                                                )}
+                                                {displayTestimonials[activeIndex]?.twitter && (
+                                                    <a 
+                                                        href={displayTestimonials[activeIndex]?.twitter}
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                                        style={{
+                                                            backgroundColor: `${colors.primary}15`,
+                                                            color: colors.primary
+                                                        }}
+                                                    >
+                                                        <FaTwitter className="text-sm" />
+                                                    </a>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -401,20 +373,28 @@ const Testimonials = () => {
                                                     background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
                                                 }}
                                             >
-                                                {testimonial.username?.charAt(0)}
+                                                {getAvatar(testimonial) ? (
+                                                    <img 
+                                                        src={getAvatar(testimonial)}
+                                                        alt={getName(testimonial)}
+                                                        className="w-full h-full rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    getName(testimonial)?.charAt(0)
+                                                )}
                                             </div>
                                             <div>
                                                 <h5 
                                                     className="font-semibold text-sm"
                                                     style={{ color: isDark ? '#fff' : '#1e293b' }}
                                                 >
-                                                    {testimonial.username}
+                                                    {getName(testimonial)}
                                                 </h5>
                                                 <p 
                                                     className="text-xs"
                                                     style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
                                                 >
-                                                    {testimonial.company}
+                                                    {getCompany(testimonial)}
                                                 </p>
                                             </div>
                                         </div>
@@ -425,14 +405,14 @@ const Testimonials = () => {
                                             className="text-sm line-clamp-3"
                                             style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
                                         >
-                                            "{Array.isArray(testimonial.message) 
-                                                ? testimonial.message.join(' ').substring(0, 100)
-                                                : testimonial.message?.substring(0, 100)}..."
+                                            "{getMessage(testimonial).substring(0, 100)}..."
                                         </p>
                                     </GlassmorphismCard>
                                 ))}
                             </div>
                         </ScrollReveal>
+                            </>
+                        )}
                     </>
                 )}
             </div>

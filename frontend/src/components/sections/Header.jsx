@@ -31,6 +31,7 @@ const Header = () => {
     { path: '/projects', label: 'Projects', icon: FaFolder },
     { path: '/staff', label: 'Team', icon: FaUsers },
     { path: '/testimonials', label: 'Testimonials', icon: FaStar },
+    { path: '/blog', label: 'Blog', icon: FaBlog },
     { path: '/book', label: 'Book', icon: FaCalendarCheck },
   ];
 

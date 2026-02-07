@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { useSiteCopy } from '../hooks/useSiteCopy';
 import { 
     FaUsers, FaLinkedin, FaTwitter, FaGithub, FaEnvelope,
     FaArrowRight, FaUserTie, FaCode, FaPaintBrush, FaCog,
@@ -30,10 +31,12 @@ const getRoleIcon = (role) => {
 const StaffList = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [hoveredCard, setHoveredCard] = useState(null);
+    const pageCopy = uiCopy?.pages?.staff || {};
 
     useEffect(() => {
         const fetchStaff = async () => {
@@ -50,10 +53,10 @@ const StaffList = () => {
     }, []);
 
     const stats = [
-        { value: staff.length, label: 'Team Members' },
-        { value: new Set(staff.map(s => s.role)).size, label: 'Departments' },
-        { value: '5+', label: 'Years Experience' },
-    ];
+        { value: staff.length, label: pageCopy.stats?.teamLabel || '' },
+        { value: new Set(staff.map(s => s.role)).size, label: pageCopy.stats?.departmentsLabel || '' },
+        { value: pageCopy.stats?.experienceValue || '5+', label: pageCopy.stats?.experienceLabel || '' },
+    ].filter(stat => stat.label);
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -93,69 +96,70 @@ const StaffList = () => {
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
-                        <span 
-                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                            style={{ 
-                                backgroundColor: `${colors.primary}20`,
-                                color: colors.primary,
-                                border: `1px solid ${colors.primary}40`
-                            }}
-                        >
-                            <FaUsers className="inline mr-2" />
-                            Meet the Team
-                        </span>
+                        {pageCopy.badge && (
+                            <span 
+                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}20`,
+                                    color: colors.primary,
+                                    border: `1px solid ${colors.primary}40`
+                                }}
+                            >
+                                <FaUsers className="inline mr-2" />
+                                {pageCopy.badge}
+                            </span>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span style={{ color: colors.text }}>Our </span>
-                            <span style={{ 
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
-                                Team
-                            </span>
-                        </h1>
+                        {pageCopy.title && (
+                            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                                <span style={{ color: colors.text }}>{pageCopy.title}</span>
+                            </h1>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={200}>
-                        <p 
-                            className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            The talented experts behind AngiSoft Technologies
-                        </p>
+                        {pageCopy.subtitle && (
+                            <p 
+                                className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                {pageCopy.subtitle}
+                            </p>
+                        )}
                     </ScrollReveal>
 
                     {/* Stats */}
-                    <ScrollReveal animation="fadeUp" delay={300}>
-                        <div className="flex flex-wrap justify-center gap-8">
-                            {stats.map((stat, idx) => (
-                                <div 
-                                    key={idx}
-                                    className="text-center px-6 py-4 rounded-2xl"
-                                    style={{ 
-                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                        backdropFilter: 'blur(10px)'
-                                    }}
-                                >
+                    {stats.length > 0 && (
+                        <ScrollReveal animation="fadeUp" delay={300}>
+                            <div className="flex flex-wrap justify-center gap-8">
+                                {stats.map((stat, idx) => (
                                     <div 
-                                        className="text-3xl font-bold mb-1"
-                                        style={{ color: colors.primary }}
+                                        key={idx}
+                                        className="text-center px-6 py-4 rounded-2xl"
+                                        style={{ 
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                            backdropFilter: 'blur(10px)'
+                                        }}
                                     >
-                                        {stat.value}+
+                                        <div 
+                                            className="text-3xl font-bold mb-1"
+                                            style={{ color: colors.primary }}
+                                        >
+                                            {stat.value}{typeof stat.value === 'number' ? '+' : ''}
+                                        </div>
+                                        <div 
+                                            className="text-sm"
+                                            style={{ color: colors.textSecondary }}
+                                        >
+                                            {stat.label}
+                                        </div>
                                     </div>
-                                    <div 
-                                        className="text-sm"
-                                        style={{ color: colors.textSecondary }}
-                                    >
-                                        {stat.label}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollReveal>
+                                ))}
+                            </div>
+                        </ScrollReveal>
+                    )}
                 </div>
             </ParallaxSection>
 

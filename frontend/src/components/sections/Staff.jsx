@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaUserTie, 
     FaLinkedin, 
@@ -19,85 +20,13 @@ import { ScrollReveal, GlassmorphismCard, TeamMemberCard } from '../modern';
 
 const Staff = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [hoveredMember, setHoveredMember] = useState(null);
     const isDark = mode === 'dark';
-
-    const defaultStaff = [
-        {
-            id: 1,
-            name: "John Angera",
-            role: "Founder & CEO",
-            bio: "Visionary tech leader with 10+ years of experience in software development and business strategy.",
-            image: null,
-            skills: ["Leadership", "Strategy", "Full-Stack Dev"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "john@angisoft.tech"
-        },
-        {
-            id: 2,
-            name: "Sarah Mwangi",
-            role: "Lead Developer",
-            bio: "Senior full-stack developer specializing in React, Node.js, and cloud architecture.",
-            image: null,
-            skills: ["React", "Node.js", "AWS"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "sarah@angisoft.tech"
-        },
-        {
-            id: 3,
-            name: "David Ochieng",
-            role: "Mobile Developer",
-            bio: "Expert mobile developer with expertise in Flutter and React Native for iOS and Android.",
-            image: null,
-            skills: ["Flutter", "React Native", "iOS/Android"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "david@angisoft.tech"
-        },
-        {
-            id: 4,
-            name: "Grace Akinyi",
-            role: "UI/UX Designer",
-            bio: "Creative designer passionate about creating beautiful and user-friendly interfaces.",
-            image: null,
-            skills: ["Figma", "UI Design", "User Research"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "grace@angisoft.tech"
-        },
-        {
-            id: 5,
-            name: "Michael Kamau",
-            role: "DevOps Engineer",
-            bio: "Infrastructure specialist ensuring seamless deployments and maximum uptime.",
-            image: null,
-            skills: ["AWS", "Docker", "Kubernetes"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "michael@angisoft.tech"
-        },
-        {
-            id: 6,
-            name: "Jane Njeri",
-            role: "Security Specialist",
-            bio: "Cybersecurity expert keeping our clients' data safe with cutting-edge security measures.",
-            image: null,
-            skills: ["Penetration Testing", "SIEM", "Compliance"],
-            linkedin: "#",
-            twitter: "#",
-            github: "#",
-            email: "jane@angisoft.tech"
-        }
-    ];
+    const sectionCopy = uiCopy?.home?.team || {};
 
     const getRoleIcon = (role) => {
         if (role?.toLowerCase().includes('developer')) return FaCode;
@@ -113,9 +42,9 @@ const Staff = () => {
             try {
                 const data = await apiGet('/staff');
                 const activeStaff = Array.isArray(data) ? data.filter(s => s.active !== false) : [];
-                setStaff(activeStaff.length > 0 ? activeStaff : defaultStaff);
+                setStaff(activeStaff);
             } catch (err) {
-                setStaff(defaultStaff);
+                setError('No staff profiles available yet.');
             } finally {
                 setLoading(false);
             }
@@ -123,7 +52,7 @@ const Staff = () => {
         fetchStaff();
     }, []);
 
-    const displayStaff = staff.length > 0 ? staff : defaultStaff;
+    const displayStaff = staff;
 
     return (
         <section 
@@ -168,33 +97,39 @@ const Staff = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-16">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaUserTie />
-                            Our Team
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            Meet The Experts
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-3xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            A talented team of developers, designers, and strategists dedicated to bringing your vision to life
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaUserTie />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-3xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -212,11 +147,22 @@ const Staff = () => {
 
                 {!loading && (
                     <>
+                        {error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                {error}
+                            </div>
+                        )}
+                        {displayStaff.length === 0 && !error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                No staff profiles published yet.
+                            </div>
+                        )}
                         {/* Team Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8">
                             {displayStaff.slice(0, 6).map((member, idx) => {
                                 const RoleIcon = getRoleIcon(member.role);
                                 const isHovered = hoveredMember === idx;
+                                const fullName = [member.firstName, member.lastName].filter(Boolean).join(' ') || member.name || 'Team Member';
                                 
                                 return (
                                     <ScrollReveal key={member.id || idx} animation="fadeUp" delay={idx * 100}>
@@ -252,14 +198,14 @@ const Staff = () => {
                                                         boxShadow: `0 10px 40px ${colors.primary}40`
                                                     }}
                                                 >
-                                                    {member.image ? (
+                                                    {member.avatarUrl ? (
                                                         <img 
-                                                            src={member.image}
-                                                            alt={member.name}
+                                                            src={member.avatarUrl}
+                                                            alt={fullName}
                                                             className="w-full h-full rounded-full object-cover"
                                                         />
                                                     ) : (
-                                                        member.name?.charAt(0) || 'A'
+                                                        fullName?.charAt(0) || 'A'
                                                     )}
                                                 </div>
                                                 
@@ -281,7 +227,7 @@ const Staff = () => {
                                                     className="text-lg md:text-xl font-bold mb-1"
                                                     style={{ color: isDark ? '#fff' : '#1e293b' }}
                                                 >
-                                                    {member.name}
+                                                    {fullName}
                                                 </h3>
                                                 <p 
                                                     className="text-sm font-medium mb-2"
@@ -371,21 +317,23 @@ const Staff = () => {
                         </div>
 
                         {/* View All Button */}
-                        <ScrollReveal animation="fadeUp" delay={400}>
-                            <div className="text-center mt-16">
-                                <Link 
-                                    to="/staff"
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                        boxShadow: `0 20px 40px ${colors.primary}40`
-                                    }}
-                                >
-                                    View Full Team
-                                    <FaArrowRight />
-                                </Link>
-                            </div>
-                        </ScrollReveal>
+                        {sectionCopy.ctaLabel && (
+                            <ScrollReveal animation="fadeUp" delay={400}>
+                                <div className="text-center mt-16">
+                                    <Link 
+                                        to="/staff"
+                                        className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                            boxShadow: `0 20px 40px ${colors.primary}40`
+                                        }}
+                                    >
+                                        {sectionCopy.ctaLabel}
+                                        <FaArrowRight />
+                                    </Link>
+                                </div>
+                            </ScrollReveal>
+                        )}
                     </>
                 )}
             </div>

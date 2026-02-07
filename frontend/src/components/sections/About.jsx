@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
   FaBuilding, 
   FaLightbulb, 
@@ -16,6 +17,7 @@ import { ScrollReveal, GlassmorphismCard, AnimatedCounter } from "../modern";
 
 const About = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [about, setAbout] = useState(null);
     const [loading, setLoading] = useState(true);
     const videoRef = useRef(null);
@@ -35,37 +37,45 @@ const About = () => {
         fetchAbout();
     }, []);
 
-    const defaultContent = {
-        title: "Who We Are",
-        description: [
-            "AngiSoft Technologies is a premier software development company headquartered in Kenya, serving clients across Africa and globally. We specialize in building innovative, scalable, and secure digital solutions that drive business growth.",
-            "Our team of skilled developers, designers, and engineers are passionate about technology and committed to delivering excellence. We combine technical expertise with business acumen to create solutions that truly make an impact.",
-            "From startups to enterprises, we partner with organizations of all sizes to transform their ideas into powerful software products. Our client-centric approach ensures that every solution we deliver is tailored to meet your unique needs."
-        ],
-        values: [
-            { icon: FaLightbulb, title: "Innovation", text: "We stay ahead of technology trends to deliver cutting-edge solutions" },
-            { icon: FaHandshake, title: "Integrity", text: "Transparent communication and honest partnerships" },
-            { icon: FaAward, title: "Excellence", text: "Uncompromising quality in everything we create" },
-            { icon: FaUsers, title: "Collaboration", text: "Your success is our primary mission" }
-        ]
+    const iconMap = {
+        FaLightbulb,
+        FaHandshake,
+        FaAward,
+        FaUsers,
+        FaGlobe,
+        FaRocket,
+        FaCheckCircle
     };
 
-    const stats = [
-        { value: 2019, label: "Founded", prefix: "" },
-        { value: 50, suffix: "+", label: "Happy Clients" },
-        { value: 100, suffix: "+", label: "Projects Delivered" },
-        { value: 15, suffix: "+", label: "Team Members" }
-    ];
-
-    const achievements = [
-        "ISO 27001 Security Standards Compliant",
-        "24/7 Support & Maintenance",
-        "Agile Development Methodology",
-        "100% Client Satisfaction Rate"
-    ];
-
-    const content = about || defaultContent;
+    const content = about;
     const isDark = mode === 'dark';
+    const headerTitle = content?.title;
+    const headerSubtitle = content?.subtitle;
+    const storyTitle = content?.storyTitle || content?.subtitle;
+    const highlightStat = (content?.stats || []).find((stat) => /year|experience/i.test(stat.label || '')) || (content?.stats || [])[0];
+    const hasVideo = !!content?.videoUrl;
+    const posterImage = content?.imageUrl || undefined;
+    const sectionCopy = uiCopy?.home?.about || {};
+
+    if (loading) {
+        return (
+            <section id="about" className="relative py-28 overflow-hidden">
+                <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+                    <p>Loading about content...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (!content) {
+        return (
+            <section id="about" className="relative py-28 overflow-hidden">
+                <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+                    <p>About content not configured yet.</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section 
@@ -109,16 +119,18 @@ const About = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-20">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaBuilding />
-                            About Us
-                        </div>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaBuilding />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
                         <h2 
                             className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
                             style={{
@@ -128,14 +140,16 @@ const About = () => {
                                 backgroundClip: "text"
                             }}
                         >
-                            About AngiSoft Technologies
+                            {headerTitle}
                         </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-2xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Building the future of African tech, one solution at a time
-                        </p>
+                        {headerSubtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {headerSubtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -175,75 +189,83 @@ const About = () => {
                                             muted
                                             playsInline
                                             className="w-full h-full object-cover"
-                                            poster="/images/Logo - AngiSoft Technologies.png"
+                                            poster={posterImage}
                                         >
-                                            <source src="/videos/Logo - AngiSoft Technologies.mp4" type="video/mp4" />
+                                            {hasVideo && (
+                                                <source src={content.videoUrl} type="video/mp4" />
+                                            )}
                                         </video>
                                         
                                         {/* Play Button Overlay */}
-                                        <div 
-                                            className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
-                                            style={{ 
-                                                backgroundColor: 'rgba(0,0,0,0.3)',
-                                                opacity: videoPlaying ? 0 : 1
-                                            }}
-                                            onClick={() => {
-                                                if (videoRef.current) {
-                                                    if (videoPlaying) {
-                                                        videoRef.current.pause();
-                                                    } else {
-                                                        videoRef.current.play();
-                                                    }
-                                                    setVideoPlaying(!videoPlaying);
-                                                }
-                                            }}
-                                        >
+                                        {hasVideo && (
                                             <div 
-                                                className="w-20 h-20 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                                                style={{
-                                                    background: 'rgba(255,255,255,0.2)',
-                                                    backdropFilter: 'blur(10px)',
-                                                    border: '2px solid rgba(255,255,255,0.3)'
+                                                className="absolute inset-0 flex items-center justify-center transition-opacity duration-300"
+                                                style={{ 
+                                                    backgroundColor: 'rgba(0,0,0,0.3)',
+                                                    opacity: videoPlaying ? 0 : 1
+                                                }}
+                                                onClick={() => {
+                                                    if (videoRef.current) {
+                                                        if (videoPlaying) {
+                                                            videoRef.current.pause();
+                                                        } else {
+                                                            videoRef.current.play();
+                                                        }
+                                                        setVideoPlaying(!videoPlaying);
+                                                    }
                                                 }}
                                             >
-                                                <FaPlay className="text-white text-2xl ml-1" />
+                                                <div 
+                                                    className="w-20 h-20 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                                                    style={{
+                                                        background: 'rgba(255,255,255,0.2)',
+                                                        backdropFilter: 'blur(10px)',
+                                                        border: '2px solid rgba(255,255,255,0.3)'
+                                                    }}
+                                                >
+                                                    <FaPlay className="text-white text-2xl ml-1" />
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                                 
                                 {/* Floating Stats Card */}
-                                <div 
-                                    className="absolute -bottom-6 -right-6 z-20 p-5 rounded-2xl shadow-xl"
-                                    style={{
-                                        background: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)',
-                                        backdropFilter: 'blur(20px)',
-                                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
-                                    }}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div 
-                                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                                            style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
-                                        >
-                                            <FaRocket className="text-white text-xl" />
-                                        </div>
-                                        <div>
-                                            <p 
-                                                className="text-2xl font-bold"
-                                                style={{ color: colors.primary }}
+                                {highlightStat && (
+                                    <div 
+                                        className="absolute -bottom-6 -right-6 z-20 p-5 rounded-2xl shadow-xl"
+                                        style={{
+                                            background: isDark ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.9)',
+                                            backdropFilter: 'blur(20px)',
+                                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div 
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                                style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
                                             >
-                                                <AnimatedCounter end={5} suffix="+" />
-                                            </p>
-                                            <p 
-                                                className="text-sm"
-                                                style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
-                                            >
-                                                Years Experience
-                                            </p>
+                                                <FaRocket className="text-white text-xl" />
+                                            </div>
+                                            <div>
+                                                <p 
+                                                    className="text-2xl font-bold"
+                                                    style={{ color: colors.primary }}
+                                                >
+                                                    {highlightStat.prefix || ''}
+                                                    <AnimatedCounter end={Number(highlightStat.value) || 0} />
+                                                    {highlightStat.suffix || ''}
+                                                </p>
+                                                <p 
+                                                    className="text-sm"
+                                                    style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
+                                                >
+                                                    {highlightStat.label}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Decorative Elements */}
                                 <div 
@@ -260,23 +282,27 @@ const About = () => {
                         {/* Right: Content */}
                         <ScrollReveal animation="fadeRight" delay={200}>
                             <div>
-                                <div 
-                                    className="flex items-center gap-2 mb-4"
-                                    style={{ color: colors.primary }}
-                                >
-                                    <div className="w-12 h-0.5" style={{ backgroundColor: colors.primary }} />
-                                    <span className="text-sm font-semibold uppercase tracking-wider">Our Story</span>
-                                </div>
+                                {sectionCopy.storyLabel && (
+                                    <div 
+                                        className="flex items-center gap-2 mb-4"
+                                        style={{ color: colors.primary }}
+                                    >
+                                        <div className="w-12 h-0.5" style={{ backgroundColor: colors.primary }} />
+                                        <span className="text-sm font-semibold uppercase tracking-wider">{sectionCopy.storyLabel}</span>
+                                    </div>
+                                )}
                                 
-                                <h3 
-                                    className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6"
-                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
-                                >
-                                    {content.title || "Who We Are"}
-                                </h3>
+                                {storyTitle && storyTitle !== headerTitle && (
+                                    <h3 
+                                        className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6"
+                                        style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                    >
+                                        {storyTitle}
+                                    </h3>
+                                )}
                                 
                                 <div className="space-y-4 mb-8">
-                                    {(content.description || defaultContent.description).map((desc, idx) => (
+                                    {(content.description || []).map((desc, idx) => (
                                         <p 
                                             key={idx} 
                                             className="text-lg leading-relaxed"
@@ -289,7 +315,7 @@ const About = () => {
 
                                 {/* Achievements List */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 mb-6 md:mb-8">
-                                    {achievements.map((item, idx) => (
+                                    {(content.achievements || []).map((item, idx) => (
                                         <div 
                                             key={idx}
                                             className="flex items-center gap-3"
@@ -310,7 +336,7 @@ const About = () => {
                                     className="flex flex-wrap gap-6 md:gap-8 pt-6 md:pt-8"
                                     style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}
                                 >
-                                    {stats.map((stat, idx) => (
+                                    {(content.stats || []).map((stat, idx) => (
                                         <div key={idx} className="min-w-0">
                                             <p 
                                                 className="text-2xl md:text-3xl font-bold"
@@ -341,97 +367,110 @@ const About = () => {
                 <div className="mt-12 md:mt-16">
                     <ScrollReveal animation="fadeUp">
                         <div className="text-center mb-10 md:mb-12">
-                            <h3 
-                                className="text-2xl md:text-3xl font-bold mb-4"
-                                style={{ color: isDark ? '#fff' : '#1e293b' }}
-                            >
-                                Our Core Values
-                            </h3>
-                            <p 
-                                className="max-w-xl mx-auto"
-                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                            >
-                                The principles that guide everything we do
-                            </p>
+                            {sectionCopy.valuesTitle && (
+                                <h3 
+                                    className="text-2xl md:text-3xl font-bold mb-4"
+                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                >
+                                    {sectionCopy.valuesTitle}
+                                </h3>
+                            )}
+                            {sectionCopy.valuesSubtitle && (
+                                <p 
+                                    className="max-w-xl mx-auto"
+                                    style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                >
+                                    {sectionCopy.valuesSubtitle}
+                                </p>
+                            )}
                         </div>
                     </ScrollReveal>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        {defaultContent.values.map((value, idx) => (
-                            <ScrollReveal key={idx} animation="scaleUp" delay={idx * 100}>
-                                <GlassmorphismCard hoverEffect className="p-5 md:p-6 lg:p-8 h-full">
-                                    <div 
-                                        className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-4 md:mb-5 rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110"
-                                        style={{ 
-                                            background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
-                                        }}
-                                    >
-                                        <value.icon className="text-xl md:text-2xl text-white" />
-                                    </div>
-                                    <h4 
-                                        className="font-bold text-lg md:text-xl mb-2 md:mb-3"
-                                        style={{ color: isDark ? '#fff' : '#1e293b' }}
-                                    >
-                                        {value.title}
-                                    </h4>
-                                    <p 
-                                        className="text-sm md:text-base leading-relaxed"
-                                        style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                                    >
-                                        {value.text}
-                                    </p>
-                                </GlassmorphismCard>
-                            </ScrollReveal>
-                        ))}
+                        {(content.values || []).map((value, idx) => {
+                            const Icon = iconMap[value.icon] || FaCheckCircle;
+                            return (
+                                <ScrollReveal key={idx} animation="scaleUp" delay={idx * 100}>
+                                    <GlassmorphismCard hoverEffect className="p-5 md:p-6 lg:p-8 h-full">
+                                        <div 
+                                            className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-4 md:mb-5 rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110"
+                                            style={{ 
+                                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
+                                            }}
+                                        >
+                                            <Icon className="text-xl md:text-2xl text-white" />
+                                        </div>
+                                        <h4 
+                                            className="font-bold text-lg md:text-xl mb-2 md:mb-3"
+                                            style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                        >
+                                            {value.title}
+                                        </h4>
+                                        <p 
+                                            className="text-sm md:text-base leading-relaxed"
+                                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                        >
+                                            {value.text}
+                                        </p>
+                                    </GlassmorphismCard>
+                                </ScrollReveal>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* Global Presence */}
-                <ScrollReveal animation="fadeUp" delay={200}>
-                    <div 
-                        className="mt-24 p-10 rounded-3xl text-center"
-                        style={{
-                            background: isDark 
-                                ? 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
-                                : 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`
-                        }}
-                    >
+                {content.globalPresence && (
+                    <ScrollReveal animation="fadeUp" delay={200}>
                         <div 
-                            className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                            style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
+                            className="mt-24 p-10 rounded-3xl text-center"
+                            style={{
+                                background: isDark 
+                                    ? 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
+                                    : 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`
+                            }}
                         >
-                            <FaGlobe className="text-3xl text-white" />
-                        </div>
-                        <h4 
-                            className="text-2xl font-bold mb-4"
-                            style={{ color: isDark ? '#fff' : '#1e293b' }}
-                        >
-                            Global Reach, Local Expertise
-                        </h4>
-                        <p 
-                            className="text-lg max-w-2xl mx-auto mb-6"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Headquartered in Kenya, we serve clients across Africa, Europe, and North America. 
-                            Our distributed team brings diverse perspectives and round-the-clock productivity.
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-6">
-                            {['🇰🇪 Kenya', '🇺🇬 Uganda', '🇹🇿 Tanzania', '🇳🇬 Nigeria', '🇬🇧 UK', '🇺🇸 USA'].map((location, idx) => (
-                                <span 
-                                    key={idx}
-                                    className="px-4 py-2 rounded-full text-sm font-medium"
-                                    style={{
-                                        backgroundColor: `${colors.primary}15`,
-                                        color: colors.primary
-                                    }}
+                            <div 
+                                className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
+                                style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
+                            >
+                                <FaGlobe className="text-3xl text-white" />
+                            </div>
+                            {content.globalPresence.title && (
+                                <h4 
+                                    className="text-2xl font-bold mb-4"
+                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
                                 >
-                                    {location}
-                                </span>
-                            ))}
+                                    {content.globalPresence.title}
+                                </h4>
+                            )}
+                            {content.globalPresence.description && (
+                                <p 
+                                    className="text-lg max-w-2xl mx-auto mb-6"
+                                    style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                >
+                                    {content.globalPresence.description}
+                                </p>
+                            )}
+                            {Array.isArray(content.globalPresence.locations) && content.globalPresence.locations.length > 0 && (
+                                <div className="flex flex-wrap justify-center gap-6">
+                                    {content.globalPresence.locations.map((location, idx) => (
+                                        <span 
+                                            key={idx}
+                                            className="px-4 py-2 rounded-full text-sm font-medium"
+                                            style={{
+                                                backgroundColor: `${colors.primary}15`,
+                                                color: colors.primary
+                                            }}
+                                        >
+                                            {location}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </ScrollReveal>
+                    </ScrollReveal>
+                )}
             </div>
         </section>
     );

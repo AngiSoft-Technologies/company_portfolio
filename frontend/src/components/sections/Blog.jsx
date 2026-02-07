@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaBlog, 
     FaArrowRight,
@@ -15,66 +16,22 @@ import { ScrollReveal, GlassmorphismCard } from '../modern';
 
 const Blog = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
     const isDark = mode === 'dark';
-
-    const defaultPosts = [
-        {
-            id: 1,
-            title: "The Future of AI in Software Development",
-            excerpt: "Explore how artificial intelligence is revolutionizing the way we build software, from code generation to automated testing.",
-            image: "/images/blog/ai-development.jpg",
-            category: "Technology",
-            author: "AngiSoft Team",
-            authorImage: "/images/angisoft_logo.png",
-            date: "Dec 15, 2024",
-            readTime: "5 min read",
-            tags: ["AI", "Development", "Future Tech"]
-        },
-        {
-            id: 2,
-            title: "Building Scalable Cloud Architecture",
-            excerpt: "Learn the best practices for designing cloud infrastructure that grows with your business without breaking the bank.",
-            image: "/images/blog/cloud-architecture.jpg",
-            category: "Cloud",
-            author: "DevOps Team",
-            authorImage: "/images/angisoft_logo.png",
-            date: "Dec 10, 2024",
-            readTime: "8 min read",
-            tags: ["AWS", "Cloud", "DevOps"]
-        },
-        {
-            id: 3,
-            title: "Mobile App Development Trends 2025",
-            excerpt: "Stay ahead of the curve with the latest trends in mobile app development, from cross-platform frameworks to AI integration.",
-            image: "/images/blog/mobile-trends.jpg",
-            category: "Mobile",
-            author: "Mobile Team",
-            authorImage: "/images/angisoft_logo.png",
-            date: "Dec 5, 2024",
-            readTime: "6 min read",
-            tags: ["Mobile", "Flutter", "React Native"]
-        }
-    ];
-
-    const categoryColors = {
-        'Technology': 'from-violet-500 to-purple-600',
-        'Cloud': 'from-cyan-500 to-blue-600',
-        'Mobile': 'from-orange-500 to-red-600',
-        'Security': 'from-emerald-500 to-green-600',
-        'Design': 'from-pink-500 to-rose-600'
-    };
+    const sectionCopy = uiCopy?.home?.blog || {};
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const data = await apiGet('/blogs');
                 const published = Array.isArray(data) ? data.filter(p => p.published !== false) : [];
-                setPosts(published.length > 0 ? published : defaultPosts);
+                setPosts(published);
             } catch (err) {
-                setPosts(defaultPosts);
+                setError('No blog posts available yet.');
             } finally {
                 setLoading(false);
             }
@@ -82,7 +39,45 @@ const Blog = () => {
         fetchPosts();
     }, []);
 
-    const displayPosts = posts.length > 0 ? posts : defaultPosts;
+    const displayPosts = posts;
+
+    const getAuthorName = (post) => {
+        if (post?.author && typeof post.author === 'object') {
+            return `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim() || 'AngiSoft Team';
+        }
+        return post?.author || 'AngiSoft Team';
+    };
+
+    const getAuthorInitial = (post) => getAuthorName(post).charAt(0);
+
+    const getExcerpt = (post) => {
+        if (post?.excerpt) return post.excerpt;
+        if (post?.content) {
+            const clean = post.content.replace(/[#*_`>\\-]/g, '').trim();
+            return clean.length > 140 ? `${clean.slice(0, 140)}...` : clean;
+        }
+        return '';
+    };
+
+    const getCategory = (post) => {
+        if (post?.category) return post.category;
+        if (Array.isArray(post?.tags) && post.tags.length > 0) return post.tags[0];
+        return 'Updates';
+    };
+
+    const getDate = (post) => {
+        if (post?.date) return post.date;
+        const date = post?.publishedAt || post?.createdAt;
+        if (!date) return '';
+        return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+
+    const getReadTime = (post) => {
+        if (post?.readTime) return post.readTime;
+        const words = post?.content ? post.content.trim().split(/\\s+/).length : 0;
+        const minutes = Math.max(1, Math.round(words / 200));
+        return `${minutes} min read`;
+    };
 
     return (
         <section 
@@ -128,33 +123,39 @@ const Blog = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-16">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaBlog />
-                            Our Blog
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            Latest Insights
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-2xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Thoughts, tutorials, and insights from our team of experts
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaBlog />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -172,6 +173,16 @@ const Blog = () => {
 
                 {!loading && (
                     <>
+                        {error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                {error}
+                            </div>
+                        )}
+                        {displayPosts.length === 0 && !error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                No blog posts published yet.
+                            </div>
+                        )}
                         {/* Featured Post */}
                         {displayPosts.length > 0 && (
                             <ScrollReveal animation="fadeUp" delay={100}>
@@ -203,14 +214,16 @@ const Blog = () => {
                                             </div>
                                             
                                             {/* Featured Badge */}
-                                            <div 
-                                                className="absolute top-4 left-4 px-4 py-2 rounded-full text-sm font-semibold text-white"
-                                                style={{
-                                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
-                                                }}
-                                            >
-                                                Featured
-                                            </div>
+                                            {sectionCopy.featuredLabel && (
+                                                <div 
+                                                    className="absolute top-4 left-4 px-4 py-2 rounded-full text-sm font-semibold text-white"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
+                                                    }}
+                                                >
+                                                    {sectionCopy.featuredLabel}
+                                                </div>
+                                            )}
                                         </div>
                                         
                                         {/* Content */}
@@ -223,21 +236,21 @@ const Blog = () => {
                                                         color: colors.primary
                                                     }}
                                                 >
-                                                    {displayPosts[0].category}
+                                                    {getCategory(displayPosts[0])}
                                                 </span>
                                                 <div 
                                                     className="flex items-center gap-2 text-sm"
                                                     style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
                                                 >
                                                     <FaCalendarAlt className="text-xs" />
-                                                    {displayPosts[0].date}
+                                                    {getDate(displayPosts[0])}
                                                 </div>
                                                 <div 
                                                     className="flex items-center gap-2 text-sm"
                                                     style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
                                                 >
                                                     <FaClock className="text-xs" />
-                                                    {displayPosts[0].readTime}
+                                                    {getReadTime(displayPosts[0])}
                                                 </div>
                                             </div>
                                             
@@ -252,7 +265,7 @@ const Blog = () => {
                                                 className="text-lg mb-6"
                                                 style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
                                             >
-                                                {displayPosts[0].excerpt}
+                                                {getExcerpt(displayPosts[0])}
                                             </p>
                                             
                                             <div className="flex items-center justify-between">
@@ -263,23 +276,25 @@ const Blog = () => {
                                                             background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
                                                         }}
                                                     >
-                                                        {displayPosts[0].author?.charAt(0)}
+                                                        {getAuthorInitial(displayPosts[0])}
                                                     </div>
                                                     <span 
                                                         className="text-sm font-medium"
                                                         style={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)' }}
                                                     >
-                                                        {displayPosts[0].author}
+                                                        {getAuthorName(displayPosts[0])}
                                                     </span>
                                                 </div>
                                                 
-                                                <span 
-                                                    className="inline-flex items-center gap-2 font-semibold transition-all group-hover:gap-3"
-                                                    style={{ color: colors.primary }}
-                                                >
-                                                    Read More
-                                                    <FaArrowRight className="text-sm" />
-                                                </span>
+                                                {sectionCopy.readLabel && (
+                                                    <span 
+                                                        className="inline-flex items-center gap-2 font-semibold transition-all group-hover:gap-3"
+                                                        style={{ color: colors.primary }}
+                                                    >
+                                                        {sectionCopy.readLabel}
+                                                        <FaArrowRight className="text-sm" />
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -325,7 +340,7 @@ const Blog = () => {
                                                     backdropFilter: 'blur(10px)'
                                                 }}
                                             >
-                                                {post.category}
+                                                {getCategory(post)}
                                             </div>
                                         </div>
                                         
@@ -337,11 +352,11 @@ const Blog = () => {
                                             >
                                                 <span className="flex items-center gap-1">
                                                     <FaCalendarAlt />
-                                                    {post.date}
+                                                    {getDate(post)}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <FaClock />
-                                                    {post.readTime}
+                                                    {getReadTime(post)}
                                                 </span>
                                             </div>
                                             
@@ -356,7 +371,7 @@ const Blog = () => {
                                                 className="text-sm mb-4 line-clamp-2"
                                                 style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
                                             >
-                                                {post.excerpt}
+                                                {getExcerpt(post)}
                                             </p>
                                             
                                             {/* Author & Read More */}
@@ -368,23 +383,25 @@ const Blog = () => {
                                                             background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
                                                         }}
                                                     >
-                                                        {post.author?.charAt(0)}
+                                                        {getAuthorInitial(post)}
                                                     </div>
                                                     <span 
                                                         className="text-xs font-medium"
                                                         style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }}
                                                     >
-                                                        {post.author}
+                                                        {getAuthorName(post)}
                                                     </span>
                                                 </div>
                                                 
-                                                <span 
-                                                    className="inline-flex items-center gap-1 text-sm font-semibold transition-all group-hover:gap-2"
-                                                    style={{ color: colors.primary }}
-                                                >
-                                                    Read
-                                                    <FaArrowRight className="text-xs" />
-                                                </span>
+                                                {sectionCopy.readLabel && (
+                                                    <span 
+                                                        className="inline-flex items-center gap-1 text-sm font-semibold transition-all group-hover:gap-2"
+                                                        style={{ color: colors.primary }}
+                                                    >
+                                                        {sectionCopy.readLabel}
+                                                        <FaArrowRight className="text-xs" />
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -393,21 +410,23 @@ const Blog = () => {
                         </div>
 
                         {/* View All Button */}
-                        <ScrollReveal animation="fadeUp" delay={400}>
-                            <div className="text-center mt-16">
-                                <Link 
-                                    to="/blog"
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                        boxShadow: `0 20px 40px ${colors.primary}40`
-                                    }}
-                                >
-                                    View All Articles
-                                    <FaArrowRight />
-                                </Link>
-                            </div>
-                        </ScrollReveal>
+                        {sectionCopy.ctaLabel && (
+                            <ScrollReveal animation="fadeUp" delay={400}>
+                                <div className="text-center mt-16">
+                                    <Link 
+                                        to="/blog"
+                                        className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 hover:-translate-y-1 text-white"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                            boxShadow: `0 20px 40px ${colors.primary}40`
+                                        }}
+                                    >
+                                        {sectionCopy.ctaLabel}
+                                        <FaArrowRight />
+                                    </Link>
+                                </div>
+                            </ScrollReveal>
+                        )}
                     </>
                 )}
             </div>

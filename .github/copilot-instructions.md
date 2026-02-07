@@ -144,7 +144,7 @@ npm run dev
 
 1. **CRUD helper** ([../../backend/src/utils/crud.ts](../../backend/src/utils/crud.ts)): Avoids boilerplate for simple resources; define schema, controller, and route factory
 2. **Two-factor auth** ([../../backend/src/services/twofactor.ts](../../backend/src/services/twofactor.ts)): TOTP + backup codes for employees; optional for clients
-3. **Email service** ([../../backend/src/services/email.ts](../../backend/src/services/email.ts)): Uses SendGrid or Nodemailer; templates are HTML strings
+3. **Email service** ([../../backend/src/services/email.ts](../../backend/src/services/email.ts)): Uses Zoho Mail SMTP via Nodemailer with purpose-based from addresses (general, support, noreply, updates); templates are HTML strings
 4. **Audit logging** ([../../backend/src/services/audit.ts](../../backend/src/services/audit.ts)): Log sensitive actions (login, payment, role change) for compliance
 5. **Environment isolation**: `.env.example` lists all required variables; tests use separate `DATABASE_URL_TEST` if needed
 
@@ -189,7 +189,7 @@ npm run dev
 - **MIME type rejected**: Validate against whitelist in [../../backend/src/middleware/fileValidation.ts](../../backend/src/middleware/fileValidation.ts); common mimes: `application/pdf`, `image/*`, `text/plain`
 
 ### Email Delivery
-- **Email not sent**: Check `SENDGRID_API_KEY` or `SMTP_*` env vars in [../../backend/src/services/email.ts](../../backend/src/services/email.ts); verify `EMAIL_FROM` domain whitelisted
+- **Email not sent**: Check `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` env vars in [../../backend/src/services/email.ts](../../backend/src/services/email.ts); verify Zoho Mail SMTP credentials are correct and `EMAIL_FROM` domain is @angisoft.co.ke
 - **Email queue stuck**: Inspect Redis with `redis-cli KEYS 'bullmq:emails*'`; restart worker via `npm run dev` or manually flush queue
 - **Template issues**: Email templates are HTML strings; test with sample HTML before sending
 
@@ -220,5 +220,5 @@ npm run dev
 - **Database**: Use managed Postgres (Supabase, Neon) with automated backups
 - **File storage**: Cloudflare R2 (recommended) or AWS S3 with CDN (CloudFront)
 - **Frontend hosting**: Cloudflare Pages or Netlify with auto-deploy from main branch
-- **Email service**: Configure SendGrid or Postmark API key in production environment
+- **Email service**: Configure Zoho Mail SMTP credentials (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS) in production environment
 - **Monitoring**: Sentry captures backend errors; set up Datadog or similar for logs

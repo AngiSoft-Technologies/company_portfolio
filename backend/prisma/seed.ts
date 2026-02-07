@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const prisma = new PrismaClient();
 
@@ -10,13 +13,13 @@ async function main() {
     const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
     const hash = await bcrypt.hash(password, 10);
 
-    const existing = await prisma.employee.findUnique({ where: { email: 'admin@angisoft-technologies.com' } });
+    const existing = await prisma.employee.findUnique({ where: { email: 'admin@angisoft.co.ke' } });
     if (!existing) {
         await prisma.employee.create({
             data: {
                 firstName: 'Admin',
                 lastName: 'AngiSoft',
-                email: 'admin@angisoft-technologies.com',
+                email: 'admin@angisoft.co.ke',
                 role: 'ADMIN',
                 username: 'admin',
                 passwordHash: hash,
@@ -31,7 +34,7 @@ async function main() {
         console.log('ℹ️  Admin user already exists');
     }
 
-    const admin = await prisma.employee.findUnique({ where: { email: 'admin@angisoft-technologies.com' } });
+    const admin = await prisma.employee.findUnique({ where: { email: 'admin@angisoft.co.ke' } });
 
     // ==================== SITE SETTINGS ====================
     console.log('\n📝 Seeding site settings...');
@@ -107,8 +110,9 @@ async function main() {
             key: 'site_contact',
             value: {
                 companyName: "AngiSoft Technologies",
-                email: "info@angisofttechnologies.com",
-                phone: "+254 700 000 000",
+                email: "info@angisoft.co.ke",
+                phone: "+254710398690",
+                whatsapp: "+254710398690",
                 address: {
                     street: "Kimathi Street",
                     city: "Nairobi",
@@ -183,8 +187,207 @@ async function main() {
     });
     console.log('  ✅ Branding settings');
 
+    // UI Copy (Headings, labels, CTAs)
+    await prisma.setting.upsert({
+        where: { key: 'site_ui' },
+        update: {},
+        create: {
+            key: 'site_ui',
+            value: {
+                home: {
+                    hero: {
+                        welcomeLabel: 'Welcome to',
+                        showreelLabel: 'Watch Our Showreel'
+                    },
+                    about: {
+                        badge: 'About Us',
+                        storyLabel: 'Our Story',
+                        valuesTitle: 'Our Core Values',
+                        valuesSubtitle: 'The principles that guide everything we do'
+                    },
+                    services: {
+                        badge: 'Our Services',
+                        title: 'What We Offer',
+                        subtitle: 'Custom software, data analysis, cyber services, and more.',
+                        cta: {
+                            title: 'Ready to Start Your Project?',
+                            subtitle: 'Tell us about your idea and we will map the next steps.',
+                            primaryLabel: 'View All Services',
+                            primaryLink: '/services',
+                            secondaryLabel: 'Get Free Quote',
+                            secondaryLink: '/book'
+                        }
+                    },
+                    projects: {
+                        badge: 'Our Portfolio',
+                        title: 'Featured Projects',
+                        subtitle: 'Explore our latest work',
+                        ctaLabel: 'View All Projects'
+                    },
+                    blog: {
+                        badge: 'Our Blog',
+                        title: 'Latest Insights',
+                        subtitle: 'Thoughts, tutorials, and updates from our team.',
+                        ctaLabel: 'View All Articles',
+                        featuredLabel: 'Featured',
+                        readLabel: 'Read'
+                    },
+                    testimonials: {
+                        badge: 'Testimonials',
+                        title: 'What Our Clients Say',
+                        subtitle: 'Trusted by businesses across the region'
+                    },
+                    team: {
+                        badge: 'Our Team',
+                        title: 'Meet the Experts',
+                        subtitle: 'A talented team across software, data, and operations',
+                        ctaLabel: 'View Full Team'
+                    },
+                    contact: {
+                        badge: 'Get In Touch',
+                        title: 'Contact Us',
+                        subtitle: 'Have a project in mind? Let us talk.',
+                        introTitle: "Let's Talk",
+                        introSubtitle: 'We respond within 24 hours.'
+                    },
+                    skills: {
+                        title: 'Technologies We Use',
+                        subtitle: 'We build with modern, reliable stacks.'
+                    }
+                },
+                pages: {
+                    services: {
+                        badge: 'Our Expertise',
+                        title: 'Our Services',
+                        subtitle: 'Software, data, cyber, and advertising solutions built for your goals.',
+                        featureBadges: ['Custom Software', 'Data Analysis', 'Cyber Services', 'Advertising']
+                    },
+                    projects: {
+                        badge: 'Portfolio',
+                        title: 'Our Projects',
+                        subtitle: 'Discover the solutions we have delivered.',
+                        stats: {
+                            totalLabel: 'Total Projects',
+                            categoriesLabel: 'Categories',
+                            featuredLabel: 'Featured'
+                        },
+                        emptyMessage: 'No projects found in this category.',
+                        cta: {
+                            title: 'Have a Project in Mind?',
+                            subtitle: 'Let us collaborate on your next release.',
+                            primaryLabel: 'Start a Project',
+                            primaryLink: '/book',
+                            secondaryLabel: 'Contact Us',
+                            secondaryLink: '/#contact'
+                        }
+                    },
+                    blog: {
+                        badge: 'Blog',
+                        title: 'Insights & Updates',
+                        subtitle: 'News, guides, and announcements from our team.',
+                        ctaLabel: 'View All Articles'
+                    },
+                    testimonials: {
+                        badge: 'Client Reviews',
+                        title: 'What Our Clients Say',
+                        subtitle: 'Real feedback from teams we have supported.',
+                        stats: {
+                            clientsLabel: 'Happy Clients',
+                            ratingLabel: 'Avg Rating',
+                            satisfactionLabel: 'Satisfaction'
+                        }
+                    },
+                    staff: {
+                        badge: 'Meet the Team',
+                        title: 'Our Team',
+                        subtitle: 'The talent behind our solutions.',
+                        stats: {
+                            teamLabel: 'Team Members',
+                            departmentsLabel: 'Departments',
+                            experienceLabel: 'Years Experience',
+                            experienceValue: '5+'
+                        }
+                    }
+                }
+            }
+        }
+    });
+    console.log('  ✅ UI copy settings');
+
+    // Booking Copy (Headings, steps, labels)
+    await prisma.setting.upsert({
+        where: { key: 'site_booking' },
+        update: {},
+        create: {
+            key: 'site_booking',
+            value: {
+                hero: {
+                    badge: 'Start Your Project',
+                    title: 'Request a',
+                    highlight: 'Project'
+                },
+                success: {
+                    title: 'Booking Submitted!',
+                    message: 'Your booking has been received. We will reach out within 24 hours.'
+                },
+                labels: {
+                    next: 'Next',
+                    back: 'Back',
+                    submit: 'Submit Booking',
+                    submitting: 'Submitting...',
+                    viewStatus: 'View Status',
+                    returnHome: 'Return Home'
+                },
+                steps: [
+                    { title: 'Basic Information', icon: 'FaUser' },
+                    { title: 'Project Details', icon: 'FaFileAlt' },
+                    { title: 'Upload Files (Optional)', icon: 'FaCloudUploadAlt' }
+                ],
+                paymentStep: {
+                    title: 'Payment',
+                    icon: 'FaCreditCard'
+                },
+                projectTypes: [
+                    { value: 'SOFTWARE', label: 'Software Development', icon: '💻' },
+                    { value: 'DATA_ANALYSIS', label: 'Data Analysis', icon: '📊' },
+                    { value: 'CYBER_SERVICE', label: 'Cyber Services', icon: '🛡️' },
+                    { value: 'ADVERTISING', label: 'Advertising', icon: '📣' },
+                    { value: 'INTERNET_SERVICE', label: 'Internet Services', icon: '🌐' },
+                    { value: 'ENTERTAINMENT', label: 'Entertainment', icon: '🎬' },
+                    { value: 'DOCUMENT_EDIT', label: 'Document Editing', icon: '📝' },
+                    { value: 'REPORT', label: 'Reports & Posters', icon: '📄' },
+                    { value: 'RESUME', label: 'Resume / CV', icon: '📎' },
+                    { value: 'OTHER', label: 'Other', icon: '✨' }
+                ]
+            }
+        }
+    });
+    console.log('  ✅ Booking copy settings');
+
     // ==================== SERVICES ====================
+    console.log('\n🗂️  Seeding service categories...');
+
+    const serviceCategories = [
+        { name: 'Custom Software', slug: 'custom-software', description: 'Web apps, POS, management systems, and tailored solutions.', order: 1, published: true },
+        { name: 'Automation & Debugging', slug: 'automation-debugging', description: 'Code debugging, optimization, and Bash automation.', order: 2, published: true },
+        { name: 'Data Analysis', slug: 'data-analysis', description: 'Python/Excel analytics, dashboards, and reports.', order: 3, published: true },
+        { name: 'Cyber Services', slug: 'cyber-services', description: 'Document editing, reports, thesis, posters, presentations.', order: 4, published: true },
+        { name: 'Government Services', slug: 'government-services', description: 'KRA, SHA, and good conduct applications.', order: 5, published: true },
+        { name: 'Advertising', slug: 'advertising', description: 'Product and staff promotion campaigns.', order: 6, published: true },
+        { name: 'Internet Services', slug: 'internet-services', description: 'Coming soon.', order: 7, published: false },
+        { name: 'Entertainment Services', slug: 'entertainment-services', description: 'Coming soon.', order: 8, published: false }
+    ];
+
+    await prisma.serviceCategory.createMany({
+        data: serviceCategories,
+        skipDuplicates: true
+    });
+    console.log('  ✅ Service categories');
+
     console.log('\n🛠️  Seeding services...');
+
+    const categoryRecords = await prisma.serviceCategory.findMany();
+    const categoryBySlug = new Map(categoryRecords.map((category) => [category.slug, category]));
 
     const services = [
         {
@@ -192,56 +395,130 @@ async function main() {
             slug: 'custom-software-development',
             description: 'End-to-end custom software solutions designed to meet your unique business requirements. From web applications to enterprise systems, we build scalable, secure, and maintainable software.',
             priceFrom: 5000,
-            images: ['/images/services/software-dev.jpg'],
-            published: true
+            images: ['/images/Software-Development-Company.jpg'],
+            published: true,
+            categorySlug: 'custom-software',
+            targetAudience: 'Startups, SMEs, Enterprises',
+            scope: '4-12 weeks'
         },
         {
             title: 'Mobile App Development',
             slug: 'mobile-app-development',
-            description: 'Native and cross-platform mobile applications for iOS and Android. We use React Native, Flutter, and native technologies to deliver high-performance mobile experiences.',
+            description: 'Native and cross-platform mobile applications for iOS and Android. We use Flutter and Kotlin to deliver high-performance mobile experiences.',
             priceFrom: 3000,
-            images: ['/images/services/mobile-dev.jpg'],
-            published: true
+            images: ['/images/developer-8829735_1280.jpg'],
+            published: true,
+            categorySlug: 'custom-software',
+            targetAudience: 'Businesses, Startups',
+            scope: '6-14 weeks'
         },
         {
-            title: 'Cloud Solutions & DevOps',
-            slug: 'cloud-solutions-devops',
-            description: 'Cloud architecture, migration, and DevOps services. We help you leverage AWS, Azure, and Google Cloud for scalable, cost-effective infrastructure.',
-            priceFrom: 2500,
-            images: ['/images/services/cloud-devops.jpg'],
-            published: true
+            title: 'POS & Management Systems',
+            slug: 'pos-management-systems',
+            description: 'Sales, inventory, and management platforms tailored for retail, hospitality, and service businesses. Includes reporting and role-based access.',
+            priceFrom: 4000,
+            images: ['/images/web-development.jpg'],
+            published: true,
+            categorySlug: 'custom-software',
+            targetAudience: 'Retail, Hospitality, SMEs',
+            scope: '6-10 weeks'
         },
         {
-            title: 'UI/UX Design',
-            slug: 'ui-ux-design',
-            description: 'User-centered design that delights. Our design team creates intuitive, beautiful interfaces that enhance user engagement and drive conversions.',
-            priceFrom: 1500,
-            images: ['/images/services/ui-ux.jpg'],
-            published: true
+            title: 'Automation & Debugging',
+            slug: 'automation-debugging',
+            description: 'Code debugging, performance tuning, and automation with Bash scripting to streamline workflows and reduce manual effort.',
+            priceFrom: 800,
+            images: ['/images/programming-background-with-person-working-with-codes-computer.jpg'],
+            published: true,
+            categorySlug: 'automation-debugging',
+            targetAudience: 'Engineering Teams, Operations',
+            scope: '1-4 weeks'
         },
         {
-            title: 'API Development & Integration',
-            slug: 'api-development-integration',
-            description: 'RESTful and GraphQL API development, third-party integrations, and microservices architecture. Connect your systems seamlessly.',
-            priceFrom: 2000,
-            images: ['/images/services/api-dev.jpg'],
-            published: true
+            title: 'Data Analysis & Dashboards',
+            slug: 'data-analysis-dashboards',
+            description: 'Python and Excel-based analytics, dashboards, and reporting to help you make data-driven decisions.',
+            priceFrom: 600,
+            images: ['/images/developer-8829735_1280.jpg'],
+            published: true,
+            categorySlug: 'data-analysis',
+            targetAudience: 'SMEs, Analysts, Teams',
+            scope: '1-3 weeks'
         },
         {
-            title: 'Technical Consulting',
-            slug: 'technical-consulting',
-            description: 'Expert guidance on technology strategy, architecture decisions, and digital transformation. We help you make informed decisions.',
-            priceFrom: 500,
-            images: ['/images/services/consulting.jpg'],
-            published: true
+            title: 'Cyber Document Services',
+            slug: 'cyber-document-services',
+            description: 'Document editing and formatting for reports, thesis, posters, presentations, and attachments.',
+            priceFrom: 50,
+            images: ['/images/Software-Development-Company.jpg'],
+            published: true,
+            categorySlug: 'cyber-services',
+            targetAudience: 'Students, Professionals, SMEs',
+            scope: '2-5 days'
+        },
+        {
+            title: 'KRA & SHA Applications',
+            slug: 'kra-sha-applications',
+            description: 'We automate and assist with KRA, SHA, and good conduct applications through our system.',
+            priceFrom: 30,
+            images: ['/images/web-development.jpg'],
+            published: true,
+            categorySlug: 'government-services',
+            targetAudience: 'Individuals, SMEs',
+            scope: '1-3 days'
+        },
+        {
+            title: 'Advertising & Brand Promotion',
+            slug: 'advertising-brand-promotion',
+            description: 'Campaigns to promote your products and staff, with creative assets and reporting.',
+            priceFrom: 200,
+            images: ['/images/programming-background-with-person-working-with-codes-computer.jpg'],
+            published: true,
+            categorySlug: 'advertising',
+            targetAudience: 'Businesses, Startups',
+            scope: '2-4 weeks'
+        },
+        {
+            title: 'Internet Services (Coming Soon)',
+            slug: 'internet-services',
+            description: 'Reliable internet services for homes and businesses. Coming soon.',
+            priceFrom: 0,
+            images: ['/images/Software-Development-Company.jpg'],
+            published: false,
+            categorySlug: 'internet-services',
+            targetAudience: 'Homes, Businesses',
+            scope: 'TBD'
+        },
+        {
+            title: 'Entertainment Services (Coming Soon)',
+            slug: 'entertainment-services',
+            description: 'Entertainment offerings and digital media solutions. Coming soon.',
+            priceFrom: 0,
+            images: ['/images/web-development.jpg'],
+            published: false,
+            categorySlug: 'entertainment-services',
+            targetAudience: 'General Audience',
+            scope: 'TBD'
         }
     ];
 
     for (const service of services) {
+        const { categorySlug, ...serviceData } = service as any;
+        const category = categorySlug ? categoryBySlug.get(categorySlug) : null;
         await prisma.service.upsert({
-            where: { slug: service.slug },
-            update: { ...service, authorId: admin?.id },
-            create: { ...service, authorId: admin?.id }
+            where: { slug: serviceData.slug },
+            update: {
+                ...serviceData,
+                categoryId: category?.id,
+                category: category?.name || serviceData.category || 'General',
+                authorId: admin?.id
+            },
+            create: {
+                ...serviceData,
+                categoryId: category?.id,
+                category: category?.name || serviceData.category || 'General',
+                authorId: admin?.id
+            }
         });
     }
     console.log(`  ✅ ${services.length} services seeded`);
@@ -462,7 +739,7 @@ Contact us to discuss your mobile app project.`,
         {
             firstName: 'John',
             lastName: 'Kamau',
-            email: 'john.kamau@angisoft-technologies.com',
+            email: 'john.kamau@angisoft.co.ke',
             role: 'DEVELOPER' as const,
             bio: 'Full-stack developer with 8+ years of experience in building scalable web applications. Specializes in React, Node.js, and cloud architecture.',
             avatarUrl: '/images/team/john-kamau.jpg'
@@ -470,7 +747,7 @@ Contact us to discuss your mobile app project.`,
         {
             firstName: 'Mary',
             lastName: 'Njeri',
-            email: 'mary.njeri@angisoft-technologies.com',
+            email: 'mary.njeri@angisoft.co.ke',
             role: 'DEVELOPER' as const,
             bio: 'Senior mobile developer and UI/UX enthusiast. Expert in React Native and Flutter with a passion for creating beautiful user experiences.',
             avatarUrl: '/images/team/mary-njeri.jpg'
@@ -478,7 +755,7 @@ Contact us to discuss your mobile app project.`,
         {
             firstName: 'Peter',
             lastName: 'Ochieng',
-            email: 'peter.ochieng@angisoft-technologies.com',
+            email: 'peter.ochieng@angisoft.co.ke',
             role: 'DEVELOPER' as const,
             bio: 'DevOps engineer and cloud architect. AWS certified with expertise in CI/CD pipelines, containerization, and infrastructure automation.',
             avatarUrl: '/images/team/peter-ochieng.jpg'
@@ -486,7 +763,7 @@ Contact us to discuss your mobile app project.`,
         {
             firstName: 'Faith',
             lastName: 'Wambui',
-            email: 'faith.wambui@angisoft-technologies.com',
+            email: 'faith.wambui@angisoft.co.ke',
             role: 'MARKETING' as const,
             bio: 'Marketing strategist with a focus on tech companies. Specializes in digital marketing, content strategy, and brand development.',
             avatarUrl: '/images/team/faith-wambui.jpg'
@@ -507,6 +784,38 @@ Contact us to discuss your mobile app project.`,
         }
     }
     console.log(`  ✅ ${staffMembers.length} staff members seeded`);
+
+    // ==================== FAQs ====================
+    console.log('\n❓ Seeding FAQs...');
+
+    const faqs = [
+        // General
+        { question: 'What services does AngiSoft Technologies offer?', answer: 'We offer custom software development (web & mobile apps, POS systems), data analysis & dashboards, cyber/document services (reports, thesis, posters, presentations), government application support (KRA, SHA, Good Conduct), advertising & brand promotion, and more.', category: 'General', order: 1 },
+        { question: 'Where is AngiSoft Technologies located?', answer: 'We are based in Nairobi, Kenya but serve clients across Africa and globally. You can reach us at +254710398690 (call or WhatsApp) or email info@angisoft.co.ke.', category: 'General', order: 2 },
+        { question: 'What are your working hours?', answer: 'Our team is available Monday to Friday, 8:00 AM – 6:00 PM (EAT), and Saturdays 9:00 AM – 1:00 PM. For urgent matters, WhatsApp us at +254710398690.', category: 'General', order: 3 },
+        { question: 'How can I contact you?', answer: 'You can reach us via: 📞 Phone/WhatsApp: +254710398690, 📧 General: info@angisoft.co.ke, 📧 Support: support@angisoft.co.ke, or use the chat bot on our website for instant help.', category: 'General', order: 4 },
+        // Bookings & Projects
+        { question: 'How do I start a project with you?', answer: 'Simply visit our booking page and fill out the project request form. Select your project type, describe your requirements, and optionally upload reference files. Our team reviews every submission within 24 hours.', category: 'Bookings & Projects', order: 1 },
+        { question: 'What happens after I submit a booking?', answer: 'Your booking goes through these stages: Submitted → Under Review → Accepted → Terms Accepted → Deposit Paid → In Progress → Delivered → Completed. You will receive email updates at each stage.', category: 'Bookings & Projects', order: 2 },
+        { question: 'What file types can I upload with my booking?', answer: 'You can upload PDFs, images (JPG, PNG), Word documents, Excel files, and plain text files. Maximum 5 files, 10MB total.', category: 'Bookings & Projects', order: 3 },
+        { question: 'Can I track my project status?', answer: 'Yes! After submitting a booking, you will receive a booking reference. Use it on our Booking Status page to track progress in real time.', category: 'Bookings & Projects', order: 4 },
+        // Payments
+        { question: 'What payment methods do you accept?', answer: 'We accept M-Pesa, Stripe (Visa/Mastercard), and PayPal. Payment details are provided after your booking is accepted and terms are agreed upon.', category: 'Payments', order: 1 },
+        { question: 'Is a deposit required?', answer: 'Yes, a deposit (typically 30-50% of the project cost) is required before work begins. The remaining balance is due upon project delivery.', category: 'Payments', order: 2 },
+        // Technical
+        { question: 'What technologies do you use?', answer: 'We build with modern stacks including React, React Native, Flutter, Kotlin, Node.js, Python, TypeScript, PostgreSQL, AWS, and more. We choose the best technology for each project.', category: 'Technical', order: 1 },
+        { question: 'Do you provide ongoing support after delivery?', answer: 'Yes! We offer maintenance packages and ongoing support. All projects include a 30-day post-delivery support period at no extra cost.', category: 'Technical', order: 2 },
+        // Newsletter
+        { question: 'How do I stay updated with AngiSoft news?', answer: 'Subscribe to our newsletter at the bottom of any page! We send updates about new services, tech insights, and special offers from updates@angisoft.co.ke. You can unsubscribe at any time.', category: 'Newsletter', order: 1 },
+    ];
+
+    for (const faq of faqs) {
+        const existing = await prisma.faq.findFirst({ where: { question: faq.question } });
+        if (!existing) {
+            await prisma.faq.create({ data: { ...faq, published: true } });
+        }
+    }
+    console.log(`  ✅ ${faqs.length} FAQs seeded`);
 
     console.log('\n🎉 Seeding complete!\n');
 }

@@ -2,6 +2,10 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+# Ensure production defaults in container
+ENV NODE_ENV=production
+ENV PORT=5000
+
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
 
@@ -27,5 +31,5 @@ RUN npm run build && echo "=== BUILD OUTPUT ===" && ls -la dist/ && cat dist/ind
 # Expose port
 EXPOSE 5000
 
-# Start the app
-CMD ["node", "dist/index.js"]
+# Start the app (runs migrations then starts server)
+CMD ["npm", "run", "start:prod"]

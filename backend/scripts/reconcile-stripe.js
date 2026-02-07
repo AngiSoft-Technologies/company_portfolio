@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* Reconciliation script: call from cron or scheduler to reconcile recent Stripe PaymentIntents with DB */
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const Stripe = require('stripe');

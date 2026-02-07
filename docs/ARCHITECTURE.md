@@ -15,7 +15,7 @@ This document describes the proposed production architecture for the AngiSoft Te
 - Backend: Node.js + Express + TypeScript, Prisma ORM, hosted on a managed Node host (Render, Fly.io, or container on cloud provider). Containerized Dockerfile included.
 - Database: PostgreSQL (managed: Supabase, Neon, AWS RDS) with Prisma migrations.
 - File storage: Cloudflare R2 (recommended if using Cloudflare Pages) or AWS S3.
-- Email: SendGrid / Postmark / Mailgun for transactional emails (invites, booking updates, receipts).
+- Email: Zoho Mail SMTP (smtp.zoho.com:465) via nodemailer for transactional emails (invites, booking updates, receipts, newsletters).
 - Payments: Stripe (primary for card payments), PayPal (optional), M-Pesa via Daraja or certified aggregator.
 - Queue/Background: Redis + BullMQ for async jobs (email, webhook handling, file processing).
 - Observability: Sentry for errors, Prometheus/Grafana or hosted metrics for monitoring, centralized logs (structured JSON) to Datadog/Logflare.

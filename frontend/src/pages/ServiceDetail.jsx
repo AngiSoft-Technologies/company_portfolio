@@ -6,7 +6,7 @@ import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/
 import { 
     FaArrowLeft, FaRocket, FaCheckCircle, FaClock, FaDollarSign,
     FaEnvelope, FaPhoneAlt, FaChevronLeft, FaChevronRight,
-    FaStar, FaQuoteLeft, FaArrowRight
+    FaStar, FaQuoteLeft, FaArrowRight, FaUsers
 } from 'react-icons/fa';
 
 const ServiceDetail = () => {
@@ -102,14 +102,19 @@ const ServiceDetail = () => {
         );
     }
 
+    const categoryLabel = service.categoryRef?.name || service.category;
     const features = [
-        'Professional Quality',
-        'Fast Turnaround',
-        'Dedicated Support',
-        'Competitive Pricing',
-        'Custom Solutions',
-        'Satisfaction Guaranteed'
-    ];
+        categoryLabel ? `Category: ${categoryLabel}` : null,
+        service.targetAudience ? `Audience: ${service.targetAudience}` : null,
+        service.scope ? `Scope: ${service.scope}` : null,
+        service.priceFrom ? `Starting from ${service.currency || 'KES'} ${service.priceFrom}` : null
+    ].filter(Boolean);
+    const quickInfo = [
+        service.priceFrom && { icon: FaDollarSign, label: 'Starting Price', value: `${service.currency || 'KES'} ${service.priceFrom}` },
+        service.scope && { icon: FaClock, label: 'Scope', value: service.scope },
+        service.targetAudience && { icon: FaUsers, label: 'Audience', value: service.targetAudience },
+        categoryLabel && { icon: FaStar, label: 'Category', value: categoryLabel }
+    ].filter(Boolean);
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -294,87 +299,65 @@ const ServiceDetail = () => {
                             </ScrollReveal>
 
                             {/* Features */}
-                            <ScrollReveal animation="fadeUp" delay={100}>
-                                <GlassmorphismCard className="p-8">
-                                    <h3 
-                                        className="text-xl font-bold mb-6"
-                                        style={{ color: colors.text }}
-                                    >
-                                        What's Included
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {features.map((feature, idx) => (
-                                            <div 
-                                                key={idx}
-                                                className="flex items-center gap-3"
-                                            >
-                                                <FaCheckCircle 
-                                                    className="flex-shrink-0"
-                                                    style={{ color: colors.primary }}
-                                                />
-                                                <span style={{ color: colors.textSecondary }}>{feature}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </GlassmorphismCard>
-                            </ScrollReveal>
+                            {features.length > 0 && (
+                                <ScrollReveal animation="fadeUp" delay={100}>
+                                    <GlassmorphismCard className="p-8">
+                                        <h3 
+                                            className="text-xl font-bold mb-6"
+                                            style={{ color: colors.text }}
+                                        >
+                                            What's Included
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {features.map((feature, idx) => (
+                                                <div 
+                                                    key={idx}
+                                                    className="flex items-center gap-3"
+                                                >
+                                                    <FaCheckCircle 
+                                                        className="flex-shrink-0"
+                                                        style={{ color: colors.primary }}
+                                                    />
+                                                    <span style={{ color: colors.textSecondary }}>{feature}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </GlassmorphismCard>
+                                </ScrollReveal>
+                            )}
                         </div>
 
                         {/* Sidebar */}
                         <div className="space-y-6">
                             {/* Quick Info */}
-                            <ScrollReveal animation="fadeUp" delay={200}>
-                                <GlassmorphismCard className="p-6">
-                                    <h3 
-                                        className="text-lg font-bold mb-4"
-                                        style={{ color: colors.text }}
-                                    >
-                                        Quick Info
-                                    </h3>
-                                    <div className="space-y-4">
-                                        {service.priceFrom && (
-                                            <div className="flex items-center gap-3">
-                                                <div 
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                                                    style={{ backgroundColor: `${colors.primary}20` }}
-                                                >
-                                                    <FaDollarSign style={{ color: colors.primary }} />
+                            {quickInfo.length > 0 && (
+                                <ScrollReveal animation="fadeUp" delay={200}>
+                                    <GlassmorphismCard className="p-6">
+                                        <h3 
+                                            className="text-lg font-bold mb-4"
+                                            style={{ color: colors.text }}
+                                        >
+                                            Quick Info
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {quickInfo.map((item, idx) => (
+                                                <div key={idx} className="flex items-center gap-3">
+                                                    <div 
+                                                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                                                        style={{ backgroundColor: `${colors.primary}20` }}
+                                                    >
+                                                        <item.icon style={{ color: colors.primary }} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm" style={{ color: colors.textSecondary }}>{item.label}</p>
+                                                        <p className="font-bold" style={{ color: colors.text }}>{item.value}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm" style={{ color: colors.textSecondary }}>Starting Price</p>
-                                                    <p className="font-bold" style={{ color: colors.text }}>
-                                                        {service.currency || 'KES'} {service.priceFrom}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-3">
-                                            <div 
-                                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                                style={{ backgroundColor: `${colors.primary}20` }}
-                                            >
-                                                <FaClock style={{ color: colors.primary }} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm" style={{ color: colors.textSecondary }}>Response Time</p>
-                                                <p className="font-bold" style={{ color: colors.text }}>Within 24 hours</p>
-                                            </div>
+                                            ))}
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <div 
-                                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                                style={{ backgroundColor: `${colors.primary}20` }}
-                                            >
-                                                <FaStar style={{ color: colors.primary }} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm" style={{ color: colors.textSecondary }}>Satisfaction</p>
-                                                <p className="font-bold" style={{ color: colors.text }}>100% Guaranteed</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </GlassmorphismCard>
-                            </ScrollReveal>
+                                    </GlassmorphismCard>
+                                </ScrollReveal>
+                            )}
 
                             {/* CTA Card */}
                             <ScrollReveal animation="fadeUp" delay={300}>
@@ -415,7 +398,7 @@ const ServiceDetail = () => {
                                     </h3>
                                     <div className="space-y-3">
                                         <a 
-                                            href="tel:+254700000000"
+                                            href="tel:+254710398690"
                                             className="flex items-center gap-3 p-3 rounded-lg transition-colors"
                                             style={{ 
                                                 backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
@@ -426,7 +409,20 @@ const ServiceDetail = () => {
                                             <span>Call Us</span>
                                         </a>
                                         <a 
-                                            href="mailto:contact@angisoft.com"
+                                            href="https://wa.me/254710398690"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 p-3 rounded-lg transition-colors"
+                                            style={{ 
+                                                backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                                color: colors.text
+                                            }}
+                                        >
+                                            <FaPhoneAlt style={{ color: '#25D366' }} />
+                                            <span>WhatsApp Us</span>
+                                        </a>
+                                        <a 
+                                            href="mailto:support@angisoft.co.ke"
                                             className="flex items-center gap-3 p-3 rounded-lg transition-colors"
                                             style={{ 
                                                 backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { apiGet } from '../../js/httpClient';
 
 const ChatWidget = ({ theme }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -6,46 +7,104 @@ const ChatWidget = ({ theme }) => {
         {
             id: 1,
             type: 'bot',
-            content: "👋 Hello! I'm AngiBot, your AI assistant. How can I help you today?",
+            content: "👋 Hello! I'm AngiBot, your AI assistant. How can I help you today?\n\nTry asking about our services, pricing, FAQs, or say 'talk to a human'!",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-    const [chatMode, setChatMode] = useState('bot'); // 'bot' or 'human'
+    const [chatMode, setChatMode] = useState('bot');
+    const [faqs, setFaqs] = useState([]);
     const messagesEndRef = useRef(null);
 
     const quickReplies = [
         "Tell me about your services",
         "I need a quote",
-        "Talk to a human",
-        "View your projects"
+        "Show me FAQs",
+        "Talk to a human"
     ];
 
-    // AI response simulation
+    // Fetch FAQs on mount so the bot can answer from them
+    useEffect(() => {
+        apiGet('/api/faqs')
+            .then(data => { if (Array.isArray(data)) setFaqs(data); })
+            .catch(() => {});
+    }, []);
+
+    // AI response with FAQ awareness
     const getBotResponse = (userMessage) => {
-        const lowerMessage = userMessage.toLowerCase();
-        
-        if (lowerMessage.includes('service') || lowerMessage.includes('what do you do')) {
-            return "We offer a range of services including:\n\n🌐 **Web Development** - Custom websites & web apps\n📱 **Mobile Apps** - iOS & Android solutions\n☁️ **Cloud Solutions** - AWS, Azure, GCP\n🔧 **API Development** - RESTful & GraphQL\n🎨 **UI/UX Design** - User-centered design\n\nWould you like details on any specific service?";
+        const lower = userMessage.toLowerCase();
+
+        // Greeting
+        if (/^(hi|hello|hey|good\s?(morning|afternoon|evening)|howdy)/i.test(lower)) {
+            return "Hello there! 👋 Great to meet you!\n\nI'm here to help you with:\n• Information about our services\n• Getting a project quote\n• Answering FAQs\n• Connecting you with our team\n\nWhat would you like to know?";
         }
-        if (lowerMessage.includes('quote') || lowerMessage.includes('price') || lowerMessage.includes('cost')) {
-            return "I'd be happy to help you get a quote! 💰\n\nFor an accurate estimate, please tell me:\n1. What type of project you need\n2. Your timeline\n3. Any specific features required\n\nOr you can [book a free consultation](/book) with our team!";
+
+        // FAQ listing
+        if (lower.includes('faq') || lower.includes('question') || lower.includes('common')) {
+            if (faqs.length === 0) return "Our FAQ section is loading. Try again in a moment, or ask me anything directly!";
+            const categories = [...new Set(faqs.map(f => f.category))];
+            const categoryList = categories.map(c => `• ${c}`).join('\n');
+            return `Here are our FAQ categories:\n\n${categoryList}\n\nAsk me about any of these, or type a specific question!`;
         }
-        if (lowerMessage.includes('human') || lowerMessage.includes('person') || lowerMessage.includes('agent') || lowerMessage.includes('support')) {
-            return "I'll connect you with a team member! 👤\n\nOur support team is available:\n📅 Mon-Fri: 8AM - 6PM (EAT)\n\nIn the meantime, you can:\n📧 Email: info@angisoft.tech\n📞 Call: +254 700 000 000\n\nWould you like me to request a callback?";
+
+        // Try matching against loaded FAQs
+        if (faqs.length > 0) {
+            const matched = faqs.find(faq => {
+                const qWords = faq.question.toLowerCase().split(/\s+/);
+                const matchCount = qWords.filter(w => w.length > 3 && lower.includes(w)).length;
+                return matchCount >= 3;
+            });
+            if (matched) return `**${matched.question}**\n\n${matched.answer}`;
         }
-        if (lowerMessage.includes('project') || lowerMessage.includes('portfolio') || lowerMessage.includes('work')) {
-            return "Check out our amazing work! 🚀\n\nWe've built solutions for various industries including:\n• E-commerce platforms\n• Healthcare systems\n• FinTech applications\n• Educational tools\n\nVisit our [Projects page](/projects) to see case studies!";
+
+        // Services
+        if (lower.includes('service') || lower.includes('what do you do') || lower.includes('offer')) {
+            return "We offer a wide range of services:\n\n💻 **Custom Software** — Web apps, mobile apps, POS systems\n📊 **Data Analysis** — Python/Excel dashboards & reports\n📝 **Cyber Services** — Document editing, reports, thesis, posters\n🏛️ **Government Services** — KRA, SHA, Good Conduct applications\n📣 **Advertising** — Brand promotion campaigns\n🌐 **Internet Services** — Coming soon!\n\nWould you like details on any specific service?";
         }
-        if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-            return "Hello there! 👋 Great to meet you!\n\nI'm here to help you with:\n• Information about our services\n• Getting a project quote\n• Connecting you with our team\n• Answering general questions\n\nWhat would you like to know?";
+
+        // Quote / pricing
+        if (lower.includes('quote') || lower.includes('price') || lower.includes('cost') || lower.includes('how much')) {
+            return "I'd be happy to help you get a quote! 💰\n\nFor an accurate estimate, please tell me:\n1. What type of project you need\n2. Your timeline\n3. Any specific features required\n\nOr you can [book a free consultation](/booking) with our team!";
         }
-        if (lowerMessage.includes('thank')) {
+
+        // Payment
+        if (lower.includes('pay') || lower.includes('mpesa') || lower.includes('deposit')) {
+            return "We accept multiple payment methods:\n\n📱 **M-Pesa** — Direct mobile money\n💳 **Stripe** — Visa / Mastercard\n🌐 **PayPal** — International payments\n\nA deposit (30-50%) is required before work begins. The balance is due on delivery.";
+        }
+
+        // Contact / human / support
+        if (lower.includes('human') || lower.includes('person') || lower.includes('agent') || lower.includes('support') || lower.includes('contact') || lower.includes('call') || lower.includes('whatsapp')) {
+            return "I'll connect you with our team! 👤\n\n📞 **Call/WhatsApp:** [+254710398690](https://wa.me/254710398690)\n📧 **Support:** support@angisoft.co.ke\n📧 **General:** info@angisoft.co.ke\n\n🕗 **Hours:** Mon-Fri 8AM-6PM, Sat 9AM-1PM (EAT)\n\nYou can also WhatsApp us anytime for a quick response!";
+        }
+
+        // Projects / portfolio
+        if (lower.includes('project') || lower.includes('portfolio') || lower.includes('work') || lower.includes('example')) {
+            return "Check out our amazing work! 🚀\n\nWe've built solutions for various industries:\n• E-commerce & FinTech platforms\n• Healthcare & telemedicine systems\n• Educational tools & LMS\n• Fleet management & logistics\n\nVisit our [Projects page](/projects) to see case studies!";
+        }
+
+        // Booking / how to start
+        if (lower.includes('book') || lower.includes('start') || lower.includes('begin') || lower.includes('hire')) {
+            return "Starting a project is easy! 🎯\n\n1️⃣ Visit our [Booking page](/booking)\n2️⃣ Fill in your details & project requirements\n3️⃣ Upload any reference files (optional)\n4️⃣ We review within 24 hours!\n\nYour booking is tracked through every stage from submission to delivery.";
+        }
+
+        // Location
+        if (lower.includes('where') || lower.includes('location') || lower.includes('address') || lower.includes('office')) {
+            return "📍 We're based in **Nairobi, Kenya** and serve clients across Africa and globally.\n\nReach us:\n📞 +254710398690 (Call/WhatsApp)\n📧 info@angisoft.co.ke";
+        }
+
+        // Newsletter / updates
+        if (lower.includes('newsletter') || lower.includes('subscribe') || lower.includes('update')) {
+            return "Stay in the loop! 📬\n\nSubscribe to our newsletter at the bottom of any page to receive:\n• New service announcements\n• Tech insights & tutorials\n• Special offers\n\nWe send updates from updates@angisoft.co.ke — you can unsubscribe anytime.";
+        }
+
+        // Thanks
+        if (lower.includes('thank')) {
             return "You're very welcome! 😊\n\nIs there anything else I can help you with today?";
         }
-        
-        return "Thanks for your message! 🤔\n\nI'm still learning, but I can help you with:\n• Service information\n• Project quotes\n• Connecting to our team\n\nWould you like me to connect you with a human representative?";
+
+        // Fallback
+        return "Thanks for your message! 🤔\n\nI can help you with:\n• Our services & pricing\n• FAQs & common questions\n• Project booking\n• Connecting to our team\n\nTry asking something specific, or type **'FAQs'** to browse common questions!";
     };
 
     const scrollToBottom = () => {

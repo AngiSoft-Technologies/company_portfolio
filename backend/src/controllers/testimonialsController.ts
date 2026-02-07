@@ -7,11 +7,13 @@ export const testimonialsController = {
         if (t) await logAudit({ action: 'create_testimonial', entity: 'Testimonial', entityId: t.id, actorId: user?.sub || null, actorRole: user?.role || null });
         return t;
     },
-    async list() {
-        return prisma.testimonial?.findMany({ orderBy: { createdAt: 'desc' } }) || [];
+    async list(options: any = {}) {
+        return prisma.testimonial?.findMany({ orderBy: { createdAt: 'desc' }, ...options }) || [];
     },
-    async get(id: string) {
-        return prisma.testimonial?.findUnique({ where: { id } }) || null;
+    async get(id: string, options: any = {}) {
+        const { where, ...rest } = options;
+        const mergedWhere = where ? { ...where, id } : { id };
+        return prisma.testimonial?.findFirst({ where: mergedWhere, ...rest }) || null;
     },
     async update(id: string, data: any, user: any) {
         const t = await prisma.testimonial?.update({ where: { id }, data }) || null;

@@ -446,7 +446,7 @@ const ProjectDetails = () => {
                                                 backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white',
                                                 border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
                                             }}
-                                            onClick={() => navigate(`/projects/${proj.id || proj._id}`)}
+                                            onClick={() => navigate(`/project/${proj.id || proj._id}`)}
                                         >
                                             <div className="relative h-48 overflow-hidden">
                                                 <img

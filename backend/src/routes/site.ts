@@ -40,38 +40,7 @@ export default function siteRouter(prisma: PrismaClient) {
     router.get('/about', async (req, res) => {
         try {
             const about = await getSetting('site_about');
-            if (!about) {
-                return res.json({
-                    title: "Who We Are",
-                    subtitle: "Your Trusted Technology Partner",
-                    description: [
-                        "AngiSoft Technologies is a premier software development company headquartered in Kenya, serving clients across Africa and globally.",
-                        "We specialize in building innovative, scalable, and secure digital solutions that drive business growth.",
-                        "Our team of skilled developers, designers, and engineers are passionate about technology and committed to delivering excellence."
-                    ],
-                    values: [
-                        { icon: "FaLightbulb", title: "Innovation", text: "We stay ahead of technology trends to deliver cutting-edge solutions" },
-                        { icon: "FaHandshake", title: "Integrity", text: "Transparent communication and honest partnerships" },
-                        { icon: "FaAward", title: "Excellence", text: "Uncompromising quality in everything we create" },
-                        { icon: "FaUsers", title: "Collaboration", text: "Your success is our primary mission" }
-                    ],
-                    stats: [
-                        { value: 2019, label: "Founded", prefix: "" },
-                        { value: 50, suffix: "+", label: "Happy Clients" },
-                        { value: 100, suffix: "+", label: "Projects Delivered" },
-                        { value: 15, suffix: "+", label: "Team Members" }
-                    ],
-                    achievements: [
-                        "ISO 27001 Security Standards Compliant",
-                        "24/7 Support & Maintenance",
-                        "Agile Development Methodology",
-                        "100% Client Satisfaction Rate"
-                    ],
-                    videoUrl: null,
-                    imageUrl: null
-                });
-            }
-            res.json(about);
+            res.json(about || null);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -93,25 +62,7 @@ export default function siteRouter(prisma: PrismaClient) {
     router.get('/hero', async (req, res) => {
         try {
             const hero = await getSetting('site_hero');
-            if (!hero) {
-                return res.json({
-                    headline: "Building Tomorrow's",
-                    headlineHighlight: "Digital Solutions",
-                    subheadline: "Today",
-                    tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
-                    ctaPrimary: { text: "Start Your Project", link: "/booking" },
-                    ctaSecondary: { text: "View Our Work", link: "/#projects" },
-                    stats: [
-                        { value: 50, suffix: "+", label: "Happy Clients", icon: "FaUsers" },
-                        { value: 100, suffix: "+", label: "Projects Delivered", icon: "FaProjectDiagram" },
-                        { value: 5, suffix: "+", label: "Years Experience", icon: "FaAward" },
-                        { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
-                    ],
-                    backgroundVideo: "/videos/Logo - AngiSoft Technologies.mp4",
-                    backgroundImage: "/images/Logo - AngiSoft Technologies.png"
-                });
-            }
-            res.json(hero);
+            res.json(hero || null);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -133,31 +84,7 @@ export default function siteRouter(prisma: PrismaClient) {
     router.get('/contact', async (req, res) => {
         try {
             const contact = await getSetting('site_contact');
-            if (!contact) {
-                return res.json({
-                    companyName: "AngiSoft Technologies",
-                    email: "info@angisofttechnologies.com",
-                    phone: "+254 700 000 000",
-                    address: {
-                        street: "Kimathi Street",
-                        city: "Nairobi",
-                        country: "Kenya",
-                        postalCode: "00100"
-                    },
-                    hours: {
-                        weekdays: "Mon - Fri: 8:00 AM - 6:00 PM",
-                        weekends: "Sat: 9:00 AM - 1:00 PM"
-                    },
-                    social: {
-                        linkedin: "https://linkedin.com/company/angisofttechnologies",
-                        twitter: "https://twitter.com/angisofttech",
-                        github: "https://github.com/angisofttechnologies",
-                        facebook: "https://facebook.com/angisofttechnologies"
-                    },
-                    mapUrl: null
-                });
-            }
-            res.json(contact);
+            res.json(contact || null);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -179,30 +106,7 @@ export default function siteRouter(prisma: PrismaClient) {
     router.get('/footer', async (req, res) => {
         try {
             const footer = await getSetting('site_footer');
-            if (!footer) {
-                return res.json({
-                    description: "AngiSoft Technologies is a premier software development company delivering innovative digital solutions across Africa and beyond.",
-                    quickLinks: [
-                        { label: "About Us", href: "/#about" },
-                        { label: "Services", href: "/#services" },
-                        { label: "Projects", href: "/#projects" },
-                        { label: "Blog", href: "/blog" },
-                        { label: "Contact", href: "/#contact" }
-                    ],
-                    legalLinks: [
-                        { label: "Privacy Policy", href: "/privacy" },
-                        { label: "Terms of Service", href: "/terms" },
-                        { label: "Cookie Policy", href: "/cookies" }
-                    ],
-                    newsletter: {
-                        enabled: true,
-                        title: "Stay Updated",
-                        description: "Subscribe to our newsletter for the latest updates and insights."
-                    },
-                    copyright: "© {year} AngiSoft Technologies. All rights reserved."
-                });
-            }
-            res.json(footer);
+            res.json(footer || null);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -218,27 +122,57 @@ export default function siteRouter(prisma: PrismaClient) {
         }
     });
 
+    // ==================== UI COPY ====================
+
+    // GET /api/site/ui - Get UI copy for headings, CTAs, and labels
+    router.get('/ui', async (req, res) => {
+        try {
+            const ui = await getSetting('site_ui');
+            res.json(ui || null);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // PUT /api/site/ui - Update UI copy (admin only)
+    router.put('/ui', requireAuth, requireAdmin, async (req, res) => {
+        try {
+            const result = await upsertSetting('site_ui', req.body);
+            res.json(result.value);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ==================== BOOKING COPY ====================
+
+    // GET /api/site/booking - Get booking page copy and steps
+    router.get('/booking', async (req, res) => {
+        try {
+            const booking = await getSetting('site_booking');
+            res.json(booking || null);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // PUT /api/site/booking - Update booking page copy and steps (admin only)
+    router.put('/booking', requireAuth, requireAdmin, async (req, res) => {
+        try {
+            const result = await upsertSetting('site_booking', req.body);
+            res.json(result.value);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // ==================== BRANDING ====================
 
     // GET /api/site/branding - Get branding assets
     router.get('/branding', async (req, res) => {
         try {
             const branding = await getSetting('site_branding');
-            if (!branding) {
-                return res.json({
-                    logo: "/images/angisoft_logo.png",
-                    logoDark: "/images/angisoft_logo_dark.png",
-                    favicon: "/favicon.ico",
-                    siteName: "AngiSoft Technologies",
-                    tagline: "Building Tomorrow's Digital Solutions Today",
-                    colors: {
-                        primary: "#0891b2",
-                        secondary: "#06b6d4",
-                        accent: "#f59e0b"
-                    }
-                });
-            }
-            res.json(branding);
+            res.json(branding || null);
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -259,19 +193,23 @@ export default function siteRouter(prisma: PrismaClient) {
     // GET /api/site/all - Get all site settings at once (for SSR/preloading)
     router.get('/all', async (req, res) => {
         try {
-            const [about, hero, contact, footer, branding] = await Promise.all([
+            const [about, hero, contact, footer, branding, ui, booking] = await Promise.all([
                 getSetting('site_about'),
                 getSetting('site_hero'),
                 getSetting('site_contact'),
                 getSetting('site_footer'),
-                getSetting('site_branding')
+                getSetting('site_branding'),
+                getSetting('site_ui'),
+                getSetting('site_booking')
             ]);
             res.json({
                 about: about || null,
                 hero: hero || null,
                 contact: contact || null,
                 footer: footer || null,
-                branding: branding || null
+                branding: branding || null,
+                ui: ui || null,
+                booking: booking || null
             });
         } catch (err: any) {
             res.status(500).json({ error: err.message });

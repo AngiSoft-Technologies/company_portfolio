@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Link } from "react-router-dom";
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
   FaRocket, 
   FaArrowRight, 
@@ -22,10 +23,13 @@ const iconMap = {
 
 const Hero = () => {
   const { colors } = useTheme();
+  const { copy: uiCopy } = useSiteCopy();
   const videoRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [heroData, setHeroData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const getResponsiveValue = (values) => {
     const w = window.innerWidth;
@@ -42,33 +46,18 @@ const Hero = () => {
     return values[1920];
   };
 
-  const defaultHero = {
-    headline: "Building Tomorrow's",
-    headlineHighlight: "Digital Solutions",
-    subheadline: "Today",
-    tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
-    ctaPrimary: { text: "Start Your Project", link: "/booking" },
-    ctaSecondary: { text: "View Our Work", link: "/#projects" },
-    stats: [
-      { value: 50, suffix: '+', label: 'Happy Clients', icon: 'FaUsers' },
-      { value: 5, suffix: '+', label: 'Projects Delivered', icon: 'FaProjectDiagram' },
-      { value: 2, suffix: '+', label: 'Years Experience', icon: 'FaAward' },
-      { value: 24, suffix: '/7', label: 'Support Available', icon: 'FaHeadset' }
-    ],
-    backgroundVideo: "/videos/Matrix_rain_code.mp4",
-    backgroundImage: "/images/Software-Development-Company.jpg",
-    alternativeVideos: ["/videos/Hacked_screen_video.mp4", "/videos/Logo - AngiSoft Technologies.mp4"]
-  };
-
   useEffect(() => {
     const fetchHero = async () => {
       try {
         const data = await apiGet('/site/hero');
-        setHeroData(data || defaultHero);
-        console.log('Hero data fetched:', data || defaultHero);
+        setHeroData(data || null);
+        console.log('Hero data fetched:', data);
       } catch (err) {
         console.error('Failed to fetch hero data:', err);
-        setHeroData(defaultHero);
+        setError('Hero content is not available yet.');
+        setHeroData(null);
+      } finally {
+        setLoading(false);
       }
     };
     fetchHero();
@@ -85,9 +74,27 @@ const Hero = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  const content = heroData;
+  const stats = (content?.stats || []).map(s => ({
+    ...s,
+    icon: iconMap[s.icon] || FaUsers
+  }));
+  const headlineText = [content?.headline, content?.headlineHighlight].filter(Boolean).join(' ');
+  const subheadline = content?.subheadline;
+  const primaryCta = content?.ctaPrimary;
+  const secondaryCta = content?.ctaSecondary;
+  const normalizeCtaLink = (link) => (link === '/booking' ? '/book' : link);
+  const backgroundImage = content?.backgroundImage;
+  const backgroundVideo = content?.backgroundVideo;
+  const heroCopy = uiCopy?.home?.hero || {};
+
   // Handle video autoplay with fallback
   useEffect(() => {
     console.log('Setting up video autoplay');
+    if (!backgroundVideo) {
+      setVideoLoaded(false);
+      return;
+    }
     if (videoRef.current) {
       console.log('Video ref found, current src:', videoRef.current.src);
       videoRef.current.setAttribute('autoplay', '');
@@ -110,13 +117,23 @@ const Hero = () => {
     } else {
       console.log('⚠️ Video ref not found');
     }
-  }, [heroData]);
+  }, [heroData, backgroundVideo]);
 
-  const content = heroData || defaultHero;
-  const stats = (content.stats || []).map(s => ({
-    ...s,
-    icon: iconMap[s.icon] || FaUsers
-  }));
+  if (loading) {
+    return (
+      <section id="hero" className="relative min-h-screen flex items-center justify-center">
+        <div className="text-center text-lg">Loading hero content...</div>
+      </section>
+    );
+  }
+
+  if (!content) {
+    return (
+      <section id="hero" className="relative min-h-screen flex items-center justify-center">
+        <div className="text-center text-lg">{error || 'Hero content not configured yet.'}</div>
+      </section>
+    );
+  }
 
   return (
     <section 
@@ -137,55 +154,59 @@ const Hero = () => {
         />
         
         {/* Image Poster - Primary fallback */}
-        <img 
-          src="/images/Software-Development-Company.jpg"
-          alt="Hero Background"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ 
-            opacity: videoLoaded ? 0 : 0.8,
-            transition: 'opacity 0.8s ease-in-out'
-          }}
-          onLoad={() => console.log('✅ Image loaded')}
-          onError={(e) => console.error('❌ Image failed:', e.target.src)}
-        />
+        {backgroundImage && (
+          <img 
+            src={backgroundImage}
+            alt="Hero Background"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ 
+              opacity: videoLoaded ? 0 : 0.8,
+              transition: 'opacity 0.8s ease-in-out'
+            }}
+            onLoad={() => console.log('✅ Image loaded')}
+            onError={(e) => console.error('❌ Image failed:', e.target.src)}
+          />
+        )}
         
         {/* Video Element */}
-        <video
-          ref={videoRef}
-          autoPlay={true}
-          loop={true}
-          muted={true}
-          playsInline={true}
-          controls={false}
-          disablePictureInPicture={true}
-          preload="auto"
-          onLoadedData={() => {
-            console.log('✅ Video loaded (onLoadedData)');
-            setVideoLoaded(true);
-          }}
-          onCanPlay={() => {
-            console.log('✅ Video can play (onCanPlay)');
-          }}
-          onError={(e) => {
-            console.error('❌ Video error:', e);
-            setVideoLoaded(false);
-          }}
-          onPlay={() => console.log('✅ Video playing')}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ 
-            opacity: videoLoaded ? 0.4 : 0, 
-            transition: 'opacity 0.8s ease-in-out',
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            zIndex: 1,
-            pointerEvents: 'none'
-          }}
-          poster="/images/Software-Development-Company.jpg"
-        >
-          <source src="/videos/Matrix_rain_code.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {backgroundVideo && (
+          <video
+            ref={videoRef}
+            autoPlay={true}
+            loop={true}
+            muted={true}
+            playsInline={true}
+            controls={false}
+            disablePictureInPicture={true}
+            preload="auto"
+            onLoadedData={() => {
+              console.log('✅ Video loaded (onLoadedData)');
+              setVideoLoaded(true);
+            }}
+            onCanPlay={() => {
+              console.log('✅ Video can play (onCanPlay)');
+            }}
+            onError={(e) => {
+              console.error('❌ Video error:', e);
+              setVideoLoaded(false);
+            }}
+            onPlay={() => console.log('✅ Video playing')}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ 
+              opacity: videoLoaded ? 0.4 : 0, 
+              transition: 'opacity 0.8s ease-in-out',
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }}
+            poster={backgroundImage}
+          >
+            <source src={backgroundVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        )}
       </div>
 
       {/* Animated Gradient Overlay */}
@@ -296,14 +317,16 @@ const Hero = () => {
         </ScrollReveal>
         
         {/* Heading */}
-        <ScrollReveal animation="fadeUp" delay={100}>
-          <h2 className="font-medium text-white/70" style={{
-            fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.15rem', 1024: '1.2rem', 1366: '1.3rem', 1440: '1.4rem', 1920: '1.5rem' }),
-            marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1.125rem', 1440: '1.25rem', 1920: '1.375rem' })
-          }}>
-            Welcome to
-          </h2>
-        </ScrollReveal>
+        {heroCopy.welcomeLabel && (
+          <ScrollReveal animation="fadeUp" delay={100}>
+            <h2 className="font-medium text-white/70" style={{
+              fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.15rem', 1024: '1.2rem', 1366: '1.3rem', 1440: '1.4rem', 1920: '1.5rem' }),
+              marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1.125rem', 1440: '1.25rem', 1920: '1.375rem' })
+            }}>
+              {heroCopy.welcomeLabel}
+            </h2>
+          </ScrollReveal>
+        )}
         
         <ScrollReveal animation="scaleUp" delay={200}>
           <h1 
@@ -318,21 +341,23 @@ const Hero = () => {
               textShadow: '0 0 80px rgba(20, 184, 166, 0.3)'
             }}
           >
-            AngiSoft Technologies
+            {headlineText}
           </h1>
         </ScrollReveal>
         
-        <ScrollReveal animation="slideUp" delay={300}>
-          <h3 
-            className="font-semibold tracking-wide text-white/90"
-            style={{ 
-              fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.1rem', 768: '1.2rem', 900: '1.35rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-              marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.375rem', 1440: '1.5rem', 1920: '1.75rem' })
-            }}
-          >
-            Your Partner in Digital Innovation
-          </h3>
-        </ScrollReveal>
+        {subheadline && (
+          <ScrollReveal animation="slideUp" delay={300}>
+            <h3 
+              className="font-semibold tracking-wide text-white/90"
+              style={{ 
+                fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.1rem', 768: '1.2rem', 900: '1.35rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
+                marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.375rem', 1440: '1.5rem', 1920: '1.75rem' })
+              }}
+            >
+              {subheadline}
+            </h3>
+          </ScrollReveal>
+        )}
         
         <ScrollReveal animation="fadeUp" delay={400}>
           <p 
@@ -354,63 +379,69 @@ const Hero = () => {
               gap: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.25rem', 1024: '1.375rem', 1366: '1.5rem', 1440: '1.625rem', 1920: '1.75rem' })
             }}
           >
-            <Link 
-              to={content.ctaPrimary?.link || "/booking"}
-              className="group inline-flex items-center justify-center text-white shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
-              style={{
-                padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
-                fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
-                gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || colors.primary} 100%)`,
-                boxShadow: `0 20px 40px ${colors.primary}40`
-              }}
-            >
-              <FaRocket className="group-hover:rotate-12 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-              Explore Services
-              <FaArrowRight className="opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" style={{ fontSize: getResponsiveValue({ 360: '0.5rem', 420: '0.55rem', 475: '0.6rem', 575: '0.6rem', 768: '0.65rem', 900: '0.7rem', 1024: '0.7rem', 1366: '0.8rem', 1440: '0.85rem', 1920: '0.95rem' }) }} />
-            </Link>
-            <Link 
-              to="/book"
-              className="group inline-flex items-center justify-center text-white border-2 hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
-              style={{
-                padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
-                fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
-                gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
-                background: 'rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(10px)',
-                borderColor: 'rgba(255,255,255,0.2)'
-              }}
-            >
-              <FaCalendarCheck className="group-hover:scale-110 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-              Request a Quote
-            </Link>
+            {primaryCta?.text && primaryCta?.link && (
+              <Link 
+                to={normalizeCtaLink(primaryCta.link)}
+                className="group inline-flex items-center justify-center text-white shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
+                style={{
+                  padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
+                  fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
+                  gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || colors.primary} 100%)`,
+                  boxShadow: `0 20px 40px ${colors.primary}40`
+                }}
+              >
+                <FaRocket className="group-hover:rotate-12 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
+                {primaryCta.text}
+                <FaArrowRight className="opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" style={{ fontSize: getResponsiveValue({ 360: '0.5rem', 420: '0.55rem', 475: '0.6rem', 575: '0.6rem', 768: '0.65rem', 900: '0.7rem', 1024: '0.7rem', 1366: '0.8rem', 1440: '0.85rem', 1920: '0.95rem' }) }} />
+              </Link>
+            )}
+            {secondaryCta?.text && secondaryCta?.link && (
+              <Link 
+                to={normalizeCtaLink(secondaryCta.link)}
+                className="group inline-flex items-center justify-center text-white border-2 hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
+                style={{
+                  padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
+                  fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
+                  gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
+                  background: 'rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                  borderColor: 'rgba(255,255,255,0.2)'
+                }}
+              >
+                <FaCalendarCheck className="group-hover:scale-110 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
+                {secondaryCta.text}
+              </Link>
+            )}
           </div>
         </ScrollReveal>
 
         {/* Video Showreel Button */}
-        <ScrollReveal animation="fadeUp" delay={600}>
-          <button 
-            className="inline-flex items-center text-white/70 hover:text-white transition-colors group"
-            style={{
-              marginTop: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-              gap: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1rem', 1440: '1.125rem', 1920: '1.25rem' })
-            }}
-          >
-            <div 
-              className="rounded-full flex items-center justify-center transition-all group-hover:scale-110"
+        {heroCopy.showreelLabel && (
+          <ScrollReveal animation="fadeUp" delay={600}>
+            <button 
+              className="inline-flex items-center text-white/70 hover:text-white transition-colors group"
               style={{
-                width: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-                height: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-                background: 'rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.2)'
+                marginTop: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
+                gap: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1rem', 1440: '1.125rem', 1920: '1.25rem' })
               }}
             >
-              <FaPlay size={14} className="ml-0.5" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-            </div>
-            <span className="font-medium" style={{ fontSize: getResponsiveValue({ 360: '0.65rem', 420: '0.7rem', 475: '0.75rem', 575: '0.8rem', 768: '0.85rem', 900: '0.9rem', 1024: '0.95rem', 1366: '1rem', 1440: '1rem', 1920: '1.05rem' }) }}>Watch Our Showreel</span>
-          </button>
-        </ScrollReveal>
+              <div 
+                className="rounded-full flex items-center justify-center transition-all group-hover:scale-110"
+                style={{
+                  width: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
+                  height: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
+                  background: 'rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.2)'
+                }}
+              >
+                <FaPlay size={14} className="ml-0.5" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
+              </div>
+              <span className="font-medium" style={{ fontSize: getResponsiveValue({ 360: '0.65rem', 420: '0.7rem', 475: '0.75rem', 575: '0.8rem', 768: '0.85rem', 900: '0.9rem', 1024: '0.95rem', 1366: '1rem', 1440: '1rem', 1920: '1.05rem' }) }}>{heroCopy.showreelLabel}</span>
+            </button>
+          </ScrollReveal>
+        )}
 
         {/* Stats Section */}
         <ScrollReveal animation="fadeUp" delay={700}>

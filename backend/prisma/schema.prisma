@@ -1,3 +1,4 @@
+
 // Prisma schema for AngiSoft backend (Postgres)
 
 datasource db {
@@ -77,6 +78,11 @@ model Booking {
 
 enum ProjectType {
   SOFTWARE
+  DATA_ANALYSIS
+  CYBER_SERVICE
+  ADVERTISING
+  INTERNET_SERVICE
+  ENTERTAINMENT
   RESUME
   DOCUMENT_EDIT
   REPORT
@@ -130,7 +136,9 @@ model Service {
   title            String
   slug             String   @unique
   description      String
-  category         String   @default("General")  // Development, Design, Documents, DevOps, Debugging, Learning, Cyber, Quick Solutions
+  category         String   @default("General")  // Legacy label; prefer categoryId when available
+  categoryId       String?
+  categoryRef      ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   priceFrom        Float?
   targetAudience   String?  // Comma-separated or JSON; e.g., "Startups, Businesses, Enterprises"
   scope            String?  // Project duration/scope; e.g., "2-12 weeks"
@@ -140,6 +148,19 @@ model Service {
   published        Boolean   @default(false)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  services    Service[]
 }
 
 model Project {
@@ -247,4 +268,29 @@ model TwoFactorBackupCode {
   codeHash   String
   used       Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+// ─── Newsletter Subscribers ─────────────────────────────────────────
+model Subscriber {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  confirmed     Boolean  @default(false)
+  confirmToken  String?  @unique
+  unsubToken    String   @unique @default(uuid())
+  subscribedAt  DateTime @default(now())
+  confirmedAt   DateTime?
+  unsubscribedAt DateTime?
+}
+
+// ─── FAQ (fetched by ChatWidget and FAQ page) ───────────────────────
+model Faq {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  category  String   @default("General")
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

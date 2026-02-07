@@ -24,6 +24,7 @@ const navSections = [
         items: [
             { to: '/admin/staff', label: 'Staff', icon: FaUser },
             { to: '/admin/services', label: 'Services', icon: FaServicestack },
+            { to: '/admin/service-categories', label: 'Service Categories', icon: FaArchive },
             { to: '/admin/projects', label: 'Projects', icon: FaProjectDiagram },
         ]
     },

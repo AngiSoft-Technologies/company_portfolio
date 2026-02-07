@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaCogs, 
     FaLaptopCode, 
     FaMobileAlt, 
-    FaCloud, 
     FaShieldAlt, 
-    FaPaintBrush,
+    FaChartLine,
+    FaBullhorn,
     FaArrowRight,
     FaCheckCircle
 } from 'react-icons/fa';
@@ -16,76 +17,34 @@ import { ScrollReveal, GlassmorphismCard, ModernServiceCard } from '../modern';
 
 const Services = () => {
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [activeService, setActiveService] = useState(0);
     const isDark = mode === 'dark';
+    const sectionCopy = uiCopy?.home?.services || {};
+    const ctaCopy = sectionCopy?.cta || {};
 
-    const defaultServices = [
-        {
-            id: 1,
-            icon: FaLaptopCode,
-            title: 'Custom Web Development',
-            description: 'Full-stack web applications built with modern technologies like React, Node.js, and cloud infrastructure. We create responsive, scalable solutions.',
-            features: ['React & Next.js', 'Node.js Backend', 'Cloud Hosting', 'Real-time Apps'],
-            gradient: 'from-blue-500 to-cyan-500',
-            image: '/images/web-development.jpg'
-        },
-        {
-            id: 2,
-            icon: FaMobileAlt,
-            title: 'Mobile App Development',
-            description: 'Native and cross-platform mobile applications for iOS and Android using Flutter and React Native with seamless user experiences.',
-            features: ['Flutter', 'React Native', 'Native iOS/Android', 'App Store Deployment'],
-            gradient: 'from-violet-500 to-purple-600',
-            image: '/images/web-development.jpg'
-        },
-        {
-            id: 3,
-            icon: FaCloud,
-            title: 'Cloud Solutions',
-            description: 'Scalable cloud architecture, DevOps, and managed services on AWS, Azure, and Google Cloud for maximum reliability.',
-            features: ['AWS & Azure', 'DevOps', 'Auto-scaling', 'CI/CD Pipelines'],
-            gradient: 'from-cyan-500 to-teal-600',
-            image: '/images/programming-background-with-person-working-with-codes-computer.jpg'
-        },
-        {
-            id: 4,
-            icon: FaCogs,
-            title: 'API Development',
-            description: 'RESTful and GraphQL API design, development, and integration for seamless system connectivity and third-party integrations.',
-            features: ['REST APIs', 'GraphQL', 'Webhooks', 'Microservices'],
-            gradient: 'from-orange-500 to-red-600',
-            image: '/images/web-development.jpg'
-        },
-        {
-            id: 5,
-            icon: FaShieldAlt,
-            title: 'Cybersecurity',
-            description: 'Security audits, penetration testing, and implementation of robust security measures to protect your digital assets.',
-            features: ['Security Audits', 'Penetration Testing', 'Compliance', 'SIEM Solutions'],
-            gradient: 'from-emerald-500 to-green-600',
-            image: '/images/developer-8829735_1280.jpg'
-        },
-        {
-            id: 6,
-            icon: FaPaintBrush,
-            title: 'UI/UX Design',
-            description: 'User-centered design that combines aesthetics with functionality for exceptional digital experiences that convert.',
-            features: ['Figma Design', 'Prototyping', 'User Research', 'Design Systems'],
-            gradient: 'from-pink-500 to-rose-600',
-            image: '/images/web-development.jpg'
-        }
-    ];
+    const getCategoryMeta = (service) => {
+        const category = (service.categoryRef?.name || service.category || '').toLowerCase();
+        if (category.includes('mobile')) return { icon: FaMobileAlt, gradient: 'from-violet-500 to-purple-600' };
+        if (category.includes('data')) return { icon: FaChartLine, gradient: 'from-orange-500 to-red-600' };
+        if (category.includes('cyber') || category.includes('security')) return { icon: FaShieldAlt, gradient: 'from-emerald-500 to-green-600' };
+        if (category.includes('advert')) return { icon: FaBullhorn, gradient: 'from-pink-500 to-rose-600' };
+        if (category.includes('automation') || category.includes('debug')) return { icon: FaCogs, gradient: 'from-cyan-500 to-teal-600' };
+        if (category.includes('software') || category.includes('web') || category.includes('system')) return { icon: FaLaptopCode, gradient: 'from-blue-500 to-cyan-500' };
+        return { icon: FaCogs, gradient: 'from-blue-500 to-cyan-500' };
+    };
 
     useEffect(() => {
         const fetchServices = async () => {
             try {
                 const data = await apiGet('/services');
                 const published = Array.isArray(data) ? data.filter(s => s.published !== false) : [];
-                setServices(published.length > 0 ? published : defaultServices);
+                setServices(published);
             } catch (err) {
-                setServices(defaultServices);
+                setError('Failed to load services.');
             } finally {
                 setLoading(false);
             }
@@ -93,7 +52,7 @@ const Services = () => {
         fetchServices();
     }, []);
 
-    const displayServices = services.length > 0 ? services : defaultServices;
+    const displayServices = services;
 
     return (
         <section 
@@ -140,33 +99,39 @@ const Services = () => {
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
                     <div className="text-center mb-20">
-                        <div 
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
-                            style={{
-                                backgroundColor: `${colors.primary}15`,
-                                color: colors.primary
-                            }}
-                        >
-                            <FaCogs />
-                            Our Services
-                        </div>
-                        <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                            style={{
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
-                            }}
-                        >
-                            What We Offer
-                        </h2>
-                        <p 
-                            className="text-lg md:text-xl max-w-3xl mx-auto"
-                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                        >
-                            Comprehensive software solutions tailored to transform your business and accelerate growth
-                        </p>
+                        {sectionCopy.badge && (
+                            <div 
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                style={{
+                                    backgroundColor: `${colors.primary}15`,
+                                    color: colors.primary
+                                }}
+                            >
+                                <FaCogs />
+                                {sectionCopy.badge}
+                            </div>
+                        )}
+                        {sectionCopy.title && (
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    WebkitBackgroundClip: "text",
+                                    WebkitTextFillColor: "transparent",
+                                    backgroundClip: "text"
+                                }}
+                            >
+                                {sectionCopy.title}
+                            </h2>
+                        )}
+                        {sectionCopy.subtitle && (
+                            <p 
+                                className="text-lg md:text-xl max-w-3xl mx-auto"
+                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                            >
+                                {sectionCopy.subtitle}
+                            </p>
+                        )}
                     </div>
                 </ScrollReveal>
 
@@ -184,13 +149,28 @@ const Services = () => {
 
                 {!loading && (
                     <>
+                        {error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                {error}
+                            </div>
+                        )}
+                        {displayServices.length === 0 && !error && (
+                            <div className="text-center text-sm mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
+                                No services published yet.
+                            </div>
+                        )}
                         {/* Services Grid - Modern Card Layout */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-20">
                             {displayServices.slice(0, 6).map((service, idx) => {
-                                const defaultService = defaultServices[idx] || defaultServices[0];
-                                const ServiceIcon = service.icon || defaultService.icon;
-                                const features = service.features || defaultService.features;
-                                
+                                const { icon: ServiceIcon } = getCategoryMeta(service);
+                                const categoryLabel = service.categoryRef?.name || service.category;
+                                const features = [
+                                    categoryLabel ? `${categoryLabel}` : null,
+                                    service.targetAudience ? `Audience: ${service.targetAudience}` : null,
+                                    service.scope ? `Scope: ${service.scope}` : null,
+                                    service.priceFrom ? `From ${service.currency || 'KES'} ${service.priceFrom}` : null
+                                ].filter(Boolean);
+
                                 return (
                                     <ScrollReveal key={service.id || idx} animation="fadeUp" delay={idx * 100}>
                                         <div 
@@ -247,25 +227,27 @@ const Services = () => {
                                                 </p>
                                                 
                                                 {/* Features */}
-                                                <div className="space-y-2.5 mb-5">
-                                                    {features.slice(0, 3).map((feature, fIdx) => (
-                                                        <div 
-                                                            key={fIdx}
-                                                            className="flex items-center gap-3"
-                                                        >
-                                                            <FaCheckCircle 
-                                                                className="text-sm flex-shrink-0"
-                                                                style={{ color: colors.primary }}
-                                                            />
-                                                            <span 
-                                                                className="text-sm"
-                                                                style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }}
+                                                {features.length > 0 && (
+                                                    <div className="space-y-2.5 mb-5">
+                                                        {features.slice(0, 3).map((feature, fIdx) => (
+                                                            <div 
+                                                                key={fIdx}
+                                                                className="flex items-center gap-3"
                                                             >
-                                                                {feature}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                                                <FaCheckCircle 
+                                                                    className="text-sm flex-shrink-0"
+                                                                    style={{ color: colors.primary }}
+                                                                />
+                                                                <span 
+                                                                    className="text-sm"
+                                                                    style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }}
+                                                                >
+                                                                    {feature}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 
                                                 {/* Learn More Link */}
                                                 <Link 
@@ -291,39 +273,48 @@ const Services = () => {
                             })}
                         </div>
 
-                        {/* CTA Section */}
-                        <ScrollReveal animation="fadeUp" delay={300}>
-                            <div 
-                                className="text-center p-12 rounded-3xl"
-                                style={{
-                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                    boxShadow: `0 25px 80px ${colors.primary}40`
-                                }}
-                            >
-                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                                    Ready to Start Your Project?
-                                </h3>
-                                <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-                                    Let's discuss how we can help transform your ideas into powerful software solutions.
-                                </p>
-                                <div className="flex flex-wrap justify-center gap-4">
-                                    <Link 
-                                        to="/services"
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold bg-white transition-all hover:-translate-y-1 hover:shadow-xl"
-                                        style={{ color: colors.primary }}
-                                    >
-                                        View All Services
-                                        <FaArrowRight />
-                                    </Link>
-                                    <Link 
-                                        to="/book"
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-white border-2 border-white/30 transition-all hover:bg-white/10 hover:-translate-y-1"
-                                    >
-                                        Get Free Quote
-                                    </Link>
+                        {(ctaCopy.title || ctaCopy.subtitle || ctaCopy.primaryLabel || ctaCopy.secondaryLabel) && (
+                            <ScrollReveal animation="fadeUp" delay={300}>
+                                <div 
+                                    className="text-center p-12 rounded-3xl"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                        boxShadow: `0 25px 80px ${colors.primary}40`
+                                    }}
+                                >
+                                    {ctaCopy.title && (
+                                        <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                                            {ctaCopy.title}
+                                        </h3>
+                                    )}
+                                    {ctaCopy.subtitle && (
+                                        <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
+                                            {ctaCopy.subtitle}
+                                        </p>
+                                    )}
+                                    <div className="flex flex-wrap justify-center gap-4">
+                                        {ctaCopy.primaryLabel && (
+                                            <Link 
+                                                to={ctaCopy.primaryLink || "/services"}
+                                                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold bg-white transition-all hover:-translate-y-1 hover:shadow-xl"
+                                                style={{ color: colors.primary }}
+                                            >
+                                                {ctaCopy.primaryLabel}
+                                                <FaArrowRight />
+                                            </Link>
+                                        )}
+                                        {ctaCopy.secondaryLabel && (
+                                            <Link 
+                                                to={ctaCopy.secondaryLink || "/book"}
+                                                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-white border-2 border-white/30 transition-all hover:bg-white/10 hover:-translate-y-1"
+                                            >
+                                                {ctaCopy.secondaryLabel}
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </ScrollReveal>
+                            </ScrollReveal>
+                        )}
                     </>
                 )}
             </div>

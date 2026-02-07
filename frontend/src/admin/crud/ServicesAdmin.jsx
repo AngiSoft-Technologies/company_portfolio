@@ -5,26 +5,27 @@ import CrudModal from '../../components/CrudModal';
 
 const API_URL = '/services';
 
-const SERVICE_CATEGORIES = [
-  'Development',
-  'Design',
-  'Documents',
-  'DevOps',
-  'Debugging',
-  'Learning',
-  'Cyber',
-  'Quick Solutions',
+const DEFAULT_CATEGORIES = [
+  'Custom Software',
+  'Automation & Debugging',
+  'Data Analysis',
+  'Cyber Services',
+  'Government Services',
+  'Advertising',
+  'Internet Services',
+  'Entertainment Services',
   'General'
 ];
 
 const columns = [
   { key: 'title', title: 'Service' },
-  { key: 'category', title: 'Category' },
+  { key: 'category', title: 'Category', render: (_val, row) => row.categoryRef?.name || row.category || 'General' },
   { key: 'description', title: 'Description' },
 ];
 
 const ServicesAdmin = ({ theme }) => {
   const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -34,6 +35,7 @@ const ServicesAdmin = ({ theme }) => {
     slug: '',
     description: '', 
     category: 'General',
+    categoryId: '',
     priceFrom: '',
     targetAudience: '',
     scope: '',
@@ -41,8 +43,13 @@ const ServicesAdmin = ({ theme }) => {
   });
   const [message, setMessage] = useState('');
 
+  const categoryOptions = categories.length
+    ? [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    : DEFAULT_CATEGORIES.map((name) => ({ id: name, name }));
+
   useEffect(() => {
     fetchServices();
+    fetchCategories();
   }, []);
 
   const fetchServices = async () => {
@@ -50,11 +57,20 @@ const ServicesAdmin = ({ theme }) => {
     setError('');
     try {
       const res = await apiGet(API_URL);
-      setServices(res.data || []);
+      setServices(res.data || res || []);
     } catch (err) {
       setError('Failed to fetch services');
     }
     setLoading(false);
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await apiGet('/service-categories');
+      setCategories(res.data || res || []);
+    } catch (err) {
+      setCategories([]);
+    }
   };
 
   const openAddModal = () => {
@@ -64,6 +80,7 @@ const ServicesAdmin = ({ theme }) => {
       slug: '',
       description: '', 
       category: 'General',
+      categoryId: '',
       priceFrom: '',
       targetAudience: '',
       scope: '',
@@ -78,7 +95,8 @@ const ServicesAdmin = ({ theme }) => {
       title: row.title || '', 
       slug: row.slug || '',
       description: row.description || '', 
-      category: row.category || 'General',
+      category: row.categoryRef?.name || row.category || 'General',
+      categoryId: row.categoryId || row.categoryRef?.id || '',
       priceFrom: row.priceFrom || '',
       targetAudience: row.targetAudience || '',
       scope: row.scope || '',
@@ -94,6 +112,7 @@ const ServicesAdmin = ({ theme }) => {
       slug: '',
       description: '', 
       category: 'General',
+      categoryId: '',
       priceFrom: '',
       targetAudience: '',
       scope: '',
@@ -111,11 +130,16 @@ const ServicesAdmin = ({ theme }) => {
     setMessage('');
     setError('');
     try {
+      const payload = {
+        ...form,
+        priceFrom: form.priceFrom === '' ? undefined : Number(form.priceFrom),
+        categoryId: form.categoryId || undefined
+      };
       if (editing) {
-        await apiPut(`${API_URL}/${editing}`, form);
+        await apiPut(`${API_URL}/${editing}`, payload);
         setMessage('Updated successfully');
       } else {
-        await apiPost(API_URL, form);
+        await apiPost(API_URL, payload);
         setMessage('Added successfully');
       }
       fetchServices();
@@ -169,7 +193,7 @@ const ServicesAdmin = ({ theme }) => {
         actions={(row) => (
           <>
             <button className="admin-btn-secondary" onClick={() => openEditModal(row)}>Edit</button>
-            <button className="admin-btn-danger" onClick={() => handleDelete(row._id)}>Delete</button>
+            <button className="admin-btn-danger" onClick={() => handleDelete(row.id)}>Delete</button>
           </>
         )}
       />
@@ -208,11 +232,15 @@ const ServicesAdmin = ({ theme }) => {
             <select
               name="category"
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              onChange={(e) => {
+                const selected = e.target.value;
+                const matched = categories.find((cat) => cat.name === selected);
+                setForm({ ...form, category: selected, categoryId: matched?.id || '' });
+              }}
               className="admin-section-card w-full p-2 border rounded"
             >
-              {SERVICE_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>
               ))}
             </select>
           </div>

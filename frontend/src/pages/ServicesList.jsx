@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { useSiteCopy } from '../hooks/useSiteCopy';
 import { 
     FaCode, FaCog, FaMobile, FaCloud, FaDatabase, FaPaintBrush,
     FaRocket, FaArrowRight, FaCheckCircle, FaQuoteLeft,
@@ -30,10 +31,12 @@ const getIcon = (iconLink) => {
 const ServicesList = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [hoveredCard, setHoveredCard] = useState(null);
+    const pageCopy = uiCopy?.pages?.services || {};
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -50,12 +53,14 @@ const ServicesList = () => {
         fetchServices();
     }, []);
 
-    const features = [
-        { icon: FaCheckCircle, text: 'Custom Solutions' },
-        { icon: FaCheckCircle, text: 'Expert Team' },
-        { icon: FaCheckCircle, text: '24/7 Support' },
-        { icon: FaCheckCircle, text: 'On-Time Delivery' },
-    ];
+    const featureItems = Array.isArray(pageCopy.featureBadges) && pageCopy.featureBadges.length > 0
+        ? pageCopy.featureBadges
+        : Array.from(new Set(
+            services
+                .map((service) => service.categoryRef?.name || service.category || service.title)
+                .filter(Boolean)
+        )).slice(0, 4);
+    const features = featureItems.map((text) => ({ icon: FaCheckCircle, text }));
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -95,38 +100,37 @@ const ServicesList = () => {
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
-                        <span 
-                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                            style={{ 
-                                backgroundColor: `${colors.primary}20`,
-                                color: colors.primary,
-                                border: `1px solid ${colors.primary}40`
-                            }}
-                        >
-                            Our Expertise
-                        </span>
+                        {pageCopy.badge && (
+                            <span 
+                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}20`,
+                                    color: colors.primary,
+                                    border: `1px solid ${colors.primary}40`
+                                }}
+                            >
+                                {pageCopy.badge}
+                            </span>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span style={{ color: colors.text }}>Our </span>
-                            <span style={{ 
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
-                                Services
-                            </span>
-                        </h1>
+                        {pageCopy.title && (
+                            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                                <span style={{ color: colors.text }}>{pageCopy.title}</span>
+                            </h1>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={200}>
-                        <p 
-                            className="text-xl md:text-2xl max-w-3xl mx-auto mb-10"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            Comprehensive solutions to transform your ideas into reality
-                        </p>
+                        {pageCopy.subtitle && (
+                            <p 
+                                className="text-xl md:text-2xl max-w-3xl mx-auto mb-10"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                {pageCopy.subtitle}
+                            </p>
+                        )}
                     </ScrollReveal>
 
                     {/* Feature badges */}
@@ -200,7 +204,7 @@ const ServicesList = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/services/${service.slug}`)}
+                                                    onClick={() => navigate(`/service/${service.slug}`)}
                                                 >
                                                     {/* Gradient top bar */}
                                                     <div 

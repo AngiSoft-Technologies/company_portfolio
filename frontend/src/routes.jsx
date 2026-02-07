@@ -11,7 +11,9 @@ import BookingStatus from "./pages/BookingStatus";
 import StaffList from "./pages/StaffList";
 import StaffDetail from "./pages/StaffDetail";
 import ServiceDetail from "./pages/ServiceDetail";
-import AppLayout from "./layouts/AppLayout";
+import BlogList from "./pages/BlogList";
+import BlogDetail from "./pages/BlogDetail";import NewsletterConfirm from './pages/NewsletterConfirm';
+import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';import AppLayout from "./layouts/AppLayout";
 import AdminLogin from './admin/AdminLogin';
 import AdminLayout from './admin/AdminLayout';
 import FileUpload from './admin/FileUpload';
@@ -27,6 +29,7 @@ const AboutAdmin = lazy(() => import('./admin/crud/AboutAdmin'));
 const ProjectsAdmin = lazy(() => import('./admin/crud/ProjectsAdmin'));
 const SkillsAdmin = lazy(() => import('./admin/crud/SkillsAdmin'));
 const ServicesAdmin = lazy(() => import('./admin/crud/ServicesAdmin'));
+const ServiceCategoriesAdmin = lazy(() => import('./admin/crud/ServiceCategoriesAdmin'));
 const BlogAdmin = lazy(() => import('./admin/crud/BlogAdmin'));
 const EducationAdmin = lazy(() => import('./admin/crud/EducationAdmin'));
 const ExperienceAdmin = lazy(() => import('./admin/crud/ExperienceAdmin'));
@@ -64,8 +67,12 @@ const RoutesComponent = () => {
           <Route path="staff" element={<StaffList />} />
           <Route path="staff/:id" element={<StaffDetail />} />
           <Route path="testimonials" element={<TestimonialsList />} />
+          <Route path="blog" element={<BlogList />} />
+          <Route path="blog/:id" element={<BlogDetail />} />
           <Route path="book" element={<Booking />} />
           <Route path="booking/:id" element={<BookingStatus />} />
+          <Route path="newsletter/confirm" element={<NewsletterConfirm />} />
+          <Route path="newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -83,6 +90,7 @@ const RoutesComponent = () => {
           <Route path="projects" element={<ProjectsAdmin />} />
           <Route path="skills" element={<SkillsAdmin />} />
           <Route path="services" element={<ServicesAdmin />} />
+          <Route path="service-categories" element={<ServiceCategoriesAdmin />} />
           <Route path="blog" element={<BlogAdmin />} />
           <Route path="education" element={<EducationAdmin />} />
           <Route path="experience" element={<ExperienceAdmin />} />

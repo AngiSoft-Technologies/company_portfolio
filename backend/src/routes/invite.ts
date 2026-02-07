@@ -26,7 +26,7 @@ export default function inviteRouter(prisma: PrismaClient) {
         const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const employee = await prisma.employee.create({ data: { firstName, lastName, email, phone, role: (role as Role) || 'DEVELOPER', inviteToken: token, inviteExpiry: expiry } });
         const acceptUrl = `${process.env.FRONTEND_URL}/invite/accept?token=${token}`;
-        await sendMail({ to: email, subject: 'You are invited to AngiSoft', html: `<p>Click <a href="${acceptUrl}">here</a> to accept your invite.</p>` });
+        await sendMail({ to: email, subject: 'You are invited to AngiSoft', html: `<p>Click <a href="${acceptUrl}">here</a> to accept your invite.</p>`, purpose: 'noreply' });
         await logAudit({ action: 'create_invite', entity: 'Employee', entityId: employee.id, actorId: req.user?.sub || null, actorRole: req.user?.role || null });
         res.status(201).json({ message: 'Invite created' });
     });

@@ -15,6 +15,7 @@ const columns = [
 const BlogAdmin = ({ theme }) => {
   const { colors } = useTheme();
   const [blogs, setBlogs] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,6 +31,7 @@ const BlogAdmin = ({ theme }) => {
 
   useEffect(() => {
     fetchBlogs();
+    fetchCurrentUser();
   }, []);
 
   const fetchBlogs = async () => {
@@ -43,6 +45,15 @@ const BlogAdmin = ({ theme }) => {
       console.error('Error fetching blogs:', err);
     }
     setLoading(false);
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const data = await apiGet('/staff-dashboard/profile');
+      setCurrentUser(data || null);
+    } catch {
+      setCurrentUser(null);
+    }
   };
 
   const openAddModal = () => {
@@ -156,7 +167,14 @@ const BlogAdmin = ({ theme }) => {
       }}
     >
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>Blog Posts</h1>
+        <div>
+          <h1 style={{ margin: 0 }}>Blog Posts</h1>
+          {currentUser && (
+            <p style={{ marginTop: '0.35rem', fontSize: '0.85rem', color: colors?.textSecondary || '#6b7280' }}>
+              Posting as {currentUser.firstName} {currentUser.lastName}
+            </p>
+          )}
+        </div>
         <button
           onClick={openAddModal}
           style={{
@@ -219,6 +237,7 @@ const BlogAdmin = ({ theme }) => {
               <tr style={{ borderBottom: `2px solid ${colors?.primary || '#0066cc'}` }}>
                 <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 'bold' }}>Title</th>
                 <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 'bold' }}>Slug</th>
+                <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 'bold' }}>Author</th>
                 <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 'bold' }}>Published</th>
                 <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 'bold' }}>Actions</th>
               </tr>
@@ -234,6 +253,7 @@ const BlogAdmin = ({ theme }) => {
                 >
                   <td style={{ padding: '1rem' }}>{blog.title}</td>
                   <td style={{ padding: '1rem' }}>{blog.slug}</td>
+                  <td style={{ padding: '1rem' }}>{blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : '—'}</td>
                   <td style={{ padding: '1rem' }}>{blog.published ? '✓' : '✗'}</td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                     <button

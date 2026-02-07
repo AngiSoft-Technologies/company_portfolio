@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
+import { apiGet, apiPost } from '../../js/httpClient';
 import { 
     FaLinkedinIn, 
     FaTwitter, 
@@ -20,44 +21,117 @@ const Footer = () => {
     const { colors, mode } = useTheme();
     const currentYear = new Date().getFullYear();
     const isDark = mode === 'dark';
-    
-    const footerLinks = {
-        services: [
-            { label: "Web Development", href: "/services" },
-            { label: "Mobile Apps", href: "/services" },
-            { label: "Cloud Solutions", href: "/services" },
-            { label: "API Development", href: "/services" },
-            { label: "UI/UX Design", href: "/services" },
-        ],
-        company: [
-            { label: "About Us", href: "/#about" },
-            { label: "Our Team", href: "/staff" },
-            { label: "Projects", href: "/projects" },
-            { label: "Blog", href: "/blog" },
-            { label: "Testimonials", href: "/testimonials" },
-        ],
-        support: [
-            { label: "Get a Quote", href: "/book" },
-            { label: "Contact Us", href: "/#contact" },
-            { label: "FAQs", href: "#" },
-            { label: "Support", href: "#" },
-            { label: "Privacy Policy", href: "#" },
-        ],
+    const [footerData, setFooterData] = useState(null);
+    const [contactData, setContactData] = useState(null);
+    const [branding, setBranding] = useState(null);
+    const [services, setServices] = useState([]);
+    const [nlEmail, setNlEmail] = useState('');
+    const [nlStatus, setNlStatus] = useState(''); // '' | 'loading' | 'success' | 'error'
+    const [nlMessage, setNlMessage] = useState('');
+
+    const handleSubscribe = async () => {
+        if (!nlEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nlEmail)) {
+            setNlStatus('error');
+            setNlMessage('Please enter a valid email address.');
+            return;
+        }
+        setNlStatus('loading');
+        setNlMessage('');
+        try {
+            const res = await apiPost('/api/newsletter/subscribe', { email: nlEmail });
+            setNlStatus('success');
+            setNlMessage(res?.message || 'Thanks! Check your email to confirm your subscription.');
+            setNlEmail('');
+        } catch (err) {
+            setNlStatus('error');
+            setNlMessage(err?.response?.data?.error || err?.message || 'Something went wrong. Please try again.');
+        }
     };
 
+    useEffect(() => {
+        const fetchFooterData = async () => {
+            try {
+                const [footer, contact, brandingInfo, serviceList] = await Promise.all([
+                    apiGet('/site/footer'),
+                    apiGet('/site/contact'),
+                    apiGet('/site/branding'),
+                    apiGet('/services')
+                ]);
+                setFooterData(footer || null);
+                setContactData(contact || null);
+                setBranding(brandingInfo || null);
+                setServices(Array.isArray(serviceList) ? serviceList.filter(s => s.published !== false) : []);
+            } catch (err) {
+                console.error('Failed to load footer data:', err);
+            }
+        };
+        fetchFooterData();
+    }, []);
+
+    const sanitizeLinks = (links) => links.filter((link) => link && link.label && link.href);
+    const servicesLinks = sanitizeLinks(services
+        .filter((service) => service.slug)
+        .slice(0, 5)
+        .map((service) => ({
+            label: service.title,
+            href: `/service/${service.slug}`
+        })));
+    const companyLinks = sanitizeLinks(Array.isArray(footerData?.quickLinks) ? footerData.quickLinks : []);
+    const supportLinks = sanitizeLinks(Array.isArray(footerData?.legalLinks) ? footerData.legalLinks : []);
+    const newsletter = footerData?.newsletter;
+    const copyright = footerData?.copyright
+        ? footerData.copyright.replace('{year}', currentYear)
+        : '';
+    const description = footerData?.description || branding?.tagline || '';
+
     const socialLinks = [
-        { icon: FaLinkedinIn, href: '#', label: 'LinkedIn' },
-        { icon: FaTwitter, href: '#', label: 'Twitter' },
-        { icon: FaFacebookF, href: '#', label: 'Facebook' },
-        { icon: FaInstagram, href: '#', label: 'Instagram' },
-        { icon: FaGithub, href: '#', label: 'GitHub' },
-    ];
+        { icon: FaLinkedinIn, href: contactData?.social?.linkedin, label: 'LinkedIn' },
+        { icon: FaTwitter, href: contactData?.social?.twitter, label: 'Twitter' },
+        { icon: FaFacebookF, href: contactData?.social?.facebook, label: 'Facebook' },
+        { icon: FaInstagram, href: contactData?.social?.instagram, label: 'Instagram' },
+        { icon: FaGithub, href: contactData?.social?.github, label: 'GitHub' },
+    ].filter(link => !!link.href);
 
     const contactInfo = [
-        { icon: FaEnvelope, text: 'info@angisoft.tech', href: 'mailto:info@angisoft.tech' },
-        { icon: FaPhone, text: '+254 700 000 000', href: 'tel:+254700000000' },
-        { icon: FaMapMarkerAlt, text: 'Nairobi, Kenya', href: '#' },
-    ];
+        contactData?.email && { icon: FaEnvelope, text: contactData.email, href: `mailto:${contactData.email}` },
+        contactData?.phone && { icon: FaPhone, text: contactData.phone, href: `tel:${contactData.phone.replace(/\\s/g, '')}` },
+        (contactData?.address?.city || contactData?.address?.country) && {
+            icon: FaMapMarkerAlt,
+            text: [contactData?.address?.city, contactData?.address?.country].filter(Boolean).join(', '),
+            href: '#'
+        },
+    ].filter(Boolean);
+
+    const siteName = branding?.siteName || '';
+    const [brandMain, ...brandRest] = siteName.split(' ');
+    const brandSecondary = brandRest.join(' ');
+    const logoSrc = isDark ? (branding?.logoDark || branding?.logo) : (branding?.logo || branding?.logoDark);
+
+    const renderFooterLink = (link) => {
+        const isExternal = /^https?:\\/\\//.test(link.href || '');
+        const linkClasses = "text-white/60 hover:text-white transition-colors text-sm flex items-center gap-2 group";
+        const content = (
+            <>
+                <FaChevronRight 
+                    className="text-xs transition-transform group-hover:translate-x-1"
+                    style={{ color: colors.primary }}
+                />
+                {link.label}
+            </>
+        );
+        if (isExternal) {
+            return (
+                <a href={link.href} target="_blank" rel="noopener noreferrer" className={linkClasses}>
+                    {content}
+                </a>
+            );
+        }
+        return (
+            <Link to={link.href} className={linkClasses}>
+                {content}
+            </Link>
+        );
+    };
 
     return (
         <footer className="relative overflow-hidden">
@@ -108,41 +182,60 @@ const Footer = () => {
 
                 <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-8">
                     {/* Newsletter Section */}
-                    <div 
-                        className="mb-16 p-8 md:p-10 rounded-3xl"
-                        style={{
-                            background: `linear-gradient(135deg, ${colors.primary}20 0%, ${colors.secondary}10 100%)`,
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                            <div className="text-center md:text-left">
-                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                                    Stay Updated
-                                </h3>
-                                <p className="text-white/60">
-                                    Subscribe to our newsletter for the latest updates and insights.
-                                </p>
-                            </div>
-                            <div className="flex w-full md:w-auto gap-3">
-                                <input 
-                                    type="email" 
-                                    placeholder="Enter your email"
-                                    className="flex-1 md:w-72 px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 outline-none focus:border-white/40 transition-colors"
-                                />
-                                <button 
-                                    className="px-6 py-3.5 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 flex items-center gap-2"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                        boxShadow: `0 4px 20px ${colors.primary}40`
-                                    }}
-                                >
-                                    Subscribe
-                                    <FaArrowRight className="text-sm" />
-                                </button>
+                    {newsletter?.enabled !== false && (newsletter?.title || newsletter?.description) && (
+                        <div 
+                            className="mb-16 p-8 md:p-10 rounded-3xl"
+                            style={{
+                                background: `linear-gradient(135deg, ${colors.primary}20 0%, ${colors.secondary}10 100%)`,
+                                border: '1px solid rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="text-center md:text-left">
+                                    {newsletter?.title && (
+                                        <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                            {newsletter.title}
+                                        </h3>
+                                    )}
+                                    {newsletter?.description && (
+                                        <p className="text-white/60">
+                                            {newsletter.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex flex-col w-full md:w-auto gap-3">
+                                    <div className="flex w-full gap-3">
+                                        <input 
+                                            type="email" 
+                                            placeholder="Enter your email"
+                                            value={nlEmail}
+                                            onChange={(e) => { setNlEmail(e.target.value); setNlStatus(''); setNlMessage(''); }}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
+                                            className="flex-1 md:w-72 px-5 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 outline-none focus:border-white/40 transition-colors"
+                                            disabled={nlStatus === 'loading'}
+                                        />
+                                        <button 
+                                            onClick={handleSubscribe}
+                                            disabled={nlStatus === 'loading'}
+                                            className="px-6 py-3.5 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                                boxShadow: `0 4px 20px ${colors.primary}40`
+                                            }}
+                                        >
+                                            {nlStatus === 'loading' ? 'Subscribing...' : 'Subscribe'}
+                                            {nlStatus !== 'loading' && <FaArrowRight className="text-sm" />}
+                                        </button>
+                                    </div>
+                                    {nlMessage && (
+                                        <p className={`text-sm ${nlStatus === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                                            {nlMessage}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Main Footer Content */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
@@ -155,22 +248,31 @@ const Footer = () => {
                                         background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
                                     }}
                                 >
-                                    <span className="text-white font-bold text-xl">A</span>
+                                    {logoSrc ? (
+                                        <img src={logoSrc} alt={siteName || 'Brand'} className="w-8 h-8 object-contain" />
+                                    ) : (
+                                        <span className="text-white font-bold text-xl">{(brandMain || siteName || 'A').charAt(0)}</span>
+                                    )}
                                 </div>
                                 <div>
-                                    <span className="text-xl font-bold text-white">AngiSoft</span>
-                                    <span 
-                                        className="text-xl font-light ml-1"
-                                        style={{ color: colors.primary }}
-                                    >
-                                        Technologies
-                                    </span>
+                                    {brandMain && (
+                                        <span className="text-xl font-bold text-white">{brandMain}</span>
+                                    )}
+                                    {brandSecondary && (
+                                        <span 
+                                            className="text-xl font-light ml-1"
+                                            style={{ color: colors.primary }}
+                                        >
+                                            {brandSecondary}
+                                        </span>
+                                    )}
                                 </div>
                             </Link>
-                            <p className="text-white/60 mb-6 max-w-sm leading-relaxed">
-                                Transforming businesses through innovative software solutions. 
-                                Your trusted partner in digital excellence since 2019.
-                            </p>
+                            {description && (
+                                <p className="text-white/60 mb-6 max-w-sm leading-relaxed">
+                                    {description}
+                                </p>
+                            )}
                             
                             {/* Contact Info */}
                             <div className="space-y-3 mb-6">
@@ -225,74 +327,55 @@ const Footer = () => {
                         </div>
 
                         {/* Services Links */}
-                        <div>
-                            <h4 className="font-bold text-lg mb-5 text-white">Services</h4>
-                            <ul className="space-y-3">
-                                {footerLinks.services.map((link, idx) => (
-                                    <li key={idx}>
-                                        <Link 
-                                            to={link.href} 
-                                            className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-2 group"
-                                        >
-                                            <FaChevronRight 
-                                                className="text-xs transition-transform group-hover:translate-x-1"
-                                                style={{ color: colors.primary }}
-                                            />
-                                            {link.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {servicesLinks.length > 0 && (
+                            <div>
+                                <h4 className="font-bold text-lg mb-5 text-white">Services</h4>
+                                <ul className="space-y-3">
+                                    {servicesLinks.map((link, idx) => (
+                                        <li key={idx}>
+                                            {renderFooterLink(link)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
 
                         {/* Company Links */}
-                        <div>
-                            <h4 className="font-bold text-lg mb-5 text-white">Company</h4>
-                            <ul className="space-y-3">
-                                {footerLinks.company.map((link, idx) => (
-                                    <li key={idx}>
-                                        <Link 
-                                            to={link.href} 
-                                            className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-2 group"
-                                        >
-                                            <FaChevronRight 
-                                                className="text-xs transition-transform group-hover:translate-x-1"
-                                                style={{ color: colors.primary }}
-                                            />
-                                            {link.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {companyLinks.length > 0 && (
+                            <div>
+                                <h4 className="font-bold text-lg mb-5 text-white">Company</h4>
+                                <ul className="space-y-3">
+                                    {companyLinks.map((link, idx) => (
+                                        <li key={idx}>
+                                            {renderFooterLink(link)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
 
                         {/* Support Links */}
-                        <div>
-                            <h4 className="font-bold text-lg mb-5 text-white">Support</h4>
-                            <ul className="space-y-3">
-                                {footerLinks.support.map((link, idx) => (
-                                    <li key={idx}>
-                                        <Link 
-                                            to={link.href} 
-                                            className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-2 group"
-                                        >
-                                            <FaChevronRight 
-                                                className="text-xs transition-transform group-hover:translate-x-1"
-                                                style={{ color: colors.primary }}
-                                            />
-                                            {link.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {supportLinks.length > 0 && (
+                            <div>
+                                <h4 className="font-bold text-lg mb-5 text-white">Support</h4>
+                                <ul className="space-y-3">
+                                    {supportLinks.map((link, idx) => (
+                                        <li key={idx}>
+                                            {renderFooterLink(link)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     {/* Bottom Bar */}
                     <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <p className="text-white/50 text-sm text-center md:text-left">
-                            © {currentYear} AngiSoft Technologies. All rights reserved.
-                        </p>
+                        {copyright && (
+                            <p className="text-white/50 text-sm text-center md:text-left">
+                                {copyright}
+                            </p>
+                        )}
                         <div className="flex items-center gap-6">
                             <Link
                                 to="/admin/login"

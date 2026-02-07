@@ -130,8 +130,8 @@ router.post('/forgot', async (req, res) => {
     const token = createRefreshToken();
     const expiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
     await prisma.employee.update({ where: { id: emp.id }, data: { resetToken: token, resetExpiry: expiry } });
-    // send via SendGrid if configured else nodemailer
-    await sendMail({ to: email, subject: 'Password reset', html: `<p>Reset here: ${process.env.FRONTEND_URL}/reset?token=${token}</p>` });
+    // send password reset email via Zoho SMTP
+    await sendMail({ to: email, subject: 'Password reset', html: `<p>Reset here: ${process.env.FRONTEND_URL}/reset?token=${token}</p>`, purpose: 'noreply' });
     await logAudit({ action: 'forgot_password', entity: 'Employee', entityId: emp.id });
     res.json({ ok: true });
 });

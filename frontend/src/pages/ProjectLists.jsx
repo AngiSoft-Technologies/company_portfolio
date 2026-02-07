@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { useSiteCopy } from '../hooks/useSiteCopy';
 import { 
     FaCode, FaExternalLinkAlt, FaGithub, FaFilter,
     FaLaptopCode, FaRocket, FaEye, FaArrowRight
@@ -10,12 +11,15 @@ import {
 const ProjectLists = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
+    const { copy: uiCopy } = useSiteCopy();
     const [projects, setProjects] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
     const [hoveredCard, setHoveredCard] = useState(null);
+    const pageCopy = uiCopy?.pages?.projects || {};
+    const ctaCopy = pageCopy.cta || {};
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -47,10 +51,10 @@ const ProjectLists = () => {
     };
 
     const stats = [
-        { value: projects.length, label: 'Total Projects' },
-        { value: categories.length - 1, label: 'Categories' },
-        { value: projects.filter(p => p.featured).length || Math.floor(projects.length / 3), label: 'Featured' },
-    ];
+        { value: projects.length, label: pageCopy.stats?.totalLabel || '' },
+        { value: categories.length - 1, label: pageCopy.stats?.categoriesLabel || '' },
+        { value: projects.filter(p => p.featured).length || Math.floor(projects.length / 3), label: pageCopy.stats?.featuredLabel || '' },
+    ].filter(stat => stat.label);
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -91,69 +95,70 @@ const ProjectLists = () => {
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
-                        <span 
-                            className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                            style={{ 
-                                backgroundColor: `${colors.primary}20`,
-                                color: colors.primary,
-                                border: `1px solid ${colors.primary}40`
-                            }}
-                        >
-                            <FaLaptopCode className="inline mr-2" />
-                            Portfolio
-                        </span>
+                        {pageCopy.badge && (
+                            <span 
+                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
+                                style={{ 
+                                    backgroundColor: `${colors.primary}20`,
+                                    color: colors.primary,
+                                    border: `1px solid ${colors.primary}40`
+                                }}
+                            >
+                                <FaLaptopCode className="inline mr-2" />
+                                {pageCopy.badge}
+                            </span>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span style={{ color: colors.text }}>Our </span>
-                            <span style={{ 
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
-                                Projects
-                            </span>
-                        </h1>
+                        {pageCopy.title && (
+                            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                                <span style={{ color: colors.text }}>{pageCopy.title}</span>
+                            </h1>
+                        )}
                     </ScrollReveal>
                     
                     <ScrollReveal animation="fadeUp" delay={200}>
-                        <p 
-                            className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            Discover our portfolio of innovative solutions and creative work
-                        </p>
+                        {pageCopy.subtitle && (
+                            <p 
+                                className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                {pageCopy.subtitle}
+                            </p>
+                        )}
                     </ScrollReveal>
 
                     {/* Stats */}
-                    <ScrollReveal animation="fadeUp" delay={300}>
-                        <div className="flex flex-wrap justify-center gap-8">
-                            {stats.map((stat, idx) => (
-                                <div 
-                                    key={idx}
-                                    className="text-center px-6 py-4 rounded-2xl"
-                                    style={{ 
-                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                        backdropFilter: 'blur(10px)'
-                                    }}
-                                >
+                    {stats.length > 0 && (
+                        <ScrollReveal animation="fadeUp" delay={300}>
+                            <div className="flex flex-wrap justify-center gap-8">
+                                {stats.map((stat, idx) => (
                                     <div 
-                                        className="text-3xl font-bold mb-1"
-                                        style={{ color: colors.primary }}
+                                        key={idx}
+                                        className="text-center px-6 py-4 rounded-2xl"
+                                        style={{ 
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                            backdropFilter: 'blur(10px)'
+                                        }}
                                     >
-                                        {stat.value}+
+                                        <div 
+                                            className="text-3xl font-bold mb-1"
+                                            style={{ color: colors.primary }}
+                                        >
+                                            {stat.value}{typeof stat.value === 'number' ? '+' : ''}
+                                        </div>
+                                        <div 
+                                            className="text-sm"
+                                            style={{ color: colors.textSecondary }}
+                                        >
+                                            {stat.label}
+                                        </div>
                                     </div>
-                                    <div 
-                                        className="text-sm"
-                                        style={{ color: colors.textSecondary }}
-                                    >
-                                        {stat.label}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollReveal>
+                                ))}
+                            </div>
+                        </ScrollReveal>
+                    )}
                 </div>
             </ParallaxSection>
 
@@ -239,7 +244,7 @@ const ProjectLists = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/projects/${project.id || project._id}`)}
+                                                    onClick={() => navigate(`/project/${project.id || project._id}`)}
                                                 >
                                                     {/* Image Container */}
                                                     <div className="relative h-56 overflow-hidden">
@@ -390,9 +395,11 @@ const ProjectLists = () => {
                                             className="text-6xl mx-auto mb-4"
                                             style={{ color: colors.textSecondary }}
                                         />
-                                        <p style={{ color: colors.textSecondary }}>
-                                            No projects found in this category. Try another filter.
-                                        </p>
+                                        {pageCopy.emptyMessage && (
+                                            <p style={{ color: colors.textSecondary }}>
+                                                {pageCopy.emptyMessage}
+                                            </p>
+                                        )}
                                     </div>
                                 </ScrollReveal>
                             )}
@@ -410,42 +417,49 @@ const ProjectLists = () => {
                                 className="text-5xl mx-auto mb-6"
                                 style={{ color: colors.primary }}
                             />
-                            <h2 
-                                className="text-3xl md:text-4xl font-bold mb-6"
-                                style={{ color: colors.text }}
-                            >
-                                Have a Project in Mind?
-                            </h2>
-                            <p 
-                                className="text-xl mb-8 max-w-2xl mx-auto"
-                                style={{ color: colors.textSecondary }}
-                            >
-                                Let's collaborate and build something amazing together. 
-                                We turn ideas into reality.
-                            </p>
+                            {ctaCopy.title && (
+                                <h2 
+                                    className="text-3xl md:text-4xl font-bold mb-6"
+                                    style={{ color: colors.text }}
+                                >
+                                    {ctaCopy.title}
+                                </h2>
+                            )}
+                            {ctaCopy.subtitle && (
+                                <p 
+                                    className="text-xl mb-8 max-w-2xl mx-auto"
+                                    style={{ color: colors.textSecondary }}
+                                >
+                                    {ctaCopy.subtitle}
+                                </p>
+                            )}
                             <div className="flex flex-wrap justify-center gap-4">
-                                <button
-                                    onClick={() => navigate('/book')}
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
-                                        color: 'white'
-                                    }}
-                                >
-                                    <FaRocket />
-                                    Start a Project
-                                </button>
-                                <button
-                                    onClick={() => navigate('/#contact-me')}
-                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105"
-                                    style={{
-                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                        color: colors.text,
-                                        border: `2px solid ${colors.primary}`
-                                    }}
-                                >
-                                    Contact Us
-                                </button>
+                                {ctaCopy.primaryLabel && (
+                                    <button
+                                        onClick={() => navigate(ctaCopy.primaryLink || '/book')}
+                                        className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                            color: 'white'
+                                        }}
+                                    >
+                                        <FaRocket />
+                                        {ctaCopy.primaryLabel}
+                                    </button>
+                                )}
+                                {ctaCopy.secondaryLabel && (
+                                    <button
+                                        onClick={() => navigate(ctaCopy.secondaryLink || '/#contact-me')}
+                                        className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105"
+                                        style={{
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                            color: colors.text,
+                                            border: `2px solid ${colors.primary}`
+                                        }}
+                                    >
+                                        {ctaCopy.secondaryLabel}
+                                    </button>
+                                )}
                             </div>
                         </GlassmorphismCard>
                     </ScrollReveal>
