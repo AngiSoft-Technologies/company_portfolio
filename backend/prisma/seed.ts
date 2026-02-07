@@ -17,19 +17,20 @@ async function main() {
     if (!existing) {
         await prisma.employee.create({
             data: {
-                firstName: 'Admin',
-                lastName: 'AngiSoft',
+                firstName: 'Super',
+                lastName: 'admin',
                 email: 'admin@angisoft.co.ke',
                 role: 'ADMIN',
-                username: 'admin',
+                username: null,
                 passwordHash: hash,
                 twoFactorEnabled: false,
                 twoFactorSecret: null,
                 acceptedAt: new Date(),
-                bio: 'System Administrator for AngiSoft Technologies'
+                bio: 'System Administrator for AngiSoft Technologies',
+                phone: '+254710398690'
             }
         });
-        console.log('✅ Admin user created');
+        console.log('✅ Admin user created (email: admin@angisoft.co.ke, password: from ADMIN_PASSWORD env or default)');
     } else {
         console.log('ℹ️  Admin user already exists');
     }
@@ -124,10 +125,10 @@ async function main() {
                     weekends: "Sat: 9:00 AM - 1:00 PM"
                 },
                 social: {
-                    linkedin: "https://linkedin.com/company/angisofttechnologies",
-                    twitter: "https://twitter.com/angisofttech",
-                    github: "https://github.com/angisofttechnologies",
-                    facebook: "https://facebook.com/angisofttechnologies"
+                    linkedin: "https://linkedin.com/company/angisoft-technologies",
+                    twitter: "https://x.com/angisofttech",
+                    github: "https://github.com/angisoft-technologies",
+                    facebook: "https://facebook.com/angisoft.technologies"
                 }
             }
         }
@@ -528,60 +529,57 @@ async function main() {
 
     const projects = [
         {
-            title: 'PayQuick Mobile Banking',
-            slug: 'payquick-mobile-banking',
-            description: 'A comprehensive mobile banking application for a leading fintech startup. Features include mobile money integration, bill payments, and real-time transaction tracking.',
-            type: 'Mobile App',
-            images: ['/images/projects/payquick.jpg'],
-            techStack: ['React Native', 'Node.js', 'PostgreSQL', 'Redis', 'M-Pesa API'],
-            demoUrl: 'https://payquick.example.com',
-            published: true
-        },
-        {
-            title: 'LogiTrack Fleet Management',
-            slug: 'logitrack-fleet-management',
-            description: 'Real-time fleet tracking and management system with GPS integration, driver analytics, and automated reporting. Reduced operational costs by 30% for our client.',
+            title: 'E-Commerce Platform',
+            slug: 'ecommerce-platform-kenya',
+            description: 'Full-featured online shopping platform with mobile money integration, inventory management, and automated order processing. Built for a growing retail business in East Africa.',
             type: 'Web Application',
-            images: ['/images/projects/logitrack.jpg'],
-            techStack: ['React', 'Express.js', 'MongoDB', 'Socket.io', 'Google Maps API'],
-            demoUrl: 'https://logitrack.example.com',
+            images: ['/images/projects/ecommerce.jpg'],
+            techStack: ['React', 'Node.js', 'PostgreSQL', 'M-Pesa API', 'Redis'],
             published: true
         },
         {
-            title: 'HealthConnect Telemedicine',
-            slug: 'healthconnect-telemedicine',
-            description: 'HIPAA-compliant telemedicine platform enabling virtual consultations, appointment scheduling, and electronic health records management.',
+            title: 'School Management System',
+            slug: 'school-management-system',
+            description: 'Comprehensive school administration platform with student records, fee management, timetabling, and parent communication portal. Deployed across multiple institutions.',
+            type: 'Web Application',
+            images: ['/images/projects/school-system.jpg'],
+            techStack: ['React', 'Express.js', 'PostgreSQL', 'PDF Generation'],
+            published: true
+        },
+        {
+            title: 'Fleet Tracking Solution',
+            slug: 'fleet-tracking-solution',
+            description: 'Real-time GPS tracking and management system for logistics companies. Features route optimization, driver analytics, and automated reporting.',
+            type: 'Web & Mobile',
+            images: ['/images/projects/fleet-tracking.jpg'],
+            techStack: ['Flutter', 'Node.js', 'MongoDB', 'Google Maps API', 'Socket.io'],
+            published: true
+        },
+        {
+            title: 'Clinic Management App',
+            slug: 'clinic-management-app',
+            description: 'Patient records, appointment scheduling, and prescription management system for healthcare providers. HIPAA-compliant with secure data handling.',
             type: 'Healthcare Platform',
-            images: ['/images/projects/healthconnect.jpg'],
-            techStack: ['Next.js', 'TypeScript', 'PostgreSQL', 'WebRTC', 'AWS'],
+            images: ['/images/projects/clinic-app.jpg'],
+            techStack: ['React', 'TypeScript', 'PostgreSQL', 'Stripe'],
             published: true
         },
         {
-            title: 'EduLearn LMS',
-            slug: 'edulearn-lms',
-            description: 'Feature-rich learning management system with course creation, progress tracking, certificates, and gamification elements. Used by 10,000+ students.',
-            type: 'Education Platform',
-            images: ['/images/projects/edulearn.jpg'],
-            techStack: ['Vue.js', 'Django', 'PostgreSQL', 'Celery', 'S3'],
-            demoUrl: 'https://edulearn.example.com',
+            title: 'Restaurant POS System',
+            slug: 'restaurant-pos-system',
+            description: 'Point-of-sale solution with table management, kitchen display, inventory tracking, and sales analytics. Designed for hospitality businesses.',
+            type: 'POS System',
+            images: ['/images/projects/restaurant-pos.jpg'],
+            techStack: ['React', 'Node.js', 'PostgreSQL', 'Thermal Printing'],
             published: true
         },
         {
-            title: 'AgriMarket E-Commerce',
-            slug: 'agrimarket-ecommerce',
-            description: 'B2B agricultural marketplace connecting farmers directly with buyers. Features real-time pricing, logistics integration, and mobile money payments.',
-            type: 'E-Commerce',
-            images: ['/images/projects/agrimarket.jpg'],
-            techStack: ['React', 'Node.js', 'MongoDB', 'M-Pesa', 'Twilio'],
-            published: true
-        },
-        {
-            title: 'Smart Inventory System',
-            slug: 'smart-inventory-system',
-            description: 'AI-powered inventory management with demand forecasting, automated reordering, and multi-warehouse support for retail chains.',
-            type: 'Enterprise Software',
-            images: ['/images/projects/inventory.jpg'],
-            techStack: ['Angular', 'Python', 'TensorFlow', 'PostgreSQL', 'Docker'],
+            title: 'Data Analytics Dashboard',
+            slug: 'data-analytics-dashboard',
+            description: 'Interactive business intelligence dashboard with real-time data visualization, custom reports, and predictive analytics for decision-making.',
+            type: 'Data Analysis',
+            images: ['/images/projects/analytics-dashboard.jpg'],
+            techStack: ['Python', 'Pandas', 'PostgreSQL', 'D3.js', 'Excel Integration'],
             published: true
         }
     ];
@@ -601,70 +599,139 @@ async function main() {
     if (admin) {
         const posts = [
             {
-                title: 'The Future of AI in Software Development',
-                slug: 'future-of-ai-software-development',
-                content: `Artificial Intelligence is revolutionizing how we build software. From code generation to automated testing, AI tools are becoming essential in modern development workflows.
+                title: 'Why Every Business in Kenya Needs a Digital Presence in 2026',
+                slug: 'why-kenyan-businesses-need-digital-presence-2026',
+                content: `In today's fast-paced digital economy, having an online presence is no longer optional—it's essential for business growth and survival.
 
-## Key Trends
+## The Digital Shift in East Africa
 
-1. **AI-Powered Code Completion** - Tools like GitHub Copilot are changing how developers write code
-2. **Automated Testing** - AI can generate test cases and identify edge cases
-3. **Bug Detection** - Machine learning models can predict potential bugs before they happen
+Kenya is at the forefront of digital transformation in Africa. With over 60% internet penetration and M-Pesa leading global mobile money innovation, businesses that embrace digital tools have a significant competitive advantage.
 
-## What This Means for Developers
+## Key Benefits of Going Digital
 
-The role of developers is evolving. Rather than being replaced by AI, developers are becoming more productive by leveraging these tools to focus on higher-level problem solving.
+1. **Reach More Customers** - Your business is accessible 24/7 from anywhere
+2. **Reduce Operating Costs** - Automate repetitive tasks and streamline operations
+3. **Better Data & Insights** - Make informed decisions based on real customer data
+4. **Improved Customer Service** - Respond faster and serve customers better
 
-At AngiSoft Technologies, we're embracing these changes to deliver better solutions faster.`,
-                tags: ['AI', 'Development', 'Future Tech'],
+## What Digital Tools Do You Need?
+
+- **Website or E-Commerce Platform** - Your online storefront
+- **Mobile App** - For customer engagement and convenience
+- **POS System** - Track sales, inventory, and customer data
+- **Data Analytics** - Understand your business performance
+
+At AngiSoft Technologies, we help Kenyan businesses build custom digital solutions tailored to their needs. From small shops to large enterprises, we've got you covered.
+
+Ready to take your business digital? [Contact us today](/booking).`,
+                tags: ['Digital Transformation', 'Business', 'Kenya', 'E-Commerce'],
                 published: true,
-                publishedAt: new Date('2025-12-15')
+                publishedAt: new Date('2026-01-20')
             },
             {
-                title: 'Building Scalable Cloud Architecture',
-                slug: 'building-scalable-cloud-architecture',
-                content: `Cloud architecture is the foundation of modern applications. Here's how to design systems that grow with your business.
+                title: 'How to Choose the Right Software Development Partner',
+                slug: 'how-to-choose-software-development-partner',
+                content: `Choosing the right software development company can make or break your project. Here's what to look for.
 
-## Core Principles
+## Key Factors to Consider
 
-1. **Design for Failure** - Assume components will fail and build redundancy
-2. **Scale Horizontally** - Add more instances rather than bigger machines
-3. **Automate Everything** - Use Infrastructure as Code for reproducibility
+### 1. Local Experience & Understanding
+Your development partner should understand the Kenyan market, including M-Pesa integration, local payment methods, and business challenges unique to our region.
 
-## Best Practices
+### 2. Technical Expertise
+Look for companies with proven experience in the technologies your project needs:
+- Web development (React, Node.js)
+- Mobile apps (Flutter, React Native, Kotlin)
+- Database management (PostgreSQL, MongoDB)
+- Payment integration (M-Pesa, Stripe, PayPal)
 
-- Use managed services where possible
-- Implement proper monitoring and alerting
-- Design for security from the start
+### 3. Clear Communication
+Your team should provide:
+- Regular project updates
+- Transparent pricing with no hidden costs
+- Accessible support channels (phone, WhatsApp, email)
 
-Our team has extensive experience in AWS, Azure, and Google Cloud platforms.`,
-                tags: ['AWS', 'Cloud', 'DevOps', 'Architecture'],
+### 4. Portfolio & References
+Ask to see previous work and talk to past clients. Real testimonials matter more than fancy marketing.
+
+### 5. Ongoing Support
+Software needs maintenance and updates. Ensure your partner offers post-delivery support.
+
+## Red Flags to Avoid
+
+- Promises that sound too good to be true
+- No clear timeline or milestones
+- Poor communication or delayed responses
+- No written contract or agreement
+
+## Why AngiSoft?
+
+We're a Kenya-based team that understands local business needs. We've delivered 100+ projects across retail, education, healthcare, and logistics. Our clients stay with us because we deliver quality work on time and provide excellent ongoing support.
+
+[Start your project with us](/booking) or [view our portfolio](/#projects).`,
+                tags: ['Software Development', 'Business Tips', 'Technology'],
                 published: true,
-                publishedAt: new Date('2025-12-10')
+                publishedAt: new Date('2026-01-15')
             },
             {
-                title: 'Mobile App Development Trends 2026',
-                slug: 'mobile-app-trends-2026',
-                content: `Stay ahead of the curve with the latest trends in mobile app development.
+                title: 'The Complete Guide to M-Pesa Integration for Your Business',
+                slug: 'complete-guide-mpesa-integration',
+                content: `M-Pesa is Kenya's most popular payment method. Here's everything you need to know about integrating it into your business.
 
-## Top Trends
+## Why M-Pesa Integration Matters
 
-1. **Cross-Platform Development** - React Native and Flutter continue to dominate
-2. **5G-Enabled Apps** - New possibilities with faster connectivity
-3. **AI Integration** - On-device ML for smarter apps
+With over 30 million active users in Kenya, M-Pesa is essential for any business accepting digital payments. Customers trust it, and it's more accessible than traditional banking.
 
-## Framework Comparison
+## Integration Options
 
-| Framework | Performance | Dev Speed | Community |
-|-----------|-------------|-----------|-----------|
-| React Native | Good | Fast | Large |
-| Flutter | Excellent | Fast | Growing |
-| Native | Best | Slower | Largest |
+### 1. Paybill (For Businesses)
+- Best for: Retail stores, service providers, recurring payments
+- Automatic reconciliation
+- Professional business image
 
-Contact us to discuss your mobile app project.`,
-                tags: ['Mobile', 'Flutter', 'React Native', 'Trends'],
+### 2. Buy Goods Till Number
+- Best for: Small businesses, quick setup
+- Instant payments
+- Lower setup requirements
+
+### 3. M-Pesa Express (Lipa Na M-Pesa)
+- Best for: E-commerce and online platforms
+- STK Push for seamless checkout
+- Real-time payment confirmation
+
+## Technical Requirements
+
+- Safaricom Daraja API credentials
+- SSL certificate for your website
+- Webhook endpoint for payment notifications
+- Database to store transaction records
+
+## Common Challenges & Solutions
+
+**Challenge**: Payment confirmation delays
+**Solution**: Implement webhook handlers and queue systems for reliability
+
+**Challenge**: Failed transactions
+**Solution**: Automatic retry logic and clear user notifications
+
+**Challenge**: Reconciliation difficulties
+**Solution**: Automated matching between M-Pesa statements and your database
+
+## How We Can Help
+
+AngiSoft has integrated M-Pesa into 50+ applications. We handle:
+- API integration and testing
+- Security and compliance
+- Payment reconciliation
+- Error handling and retries
+- Customer notifications
+
+Whether you need M-Pesa for your POS system, e-commerce platform, or mobile app, we've got the expertise.
+
+[Get a free consultation](/booking) on M-Pesa integration.`,
+                tags: ['M-Pesa', 'Payments', 'Integration', 'Kenya'],
                 published: true,
-                publishedAt: new Date('2025-12-05')
+                publishedAt: new Date('2026-01-10')
             }
         ];
 
@@ -683,42 +750,42 @@ Contact us to discuss your mobile app project.`,
 
     const testimonials = [
         {
-            name: 'Sarah Johnson',
-            company: 'TechStart Inc.',
-            role: 'CEO',
-            text: "AngiSoft Technologies delivered our mobile app ahead of schedule. Their team's expertise and communication were exceptional throughout the project. We've seen a 40% increase in user engagement since launch.",
-            rating: 5,
-            confirmed: true
-        },
-        {
-            name: 'Michael Oduya',
-            company: 'PayQuick Kenya',
-            role: 'Founder',
-            text: "Working with AngiSoft was a game-changer for our fintech startup. They built a secure, scalable payment platform that our customers love. The attention to security and compliance was impressive.",
-            rating: 5,
-            confirmed: true
-        },
-        {
-            name: 'Jennifer Wanjiku',
-            company: 'LogiTrack',
+            name: 'Grace Muthoni',
+            company: 'Savannah Retail Ltd',
             role: 'Operations Manager',
-            text: "The fleet management system AngiSoft built for us has reduced our operational costs by 30%. Their ongoing support and maintenance have been invaluable. Highly recommend their services!",
+            text: "AngiSoft built our POS system and it has completely transformed how we manage our stores. Sales tracking, inventory, and reporting all work seamlessly. The team was professional and delivered on time.",
             rating: 5,
             confirmed: true
         },
         {
-            name: 'David Mwangi',
-            company: 'HealthTech Africa',
-            role: 'CTO',
-            text: "AngiSoft's technical expertise is unmatched. They delivered a HIPAA-compliant telemedicine platform that has transformed healthcare delivery in our region. Professional team with excellent communication.",
+            name: 'Daniel Kipchoge',
+            company: 'Greenfield Academy',
+            role: 'Principal',
+            text: "The school management system from AngiSoft has made administration so much easier. Fee collection, student records, and parent communication are now all in one place. Highly recommended!",
             rating: 5,
             confirmed: true
         },
         {
-            name: 'Grace Akinyi',
-            company: 'EduLearn Institute',
-            role: 'Director',
-            text: "Our LMS platform by AngiSoft has revolutionized how we deliver education. The intuitive design and robust features have increased student engagement by 60%. Exceptional work!",
+            name: 'Alice Wanjiru',
+            company: 'HealthCare Plus Clinic',
+            role: 'Medical Director',
+            text: "We needed a secure patient management system and AngiSoft delivered exactly what we needed. Appointment scheduling and records management work perfectly. Their support has been excellent.",
+            rating: 5,
+            confirmed: true
+        },
+        {
+            name: 'James Omondi',
+            company: 'Swift Logistics',
+            role: 'Fleet Manager',
+            text: "The fleet tracking solution has saved us thousands in fuel costs and improved our delivery times. Real-time tracking and route optimization are game changers for our business.",
+            rating: 5,
+            confirmed: true
+        },
+        {
+            name: 'Mary Kamau',
+            company: 'Nairobi Fashion Hub',
+            role: 'Founder',
+            text: "Our e-commerce platform by AngiSoft has exceeded expectations. M-Pesa integration works flawlessly and our online sales have grown by 250%. Worth every shilling!",
             rating: 5,
             confirmed: true
         }
@@ -737,36 +804,40 @@ Contact us to discuss your mobile app project.`,
 
     const staffMembers = [
         {
-            firstName: 'John',
-            lastName: 'Kamau',
-            email: 'john.kamau@angisoft.co.ke',
+            firstName: 'David',
+            lastName: 'Kimani',
+            email: 'david.kimani@angisoft.co.ke',
             role: 'DEVELOPER' as const,
-            bio: 'Full-stack developer with 8+ years of experience in building scalable web applications. Specializes in React, Node.js, and cloud architecture.',
-            avatarUrl: '/images/team/john-kamau.jpg'
+            bio: 'Full-stack developer specializing in React, Node.js, and PostgreSQL. 6+ years building web and mobile applications for East African businesses.',
+            avatarUrl: '/images/team/david-kimani.jpg',
+            phone: '+254712345678'
         },
         {
-            firstName: 'Mary',
+            firstName: 'Sarah',
             lastName: 'Njeri',
-            email: 'mary.njeri@angisoft.co.ke',
+            email: 'sarah.njeri@angisoft.co.ke',
             role: 'DEVELOPER' as const,
-            bio: 'Senior mobile developer and UI/UX enthusiast. Expert in React Native and Flutter with a passion for creating beautiful user experiences.',
-            avatarUrl: '/images/team/mary-njeri.jpg'
+            bio: 'Mobile developer with expertise in Flutter and Kotlin. Passionate about creating intuitive user experiences for Android and iOS platforms.',
+            avatarUrl: '/images/team/sarah-njeri.jpg',
+            phone: '+254723456789'
         },
         {
-            firstName: 'Peter',
-            lastName: 'Ochieng',
-            email: 'peter.ochieng@angisoft.co.ke',
+            firstName: 'Brian',
+            lastName: 'Odhiambo',
+            email: 'brian.odhiambo@angisoft.co.ke',
             role: 'DEVELOPER' as const,
-            bio: 'DevOps engineer and cloud architect. AWS certified with expertise in CI/CD pipelines, containerization, and infrastructure automation.',
-            avatarUrl: '/images/team/peter-ochieng.jpg'
+            bio: 'Data analyst and Python specialist. Creates business intelligence dashboards and automated reporting solutions using Excel and Python.',
+            avatarUrl: '/images/team/brian-odhiambo.jpg',
+            phone: '+254734567890'
         },
         {
-            firstName: 'Faith',
+            firstName: 'Lucy',
             lastName: 'Wambui',
-            email: 'faith.wambui@angisoft.co.ke',
+            email: 'lucy.wambui@angisoft.co.ke',
             role: 'MARKETING' as const,
-            bio: 'Marketing strategist with a focus on tech companies. Specializes in digital marketing, content strategy, and brand development.',
-            avatarUrl: '/images/team/faith-wambui.jpg'
+            bio: 'Digital marketing specialist focused on tech companies. Manages brand development, content strategy, and client communications.',
+            avatarUrl: '/images/team/lucy-wambui.jpg',
+            phone: '+254745678901'
         }
     ];
 

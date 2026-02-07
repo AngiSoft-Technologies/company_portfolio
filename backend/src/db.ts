@@ -30,16 +30,23 @@ const logConfig: Prisma.LogLevel[] = isProduction
 // Ensure SSL is enabled for Neon (required) and add pooling params
 function buildConnectionUrl(url: string): string {
   const parsed = new URL(url);
+  const host = parsed.hostname;
+  const isPooler = host.includes('-pooler') || parsed.searchParams.get('pgbouncer') === 'true';
 
   // Neon requires SSL
   if (isNeonUrl && !parsed.searchParams.has('sslmode')) {
     parsed.searchParams.set('sslmode', 'require');
   }
 
+  // Prefer pgbouncer when using Neon pooler
+  if (isNeonUrl && host.includes('-pooler') && !parsed.searchParams.has('pgbouncer')) {
+    parsed.searchParams.set('pgbouncer', 'true');
+  }
+
   // Connection pool tuning for production
   if (isProduction) {
     if (!parsed.searchParams.has('connection_limit')) {
-      parsed.searchParams.set('connection_limit', '10');
+      parsed.searchParams.set('connection_limit', isPooler ? '1' : '10');
     }
     if (!parsed.searchParams.has('pool_timeout')) {
       parsed.searchParams.set('pool_timeout', '30');
