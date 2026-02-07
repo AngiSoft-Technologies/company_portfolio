@@ -50,18 +50,36 @@ const Hero = () => {
     const fetchHero = async () => {
       try {
         const data = await apiGet('/site/hero');
-        setHeroData(data || null);
+        setHeroData(data || getDefaultHeroData());
         console.log('Hero data fetched:', data);
       } catch (err) {
         console.error('Failed to fetch hero data:', err);
-        setError('Hero content is not available yet.');
-        setHeroData(null);
+        console.warn('Using fallback hero data');
+        setHeroData(getDefaultHeroData());
       } finally {
         setLoading(false);
       }
     };
     fetchHero();
   }, []);
+
+  // Fallback hero data when API is unavailable
+  const getDefaultHeroData = () => ({
+    headline: "Building Tomorrow's",
+    headlineHighlight: "Digital Solutions",
+    subheadline: "Today",
+    tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
+    ctaPrimary: { text: "Start Your Project", link: "/book" },
+    ctaSecondary: { text: "View Our Work", link: "/#projects" },
+    stats: [
+      { value: 50, suffix: "+", label: "Happy Clients", icon: "FaUsers" },
+      { value: 100, suffix: "+", label: "Projects Delivered", icon: "FaProjectDiagram" },
+      { value: 5, suffix: "+", label: "Years Experience", icon: "FaAward" },
+      { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
+    ],
+    backgroundVideo: "/videos/Logo - AngiSoft Technologies.mp4",
+    backgroundImage: "/images/Logo - AngiSoft Technologies.png"
+  });
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -121,16 +139,34 @@ const Hero = () => {
 
   if (loading) {
     return (
-      <section id="hero" className="relative min-h-screen flex items-center justify-center">
-        <div className="text-center text-lg">Loading hero content...</div>
+      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Show default gradient while loading */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%)`
+          }}
+        />
+        <div className="relative z-10 text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-lg">Loading...</p>
+        </div>
       </section>
     );
   }
 
   if (!content) {
     return (
-      <section id="hero" className="relative min-h-screen flex items-center justify-center">
-        <div className="text-center text-lg">{error || 'Hero content not configured yet.'}</div>
+      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%)`
+          }}
+        />
+        <div className="relative z-10 text-center text-white">
+          <p className="text-lg">Unable to load content</p>
+        </div>
       </section>
     );
   }

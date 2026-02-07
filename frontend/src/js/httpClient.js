@@ -1,7 +1,12 @@
 import { getFingerprint } from './fingerprint';
 import { toast } from '../utils/toast';
 
-const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD
+const normalizeOrigin = (origin) => {
+  if (!origin) return origin;
+  return origin.replace(/\/+$/, '').replace(/\/api$/, '');
+};
+
+const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL) || (import.meta.env.PROD
   ? "https://api.angisoft.co.ke"
   : "http://localhost:5000");
 
