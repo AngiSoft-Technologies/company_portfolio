@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPut, apiPost } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { API_BASE_URL } from '../utils/constants';
 import { 
     FaUser, FaEnvelope, FaPhone, FaEdit, FaSave, FaTimes,
     FaCamera, FaBriefcase, FaProjectDiagram, FaCalendarCheck,
@@ -120,7 +121,7 @@ const StaffDashboard = () => {
             const formDataUpload = new FormData();
             formDataUpload.append('avatar', file);
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/staff-dashboard/profile/avatar`, {
+            const response = await fetch(`${API_BASE_URL}/staff-dashboard/profile/avatar`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formDataUpload

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
-import ScrollReveal from '../common/ScrollReveal';
+import ScrollReveal from '../modern/ScrollReveal';
 import SectionBadge from '../common/SectionBadge';
 import { FaChevronDown, FaQuestionCircle } from 'react-icons/fa';
 

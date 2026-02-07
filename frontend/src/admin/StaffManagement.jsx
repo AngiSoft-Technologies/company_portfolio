@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { API_BASE_URL } from '../utils/constants';
 import { 
     FaUser, FaEnvelope, FaPhone, FaEdit, FaSave, FaTimes,
     FaCamera, FaPlus, FaSearch, FaTrash, FaUserPlus,
@@ -137,7 +138,7 @@ const StaffManagement = () => {
             if (selectedEmployee) formDataUpload.append('ownerId', selectedEmployee.id);
             formDataUpload.append('category', 'avatar');
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/admin/upload`, {
+            const response = await fetch(`${API_BASE_URL}/admin/upload`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formDataUpload

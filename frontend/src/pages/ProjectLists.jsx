@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
+import { API_BASE_URL } from '../utils/constants';
 import { 
     FaCode, FaExternalLinkAlt, FaGithub, FaFilter,
     FaLaptopCode, FaRocket, FaEye, FaArrowRight
@@ -24,7 +25,7 @@ const ProjectLists = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/projects`);
+                const response = await fetch(`${API_BASE_URL}/projects`);
                 const data = await response.json();
                 const published = Array.isArray(data) ? data.filter(p => p.published !== false) : [];
                 setProjects(published);

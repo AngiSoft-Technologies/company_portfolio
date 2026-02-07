@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useTheme } from '../../contexts/ThemeContext';
-import { apiGet } from '../../js/httpClient';
+import { useTheme } from '../contexts/ThemeContext';
+import { apiGet } from '../js/httpClient';
 import { FaCheckCircle, FaTimesCircle, FaSpinner, FaHome } from 'react-icons/fa';
 
 const NewsletterConfirm = () => {

@@ -108,7 +108,7 @@ const Footer = () => {
     const logoSrc = isDark ? (branding?.logoDark || branding?.logo) : (branding?.logo || branding?.logoDark);
 
     const renderFooterLink = (link) => {
-        const isExternal = /^https?:\\/\\//.test(link.href || '');
+        const isExternal = /^https?:\/\//.test(link.href || '');
         const linkClasses = "text-white/60 hover:text-white transition-colors text-sm flex items-center gap-2 group";
         const content = (
             <>

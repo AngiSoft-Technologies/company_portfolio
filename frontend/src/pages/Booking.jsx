@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '../utils/toast';
 import { validators, validateForm } from '../utils/validation';
+import { API_BASE_URL } from '../utils/constants';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useBookingSettings } from '../hooks/useBookingSettings';
@@ -152,7 +153,7 @@ const Booking = () => {
                 formDataToSend.append('files', file);
             });
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/bookings`, {
+            const response = await fetch(`${API_BASE_URL}/bookings`, {
                 method: 'POST',
                 body: formDataToSend
             });

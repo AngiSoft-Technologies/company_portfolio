@@ -3,7 +3,10 @@ export const APP_NAME = 'AngiSoft Technologies';
 export const APP_TAGLINE = 'Innovative Software Solutions';
 
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD
+    ? 'https://api.angisoft.co.ke'
+    : 'http://localhost:5000');
+export const API_BASE_URL = `${API_ORIGIN.replace(/\/+$/, '')}/api`;
 
 // File Upload Limits
 export const FILE_LIMITS = {

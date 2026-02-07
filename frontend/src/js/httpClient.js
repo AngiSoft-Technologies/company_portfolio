@@ -1,7 +1,17 @@
 import { getFingerprint } from './fingerprint';
 import { toast } from '../utils/toast';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD
+  ? "https://api.angisoft.co.ke"
+  : "http://localhost:5000");
+
+const buildApiUrl = (endpoint) => {
+  if (endpoint.startsWith('http')) return endpoint;
+  const normalized = endpoint.startsWith('/api')
+    ? endpoint
+    : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  return `${API_ORIGIN}${normalized}`;
+};
 
 let notificationHandler = null;
 
@@ -11,8 +21,8 @@ export const setNotificationHandler = (handler) => {
 
 export const apiRequest = async (method, endpoint, data = null, token = null) => {
   try {
-    // Prepend API_BASE_URL if endpoint does not start with http
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    // Prepend API origin if endpoint does not start with http
+    const url = buildApiUrl(endpoint);
     const headers = { 'Content-Type': 'application/json' };
     
     // Add auth token if provided
@@ -83,7 +93,7 @@ export const apiPatch = (endpoint, data, token = null) => apiRequest('PATCH', en
  * @returns {Promise<object>} - The backend response (should include a 'url' field)
  */
 export const apiUpload = async (endpoint, file, token = null) => {
-  let url = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
+  const url = buildApiUrl(endpoint);
   const formData = new FormData();
   formData.append('file', file);
   const res = await fetch(url, {

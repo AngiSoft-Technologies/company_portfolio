@@ -3,6 +3,7 @@ import { FaUpload, FaTimes, FaImage, FaFile } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from '../utils/toast';
 import { validators } from '../utils/validation';
+import { API_BASE_URL } from '../utils/constants';
 
 const FileUpload = ({
     onUpload,
@@ -93,7 +94,7 @@ const FileUpload = ({
                 formData.append('ownerId', ownerId);
                 formData.append('category', category);
 
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/admin/upload`, {
+                const response = await fetch(`${API_BASE_URL}/admin/upload`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
