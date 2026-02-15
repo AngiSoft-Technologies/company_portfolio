@@ -41,27 +41,29 @@ async function main() {
     console.log('\n📝 Seeding site settings...');
 
     // Hero Section
+    const heroValue = {
+        headline: "Building Tomorrow's",
+        headlineHighlight: "Digital Solutions",
+        subheadline: "Today",
+        tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
+        ctaPrimary: { text: "Start Your Project", link: "/booking" },
+        ctaSecondary: { text: "View Our Work", link: "/#projects" },
+        stats: [
+            { value: 50, suffix: "+", label: "Happy Clients", icon: "FaUsers" },
+            { value: 100, suffix: "+", label: "Projects Delivered", icon: "FaProjectDiagram" },
+            { value: 5, suffix: "+", label: "Years Experience", icon: "FaAward" },
+            { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
+        ],
+        backgroundVideo: "/videos/Matrix_rain_code.mp4",
+        backgroundImage: "/images/Logo - AngiSoft Technologies.png"
+    };
+
     await prisma.setting.upsert({
         where: { key: 'site_hero' },
-        update: {},
+        update: { value: heroValue },
         create: {
             key: 'site_hero',
-            value: {
-                headline: "Building Tomorrow's",
-                headlineHighlight: "Digital Solutions",
-                subheadline: "Today",
-                tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
-                ctaPrimary: { text: "Start Your Project", link: "/booking" },
-                ctaSecondary: { text: "View Our Work", link: "/#projects" },
-                stats: [
-                    { value: 50, suffix: "+", label: "Happy Clients", icon: "FaUsers" },
-                    { value: 100, suffix: "+", label: "Projects Delivered", icon: "FaProjectDiagram" },
-                    { value: 5, suffix: "+", label: "Years Experience", icon: "FaAward" },
-                    { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
-                ],
-                backgroundVideo: "/videos/Logo - AngiSoft Technologies.mp4",
-                backgroundImage: "/images/Logo - AngiSoft Technologies.png"
-            }
+            value: heroValue
         }
     });
     console.log('  ✅ Hero settings');

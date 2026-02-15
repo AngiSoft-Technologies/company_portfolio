@@ -40,6 +40,7 @@ const InterestsAdmin = lazy(() => import('./admin/crud/InterestsAdmin'));
 const SocialMediaAdmin = lazy(() => import('./admin/crud/SocialMediaAdmin'));
 const QuotesAdmin = lazy(() => import('./admin/crud/QuotesAdmin'));
 const SiteSettingsAdmin = lazy(() => import('./admin/crud/SiteSettingsAdmin'));
+const ChatConversationsAdmin = lazy(() => import('./admin/crud/ChatConversationsAdmin'));
 
 const AdminProtectedLayout = () => {
   const isLoggedIn = !!localStorage.getItem('adminToken');
@@ -101,6 +102,7 @@ const RoutesComponent = () => {
           <Route path="interests" element={<InterestsAdmin />} />
           <Route path="social-media" element={<SocialMediaAdmin />} />
           <Route path="quotes" element={<QuotesAdmin />} />
+          <Route path="chat-conversations" element={<ChatConversationsAdmin />} />
           <Route path="system" element={<SystemPanel />} />
           <Route path="*" element={<NotFoundAdmin />} />
         </Route>

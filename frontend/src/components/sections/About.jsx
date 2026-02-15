@@ -23,6 +23,21 @@ const About = () => {
     const videoRef = useRef(null);
     const [videoPlaying, setVideoPlaying] = useState(false);
 
+    const getResponsiveValue = (values) => {
+        const w = window.innerWidth;
+        if (w < 360) return values[360];
+        if (w < 420) return values[420];
+        if (w < 475) return values[475];
+        if (w < 575) return values[575];
+        if (w < 768) return values[768];
+        if (w < 900) return values[900];
+        if (w < 1024) return values[1024];
+        if (w < 1366) return values[1366];
+        if (w < 1440) return values[1440];
+        if (w < 1920) return values[1920];
+        return values[1920];
+    };
+
     useEffect(() => {
         const fetchAbout = async () => {
             try {
@@ -80,8 +95,10 @@ const About = () => {
     return (
         <section 
             id="about" 
-            className="relative py-28 overflow-hidden"
+            className="relative overflow-hidden"
             style={{
+                paddingTop: getResponsiveValue({ 360: '3.5rem', 420: '3.75rem', 475: '4rem', 575: '4.5rem', 768: '5rem', 900: '5.5rem', 1024: '6rem', 1366: '6.5rem', 1440: '7rem', 1920: '7.5rem' }),
+                paddingBottom: getResponsiveValue({ 360: '3.5rem', 420: '3.75rem', 475: '4rem', 575: '4.5rem', 768: '5rem', 900: '5.5rem', 1024: '6rem', 1366: '6.5rem', 1440: '7rem', 1920: '7.5rem' }),
                 background: isDark 
                     ? 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
                     : 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%)'
@@ -118,11 +135,18 @@ const About = () => {
             <div className="relative z-10 max-w-7xl mx-auto px-6">
                 {/* Section Header */}
                 <ScrollReveal animation="fadeUp">
-                    <div className="text-center mb-20">
+                    <div 
+                        className="text-center"
+                        style={{
+                            marginBottom: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3.25rem', 1024: '3.5rem', 1366: '4rem', 1440: '4.5rem', 1920: '5rem' })
+                        }}
+                    >
                         {sectionCopy.badge && (
                             <div 
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-6"
+                                className="inline-flex items-center gap-2 rounded-full text-sm font-semibold"
                                 style={{
+                                    padding: getResponsiveValue({ 360: '0.4rem 0.9rem', 420: '0.425rem 1rem', 475: '0.45rem 1.1rem', 575: '0.475rem 1.2rem', 768: '0.5rem 1.25rem', 900: '0.5rem 1.35rem', 1024: '0.525rem 1.5rem', 1366: '0.55rem 1.6rem', 1440: '0.6rem 1.75rem', 1920: '0.625rem 1.9rem' }),
+                                    marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.5rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
                                     backgroundColor: `${colors.primary}15`,
                                     color: colors.primary
                                 }}
@@ -132,8 +156,10 @@ const About = () => {
                             </div>
                         )}
                         <h2 
-                            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+                            className="font-black tracking-tight"
                             style={{
+                                fontSize: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3.5rem', 1024: '4rem', 1366: '4.5rem', 1440: '5rem', 1920: '5.5rem' }),
+                                marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
                                 background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
@@ -144,8 +170,11 @@ const About = () => {
                         </h2>
                         {headerSubtitle && (
                             <p 
-                                className="text-lg md:text-xl max-w-2xl mx-auto"
-                                style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                className="max-w-2xl mx-auto"
+                                style={{
+                                    fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.2rem', 1024: '1.25rem', 1366: '1.35rem', 1440: '1.45rem', 1920: '1.6rem' }),
+                                    color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'
+                                }}
                             >
                                 {headerSubtitle}
                             </p>
@@ -167,7 +196,13 @@ const About = () => {
 
                 {/* Main Content Grid */}
                 {!loading && (
-                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-24">
+                    <div 
+                        className="grid lg:grid-cols-2 items-center"
+                        style={{
+                            gap: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '3rem', 1024: '3.5rem', 1366: '4rem', 1440: '4.5rem', 1920: '5rem' }),
+                            marginBottom: getResponsiveValue({ 360: '2.5rem', 420: '3rem', 475: '3.5rem', 575: '4rem', 768: '4.5rem', 900: '5rem', 1024: '5.5rem', 1366: '6rem', 1440: '6.5rem', 1920: '7rem' })
+                        }}
+                    >
                         {/* Left: Visual with Video */}
                         <ScrollReveal animation="fadeLeft" delay={100}>
                             <div className="relative">
@@ -284,29 +319,47 @@ const About = () => {
                             <div>
                                 {sectionCopy.storyLabel && (
                                     <div 
-                                        className="flex items-center gap-2 mb-4"
-                                        style={{ color: colors.primary }}
+                                        className="flex items-center gap-2"
+                                        style={{
+                                            color: colors.primary,
+                                            marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.625rem', 1440: '1.75rem', 1920: '2rem' })
+                                        }}
                                     >
                                         <div className="w-12 h-0.5" style={{ backgroundColor: colors.primary }} />
-                                        <span className="text-sm font-semibold uppercase tracking-wider">{sectionCopy.storyLabel}</span>
+                                        <span 
+                                            className="font-semibold uppercase tracking-wider"
+                                            style={{ fontSize: getResponsiveValue({ 360: '0.7rem', 420: '0.75rem', 475: '0.8rem', 575: '0.85rem', 768: '0.9rem', 900: '0.95rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.15rem' }) }}
+                                        >
+                                            {sectionCopy.storyLabel}
+                                        </span>
                                     </div>
                                 )}
                                 
                                 {storyTitle && storyTitle !== headerTitle && (
                                     <h3 
-                                        className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6"
-                                        style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                        className="font-bold"
+                                        style={{
+                                            color: isDark ? '#fff' : '#1e293b',
+                                            fontSize: getResponsiveValue({ 360: '1.5rem', 420: '1.6rem', 475: '1.75rem', 575: '1.9rem', 768: '2.1rem', 900: '2.3rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' }),
+                                            marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' })
+                                        }}
                                     >
                                         {storyTitle}
                                     </h3>
                                 )}
                                 
-                                <div className="space-y-4 mb-8">
+                                <div 
+                                    className="space-y-4"
+                                    style={{ marginBottom: getResponsiveValue({ 360: '1.25rem', 420: '1.5rem', 475: '1.75rem', 575: '2rem', 768: '2.25rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }) }}
+                                >
                                     {(content.description || []).map((desc, idx) => (
                                         <p 
                                             key={idx} 
-                                            className="text-lg leading-relaxed"
-                                            style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}
+                                            className="leading-relaxed"
+                                            style={{
+                                                fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.15rem', 1024: '1.2rem', 1366: '1.3rem', 1440: '1.4rem', 1920: '1.5rem' }),
+                                                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'
+                                            }}
                                         >
                                             {desc}
                                         </p>
@@ -314,7 +367,13 @@ const About = () => {
                                 </div>
 
                                 {/* Achievements List */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 mb-6 md:mb-8">
+                                <div 
+                                    className="grid grid-cols-1 sm:grid-cols-2"
+                                    style={{
+                                        gap: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.375rem', 1440: '1.5rem', 1920: '1.75rem' }),
+                                        marginBottom: getResponsiveValue({ 360: '1rem', 420: '1.25rem', 475: '1.5rem', 575: '1.75rem', 768: '2rem', 900: '2.25rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' })
+                                    }}
+                                >
                                     {(content.achievements || []).map((item, idx) => (
                                         <div 
                                             key={idx}
@@ -322,8 +381,11 @@ const About = () => {
                                         >
                                             <FaCheckCircle style={{ color: colors.primary }} />
                                             <span 
-                                                className="text-sm font-medium"
-                                                style={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)' }}
+                                                className="font-medium"
+                                                style={{
+                                                    fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1.05rem', 1366: '1.1rem', 1440: '1.15rem', 1920: '1.2rem' }),
+                                                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)'
+                                                }}
                                             >
                                                 {item}
                                             </span>
@@ -333,14 +395,19 @@ const About = () => {
                                 
                                 {/* Stats Row */}
                                 <div 
-                                    className="flex flex-wrap gap-6 md:gap-8 pt-6 md:pt-8"
-                                    style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}
+                                    className="flex flex-wrap"
+                                    style={{
+                                        gap: getResponsiveValue({ 360: '1rem', 420: '1.25rem', 475: '1.5rem', 575: '1.75rem', 768: '2rem', 900: '2.25rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' }),
+                                        paddingTop: getResponsiveValue({ 360: '1rem', 420: '1.25rem', 475: '1.5rem', 575: '1.75rem', 768: '2rem', 900: '2.25rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' }),
+                                        borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
+                                    }}
                                 >
                                     {(content.stats || []).map((stat, idx) => (
                                         <div key={idx} className="min-w-0">
                                             <p 
-                                                className="text-2xl md:text-3xl font-bold"
+                                                className="font-bold"
                                                 style={{
+                                                    fontSize: getResponsiveValue({ 360: '1.25rem', 420: '1.35rem', 475: '1.5rem', 575: '1.65rem', 768: '1.8rem', 900: '2rem', 1024: '2.2rem', 1366: '2.4rem', 1440: '2.6rem', 1920: '2.8rem' }),
                                                     background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                                                     WebkitBackgroundClip: "text",
                                                     WebkitTextFillColor: "transparent",
@@ -350,8 +417,11 @@ const About = () => {
                                                 {stat.prefix}<AnimatedCounter end={stat.value} />{stat.suffix || ''}
                                             </p>
                                             <p 
-                                                className="text-sm"
-                                                style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}
+                                                className=""
+                                                style={{
+                                                    fontSize: getResponsiveValue({ 360: '0.7rem', 420: '0.75rem', 475: '0.8rem', 575: '0.85rem', 768: '0.9rem', 900: '0.95rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.15rem' }),
+                                                    color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+                                                }}
                                             >
                                                 {stat.label}
                                             </p>
@@ -364,13 +434,26 @@ const About = () => {
                 )}
 
                 {/* Core Values - Glassmorphism Cards */}
-                <div className="mt-12 md:mt-16">
+                <div
+                    style={{
+                        marginTop: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3.5rem', 1024: '4rem', 1366: '4.5rem', 1440: '5rem', 1920: '5.5rem' })
+                    }}
+                >
                     <ScrollReveal animation="fadeUp">
-                        <div className="text-center mb-10 md:mb-12">
+                        <div
+                            className="text-center"
+                            style={{
+                                marginBottom: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.75rem', 1024: '3rem', 1366: '3.5rem', 1440: '4rem', 1920: '4.5rem' })
+                            }}
+                        >
                             {sectionCopy.valuesTitle && (
                                 <h3 
-                                    className="text-2xl md:text-3xl font-bold mb-4"
-                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                    className="font-bold"
+                                    style={{
+                                        color: isDark ? '#fff' : '#1e293b',
+                                        fontSize: getResponsiveValue({ 360: '1.5rem', 420: '1.6rem', 475: '1.75rem', 575: '1.9rem', 768: '2.1rem', 900: '2.3rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' }),
+                                        marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.5rem', 1440: '1.75rem', 1920: '2rem' })
+                                    }}
                                 >
                                     {sectionCopy.valuesTitle}
                                 </h3>
@@ -378,7 +461,10 @@ const About = () => {
                             {sectionCopy.valuesSubtitle && (
                                 <p 
                                     className="max-w-xl mx-auto"
-                                    style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                    style={{
+                                        fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.15rem', 1024: '1.2rem', 1366: '1.3rem', 1440: '1.4rem', 1920: '1.5rem' }),
+                                        color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'
+                                    }}
                                 >
                                     {sectionCopy.valuesSubtitle}
                                 </p>
@@ -386,29 +472,55 @@ const About = () => {
                         </div>
                     </ScrollReveal>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                        style={{
+                            gap: getResponsiveValue({ 360: '0.75rem', 420: '0.9rem', 475: '1rem', 575: '1.1rem', 768: '1.25rem', 900: '1.5rem', 1024: '1.75rem', 1366: '2rem', 1440: '2.25rem', 1920: '2.5rem' })
+                        }}
+                    >
                         {(content.values || []).map((value, idx) => {
                             const Icon = iconMap[value.icon] || FaCheckCircle;
                             return (
                                 <ScrollReveal key={idx} animation="scaleUp" delay={idx * 100}>
-                                    <GlassmorphismCard hoverEffect className="p-5 md:p-6 lg:p-8 h-full">
+                                    <GlassmorphismCard
+                                        hoverEffect
+                                        className="h-full"
+                                        style={{
+                                            padding: getResponsiveValue({ 360: '1rem', 420: '1.1rem', 475: '1.25rem', 575: '1.5rem', 768: '1.75rem', 900: '2rem', 1024: '2.25rem', 1366: '2.5rem', 1440: '2.75rem', 1920: '3rem' })
+                                        }}
+                                    >
                                         <div 
-                                            className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-4 md:mb-5 rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110"
+                                            className="rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110"
                                             style={{ 
-                                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
+                                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                                width: getResponsiveValue({ 360: '2.5rem', 420: '2.75rem', 475: '3rem', 575: '3.25rem', 768: '3.5rem', 900: '3.75rem', 1024: '4rem', 1366: '4.25rem', 1440: '4.5rem', 1920: '4.75rem' }),
+                                                height: getResponsiveValue({ 360: '2.5rem', 420: '2.75rem', 475: '3rem', 575: '3.25rem', 768: '3.5rem', 900: '3.75rem', 1024: '4rem', 1366: '4.25rem', 1440: '4.5rem', 1920: '4.75rem' }),
+                                                marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' })
                                             }}
                                         >
-                                            <Icon className="text-xl md:text-2xl text-white" />
+                                            <Icon
+                                                className="text-white"
+                                                style={{
+                                                    fontSize: getResponsiveValue({ 360: '1rem', 420: '1.1rem', 475: '1.2rem', 575: '1.3rem', 768: '1.4rem', 900: '1.5rem', 1024: '1.6rem', 1366: '1.75rem', 1440: '1.9rem', 1920: '2rem' })
+                                                }}
+                                            />
                                         </div>
                                         <h4 
-                                            className="font-bold text-lg md:text-xl mb-2 md:mb-3"
-                                            style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                            className="font-bold"
+                                            style={{
+                                                color: isDark ? '#fff' : '#1e293b',
+                                                fontSize: getResponsiveValue({ 360: '1rem', 420: '1.1rem', 475: '1.2rem', 575: '1.3rem', 768: '1.4rem', 900: '1.5rem', 1024: '1.6rem', 1366: '1.75rem', 1440: '1.9rem', 1920: '2rem' }),
+                                                marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.5rem', 1440: '1.75rem', 1920: '2rem' })
+                                            }}
                                         >
                                             {value.title}
                                         </h4>
                                         <p 
-                                            className="text-sm md:text-base leading-relaxed"
-                                            style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                            className="leading-relaxed"
+                                            style={{
+                                                fontSize: getResponsiveValue({ 360: '0.85rem', 420: '0.9rem', 475: '0.95rem', 575: '1rem', 768: '1.05rem', 900: '1.1rem', 1024: '1.15rem', 1366: '1.2rem', 1440: '1.3rem', 1920: '1.4rem' }),
+                                                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'
+                                            }}
                                         >
                                             {value.text}
                                         </p>
@@ -422,8 +534,10 @@ const About = () => {
                 {content.globalPresence && (
                     <ScrollReveal animation="fadeUp" delay={200}>
                         <div 
-                            className="mt-24 p-10 rounded-3xl text-center"
+                            className="rounded-3xl text-center"
                             style={{
+                                marginTop: getResponsiveValue({ 360: '2.5rem', 420: '3rem', 475: '3.5rem', 575: '4rem', 768: '4.5rem', 900: '5rem', 1024: '5.5rem', 1366: '6rem', 1440: '6.5rem', 1920: '7rem' }),
+                                padding: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '3rem', 1024: '3.5rem', 1366: '4rem', 1440: '4.5rem', 1920: '5rem' }),
                                 background: isDark 
                                     ? 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
                                     : 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
@@ -431,23 +545,39 @@ const About = () => {
                             }}
                         >
                             <div 
-                                className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                                style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
+                                className="mx-auto rounded-2xl flex items-center justify-center"
+                                style={{
+                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+                                    width: getResponsiveValue({ 360: '3rem', 420: '3.25rem', 475: '3.5rem', 575: '3.75rem', 768: '4rem', 900: '4.5rem', 1024: '5rem', 1366: '5.5rem', 1440: '6rem', 1920: '6.5rem' }),
+                                    height: getResponsiveValue({ 360: '3rem', 420: '3.25rem', 475: '3.5rem', 575: '3.75rem', 768: '4rem', 900: '4.5rem', 1024: '5rem', 1366: '5.5rem', 1440: '6rem', 1920: '6.5rem' }),
+                                    marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.5rem', 1024: '1.75rem', 1366: '2rem', 1440: '2.25rem', 1920: '2.5rem' })
+                                }}
                             >
-                                <FaGlobe className="text-3xl text-white" />
+                                <FaGlobe
+                                    className="text-white"
+                                    style={{ fontSize: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.75rem', 1024: '3rem', 1366: '3.25rem', 1440: '3.5rem', 1920: '3.75rem' }) }}
+                                />
                             </div>
                             {content.globalPresence.title && (
                                 <h4 
-                                    className="text-2xl font-bold mb-4"
-                                    style={{ color: isDark ? '#fff' : '#1e293b' }}
+                                    className="font-bold"
+                                    style={{
+                                        color: isDark ? '#fff' : '#1e293b',
+                                        fontSize: getResponsiveValue({ 360: '1.5rem', 420: '1.6rem', 475: '1.75rem', 575: '1.9rem', 768: '2.1rem', 900: '2.3rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' }),
+                                        marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.5rem', 1440: '1.75rem', 1920: '2rem' })
+                                    }}
                                 >
                                     {content.globalPresence.title}
                                 </h4>
                             )}
                             {content.globalPresence.description && (
                                 <p 
-                                    className="text-lg max-w-2xl mx-auto mb-6"
-                                    style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
+                                    className="max-w-2xl mx-auto"
+                                    style={{
+                                        fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.2rem', 1024: '1.3rem', 1366: '1.4rem', 1440: '1.5rem', 1920: '1.6rem' }),
+                                        color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                                        marginBottom: getResponsiveValue({ 360: '1rem', 420: '1.25rem', 475: '1.5rem', 575: '1.75rem', 768: '2rem', 900: '2.25rem', 1024: '2.5rem', 1366: '2.75rem', 1440: '3rem', 1920: '3.25rem' })
+                                    }}
                                 >
                                     {content.globalPresence.description}
                                 </p>
@@ -457,8 +587,10 @@ const About = () => {
                                     {content.globalPresence.locations.map((location, idx) => (
                                         <span 
                                             key={idx}
-                                            className="px-4 py-2 rounded-full text-sm font-medium"
+                                            className="rounded-full font-medium"
                                             style={{
+                                                padding: getResponsiveValue({ 360: '0.35rem 0.75rem', 420: '0.4rem 0.85rem', 475: '0.45rem 1rem', 575: '0.5rem 1.1rem', 768: '0.55rem 1.2rem', 900: '0.6rem 1.3rem', 1024: '0.65rem 1.4rem', 1366: '0.7rem 1.5rem', 1440: '0.75rem 1.6rem', 1920: '0.8rem 1.75rem' }),
+                                                fontSize: getResponsiveValue({ 360: '0.7rem', 420: '0.75rem', 475: '0.8rem', 575: '0.85rem', 768: '0.9rem', 900: '0.95rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.15rem' }),
                                                 backgroundColor: `${colors.primary}15`,
                                                 color: colors.primary
                                             }}

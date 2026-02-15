@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
-import { 
-    FaTachometerAlt, FaUser, FaProjectDiagram, FaCogs, FaServicestack, 
-    FaGraduationCap, FaBriefcase, FaAddressBook, FaQuoteRight, FaFileUpload, 
-    FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar, 
-    FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck, 
-    FaTrash, FaChevronDown, FaMoon, FaSun, FaSearch, FaGlobe, FaBlog
+import {
+    FaTachometerAlt, FaUser, FaProjectDiagram, FaCogs, FaServicestack,
+    FaGraduationCap, FaBriefcase, FaAddressBook, FaQuoteRight, FaFileUpload,
+    FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar,
+    FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck,
+    FaTrash, FaChevronDown, FaMoon, FaSun, FaSearch, FaGlobe, FaBlog,
+    FaRobot
 } from 'react-icons/fa';
 import { apiGet, apiPatch, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
@@ -26,6 +27,12 @@ const navSections = [
             { to: '/admin/services', label: 'Services', icon: FaServicestack },
             { to: '/admin/service-categories', label: 'Service Categories', icon: FaArchive },
             { to: '/admin/projects', label: 'Projects', icon: FaProjectDiagram },
+        ]
+    },
+    {
+        title: 'AI',
+        items: [
+            { to: '/admin/chat-conversations', label: 'Chatbot Leads', icon: FaRobot },
         ]
     },
     {

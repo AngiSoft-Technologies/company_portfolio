@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import inviteRouter from './routes/invite';
 import bookingsRouter from './routes/bookings';
+import chatbotRouter from './routes/chatbot';
 import paymentsRouter from './routes/payments';
 import authRouter from './routes/auth';
 import uploadsRouter from './routes/uploads';
@@ -199,6 +200,7 @@ app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
 app.use('/api/site', siteRouter(prisma));
 app.use('/api/newsletter', newsletterRouter(prisma));
 app.use('/api/faqs', faqRouter(prisma));
+app.use('/api/chatbot', chatbotRouter(prisma));
 app.use('/health', healthRouter(prisma));
 
 // Legacy admin route (kept for compatibility)
