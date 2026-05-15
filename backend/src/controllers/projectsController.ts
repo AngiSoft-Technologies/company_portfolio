@@ -4,9 +4,10 @@ import { logAudit } from '../services/audit';
 export const projectsController = {
     async create(data: any, user: any) { const p = await prisma.project.create({ data }); await logAudit({ action: 'create_project', entity: 'Project', entityId: p.id, actorId: user?.sub || null, actorRole: user?.role || null }); return p; },
     async list(options: any = {}) { return prisma.project.findMany({ orderBy: { createdAt: 'desc' }, ...options }); },
-    async get(id: string, options: any = {}) {
+    async get(identifier: string, options: any = {}) {
         const { where, ...rest } = options;
-        const mergedWhere = where ? { ...where, id } : { id };
+        const identifierWhere = { OR: [{ id: identifier }, { slug: identifier }] };
+        const mergedWhere = where ? { AND: [where, identifierWhere] } : identifierWhere;
         return prisma.project.findFirst({ where: mergedWhere, ...rest });
     },
     async update(id: string, data: any, user: any) { const p = await prisma.project.update({ where: { id }, data }); await logAudit({ action: 'update_project', entity: 'Project', entityId: id, actorId: user?.sub || null, actorRole: user?.role || null }); return p; },

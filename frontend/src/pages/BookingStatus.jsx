@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
@@ -374,6 +374,27 @@ const BookingStatus = () => {
                             )}
                         </GlassmorphismCard>
                     </ScrollReveal>
+
+                    {booking.clientProject && (
+                        <ScrollReveal animation="fadeUp" delay={80}>
+                            <GlassmorphismCard className="p-6">
+                                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h3 className="text-2xl font-black" style={{ color: colors.text }}>Live project tracker is ready</h3>
+                                        <p className="mt-2" style={{ color: colors.textSecondary }}>
+                                            Follow milestones, comments, deliverables, and progress updates in your secure client portal.
+                                        </p>
+                                        <div className="mt-4 h-3 max-w-md overflow-hidden rounded-full" style={{ backgroundColor: colors.borderLight }}>
+                                            <div className="h-full rounded-full" style={{ width: `${booking.clientProject.progress || 0}%`, background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.secondaryLight})` }} />
+                                        </div>
+                                    </div>
+                                    <Link to="/portal/request" className="rounded-full px-6 py-3 text-center font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                                        Request portal link
+                                    </Link>
+                                </div>
+                            </GlassmorphismCard>
+                        </ScrollReveal>
+                    )}
 
                     {/* Payment Required */}
                     {needsPayment && pendingPayment && (

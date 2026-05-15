@@ -11,7 +11,7 @@ import {
 const placeholderImg = '/images/placeholder.jpg';
 
 const ProjectDetails = () => {
-    const { id } = useParams();
+    const { slug } = useParams();
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
     const [project, setProject] = useState(null);
@@ -24,7 +24,7 @@ const ProjectDetails = () => {
     useEffect(() => {
         const fetchProjectDetails = async () => {
             try {
-                const data = await apiGet(`/projects/${id}`);
+                const data = await apiGet(`/projects/${slug}`);
                 setProject(data);
             } catch (err) {
                 setError(err.message);
@@ -36,18 +36,18 @@ const ProjectDetails = () => {
         const fetchRelatedProjects = async () => {
             try {
                 const data = await apiGet('/projects');
-                const published = Array.isArray(data) ? data.filter(p => p.published !== false && p.id !== id) : [];
+                const published = Array.isArray(data) ? data.filter(p => p.published !== false && p.slug !== slug) : [];
                 setRelatedProjects(published.slice(0, 3));
             } catch (err) {
                 console.error('Error fetching related projects:', err);
             }
         };
 
-        if (id) {
+        if (slug) {
             fetchProjectDetails();
             fetchRelatedProjects();
         }
-    }, [id]);
+    }, [slug]);
 
     const allImages = project?.images?.length > 0 
         ? project.images 
@@ -446,7 +446,7 @@ const ProjectDetails = () => {
                                                 backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'white',
                                                 border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
                                             }}
-                                            onClick={() => navigate(`/project/${proj.id || proj._id}`)}
+                                            onClick={() => navigate(`/project/${proj.slug || proj.id || proj._id}`)}
                                         >
                                             <div className="relative h-48 overflow-hidden">
                                                 <img

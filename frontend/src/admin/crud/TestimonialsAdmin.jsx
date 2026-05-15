@@ -5,11 +5,28 @@ import CrudModal from '../../components/CrudModal';
 
 const API_URL = '/testimonials';
 
+const emptyForm = {
+  name: '',
+  company: '',
+  role: '',
+  text: '',
+  rating: 5,
+  imageUrl: '',
+  confirmed: true,
+};
+
 const columns = [
-  { key: 'username', title: 'Username' },
-  { key: 'title', title: 'Title' },
-  { key: 'message', title: 'Message', render: (val) => (Array.isArray(val) ? val.join('\n') : val) },
-  { key: 'imageLink', title: 'Image', render: (val, row) => val ? <img src={val} alt={row.username} style={{width:40,height:40,objectFit:'contain'}} /> : null },
+  { key: 'name', title: 'Name' },
+  { key: 'company', title: 'Company' },
+  { key: 'role', title: 'Role' },
+  { key: 'rating', title: 'Rating' },
+  { key: 'confirmed', title: 'Confirmed', render: (val) => (val ? 'Yes' : 'No') },
+  { key: 'text', title: 'Quote' },
+  {
+    key: 'imageUrl',
+    title: 'Image',
+    render: (val, row) => val ? <img src={val} alt={row.name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '50%' }} /> : null,
+  },
 ];
 
 const TestimonialsAdmin = ({ theme }) => {
@@ -18,7 +35,7 @@ const TestimonialsAdmin = ({ theme }) => {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ username: '', title: '', message: '', imageLink: '' });
+  const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -30,7 +47,7 @@ const TestimonialsAdmin = ({ theme }) => {
     setError('');
     try {
       const res = await apiGet(API_URL);
-      setTestimonials(res.data || []);
+      setTestimonials(res.data || res || []);
     } catch (err) {
       setError('Failed to fetch testimonials');
     }
@@ -39,24 +56,36 @@ const TestimonialsAdmin = ({ theme }) => {
 
   const openAddModal = () => {
     setEditing(null);
-    setForm({ username: '', title: '', message: '', imageLink: '' });
+    setForm(emptyForm);
     setModalOpen(true);
   };
 
   const openEditModal = (row) => {
-    setEditing(row._id);
-    setForm({ username: row.username, title: row.title, message: Array.isArray(row.message) ? row.message.join('\n') : row.message, imageLink: row.imageLink || '' });
+    setEditing(row.id);
+    setForm({
+      name: row.name || '',
+      company: row.company || '',
+      role: row.role || '',
+      text: row.text || '',
+      rating: row.rating || 5,
+      imageUrl: row.imageUrl || '',
+      confirmed: row.confirmed !== false,
+    });
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
-    setForm({ username: '', title: '', message: '', imageLink: '' });
+    setForm(emptyForm);
     setEditing(null);
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -64,7 +93,13 @@ const TestimonialsAdmin = ({ theme }) => {
     setMessage('');
     setError('');
     try {
-      const payload = { ...form, message: form.message.split('\n') };
+      const payload = {
+        ...form,
+        rating: Number(form.rating),
+        imageUrl: form.imageUrl || undefined,
+        company: form.company || undefined,
+        role: form.role || undefined,
+      };
       if (editing) {
         await apiPut(`${API_URL}/${editing}`, payload);
         setMessage('Updated successfully');
@@ -105,7 +140,7 @@ const TestimonialsAdmin = ({ theme }) => {
         actions={(row) => (
           <>
             <button className="admin-btn-secondary" onClick={() => openEditModal(row)}>Edit</button>
-            <button className="admin-btn-danger" onClick={() => handleDelete(row._id)}>Delete</button>
+            <button className="admin-btn-danger" onClick={() => handleDelete(row.id)}>Delete</button>
           </>
         )}
       />
@@ -113,39 +148,66 @@ const TestimonialsAdmin = ({ theme }) => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            name="username"
-            value={form.username}
+            name="name"
+            value={form.name}
             onChange={handleChange}
-            placeholder="Username"
+            placeholder="Customer name"
             className="admin-section-card"
             required
           />
           <input
             type="text"
-            name="title"
-            value={form.title}
+            name="company"
+            value={form.company}
             onChange={handleChange}
-            placeholder="Title"
+            placeholder="Company"
+            className="admin-section-card"
+          />
+          <input
+            type="text"
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            placeholder="Role / title"
             className="admin-section-card"
           />
           <textarea
-            name="message"
-            value={form.message}
+            name="text"
+            value={form.text}
             onChange={handleChange}
-            placeholder="Message (one per line)"
+            placeholder="Testimonial quote"
             className="admin-section-card"
-            rows={3}
+            rows={4}
             required
           />
           <input
-            type="text"
-            name="imageLink"
-            value={form.imageLink}
+            type="number"
+            name="rating"
+            min="1"
+            max="5"
+            value={form.rating}
             onChange={handleChange}
-            placeholder="Image Link (URL, optional)"
+            placeholder="Rating"
             className="admin-section-card"
           />
-          <div style={{display:'flex',gap:'1rem',justifyContent:'flex-end'}}>
+          <input
+            type="url"
+            name="imageUrl"
+            value={form.imageUrl}
+            onChange={handleChange}
+            placeholder="Image URL (optional)"
+            className="admin-section-card"
+          />
+          <label className="admin-section-card flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="confirmed"
+              checked={form.confirmed}
+              onChange={handleChange}
+            />
+            Show publicly
+          </label>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
             <button type="button" className="admin-btn-secondary" onClick={closeModal}>Cancel</button>
             <button type="submit" className="admin-btn-primary">{editing ? 'Update' : 'Add'}</button>
           </div>
@@ -155,4 +217,4 @@ const TestimonialsAdmin = ({ theme }) => {
   );
 };
 
-export default TestimonialsAdmin; 
+export default TestimonialsAdmin;

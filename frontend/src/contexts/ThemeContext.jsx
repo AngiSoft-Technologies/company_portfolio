@@ -1,59 +1,66 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { apiGet } from '../js/httpClient';
 
 // 5 Classic Themes for AngiSoft Company System
-// Brand Primary: Teal (#14B8A6), Peach (#FFB6A3), White
+// Official brand identity: Deep Tech Blue, Electric Cyan, Neon Green, Dark Navy, Soft White, Accent Purple
 export const themes = {
-  // 1. AngiSoft Brand (Default) - Teal & Peach professional
+  // 1. AngiSoft Brand (Default) - futuristic enterprise technology palette
   angisoft: {
     id: 'angisoft',
     name: 'AngiSoft Brand',
-    description: 'Official company colors - Teal & Peach',
+    description: 'Innovate • Build • Empower - official futuristic technology palette',
     colors: {
-      primary: '#14B8A6',
-      primaryLight: '#2DD4BF',
-      primaryDark: '#0D9488',
-      secondary: '#FFB6A3',
-      secondaryLight: '#FECACA',
-      secondaryDark: '#F97316',
-      accent: '#0EA5E9',
-      background: '#FFFFFF',
-      backgroundSecondary: '#F8FAFB',
-      backgroundTertiary: '#F0FDFA',
+      primary: '#0A3DFF',
+      primaryLight: '#00C2FF',
+      primaryDark: '#07142B',
+      secondary: '#00C2FF',
+      secondaryLight: '#39FF6A',
+      secondaryDark: '#0A3DFF',
+      accent: '#8A2BE2',
+      brandBlue: '#0A3DFF',
+      brandCyan: '#00C2FF',
+      brandGreen: '#39FF6A',
+      brandNavy: '#07142B',
+      brandOffWhite: '#F5F7FA',
+      brandPurple: '#8A2BE2',
+      background: '#F5F7FA',
+      backgroundSecondary: '#FFFFFF',
+      backgroundTertiary: '#EAF1FF',
       surface: '#FFFFFF',
-      surfaceHover: '#F0FDFA',
-      text: '#0F172A',
-      textSecondary: '#475569',
-      textMuted: '#94A3B8',
+      surfaceHover: '#EAF1FF',
+      text: '#07142B',
+      textSecondary: '#334155',
+      textMuted: '#64748B',
       textOnPrimary: '#FFFFFF',
-      border: '#E2E8F0',
-      borderLight: '#F1F5F9',
-      success: '#10B981',
+      border: '#D7E3FF',
+      borderLight: '#EAF1FF',
+      success: '#16C95B',
       warning: '#F59E0B',
       error: '#EF4444',
-      info: '#0EA5E9',
+      info: '#00C2FF',
       cardBg: '#FFFFFF',
-      sidebarBg: '#0F172A',
-      sidebarText: '#F8FAFC',
-      sidebarHover: '#1E293B',
+      sidebarBg: '#07142B',
+      sidebarText: '#F5F7FA',
+      sidebarHover: '#0B1E3D',
       headerBg: '#FFFFFF',
     },
     dark: {
-      background: '#0F172A',
-      backgroundSecondary: '#1E293B',
-      backgroundTertiary: '#334155',
-      surface: '#1E293B',
-      surfaceHover: '#334155',
-      text: '#F8FAFC',
-      textSecondary: '#CBD5E1',
-      textMuted: '#64748B',
-      border: '#334155',
-      borderLight: '#475569',
-      cardBg: '#1E293B',
-      sidebarBg: '#020617',
-      sidebarText: '#F8FAFC',
-      sidebarHover: '#0F172A',
-      headerBg: '#1E293B',
+      background: '#07142B',
+      backgroundSecondary: '#0B1E3D',
+      backgroundTertiary: '#102A55',
+      surface: '#0B1E3D',
+      surfaceHover: '#102A55',
+      text: '#F5F7FA',
+      textSecondary: '#B8C7E0',
+      textMuted: '#7E94B8',
+      border: '#1E3A6A',
+      borderLight: '#254C86',
+      cardBg: '#0B1E3D',
+      sidebarBg: '#07142B',
+      sidebarText: '#F5F7FA',
+      sidebarHover: '#102A55',
+      headerBg: '#0B1E3D',
     }
   },
 
@@ -271,20 +278,15 @@ export const themes = {
 };
 
 // Get theme colors based on mode (light/dark)
-const getThemeColors = (themeId, mode) => {
+const getThemeColors = (themeId, mode, brandingColors = {}) => {
   const theme = themes[themeId] || themes.angisoft;
-  if (mode === 'dark') {
-    return {
-      ...theme.colors,
-      ...theme.dark,
-    };
-  }
-  return theme.colors;
+  const baseColors = mode === 'dark' ? { ...theme.colors, ...theme.dark } : theme.colors;
+  return { ...baseColors, ...brandingColors };
 };
 
 // Create MUI theme from our theme
-const createMuiTheme = (themeId, mode) => {
-  const colors = getThemeColors(themeId, mode);
+const createMuiTheme = (themeId, mode, brandingColors = {}) => {
+  const colors = getThemeColors(themeId, mode, brandingColors);
   
   return createTheme({
     palette: {
@@ -373,8 +375,8 @@ const createMuiTheme = (themeId, mode) => {
 };
 
 // Apply CSS variables to document
-const applyCssVariables = (themeId, mode) => {
-  const colors = getThemeColors(themeId, mode);
+const applyCssVariables = (themeId, mode, brandingColors = {}) => {
+  const colors = getThemeColors(themeId, mode, brandingColors);
   const root = document.documentElement;
   
   // Set all CSS custom properties
@@ -431,19 +433,40 @@ export const ThemeProvider = ({ children }) => {
 
   const [themeId, setThemeId] = useState(getInitialTheme);
   const [mode, setMode] = useState(getInitialMode);
+  const [branding, setBranding] = useState(null);
+
+  const loadBranding = async () => {
+    try {
+      const data = await apiGet('/site/branding');
+      setBranding(data || null);
+      if (data?.themeId && themes[data.themeId]) setThemeId(data.themeId);
+      if (data?.mode === 'light' || data?.mode === 'dark') setMode(data.mode);
+    } catch {
+      setBranding(null);
+    }
+  };
+
+  useEffect(() => {
+    loadBranding();
+    const handleBrandingUpdated = () => loadBranding();
+    window.addEventListener('branding-updated', handleBrandingUpdated);
+    return () => window.removeEventListener('branding-updated', handleBrandingUpdated);
+  }, []);
+
+  const brandingColors = useMemo(() => branding?.colors || {}, [branding]);
 
   // Apply theme when changed
   useEffect(() => {
-    applyCssVariables(themeId, mode);
+    applyCssVariables(themeId, mode, brandingColors);
     localStorage.setItem('angisoft-theme', themeId);
     localStorage.setItem('angisoft-mode', mode);
-  }, [themeId, mode]);
+  }, [themeId, mode, brandingColors]);
 
   // Create MUI theme
-  const muiTheme = useMemo(() => createMuiTheme(themeId, mode), [themeId, mode]);
-  
+  const muiTheme = useMemo(() => createMuiTheme(themeId, mode, brandingColors), [themeId, mode, brandingColors]);
+
   // Get current theme colors
-  const colors = useMemo(() => getThemeColors(themeId, mode), [themeId, mode]);
+  const colors = useMemo(() => getThemeColors(themeId, mode, brandingColors), [themeId, mode, brandingColors]);
 
   const value = useMemo(() => ({
     themeId,
@@ -451,13 +474,15 @@ export const ThemeProvider = ({ children }) => {
     colors,
     currentTheme: themes[themeId],
     allThemes: themes,
+    branding,
+    refreshBranding: loadBranding,
     setTheme: (id) => {
       if (themes[id]) setThemeId(id);
     },
     toggleMode: () => setMode(prev => prev === 'light' ? 'dark' : 'light'),
     setMode,
     isDark: mode === 'dark',
-  }), [themeId, mode, colors]);
+  }), [themeId, mode, colors, branding]);
 
   return (
     <ThemeContext.Provider value={value}>

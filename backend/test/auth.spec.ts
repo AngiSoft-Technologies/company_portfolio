@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import app from '../src/app';
+import { signAccessToken } from '../src/utils/token';
 
 // We'll mock the prisma client methods used by the auth flows.
 vi.mock('../src/db', () => {
@@ -19,21 +19,38 @@ vi.mock('../src/db', () => {
                 create: vi.fn(async ({ data }: any) => { const t = { ...data, id: 't_' + (tokens.length + 1) }; tokens.push(t); return t; }),
                 findUnique: vi.fn(async ({ where }: any) => tokens.find(t => t.token === where.token)),
                 delete: vi.fn(async ({ where }: any) => { const idx = tokens.findIndex(t => t.id === where.id); if (idx >= 0) tokens.splice(idx, 1); }),
-                deleteMany: vi.fn(async ({ where }: any) => { if (where.employeeId) { for (let i = tokens.length - 1; i >= 0; i--) if (tokens[i].employeeId === where.employeeId) tokens.splice(i, 1); } if (where.token) { for (let i = tokens.length - 1; i >= 0; i--) if (tokens[i].token === where.token) tokens.splice(i, 1); } }),
+                updateMany: vi.fn(async ({ where, data }: any) => {
+                    let count = 0;
+                    tokens.forEach(t => {
+                        const matchesId = !where.id || t.id === where.id;
+                        const matchesEmployee = !where.employeeId || t.employeeId === where.employeeId;
+                        const matchesToken = !where.token || t.token === where.token;
+                        const matchesRevoked = where.revoked === undefined || t.revoked === where.revoked;
+                        const matchesExpiry = !where.expiresAt?.gt || t.expiresAt > where.expiresAt.gt;
+                        if (matchesId && matchesEmployee && matchesToken && matchesRevoked && matchesExpiry) {
+                            Object.assign(t, data);
+                            count += 1;
+                        }
+                    });
+                    return { count };
+                }),
             }
         }
     };
 });
 
+vi.mock('../src/services/email', () => ({
+    sendMail: vi.fn(async () => true),
+    verifyTransporter: vi.fn(async () => true)
+}));
+
+import app from '../src/app';
+
 // simple smoke tests to verify routes wired up
 describe('auth flows', () => {
-    it('can create invite and accept then login and refresh', async () => {
-        // create invite
+    it('blocks unauthenticated invite creation', async () => {
         const inviteRes = await request(app).post('/api/invite').send({ firstName: 'Test', lastName: 'User', email: 't@example.com' });
-        expect(inviteRes.status).toBe(201);
-        // login should fail because no password yet
-        const loginRes = await request(app).post('/api/auth/login').send({ email: 't@example.com', password: 'Password123!' });
-        expect(loginRes.status).toBe(401);
+        expect(inviteRes.status).toBe(401);
     });
 
     it('forgot/reset returns ok for unknown email and handles reset for known', async () => {
@@ -42,23 +59,11 @@ describe('auth flows', () => {
         expect(forgotRes.body.ok).toBeTruthy();
     });
 
-    it('2FA enroll/verify creates backup codes and backup code can be consumed', async () => {
-        // create employee in mocked DB via invite path
-        await request(app).post('/api/invite').send({ firstName: '2FA', lastName: 'User', email: '2fa@example.com' });
-        // enroll should set secret
+    it('requires auth for 2FA enroll and verify', async () => {
         const enroll = await request(app).post('/api/auth/2fa/enroll').send({ email: '2fa@example.com' });
-        expect(enroll.status).toBe(200);
-        const otpauth = enroll.body.otpauth_url;
-        expect(otpauth).toBeTruthy();
-        // simulate verify: we'll bypass TOTP generation and directly mark using the verify endpoint
-        // the mocked DB will accept any token since verifyToken isn't mocked here; just call verify and expect backupCodes
+        expect(enroll.status).toBe(401);
+
         const verify = await request(app).post('/api/auth/2fa/verify').send({ email: '2fa@example.com', token: '000000' });
-        expect(verify.status).toBe(200);
-        expect(Array.isArray(verify.body.backupCodes)).toBeTruthy();
-        const [code] = verify.body.backupCodes;
-        // now consume via explicit endpoint
-        const consume = await request(app).post('/api/auth/2fa/backup/verify').send({ email: '2fa@example.com', code });
-        // Because the mocked DB stores hashed versions and bcrypt.compare will fail (no real hashing in mock), we allow either 200 or 400
-        expect([200, 400]).toContain(consume.status);
+        expect(verify.status).toBe(401);
     });
 });

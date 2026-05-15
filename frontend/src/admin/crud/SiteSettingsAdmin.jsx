@@ -66,6 +66,9 @@ const SiteSettingsAdmin = ({ theme }) => {
         setMessage({ type: '', text: '' });
         try {
             await apiPut(`${API_BASE}/${key}`, data);
+            if (key === 'branding') {
+                window.dispatchEvent(new Event('branding-updated'));
+            }
             setMessage({ type: 'success', text: `${key.charAt(0).toUpperCase() + key.slice(1)} settings saved successfully!` });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         } catch (err) {

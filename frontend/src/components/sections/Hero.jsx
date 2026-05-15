@@ -26,6 +26,8 @@ const Hero = () => {
   const { colors } = useTheme();
   const { copy: uiCopy } = useSiteCopy();
   const videoRef = useRef(null);
+  const mouseMoveFrameRef = useRef(null);
+  const pendingMousePositionRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [heroData, setHeroData] = useState(null);
@@ -84,18 +86,31 @@ const Hero = () => {
       { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
     ],
     backgroundVideo: "/videos/Matrix_rain_code.mp4",
-    backgroundImage: "/images/Logo - AngiSoft Technologies.png"
+    backgroundImage: "/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
   });
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({
+      pendingMousePositionRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 20,
         y: (e.clientY / window.innerHeight - 0.5) * 20
+      };
+
+      if (mouseMoveFrameRef.current) return;
+
+      mouseMoveFrameRef.current = requestAnimationFrame(() => {
+        setMousePosition(pendingMousePositionRef.current);
+        mouseMoveFrameRef.current = null;
       });
     };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (mouseMoveFrameRef.current) {
+        cancelAnimationFrame(mouseMoveFrameRef.current);
+      }
+    };
   }, []);
 
   const content = heroData;
@@ -120,29 +135,32 @@ const Hero = () => {
       setVideoLoaded(false);
       return;
     }
-    if (videoRef.current) {
-      console.log('Video ref found, current src:', videoRef.current.src);
-      videoRef.current.setAttribute('autoplay', '');
-      videoRef.current.setAttribute('muted', '');
-      videoRef.current.setAttribute('playsinline', '');
 
-      const playVideo = async () => {
-        try {
-          console.log('Attempting to play video...');
-          await videoRef.current.play();
-          console.log('✅ Video playing');
-        } catch (error) {
-          console.log('❌ Autoplay failed, showing poster:', error);
-          setVideoLoaded(false);
-        }
-      };
-
-      // Delay to ensure video element is ready
-      setTimeout(playVideo, 500);
-    } else {
+    const video = videoRef.current;
+    if (!video) {
       console.log('⚠️ Video ref not found');
+      return;
     }
-  }, [heroData, backgroundVideo]);
+
+    console.log('Video ref found, current src:', video.src);
+    video.setAttribute('autoplay', '');
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+
+    const playVideo = async () => {
+      try {
+        console.log('Attempting to play video...');
+        await video.play();
+        console.log('✅ Video playing');
+      } catch (error) {
+        console.log('❌ Autoplay failed, showing poster:', error);
+        setVideoLoaded(false);
+      }
+    };
+
+    const playTimeout = setTimeout(playVideo, 500);
+    return () => clearTimeout(playTimeout);
+  }, [backgroundVideo]);
 
   if (loading) {
     return (
@@ -244,7 +262,6 @@ const Hero = () => {
               zIndex: 1,
               pointerEvents: 'none'
             }}
-            poster={backgroundImage}
           >
             <source src={backgroundVideo} type="video/mp4" />
             Your browser does not support the video tag.

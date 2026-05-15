@@ -17,6 +17,7 @@ const navSections = [
         items: [
             { to: '/admin', label: 'Dashboard', icon: FaTachometerAlt },
             { to: '/admin/bookings', label: 'Bookings', icon: FaBriefcase },
+            { to: '/admin/client-projects', label: 'Client Projects', icon: FaProjectDiagram },
             { to: '/admin/staff-dashboard', label: 'My Dashboard', icon: FaUserCircle },
         ]
     },

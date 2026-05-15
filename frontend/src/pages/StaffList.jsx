@@ -213,7 +213,7 @@ const StaffList = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/staff/${member.id}`)}
+                                                    onClick={() => navigate(`/staff/${member.username || member.id}`)}
                                                 >
                                                     {/* Avatar Section */}
                                                     <div 
@@ -279,24 +279,24 @@ const StaffList = () => {
                                                                 className="text-sm font-medium capitalize"
                                                                 style={{ color: colors.primary }}
                                                             >
-                                                                {member.role?.toLowerCase().replace('_', ' ')}
+                                                                {member.publicTitle || member.role?.toLowerCase().replace('_', ' ')}
                                                             </span>
                                                         </div>
                                                         
-                                                        {member.bio && (
-                                                            <p 
+                                                        {(member.publicSummary || member.bio) && (
+                                                            <p
                                                                 className="text-sm mb-4 line-clamp-2"
                                                                 style={{ color: colors.textSecondary }}
                                                             >
-                                                                {member.bio}
+                                                                {member.publicSummary || member.bio}
                                                             </p>
                                                         )}
                                                         
                                                         {/* Social Links */}
                                                         <div className="flex justify-center gap-3 mb-4">
-                                                            {member.linkedin && (
+                                                            {member.linkedinUrl && (
                                                                 <a
-                                                                    href={member.linkedin}
+                                                                    href={member.linkedinUrl}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
@@ -309,9 +309,9 @@ const StaffList = () => {
                                                                     <FaLinkedin />
                                                                 </a>
                                                             )}
-                                                            {member.twitter && (
+                                                            {member.twitterUrl && (
                                                                 <a
-                                                                    href={member.twitter}
+                                                                    href={member.twitterUrl}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
@@ -324,9 +324,9 @@ const StaffList = () => {
                                                                     <FaTwitter />
                                                                 </a>
                                                             )}
-                                                            {member.github && (
+                                                            {member.githubUrl && (
                                                                 <a
-                                                                    href={member.github}
+                                                                    href={member.githubUrl}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
@@ -339,9 +339,9 @@ const StaffList = () => {
                                                                     <FaGithub />
                                                                 </a>
                                                             )}
-                                                            {member.email && (
+                                                            {member.publicEmail && (
                                                                 <a
-                                                                    href={`mailto:${member.email}`}
+                                                                    href={`mailto:${member.publicEmail}`}
                                                                     onClick={(e) => e.stopPropagation()}
                                                                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                                                                     style={{

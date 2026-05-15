@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import multer from 'multer';
 import { requireAuth } from '../middleware/auth';
+import { createClientProjectFromBooking } from '../services/clientProjects';
+import { logAudit } from '../services/audit';
 // stripe types may not be available until dependency is installed; keep runtime require below
 
 const upload = multer({ dest: 'uploads/' });
@@ -87,28 +89,31 @@ export default function bookingsRouter(prisma: PrismaClient) {
     // GET /api/bookings/:id - Get booking details (public, by booking ID or email)
     router.get('/:id', async (req, res) => {
         try {
-            const { email } = req.query;
+            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : '';
+            if (!email) return res.status(401).json({ error: 'Email verification required' });
             const booking = await prisma.booking.findUnique({
                 where: { id: req.params.id },
                 include: {
                     client: true,
                     files: true,
                     payments: {
-                        orderBy: { createdAt: 'desc' }
+                        orderBy: { createdAt: 'desc' },
+                        select: { id: true, status: true, amount: true, currency: true, createdAt: true }
                     },
                     assignedTo: {
                         select: {
                             id: true,
                             firstName: true,
                             lastName: true,
-                            email: true
+                            publicTitle: true,
+                            avatarUrl: true
                         }
-                    }
+                    },
+                    clientProject: { select: { id: true, title: true, status: true, progress: true, updatedAt: true } }
                 }
             });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            // Optional: verify email matches if provided
-            if (email && booking.client.email !== email) {
+            if (booking.client.email.toLowerCase() !== email) {
                 return res.status(403).json({ error: 'Unauthorized' });
             }
             res.json(booking);
@@ -134,38 +139,73 @@ export default function bookingsRouter(prisma: PrismaClient) {
                 status = 'REJECTED';
             }
 
-            const updated = await prisma.booking.update({
-                where: { id: req.params.id },
-                data: {
-                    status,
-                    priceEstimate: priceEstimate ? Number(priceEstimate) : booking.priceEstimate,
-                    assignedToId: assignedToId || booking.assignedToId
-                },
-                include: {
-                    client: true,
-                    assignedTo: {
-                        select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            email: true
-                        }
-                    }
-                }
-            });
-
-            // Add note if provided
-            if (notes) {
-                await prisma.note.create({
+            const updated = await prisma.$transaction(async (tx) => {
+                const reviewed = await tx.booking.update({
+                    where: { id: req.params.id },
                     data: {
-                        bookingId: booking.id,
-                        authorId: req.user?.sub || null,
-                        text: notes
+                        status,
+                        priceEstimate: priceEstimate ? Number(priceEstimate) : booking.priceEstimate,
+                        assignedToId: assignedToId || booking.assignedToId
+                    },
+                    include: {
+                        client: true,
+                        assignedTo: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                email: true
+                            }
+                        },
+                        clientProject: true
                     }
                 });
-            }
 
-            // TODO: Send email to client about status change
+                if (notes) {
+                    await tx.note.create({
+                        data: {
+                            bookingId: booking.id,
+                            authorId: req.user?.sub || null,
+                            text: notes
+                        }
+                    });
+                }
+
+                if (action === 'accept') {
+                    await createClientProjectFromBooking(tx, booking.id, req.user?.sub || null);
+                }
+
+                return tx.booking.findUnique({
+                    where: { id: req.params.id },
+                    include: {
+                        client: true,
+                        assignedTo: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                email: true
+                            }
+                        },
+                        clientProject: {
+                            include: {
+                                milestones: { orderBy: { sortOrder: 'asc' } },
+                                owner: { select: { id: true, firstName: true, lastName: true, publicTitle: true } }
+                            }
+                        }
+                    }
+                });
+            });
+
+            await logAudit({
+                actorId: req.user?.sub || null,
+                actorRole: req.user?.role || null,
+                action: action === 'accept' ? 'accept_booking' : 'reject_booking',
+                entity: 'Booking',
+                entityId: booking.id,
+                meta: { status, assignedToId: assignedToId || booking.assignedToId }
+            });
+
             res.json(updated);
         } catch (err: any) {
             res.status(500).json({ error: err.message });

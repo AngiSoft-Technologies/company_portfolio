@@ -55,7 +55,7 @@ async function main() {
             { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
         ],
         backgroundVideo: "/videos/Matrix_rain_code.mp4",
-        backgroundImage: "/images/Logo - AngiSoft Technologies.png"
+        backgroundImage: "/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
     };
 
     await prisma.setting.upsert({
@@ -168,24 +168,31 @@ async function main() {
     });
     console.log('  ✅ Footer settings');
 
-    // Branding
+    const brandingValue = {
+        themeId: "angisoft",
+        mode: "light",
+        logo: "/images/Logos/AngiSoft%20Horizontal%20Logo.png",
+        logoDark: "/images/Logos/AngiSoft%20Dark%20Background%20Logo.png",
+        favicon: "/favicon.ico",
+        siteName: "AngiSoft Technologies",
+        tagline: "Building Tomorrow's Digital Solutions Today",
+        colors: {
+            primary: "#14B8A6",
+            primaryLight: "#2DD4BF",
+            primaryDark: "#0D9488",
+            secondary: "#FFB6A3",
+            secondaryLight: "#FECACA",
+            secondaryDark: "#F97316",
+            accent: "#0EA5E9"
+        }
+    };
+
     await prisma.setting.upsert({
         where: { key: 'site_branding' },
-        update: {},
+        update: { value: brandingValue },
         create: {
             key: 'site_branding',
-            value: {
-                logo: "/images/angisoft_logo.png",
-                logoDark: "/images/angisoft_logo_dark.png",
-                favicon: "/favicon.ico",
-                siteName: "AngiSoft Technologies",
-                tagline: "Building Tomorrow's Digital Solutions Today",
-                colors: {
-                    primary: "#0891b2",
-                    secondary: "#06b6d4",
-                    accent: "#f59e0b"
-                }
-            }
+            value: brandingValue
         }
     });
     console.log('  ✅ Branding settings');
@@ -810,36 +817,68 @@ Whether you need M-Pesa for your POS system, e-commerce platform, or mobile app,
             lastName: 'Kimani',
             email: 'david.kimani@angisoft.co.ke',
             role: 'DEVELOPER' as const,
+            username: 'david-kimani',
             bio: 'Full-stack developer specializing in React, Node.js, and PostgreSQL. 6+ years building web and mobile applications for East African businesses.',
+            publicTitle: 'Full-Stack Developer',
+            publicSummary: 'Builds reliable web and mobile platforms for East African businesses.',
+            skills: ['React', 'Node.js', 'PostgreSQL', 'TypeScript'],
+            specialties: ['Business systems', 'API design', 'Dashboards'],
+            profilePublished: true,
+            profileOrder: 1,
             avatarUrl: '/images/team/david-kimani.jpg',
-            phone: '+254712345678'
+            phone: '+254712345678',
+            publicEmail: 'david.kimani@angisoft.co.ke'
         },
         {
             firstName: 'Sarah',
             lastName: 'Njeri',
             email: 'sarah.njeri@angisoft.co.ke',
             role: 'DEVELOPER' as const,
+            username: 'sarah-njeri',
             bio: 'Mobile developer with expertise in Flutter and Kotlin. Passionate about creating intuitive user experiences for Android and iOS platforms.',
+            publicTitle: 'Mobile App Developer',
+            publicSummary: 'Creates Flutter and Kotlin mobile apps with polished customer experiences.',
+            skills: ['Flutter', 'Kotlin', 'Android', 'UI/UX'],
+            specialties: ['Mobile apps', 'MVP builds', 'Cross-platform delivery'],
+            profilePublished: true,
+            profileOrder: 2,
             avatarUrl: '/images/team/sarah-njeri.jpg',
-            phone: '+254723456789'
+            phone: '+254723456789',
+            publicEmail: 'sarah.njeri@angisoft.co.ke'
         },
         {
             firstName: 'Brian',
             lastName: 'Odhiambo',
             email: 'brian.odhiambo@angisoft.co.ke',
             role: 'DEVELOPER' as const,
+            username: 'brian-odhiambo',
             bio: 'Data analyst and Python specialist. Creates business intelligence dashboards and automated reporting solutions using Excel and Python.',
+            publicTitle: 'Data Analyst',
+            publicSummary: 'Turns business data into dashboards, reports, and automation workflows.',
+            skills: ['Python', 'Excel', 'Power BI', 'Automation'],
+            specialties: ['Dashboards', 'Reports', 'Data cleanup'],
+            profilePublished: true,
+            profileOrder: 3,
             avatarUrl: '/images/team/brian-odhiambo.jpg',
-            phone: '+254734567890'
+            phone: '+254734567890',
+            publicEmail: 'brian.odhiambo@angisoft.co.ke'
         },
         {
             firstName: 'Lucy',
             lastName: 'Wambui',
             email: 'lucy.wambui@angisoft.co.ke',
             role: 'MARKETING' as const,
+            username: 'lucy-wambui',
             bio: 'Digital marketing specialist focused on tech companies. Manages brand development, content strategy, and client communications.',
+            publicTitle: 'Digital Marketing Specialist',
+            publicSummary: 'Connects AngiSoft services with customers through content and brand strategy.',
+            skills: ['Content strategy', 'Branding', 'Client communication'],
+            specialties: ['Campaigns', 'Product promotion', 'Customer onboarding'],
+            profilePublished: true,
+            profileOrder: 4,
             avatarUrl: '/images/team/lucy-wambui.jpg',
-            phone: '+254745678901'
+            phone: '+254745678901',
+            publicEmail: 'lucy.wambui@angisoft.co.ke'
         }
     ];
 

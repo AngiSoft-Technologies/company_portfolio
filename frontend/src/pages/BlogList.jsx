@@ -122,7 +122,7 @@ const BlogList = () => {
                   <ScrollReveal key={post.id || idx} animation="fadeUp" delay={idx * 100}>
                     <div
                       className="group h-full cursor-pointer"
-                      onClick={() => navigate(`/blog/${post.id}`)}
+                      onClick={() => navigate(`/blog/${post.slug || post.id}`)}
                     >
                       <GlassmorphismCard className="p-8 h-full flex flex-col gap-5 transition-all duration-300 hover:-translate-y-2">
                         <div className="flex items-center justify-between text-sm" style={{ color: colors.textSecondary }}>

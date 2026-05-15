@@ -89,6 +89,28 @@ export const apiPut = (endpoint, data, token = null) => apiRequest('PUT', endpoi
 export const apiDelete = (endpoint, token = null) => apiRequest('DELETE', endpoint, null, token);
 export const apiPatch = (endpoint, data, token = null) => apiRequest('PATCH', endpoint, data, token);
 
+const getClientPortalToken = () => localStorage.getItem('clientPortalToken');
+
+const clientPortalRequest = async (method, endpoint, data = null) => {
+  try {
+    return await apiRequest(method, endpoint, data, getClientPortalToken());
+  } catch (error) {
+    if (window.location.pathname.startsWith('/portal')) {
+      localStorage.removeItem('clientPortalToken');
+      if (!window.location.pathname.startsWith('/portal/request')) {
+        setTimeout(() => {
+          window.location.href = '/portal/request';
+        }, 800);
+      }
+    }
+    throw error;
+  }
+};
+
+export const clientApiGet = (endpoint) => clientPortalRequest('GET', endpoint);
+export const clientApiPost = (endpoint, data) => clientPortalRequest('POST', endpoint, data);
+export const clientApiPatch = (endpoint, data) => clientPortalRequest('PATCH', endpoint, data);
+
 /**
  * Upload a file to the backend. The endpoint should be like '/upload/image', '/upload/icon', '/upload/document'.
  * The '/api' prefix will be added automatically.

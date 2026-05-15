@@ -44,8 +44,8 @@ export default function projectsRouter() {
             const isDeveloper = isRole(req, ['DEVELOPER']);
             const project = await projectsController.get(req.params.id, {
                 where: includeAll
-                    ? { id: req.params.id }
-                    : (isDeveloper ? { id: req.params.id, authorId: req.user?.sub } : { id: req.params.id, published: true }),
+                    ? {}
+                    : (isDeveloper ? { authorId: req.user?.sub } : { published: true }),
                 include: {
                     author: { select: { id: true, firstName: true, lastName: true, role: true, avatarUrl: true } }
                 }

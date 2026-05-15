@@ -4,9 +4,10 @@ import { logAudit } from '../services/audit';
 export const blogController = {
     async create(data: any, user: any) { const p = await prisma.blogPost.create({ data }); await logAudit({ action: 'create_blog', entity: 'BlogPost', entityId: p.id, actorId: user?.sub || null, actorRole: user?.role || null }); return p; },
     async list(options: any = {}) { return prisma.blogPost.findMany({ orderBy: { createdAt: 'desc' }, ...options }); },
-    async get(id: string, options: any = {}) {
+    async get(identifier: string, options: any = {}) {
         const { where, ...rest } = options;
-        const mergedWhere = where ? { ...where, id } : { id };
+        const identifierWhere = { OR: [{ id: identifier }, { slug: identifier }] };
+        const mergedWhere = where ? { AND: [where, identifierWhere] } : identifierWhere;
         return prisma.blogPost.findFirst({ where: mergedWhere, ...rest });
     },
     async update(id: string, data: any, user: any) { const p = await prisma.blogPost.update({ where: { id }, data }); await logAudit({ action: 'update_blog', entity: 'BlogPost', entityId: id, actorId: user?.sub || null, actorRole: user?.role || null }); return p; },

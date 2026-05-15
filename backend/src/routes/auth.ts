@@ -6,10 +6,10 @@ import { sendMail } from '../services/email';
 import { logAudit } from '../services/audit';
 import { suspiciousAuthEvent } from '../services/monitor';
 import { z } from 'zod';
-import { setRefreshCookie } from '../middleware/auth';
+import { AuthRequest, requireAuth, setRefreshCookie } from '../middleware/auth';
 import rateLimit from 'express-rate-limit';
-import { requireAuth } from '../middleware/auth';
 import { generateSecret, generateOtpAuthUrl, verifyToken, generateBackupCodes, hashBackupCodes } from '../services/twofactor';
+import { requireRoles } from '../middleware/roles';
 import zxcvbn from 'zxcvbn';
 import { checkPasswordStrength } from '../utils/passwordPolicy';
 
@@ -83,13 +83,17 @@ router.post('/refresh', async (req, res) => {
     const incoming = req.cookies?.refreshToken || req.body.refreshToken;
     if (!incoming) return res.status(400).json({ error: 'Missing refresh token' });
     const incomingHash = hashToken(incoming);
-    const r = await prisma.refreshToken.findUnique({ where: { token: incomingHash } });
-    if (!r || r.expiresAt < new Date()) return res.status(401).json({ error: 'Invalid refresh token' });
-    const emp = await prisma.employee.findUnique({ where: { id: r.employeeId } });
+    const current = await prisma.refreshToken.findUnique({ where: { token: incomingHash } });
+    if (!current || current.revoked || current.expiresAt < new Date()) return res.status(401).json({ error: 'Invalid refresh token' });
+    const claimed = await prisma.refreshToken.updateMany({
+        where: { id: current.id, revoked: false, expiresAt: { gt: new Date() } },
+        data: { revoked: true }
+    });
+    if (claimed.count !== 1) return res.status(401).json({ error: 'Invalid refresh token' });
+
+    const emp = await prisma.employee.findUnique({ where: { id: current.employeeId } });
     if (!emp) return res.status(401).json({ error: 'Invalid token owner' });
 
-    // rotate: delete old and issue new
-    await prisma.refreshToken.delete({ where: { id: r.id } });
     const newToken = createRefreshToken();
     const newHash = hashToken(newToken);
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -107,16 +111,15 @@ router.post('/refresh', async (req, res) => {
 router.post('/logout', async (req, res) => {
     const incoming = req.cookies?.refreshToken || req.body.refreshToken;
     if (incoming) {
-        await prisma.refreshToken.deleteMany({ where: { token: hashToken(incoming) } }).catch(() => { });
+        await prisma.refreshToken.updateMany({ where: { token: hashToken(incoming) }, data: { revoked: true } }).catch(() => { });
     }
     res.clearCookie('refreshToken', { path: '/api/auth' });
     res.json({ ok: true });
 });
 
-router.post('/revoke/:employeeId', async (req, res) => {
-    // Admin-only endpoint: should be protected by requireAuth + role check in production
+router.post('/revoke/:employeeId', requireAuth, requireRoles('ADMIN'), async (req, res) => {
     const { employeeId } = req.params;
-    await prisma.refreshToken.deleteMany({ where: { employeeId } });
+    await prisma.refreshToken.updateMany({ where: { employeeId }, data: { revoked: true } });
     await logAudit({ action: 'revoke_tokens', entity: 'Employee', entityId: employeeId, actorId: req.user?.sub || null, actorRole: req.user?.role || null });
     res.json({ ok: true });
 });
@@ -169,23 +172,22 @@ router.post('/2fa/backup/verify', async (req, res) => {
 });
 
 // 2FA enroll: generate secret and otpauth url
-router.post('/2fa/enroll', async (req, res) => {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'Missing email' });
-    const emp = await prisma.employee.findUnique({ where: { email } });
+router.post('/2fa/enroll', requireAuth, async (req: AuthRequest, res) => {
+    const userId = req.user?.sub;
+    if (!userId) return res.status(401).json({ error: 'Not authorized' });
+    const emp = await prisma.employee.findUnique({ where: { id: userId } });
     if (!emp) return res.status(404).json({ error: 'Unknown user' });
     const secret = generateSecret();
-    const url = generateOtpAuthUrl(secret, email);
-    // store secret temporarily (in production, mark as pending until verified)
+    const url = generateOtpAuthUrl(secret, emp.email);
     await prisma.employee.update({ where: { id: emp.id }, data: { twoFactorSecret: secret } });
     res.json({ otpauth_url: url });
 });
 
 // 2FA verify + enable
-router.post('/2fa/verify', async (req, res) => {
-    const { email, token } = req.body;
-    if (!email || !token) return res.status(400).json({ error: 'Missing params' });
-    const emp = await prisma.employee.findUnique({ where: { email } });
+router.post('/2fa/verify', requireAuth, async (req: AuthRequest, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Missing token' });
+    const emp = await prisma.employee.findUnique({ where: { id: req.user?.sub } });
     if (!emp || !emp.twoFactorSecret) return res.status(400).json({ error: 'No secret enrolled' });
     const ok = verifyToken(emp.twoFactorSecret, token);
     if (!ok) return res.status(400).json({ error: 'Invalid token' });

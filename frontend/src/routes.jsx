@@ -8,6 +8,10 @@ import ServicesList from "./pages/ServicesList";
 import TestimonialsList from "./pages/TestimonialsList";
 import Booking from "./pages/Booking";
 import BookingStatus from "./pages/BookingStatus";
+import ClientPortalRequest from "./pages/ClientPortalRequest";
+import ClientPortalAccess from "./pages/ClientPortalAccess";
+import ClientDashboard from "./pages/ClientDashboard";
+import ClientProjectTracking from "./pages/ClientProjectTracking";
 import StaffList from "./pages/StaffList";
 import StaffDetail from "./pages/StaffDetail";
 import ServiceDetail from "./pages/ServiceDetail";
@@ -23,6 +27,7 @@ import StaffManagement from './admin/StaffManagement';
 import FileUploadManager from './admin/FileUploadManager';
 import StaffDashboard from './admin/StaffDashboard';
 import NotFoundAdmin from './admin/NotFoundAdmin';
+import ClientProjectsManagement from './admin/ClientProjectsManagement';
 import SystemPanel from './admin/SystemPanel';
 
 const AboutAdmin = lazy(() => import('./admin/crud/AboutAdmin'));
@@ -54,6 +59,12 @@ const AdminProtectedLayout = () => {
   );
 };
 
+const ClientProtectedRoute = () => {
+  const isLoggedIn = !!localStorage.getItem('clientPortalToken');
+  if (!isLoggedIn) return <Navigate to="/portal/request" replace />;
+  return <Outlet />;
+};
+
 const RoutesComponent = () => {
   return (
     <Router>
@@ -64,14 +75,20 @@ const RoutesComponent = () => {
           <Route path="projects" element={<ProjectLists />} />
           <Route path="services" element={<ServicesList />} />
           <Route path="service/:slug" element={<ServiceDetail />} />
-          <Route path="project/:id" element={<ProjectDetails />} />
+          <Route path="project/:slug" element={<ProjectDetails />} />
           <Route path="staff" element={<StaffList />} />
-          <Route path="staff/:id" element={<StaffDetail />} />
+          <Route path="staff/:usernameOrId" element={<StaffDetail />} />
           <Route path="testimonials" element={<TestimonialsList />} />
           <Route path="blog" element={<BlogList />} />
-          <Route path="blog/:id" element={<BlogDetail />} />
+          <Route path="blog/:slug" element={<BlogDetail />} />
           <Route path="book" element={<Booking />} />
           <Route path="booking/:id" element={<BookingStatus />} />
+          <Route path="portal/request" element={<ClientPortalRequest />} />
+          <Route path="portal/access" element={<ClientPortalAccess />} />
+          <Route path="portal" element={<ClientProtectedRoute />}>
+            <Route index element={<ClientDashboard />} />
+            <Route path="projects/:id" element={<ClientProjectTracking />} />
+          </Route>
           <Route path="newsletter/confirm" element={<NewsletterConfirm />} />
           <Route path="newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
           <Route path="*" element={<NotFound />} />
@@ -83,6 +100,7 @@ const RoutesComponent = () => {
           <Route index element={<EnhancedAdminDashboard />} />
           <Route path="bookings" element={<BookingsManagement />} />
           <Route path="bookings/:id" element={<BookingsManagement />} />
+          <Route path="client-projects" element={<ClientProjectsManagement />} />
           <Route path="staff" element={<StaffManagement />} />
           <Route path="staff-dashboard" element={<StaffDashboard />} />
           <Route path="upload-manager" element={<FileUploadManager />} />

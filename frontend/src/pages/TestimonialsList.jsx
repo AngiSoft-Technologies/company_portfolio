@@ -22,8 +22,8 @@ const TestimonialsList = () => {
         const fetchTestimonials = async () => {
             try {
                 const data = await apiGet('/testimonials');
-                const approved = Array.isArray(data) ? data.filter(t => t.approved !== false) : [];
-                setTestimonials(approved);
+                const confirmed = Array.isArray(data) ? data.filter(t => t.confirmed !== false) : [];
+                setTestimonials(confirmed);
             } catch (err) {
                 setError(err.message);
             } finally {

@@ -245,7 +245,7 @@ const ProjectLists = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/project/${project.id || project._id}`)}
+                                                    onClick={() => navigate(`/project/${project.slug || project.id || project._id}`)}
                                                 >
                                                     {/* Image Container */}
                                                     <div className="relative h-56 overflow-hidden">

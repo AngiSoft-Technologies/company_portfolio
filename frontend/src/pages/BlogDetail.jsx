@@ -19,7 +19,7 @@ const splitParagraphs = (text) => {
 };
 
 const BlogDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { colors } = useTheme();
   const { copy: uiCopy } = useSiteCopy();
@@ -31,7 +31,7 @@ const BlogDetail = () => {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const data = await apiGet(`/blogs/${id}`);
+        const data = await apiGet(`/blogs/${slug}`);
         setPost(data || null);
       } catch (err) {
         setError(err.message || 'Failed to load post');
@@ -40,7 +40,7 @@ const BlogDetail = () => {
       }
     };
     fetchPost();
-  }, [id]);
+  }, [slug]);
 
   const paragraphs = useMemo(() => splitParagraphs(post?.content || ''), [post]);
 

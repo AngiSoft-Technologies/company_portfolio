@@ -71,11 +71,11 @@ const Testimonials = () => {
         ));
     };
 
-    const getName = (t) => t.name || t.username || 'Client';
-    const getRole = (t) => t.role || t.title || '';
-    const getMessage = (t) => t.text || t.message || '';
+    const getName = (t) => t.name || 'Client';
+    const getRole = (t) => t.role || '';
+    const getMessage = (t) => t.text || '';
     const getCompany = (t) => t.company || '';
-    const getAvatar = (t) => t.imageUrl || t.imageLink || null;
+    const getAvatar = (t) => t.imageUrl || null;
 
     return (
         <section 

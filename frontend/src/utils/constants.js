@@ -42,10 +42,10 @@ export const BOOKING_STATUS_COLORS = {
 
 // Brand Colors
 export const BRAND_COLORS = {
-    primary: '#14B8A6', // Teal
-    secondary: '#0D9488',
-    accent: '#FFB6A3', // Peach
-    dark: '#0F172A',
-    light: '#F8FAFC'
+    primary: '#0B5CFF',
+    secondary: '#12A86B',
+    accent: '#D6A327',
+    dark: '#061A36',
+    light: '#F7FAFC'
 };
 

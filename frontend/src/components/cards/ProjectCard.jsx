@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ProjectCard = ({ image, title, description, id, theme}) => {
+const ProjectCard = ({ image, title, description, id, slug, theme}) => {
     const navigate = useNavigate();
 
     const handleReadMore = () => {
-        navigate(`/project/${id}`, { state: { image, title, description } });
+        navigate(`/project/${slug || id}`, { state: { image, title, description } });
     };
 
     const isDark = theme === 'dark';

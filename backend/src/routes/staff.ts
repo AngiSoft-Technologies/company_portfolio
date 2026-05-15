@@ -1,28 +1,42 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 
+const publicProfileSelect = {
+    id: true,
+    username: true,
+    firstName: true,
+    lastName: true,
+    role: true,
+    publicTitle: true,
+    publicSummary: true,
+    bio: true,
+    avatarUrl: true,
+    location: true,
+    websiteUrl: true,
+    linkedinUrl: true,
+    twitterUrl: true,
+    githubUrl: true,
+    skills: true,
+    specialties: true,
+    publicEmail: true,
+    publicPhone: true,
+    profileOrder: true,
+    createdAt: true,
+};
+
 export default function staffRouter(prisma: PrismaClient) {
     const router = Router();
 
-    // GET /api/staff - List all public staff members (only those who have accepted invites)
     router.get('/', async (req, res) => {
         try {
             const staff = await prisma.employee.findMany({
                 where: {
-                    acceptedAt: { not: null }, // Only show staff who have accepted their invite
-                    passwordHash: { not: null } // Only show active accounts
+                    acceptedAt: { not: null },
+                    passwordHash: { not: null },
+                    profilePublished: true,
                 },
-                select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    bio: true,
-                    avatarUrl: true,
-                    role: true,
-                    createdAt: true
-                },
-                orderBy: { createdAt: 'desc' }
+                select: publicProfileSelect,
+                orderBy: [{ profileOrder: 'asc' }, { createdAt: 'desc' }],
             });
             res.json(staff);
         } catch (err: any) {
@@ -30,23 +44,18 @@ export default function staffRouter(prisma: PrismaClient) {
         }
     });
 
-    // GET /api/staff/:id - Get individual staff member details
-    router.get('/:id', async (req, res) => {
+    router.get('/:usernameOrId', async (req, res) => {
         try {
-            const staff = await prisma.employee.findUnique({
-                where: { id: req.params.id },
+            const { usernameOrId } = req.params;
+            const staff = await prisma.employee.findFirst({
+                where: {
+                    OR: [{ username: usernameOrId }, { id: usernameOrId }],
+                    acceptedAt: { not: null },
+                    passwordHash: { not: null },
+                    profilePublished: true,
+                },
                 select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    phone: true,
-                    bio: true,
-                    avatarUrl: true,
-                    role: true,
-                    createdAt: true,
-                    acceptedAt: true,
-                    passwordHash: true, // Check if exists but don't return it
+                    ...publicProfileSelect,
                     posts: {
                         where: { published: true },
                         select: {
@@ -54,10 +63,10 @@ export default function staffRouter(prisma: PrismaClient) {
                             title: true,
                             slug: true,
                             publishedAt: true,
-                            createdAt: true
+                            createdAt: true,
                         },
-                        orderBy: { publishedAt: 'desc' },
-                        take: 5
+                        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+                        take: 5,
                     },
                     services: {
                         where: { published: true },
@@ -66,18 +75,53 @@ export default function staffRouter(prisma: PrismaClient) {
                             title: true,
                             slug: true,
                             description: true,
-                            images: true
+                            images: true,
                         },
-                        take: 5
-                    }
-                }
+                        orderBy: { createdAt: 'desc' },
+                        take: 5,
+                    },
+                    projectsAuthored: {
+                        where: { published: true },
+                        select: {
+                            id: true,
+                            title: true,
+                            slug: true,
+                            description: true,
+                            images: true,
+                            techStack: true,
+                        },
+                        orderBy: { createdAt: 'desc' },
+                        take: 5,
+                    },
+                },
             });
-            if (!staff || !staff.passwordHash || !staff.acceptedAt) {
+
+            if (!staff) {
                 return res.status(404).json({ error: 'Staff member not found' });
             }
-            // Remove passwordHash from response
-            const { passwordHash, ...staffPublic } = staff;
-            res.json(staffPublic);
+
+            const documents = await prisma.file.findMany({
+                where: {
+                    ownerType: 'employee_document',
+                    ownerId: staff.id,
+                    metadata: {
+                        path: ['public'],
+                        equals: true,
+                    },
+                },
+                select: {
+                    id: true,
+                    filename: true,
+                    url: true,
+                    mime: true,
+                    metadata: true,
+                    createdAt: true,
+                },
+                orderBy: { createdAt: 'desc' },
+            });
+
+            const { projectsAuthored, ...staffPublic } = staff;
+            res.json({ ...staffPublic, projects: projectsAuthored, documents });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
@@ -85,4 +129,3 @@ export default function staffRouter(prisma: PrismaClient) {
 
     return router;
 }
-

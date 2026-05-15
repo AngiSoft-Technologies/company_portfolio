@@ -188,7 +188,7 @@ const Blog = () => {
                             <ScrollReveal animation="fadeUp" delay={100}>
                                 <div 
                                     className="relative mb-12 rounded-3xl overflow-hidden group cursor-pointer"
-                                    onClick={() => navigate(`/blog/${displayPosts[0].id}`)}
+                                    onClick={() => navigate(`/blog/${displayPosts[0].slug || displayPosts[0].id}`)}
                                     style={{
                                         background: isDark 
                                             ? 'linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
@@ -308,7 +308,7 @@ const Blog = () => {
                                 <ScrollReveal key={post.id || idx} animation="fadeUp" delay={(idx + 1) * 100}>
                                     <div 
                                         className="group h-full rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-3"
-                                        onClick={() => navigate(`/blog/${post.id}`)}
+                                        onClick={() => navigate(`/blog/${post.slug || post.id}`)}
                                         style={{
                                             background: isDark 
                                                 ? 'rgba(30,41,59,0.6)'

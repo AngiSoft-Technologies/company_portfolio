@@ -267,9 +267,9 @@ const Projects = () => {
                                                         opacity: isHovered ? 1 : 0
                                                     }}
                                                 >
-                                                    {project.id && (
-                                                        <Link 
-                                                            to={`/project/${project.id}`}
+                                                    {(project.slug || project.id) && (
+                                                        <Link
+                                                            to={`/project/${project.slug || project.id}`}
                                                             className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                                                             style={{
                                                                 backgroundColor: colors.primary
