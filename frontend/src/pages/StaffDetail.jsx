@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
+import { getBlogDetailPath, getProjectDetailPath, getServiceDetailPath } from '../utils/detailPaths';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import {
@@ -76,8 +77,8 @@ const StaffDetail = () => {
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
-            <ParallaxSection speed={0.3} className="relative py-24 overflow-hidden">
-                <div className="absolute inset-0 z-0" style={{ background: `linear-gradient(135deg, ${colors.primary}20 0%, ${colors.secondary}20 50%, ${colors.primaryDark}20 100%)` }} />
+            <ParallaxSection speed={0.12} treatment="resume" className="relative py-24 overflow-hidden">
+                <div className="absolute inset-0 angi-technical-grid-soft opacity-15" />
                 <div className="relative z-10 max-w-7xl mx-auto px-4">
                     <ScrollReveal animation="fadeUp">
                         <button onClick={() => navigate('/staff')} className="inline-flex items-center gap-2 mb-8 text-sm font-medium transition-colors hover:opacity-80" style={{ color: colors.primary }}>
@@ -163,11 +164,11 @@ const StaffDetail = () => {
                             )}
 
                             {staff.services?.length > 0 && (
-                                <ContentGrid title="Services" icon={FaBriefcase} items={staff.services} colors={colors} mode={mode} onOpen={(service) => navigate(`/service/${service.slug || service.id}`)} />
+                                <ContentGrid title="Services" icon={FaBriefcase} items={staff.services} colors={colors} mode={mode} onOpen={(service) => navigate(getServiceDetailPath(service))} />
                             )}
 
                             {staff.projects?.length > 0 && (
-                                <ContentGrid title="Projects" icon={FaProjectDiagram} items={staff.projects} colors={colors} mode={mode} onOpen={(project) => navigate(`/project/${project.slug || project.id}`)} />
+                                <ContentGrid title="Projects" icon={FaProjectDiagram} items={staff.projects} colors={colors} mode={mode} onOpen={(project) => navigate(getProjectDetailPath(project))} />
                             )}
 
                             {staff.posts?.length > 0 && (
@@ -176,7 +177,7 @@ const StaffDetail = () => {
                                         <h2 className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: colors.text }}><FaNewspaper style={{ color: colors.primary }} /> Recent Articles</h2>
                                         <div className="space-y-4">
                                             {staff.posts.map((post) => (
-                                                <div key={post.id} onClick={() => navigate(`/blog/${post.slug || post.id}`)} className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all hover:shadow-lg" style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
+                                                <div key={post.id} onClick={() => navigate(getBlogDetailPath(post))} className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all hover:shadow-lg" style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
                                                     <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}20` }}><FaNewspaper style={{ color: colors.primary }} /></div>
                                                     <div className="flex-1 min-w-0">
                                                         <h3 className="font-bold truncate" style={{ color: colors.text }}>{post.title}</h3>
@@ -213,10 +214,13 @@ const StaffDetail = () => {
     );
 };
 
-const ContentGrid = ({ title, icon: Icon, items, colors, mode, onOpen }) => (
+const ContentGrid = ({ title, icon, items, colors, mode, onOpen }) => {
+    const GridIcon = icon;
+
+    return (
     <ScrollReveal animation="fadeUp" delay={200}>
         <div>
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: colors.text }}><Icon style={{ color: colors.primary }} /> {title}</h2>
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: colors.text }}><GridIcon style={{ color: colors.primary }} /> {title}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {items.map((item) => (
                     <div key={item.id} onClick={() => onOpen(item)} className="p-6 rounded-2xl cursor-pointer transition-all hover:shadow-lg" style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
@@ -227,6 +231,7 @@ const ContentGrid = ({ title, icon: Icon, items, colors, mode, onOpen }) => (
             </div>
         </div>
     </ScrollReveal>
-);
+    );
+};
 
 export default StaffDetail;

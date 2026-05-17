@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { getServiceDetailPath } from '../../utils/detailPaths';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaCogs, 
@@ -21,20 +22,20 @@ const Services = () => {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeService, setActiveService] = useState(0);
+    const navigate = useNavigate();
     const isDark = mode === 'dark';
     const sectionCopy = uiCopy?.home?.services || {};
     const ctaCopy = sectionCopy?.cta || {};
 
     const getCategoryMeta = (service) => {
         const category = (service.categoryRef?.name || service.category || '').toLowerCase();
-        if (category.includes('mobile')) return { icon: FaMobileAlt, gradient: 'from-violet-500 to-purple-600' };
-        if (category.includes('data')) return { icon: FaChartLine, gradient: 'from-orange-500 to-red-600' };
-        if (category.includes('cyber') || category.includes('security')) return { icon: FaShieldAlt, gradient: 'from-emerald-500 to-green-600' };
-        if (category.includes('advert')) return { icon: FaBullhorn, gradient: 'from-pink-500 to-rose-600' };
-        if (category.includes('automation') || category.includes('debug')) return { icon: FaCogs, gradient: 'from-cyan-500 to-teal-600' };
-        if (category.includes('software') || category.includes('web') || category.includes('system')) return { icon: FaLaptopCode, gradient: 'from-blue-500 to-cyan-500' };
-        return { icon: FaCogs, gradient: 'from-blue-500 to-cyan-500' };
+        if (category.includes('mobile')) return { icon: FaMobileAlt, gradient: 'from-[#00AFFF] to-[#0875FF]' };
+        if (category.includes('data')) return { icon: FaChartLine, gradient: 'from-[#00AFFF] to-[#27D94B]' };
+        if (category.includes('cyber') || category.includes('security')) return { icon: FaShieldAlt, gradient: 'from-[#27D94B] to-[#00AFFF]' };
+        if (category.includes('advert')) return { icon: FaBullhorn, gradient: 'from-[#00AFFF] to-[#0875FF]' };
+        if (category.includes('automation') || category.includes('debug')) return { icon: FaCogs, gradient: 'from-[#00AFFF] to-[#0875FF]' };
+        if (category.includes('software') || category.includes('web') || category.includes('system')) return { icon: FaLaptopCode, gradient: 'from-[#0875FF] to-[#00AFFF]' };
+        return { icon: FaCogs, gradient: 'from-[#0875FF] to-[#00AFFF]' };
     };
 
     useEffect(() => {
@@ -43,7 +44,7 @@ const Services = () => {
                 const data = await apiGet('/services');
                 const published = Array.isArray(data) ? data.filter(s => s.published !== false) : [];
                 setServices(published);
-            } catch (err) {
+            } catch {
                 setError('Failed to load services.');
             } finally {
                 setLoading(false);
@@ -171,10 +172,14 @@ const Services = () => {
                                     service.priceFrom ? `From ${service.currency || 'KES'} ${service.priceFrom}` : null
                                 ].filter(Boolean);
 
+                                const detailPath = getServiceDetailPath(service);
+
                                 return (
                                     <ScrollReveal key={service.id || idx} animation="fadeUp" delay={idx * 100}>
-                                        <div 
-                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-3"
+                                        <div
+                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-3 cursor-pointer"
+                                            role="link"
+                                            tabIndex={0}
                                             style={{
                                                 background: isDark 
                                                     ? 'linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
@@ -185,7 +190,13 @@ const Services = () => {
                                                     ? '0 25px 50px -12px rgba(0,0,0,0.5)'
                                                     : '0 25px 50px -12px rgba(0,0,0,0.15)'
                                             }}
-                                            onMouseEnter={() => setActiveService(idx)}
+                                            onClick={() => navigate(detailPath)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    navigate(detailPath);
+                                                }
+                                            }}
                                         >
                                             {/* Top Gradient Bar */}
                                             <div 
@@ -250,8 +261,9 @@ const Services = () => {
                                                 )}
                                                 
                                                 {/* Learn More Link */}
-                                                <Link 
-                                                    to="/services"
+                                                <Link
+                                                    to={detailPath}
+                                                    onClick={(event) => event.stopPropagation()}
                                                     className="inline-flex items-center gap-2 font-semibold text-sm transition-all group-hover:gap-3 mt-auto pt-2"
                                                     style={{ color: colors.primary }}
                                                 >

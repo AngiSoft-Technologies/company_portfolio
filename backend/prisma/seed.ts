@@ -18,15 +18,15 @@ async function main() {
         await prisma.employee.create({
             data: {
                 firstName: 'Super',
-                lastName: 'admin',
+                lastName: 'Admin',
                 email: 'admin@angisoft.co.ke',
-                role: 'ADMIN',
-                username: null,
+                role: 'SUPER_ADMIN',
+                username: 'super-admin',
                 passwordHash: hash,
                 twoFactorEnabled: false,
                 twoFactorSecret: null,
                 acceptedAt: new Date(),
-                bio: 'System Administrator for AngiSoft Technologies',
+                bio: 'System Administrator for AngiSoft Technologies. Innovate \u2022 Build \u2022 Empower.',
                 phone: '+254710398690'
             }
         });
@@ -170,20 +170,37 @@ async function main() {
 
     const brandingValue = {
         themeId: "angisoft",
-        mode: "light",
-        logo: "/images/Logos/AngiSoft%20Horizontal%20Logo.png",
-        logoDark: "/images/Logos/AngiSoft%20Dark%20Background%20Logo.png",
+        mode: "dark",
+        logo: "/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
+        logoDark: "/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
+        logoSymbol: "/images/Logos/AngiSoft Logo Symbol Only.png",
         favicon: "/favicon.ico",
         siteName: "AngiSoft Technologies",
-        tagline: "Building Tomorrow's Digital Solutions Today",
+        motto: "Innovate \u2022 Build \u2022 Empower",
+        tagline: "Building Reliable, Scalable, and Secure Digital Solutions",
+        website: "www.angisoft.co.ke",
+        email: "info@angisoft.co.ke",
+        phone: "+254710398690",
+        whatsapp: "+254710398690",
+        location: "Nairobi, Kenya",
         colors: {
-            primary: "#14B8A6",
-            primaryLight: "#2DD4BF",
-            primaryDark: "#0D9488",
-            secondary: "#FFB6A3",
-            secondaryLight: "#FECACA",
-            secondaryDark: "#F97316",
-            accent: "#0EA5E9"
+            primary: "#0875FF",
+            primaryLight: "#3B9AFF",
+            primaryDark: "#003BCE",
+            secondary: "#00AFFF",
+            secondaryLight: "#18D8FF",
+            secondaryDark: "#0088CC",
+            accent: "#18D8FF",
+            success: "#27D94B",
+            successDark: "#1EB83D",
+            lime: "#5DFF62",
+            navy: "#07142B",
+            dark: "#061324",
+            navyLight: "#0B1E3D",
+            navyLighter: "#102A55",
+            light: "#F5F7FA",
+            gradient: "linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%)",
+            gradientBtn: "linear-gradient(135deg, #0875FF 0%, #00AFFF 100%)"
         }
     };
 
@@ -928,6 +945,175 @@ Whether you need M-Pesa for your POS system, e-commerce platform, or mobile app,
         }
     }
     console.log(`  ✅ ${faqs.length} FAQs seeded`);
+
+    // ==================== PRODUCTS ====================
+    console.log('\n📦 Seeding products...');
+
+    const products = [
+        {
+            name: 'PetroFlow',
+            slug: 'petroflow',
+            tagline: 'Fuel Station Management Platform',
+            description: 'PetroFlow is a comprehensive fuel station management platform designed for the East African market. It handles pump management, inventory tracking, sales reconciliation, staff scheduling, and real-time reporting — all from one dashboard.',
+            category: 'Fuel & Energy',
+            logoUrl: '/images/Logos/PetroFlow.png',
+            features: ['Pump management & monitoring', 'Real-time sales tracking', 'Inventory management', 'Staff scheduling & attendance', 'M-Pesa & card payment integration', 'Multi-station dashboard', 'Automated reports & analytics', 'Shift reconciliation'],
+            pricing: { model: 'subscription', monthly: 15000, currency: 'KES', trialDays: 14 },
+            status: 'LIVE' as const,
+            published: true,
+            sortOrder: 1
+        },
+        {
+            name: 'DukaFlow',
+            slug: 'dukaflow',
+            tagline: 'Retail POS & Inventory System',
+            description: 'DukaFlow is a modern point-of-sale and inventory management system for retail shops and small businesses. Track sales, manage stock, process M-Pesa payments, and generate reports from your phone or computer.',
+            category: 'Retail & Commerce',
+            logoUrl: '/images/Logos/DukaFlow.png',
+            features: ['POS sales processing', 'Inventory tracking', 'M-Pesa & cash payments', 'Barcode scanning', 'Supplier management', 'Expense tracking', 'Daily sales reports', 'Customer database'],
+            pricing: { model: 'subscription', monthly: 5000, currency: 'KES', trialDays: 30 },
+            status: 'LIVE' as const,
+            published: true,
+            sortOrder: 2
+        },
+        {
+            name: 'KejaLink',
+            slug: 'kejalink',
+            tagline: 'Property & Tenant Management',
+            description: 'KejaLink connects landlords with tenants through a digital property management platform. Handle rent collection, maintenance requests, communication, and financial tracking — all in one place.',
+            category: 'Real Estate',
+            logoUrl: '/images/Logos/KejaLink.png',
+            features: ['Rent collection & tracking', 'Tenant portal', 'Maintenance request management', 'Vacancy listing', 'Lease management', 'Financial reporting', 'SMS & WhatsApp notifications', 'Document storage'],
+            pricing: { model: 'subscription', monthly: 3000, currency: 'KES', trialDays: 30 },
+            status: 'LIVE' as const,
+            published: true,
+            sortOrder: 3
+        },
+        {
+            name: 'AngiTunes',
+            slug: 'angitunes',
+            tagline: 'Music Distribution & Management',
+            description: 'AngiTunes is a music distribution and royalty management platform for artists and labels across East Africa. Upload your music, distribute to major platforms, track royalties, and manage your catalog from one dashboard.',
+            category: 'Entertainment & Music',
+            logoUrl: '/images/Logos/AngiTunes.png',
+            features: ['Music upload & cataloging', 'Distribution to streaming platforms', 'Royalty tracking & payouts', 'Analytics dashboard', 'Collaborator management', 'Release scheduling', 'Fan engagement tools', 'Rights management'],
+            pricing: { model: 'commission', commissionRate: 15, currency: 'KES' },
+            status: 'BETA' as const,
+            published: true,
+            sortOrder: 4
+        }
+    ];
+
+    for (const product of products) {
+        await prisma.product.upsert({
+            where: { slug: product.slug },
+            update: product,
+            create: product
+        });
+    }
+    console.log(`  ✅ ${products.length} products seeded`);
+
+    // ==================== COMPANY STATS ====================
+    console.log('\n📊 Seeding company stats...');
+
+    const stats = [
+        { label: 'Years of Experience', value: 5, suffix: '+', icon: 'FaAward', order: 1 },
+        { label: 'Projects Delivered', value: 100, suffix: '+', icon: 'FaProjectDiagram', order: 2 },
+        { label: 'IT Professionals', value: 15, suffix: '+', icon: 'FaUsers', order: 3 },
+        { label: 'Industries Served', value: 10, suffix: '+', icon: 'FaIndustry', order: 4 },
+        { label: 'Client Satisfaction', value: 98, suffix: '%', icon: 'FaStar', order: 5 }
+    ];
+
+    for (const stat of stats) {
+        const existing = await prisma.companyStat.findFirst({ where: { label: stat.label } });
+        if (!existing) {
+            await prisma.companyStat.create({ data: stat });
+        }
+    }
+    console.log(`  ✅ ${stats.length} company stats seeded`);
+
+    // ==================== JOB POSTINGS ====================
+    console.log('\n💼 Seeding job postings...');
+
+    const jobs = [
+        {
+            title: 'Full-Stack Developer',
+            slug: 'full-stack-developer',
+            department: 'Engineering',
+            location: 'Nairobi, Kenya',
+            type: 'full-time',
+            description: 'We are looking for an experienced full-stack developer to join our engineering team. You will work on web and mobile applications using React, Node.js, and PostgreSQL.',
+            requirements: ['3+ years experience with React and Node.js', 'Strong PostgreSQL/relational database skills', 'Experience with TypeScript', 'Familiarity with REST API design', 'Git workflow experience'],
+            benefits: ['Competitive salary', 'Flexible working hours', 'Learning & development budget', 'Health insurance', 'Team building events'],
+            salaryRange: 'KES 80,000 - 150,000',
+            published: true
+        },
+        {
+            title: 'Mobile Developer (Flutter)',
+            slug: 'mobile-developer-flutter',
+            department: 'Engineering',
+            location: 'Nairobi, Kenya',
+            type: 'full-time',
+            description: 'Join our mobile team to build cross-platform applications using Flutter. You will create polished mobile experiences for our clients across East Africa.',
+            requirements: ['2+ years experience with Flutter/Dart', 'Understanding of iOS and Android platforms', 'Experience with state management (Provider, Bloc, Riverpod)', 'REST API integration experience', 'Published apps on Play Store or App Store'],
+            benefits: ['Competitive salary', 'Remote work option', 'Latest hardware provided', 'Professional development', 'Team retreats'],
+            salaryRange: 'KES 70,000 - 130,000',
+            published: true
+        },
+        {
+            title: 'Digital Marketing Specialist',
+            slug: 'digital-marketing-specialist',
+            department: 'Marketing',
+            location: 'Nairobi, Kenya',
+            type: 'full-time',
+            description: 'We need a creative digital marketer to drive our brand presence, manage social media, run campaigns, and generate leads for our B2B services.',
+            requirements: ['2+ years in digital marketing', 'Experience with social media management', 'Content creation skills', 'Analytics and reporting', 'SEO/SEM knowledge'],
+            benefits: ['Competitive salary', 'Creative freedom', 'Marketing tools access', 'Professional growth', 'Flexible schedule'],
+            salaryRange: 'KES 50,000 - 90,000',
+            published: true
+        }
+    ];
+
+    for (const job of jobs) {
+        await prisma.jobPosting.upsert({
+            where: { slug: job.slug },
+            update: job,
+            create: job
+        });
+    }
+    console.log(`  ✅ ${jobs.length} job postings seeded`);
+
+    // ==================== HOME PAGE SECTIONS ====================
+    console.log('\n🏠 Seeding home page sections...');
+
+    const homeSections = [
+        { sectionId: 'announcement-bar', title: 'Announcement Bar', visible: true, order: 0 },
+        { sectionId: 'hero', title: 'Hero Section', visible: true, order: 1 },
+        { sectionId: 'key-facts', title: 'Key Facts About AngiSoft', visible: true, order: 2 },
+        { sectionId: 'services', title: 'Explore Our Offering', visible: true, order: 3 },
+        { sectionId: 'brand-statement', title: 'Brand Statement', visible: true, order: 4 },
+        { sectionId: 'discussion-cta', title: 'Discuss Your Project', visible: true, order: 5 },
+        { sectionId: 'industry-expertise', title: 'Industry Expertise', visible: true, order: 6 },
+        { sectionId: 'solutions', title: 'Solutions We Deliver', visible: true, order: 7 },
+        { sectionId: 'tech-trends', title: 'Tech Trends', visible: true, order: 8 },
+        { sectionId: 'product-demos', title: 'Product Demos', visible: true, order: 9 },
+        { sectionId: 'success-stories', title: 'Success Stories', visible: true, order: 10 },
+        { sectionId: 'testimonials', title: 'Testimonials', visible: true, order: 11 },
+        { sectionId: 'insights', title: 'Expert Insights', visible: true, order: 12 },
+        { sectionId: 'why-choose', title: 'Why Choose Us', visible: true, order: 13 },
+        { sectionId: 'tech-platforms', title: 'Tech Platforms', visible: true, order: 14 },
+        { sectionId: 'faq', title: 'FAQ', visible: true, order: 15 },
+        { sectionId: 'contact', title: 'Contact Form', visible: true, order: 16 }
+    ];
+
+    for (const section of homeSections) {
+        await prisma.homePageSection.upsert({
+            where: { sectionId: section.sectionId },
+            update: section,
+            create: section
+        });
+    }
+    console.log(`  ✅ ${homeSections.length} home page sections seeded`);
 
     console.log('\n🎉 Seeding complete!\n');
 }

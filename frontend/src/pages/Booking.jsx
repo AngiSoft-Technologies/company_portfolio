@@ -194,7 +194,7 @@ const Booking = () => {
     // Success State
     if (success && !clientSecret) {
         return (
-            <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+            <div style={{ background: `linear-gradient(180deg, ${colors.brandNavy} 0%, ${colors.backgroundSecondary} 42%, ${colors.brandNavy} 100%)`, color: colors.text, paddingTop: '5.5rem' }} className="min-h-screen">
                 <div className="max-w-2xl mx-auto px-4 py-20">
                     <ScrollReveal animation="scaleUp">
                         <GlassmorphismCard className="p-12 text-center">
@@ -272,18 +272,14 @@ const Booking = () => {
     }
 
     return (
-        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+        <div style={{ backgroundColor: colors.background, color: colors.text, paddingTop: '5.5rem' }} className="min-h-screen angi-page-shell--resume">
             {/* Hero Section */}
             <ParallaxSection
-                speed={0.3}
+                speed={0.12}
+                treatment="plain"
                 className="relative py-16 overflow-hidden"
             >
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
-                    }}
-                />
+                <div className="absolute inset-0 angi-technical-grid-soft opacity-15" />
 
                 <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
@@ -344,7 +340,7 @@ const Booking = () => {
                                     />
                                 </div>
                                 
-                                {steps.map((s, idx) => (
+                                {steps.map((s) => (
                                     <div 
                                         key={s.id}
                                         className="relative z-10 flex flex-col items-center"

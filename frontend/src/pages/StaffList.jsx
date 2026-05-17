@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
+import { getStaffDetailPath } from '../utils/detailPaths';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
@@ -62,37 +63,11 @@ const StaffList = () => {
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
             {/* Hero Section */}
             <ParallaxSection
-                speed={0.3}
-                className="relative py-32 overflow-hidden"
+                speed={0.15}
+                treatment="resume"
+                className="relative py-28 overflow-hidden"
             >
-                {/* Background gradient */}
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
-                    }}
-                />
-                
-                {/* Floating shapes */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                    <div 
-                        className="absolute w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                            top: '10%',
-                            left: '5%'
-                        }}
-                    />
-                    <div 
-                        className="absolute w-72 h-72 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.secondary}, transparent)`,
-                            bottom: '10%',
-                            right: '10%',
-                            animationDelay: '1.5s'
-                        }}
-                    />
-                </div>
+                <div className="absolute inset-0 angi-technical-grid-soft opacity-20" />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
@@ -194,6 +169,7 @@ const StaffList = () => {
                             {staff.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                                     {staff.map((member, idx) => {
+                                        const profilePath = getStaffDetailPath(member);
                                         const RoleIcon = getRoleIcon(member.role);
                                         return (
                                             <ScrollReveal 
@@ -213,7 +189,7 @@ const StaffList = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/staff/${member.username || member.id}`)}
+                                                    onClick={() => navigate(profilePath)}
                                                 >
                                                     {/* Avatar Section */}
                                                     <div 
@@ -297,9 +273,9 @@ const StaffList = () => {
                                                             {member.linkedinUrl && (
                                                                 <a
                                                                     href={member.linkedinUrl}
+                                                                    onClick={(event) => event.stopPropagation()}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    onClick={(e) => e.stopPropagation()}
                                                                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                                                                     style={{
                                                                         backgroundColor: `${colors.primary}20`,
@@ -312,9 +288,9 @@ const StaffList = () => {
                                                             {member.twitterUrl && (
                                                                 <a
                                                                     href={member.twitterUrl}
+                                                                    onClick={(event) => event.stopPropagation()}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    onClick={(e) => e.stopPropagation()}
                                                                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                                                                     style={{
                                                                         backgroundColor: `${colors.primary}20`,
@@ -327,9 +303,9 @@ const StaffList = () => {
                                                             {member.githubUrl && (
                                                                 <a
                                                                     href={member.githubUrl}
+                                                                    onClick={(event) => event.stopPropagation()}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    onClick={(e) => e.stopPropagation()}
                                                                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                                                                     style={{
                                                                         backgroundColor: `${colors.primary}20`,
@@ -342,7 +318,7 @@ const StaffList = () => {
                                                             {member.publicEmail && (
                                                                 <a
                                                                     href={`mailto:${member.publicEmail}`}
-                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onClick={(event) => event.stopPropagation()}
                                                                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                                                                     style={{
                                                                         backgroundColor: `${colors.primary}20`,

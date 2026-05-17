@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
 import { API_BASE_URL } from '../utils/constants';
+import { getProjectDetailPath } from '../utils/detailPaths';
 import { 
     FaCode, FaExternalLinkAlt, FaGithub, FaFilter,
     FaLaptopCode, FaRocket, FaEye, FaArrowRight
@@ -61,38 +62,12 @@ const ProjectLists = () => {
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
             {/* Hero Section with Parallax */}
             <ParallaxSection
-                speed={0.3}
+                speed={0.25}
+                treatment="technical"
+                backgroundImage="/images/programming-background-with-person-working-with-codes-computer.jpg"
                 className="relative py-32 overflow-hidden"
             >
-                {/* Background gradient */}
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
-                    }}
-                />
-                
-                {/* Animated shapes */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                    <div 
-                        className="absolute w-80 h-80 rounded-full blur-3xl opacity-20"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                            top: '20%',
-                            right: '10%',
-                            animation: 'pulse 4s ease-in-out infinite'
-                        }}
-                    />
-                    <div 
-                        className="absolute w-64 h-64 rounded-full blur-3xl opacity-20"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.secondary}, transparent)`,
-                            bottom: '20%',
-                            left: '10%',
-                            animation: 'pulse 4s ease-in-out infinite 2s'
-                        }}
-                    />
-                </div>
+                <div className="angi-grain" />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
@@ -225,8 +200,10 @@ const ProjectLists = () => {
                                     {filteredProjects.map((project, idx) => {
                                         const mainImage = project.images && project.images.length > 0 
                                             ? project.images[0] 
-                                            : (project.image || '/images/placeholder.jpg');
+                                            : (project.image || '/images/project-placeholder.png');
                                         
+                                        const detailPath = getProjectDetailPath(project);
+
                                         return (
                                             <ScrollReveal 
                                                 key={project.id || project._id} 
@@ -245,7 +222,7 @@ const ProjectLists = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/project/${project.slug || project.id || project._id}`)}
+                                                    onClick={() => navigate(detailPath)}
                                                 >
                                                     {/* Image Container */}
                                                     <div className="relative h-56 overflow-hidden">

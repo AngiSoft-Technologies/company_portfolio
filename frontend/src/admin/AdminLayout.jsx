@@ -5,10 +5,11 @@ import {
     FaGraduationCap, FaBriefcase, FaAddressBook, FaQuoteRight, FaFileUpload,
     FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar,
     FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck,
-    FaTrash, FaChevronDown, FaMoon, FaSun, FaSearch, FaGlobe, FaBlog,
-    FaRobot
+    FaTrash, FaChevronDown, FaSearch, FaGlobe, FaBlog,
+    FaRobot, FaBox
 } from 'react-icons/fa';
-import { apiGet, apiPatch, apiDelete } from '../js/httpClient';
+import AngiSoftLogo from '../components/brand/AngiSoftLogo';
+import { apiGet, apiPatch } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 
 const navSections = [
@@ -28,6 +29,7 @@ const navSections = [
             { to: '/admin/services', label: 'Services', icon: FaServicestack },
             { to: '/admin/service-categories', label: 'Service Categories', icon: FaArchive },
             { to: '/admin/projects', label: 'Projects', icon: FaProjectDiagram },
+            { to: '/admin/products', label: 'Products', icon: FaBox },
         ]
     },
     {
@@ -67,7 +69,7 @@ const navSections = [
 ];
 
 const AdminLayout = ({ children }) => {
-    const { colors, mode, toggleMode } = useTheme();
+    const { colors } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -75,32 +77,30 @@ const AdminLayout = ({ children }) => {
     const [notifOpen, setNotifOpen] = useState(false);
     const [msgOpen, setMsgOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [notifications, setNotifications] = useState([]);
     const [messages, setMessages] = useState([]);
     const [realUsername, setRealUsername] = useState('Admin');
     const [expandedSections, setExpandedSections] = useState(['Main', 'Management']);
-    
+
     const notifRef = useRef();
     const msgRef = useRef();
     const profileRef = useRef();
-
-    useEffect(() => {
-        document.documentElement.classList.remove('light', 'dark');
-        document.documentElement.classList.add(mode);
-    }, [mode]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const notifs = await apiGet('/notifications');
                 setNotifications(Array.isArray(notifs) ? notifs.filter(n => !n.archived) : []);
-            } catch {}
+            } catch (error) {
+                console.warn('Unable to load notifications', error);
+            }
             try {
                 const msgs = await apiGet('/admin-messages');
                 setMessages(Array.isArray(msgs) ? msgs.filter(m => !m.archived && !m.read).slice(0, 5) : []);
-            } catch {}
+            } catch (error) {
+                console.warn('Unable to load admin messages', error);
+            }
         };
         fetchData();
         const interval = setInterval(fetchData, 30000);
@@ -119,7 +119,9 @@ const AdminLayout = ({ children }) => {
                     const data = await res.json();
                     setRealUsername(data.username || data.name || 'Admin');
                 }
-            } catch {}
+            } catch (error) {
+                console.warn('Unable to load admin profile', error);
+            }
         };
         fetchAdmin();
     }, []);
@@ -181,17 +183,26 @@ const AdminLayout = ({ children }) => {
                 }}
             >
                 {/* Logo */}
-                <div 
+                <div
                     className="h-16 flex items-center justify-between px-4 border-b"
                     style={{ borderColor: colors.border }}
                 >
-                    {sidebarOpen && (
-                        <span 
-                            className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"
-                        >
-                            Admin Panel
-                        </span>
-                    )}
+                    <div className="flex items-center gap-3 min-w-0">
+                        <AngiSoftLogo
+                            variant="symbol"
+                            size="symbolSm"
+                            showBackground
+                            alt="AngiSoft admin"
+                        />
+                        {sidebarOpen && (
+                            <span
+                                className="text-lg font-bold truncate"
+                                style={{ color: colors.text }}
+                            >
+                                Admin Panel
+                            </span>
+                        )}
+                    </div>
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="p-2 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-gray-700 lg:block hidden"
@@ -317,18 +328,6 @@ const AdminLayout = ({ children }) => {
 
                     {/* Right side */}
                     <div className="flex items-center gap-2">
-                        {/* Theme Toggle */}
-                        <button
-                            onClick={toggleMode}
-                            className="p-2.5 rounded-xl transition-all"
-                            style={{ 
-                                backgroundColor: colors.backgroundSecondary,
-                                color: colors.text
-                            }}
-                        >
-                            {mode === 'dark' ? <FaSun size={18} /> : <FaMoon size={18} />}
-                        </button>
-
                         {/* Notifications */}
                         <div className="relative" ref={notifRef}>
                             <button

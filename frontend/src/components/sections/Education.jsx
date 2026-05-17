@@ -31,7 +31,7 @@ const Education = ({ theme }) => {
 
     return (
         <section id="education" className={`p-6 justify-center items-center transition-opacity duration-700 ${visible ? 'opacity-100' : 'opacity-0'}`}> 
-            <h2 className="text-4xl font-extrabold mb-6 tracking-tight text-gradient bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent animate-fade-in">Education</h2>
+            <h2 className="text-4xl font-extrabold mb-6 tracking-tight text-gradient bg-gradient-to-r from-[#0A3DFF] to-[#00C2FF] bg-clip-text text-transparent animate-fade-in">Education</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading && <p>Loading...</p>}
                 {error && <p className="text-red-500">{error}</p>}

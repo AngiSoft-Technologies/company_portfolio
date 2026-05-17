@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { apiPost } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
-import { FaLock, FaEnvelope, FaEye, FaEyeSlash, FaMoon, FaSun, FaArrowRight, FaKey } from 'react-icons/fa';
+import AngiSoftLogo from '../components/brand/AngiSoftLogo';
+import { FaEnvelope, FaEye, FaEyeSlash, FaMoon, FaSun, FaArrowRight, FaKey } from 'react-icons/fa';
 
 const AdminLogin = () => {
     const { colors, mode, toggleMode } = useTheme();
@@ -50,39 +51,13 @@ const AdminLogin = () => {
     };
 
     return (
-        <div 
-            className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+        <div
+            className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden angi-page-shell--resume"
             style={{ backgroundColor: colors.background }}
         >
-            {/* Animated Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div 
-                    className="absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-30 animate-pulse"
-                    style={{ 
-                        background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                        top: '-20%',
-                        right: '-10%'
-                    }}
-                />
-                <div 
-                    className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-pulse"
-                    style={{ 
-                        background: `radial-gradient(circle, ${colors.secondary || colors.primary}, transparent)`,
-                        bottom: '-10%',
-                        left: '-10%',
-                        animationDelay: '2s'
-                    }}
-                />
-                <div 
-                    className="absolute w-[300px] h-[300px] rounded-full blur-3xl opacity-25 animate-pulse"
-                    style={{ 
-                        background: `radial-gradient(circle, #8B5CF6, transparent)`,
-                        top: '50%',
-                        left: '30%',
-                        animationDelay: '1s'
-                    }}
-                />
-            </div>
+            {/* Branded calm background */}
+            <div className="angi-atmosphere opacity-70" aria-hidden="true" />
+            <div className="absolute inset-0 angi-technical-grid-soft opacity-15" aria-hidden="true" />
 
             {/* Theme Toggle */}
             <button
@@ -111,13 +86,13 @@ const AdminLogin = () => {
                     }}
                 >
                     {/* Logo / Icon */}
-                    <div 
-                        className="w-20 h-20 mx-auto mb-8 rounded-2xl flex items-center justify-center"
-                        style={{ 
-                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark || '#4338CA'})`
-                        }}
-                    >
-                        <FaLock className="text-3xl text-white" />
+                    <div className="mx-auto mb-8 flex justify-center">
+                        <AngiSoftLogo
+                            variant="symbol"
+                            size="symbolLg"
+                            showBackground
+                            alt="AngiSoft admin"
+                        />
                     </div>
 
                     <h1 

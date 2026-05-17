@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { getStaffDetailPath } from '../../utils/detailPaths';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaUserTie, 
@@ -24,7 +25,8 @@ const Staff = () => {
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [hoveredMember, setHoveredMember] = useState(null);
+    const [, setHoveredMember] = useState(null);
+    const navigate = useNavigate();
     const isDark = mode === 'dark';
     const sectionCopy = uiCopy?.home?.team || {};
 
@@ -43,7 +45,7 @@ const Staff = () => {
                 const data = await apiGet('/staff');
                 const activeStaff = Array.isArray(data) ? data.filter(s => s.active !== false) : [];
                 setStaff(activeStaff);
-            } catch (err) {
+            } catch {
                 setError('No staff profiles available yet.');
             } finally {
                 setLoading(false);
@@ -161,13 +163,15 @@ const Staff = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8">
                             {displayStaff.slice(0, 6).map((member, idx) => {
                                 const RoleIcon = getRoleIcon(member.role);
-                                const isHovered = hoveredMember === idx;
+                                const profilePath = getStaffDetailPath(member);
                                 const fullName = [member.firstName, member.lastName].filter(Boolean).join(' ') || member.name || 'Team Member';
                                 
                                 return (
                                     <ScrollReveal key={member.id || idx} animation="fadeUp" delay={idx * 100}>
                                         <div 
-                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-3"
+                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-3 cursor-pointer"
+                                            role="link"
+                                            tabIndex={0}
                                             style={{
                                                 background: isDark 
                                                     ? 'linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
@@ -180,6 +184,13 @@ const Staff = () => {
                                             }}
                                             onMouseEnter={() => setHoveredMember(idx)}
                                             onMouseLeave={() => setHoveredMember(null)}
+                                            onClick={() => navigate(profilePath)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    navigate(profilePath);
+                                                }
+                                            }}
                                         >
                                             {/* Avatar Section */}
                                             <div className="relative h-48 overflow-hidden flex items-center justify-center">
@@ -258,11 +269,22 @@ const Staff = () => {
                                                     ))}
                                                 </div>
                                                 
+                                                <Link
+                                                    to={profilePath}
+                                                    onClick={(event) => event.stopPropagation()}
+                                                    className="inline-flex items-center gap-2 mt-5 text-sm font-semibold transition-all group-hover:gap-3"
+                                                    style={{ color: colors.primary }}
+                                                >
+                                                    View Profile
+                                                    <FaArrowRight className="text-xs" />
+                                                </Link>
+
                                                 {/* Social Links */}
                                                 <div className="flex justify-center gap-3">
                                                     {member.linkedin && (
-                                                        <a 
+                                                        <a
                                                             href={member.linkedin}
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                                             style={{
                                                                 backgroundColor: `${colors.primary}15`,
@@ -273,8 +295,9 @@ const Staff = () => {
                                                         </a>
                                                     )}
                                                     {member.twitter && (
-                                                        <a 
+                                                        <a
                                                             href={member.twitter}
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                                             style={{
                                                                 backgroundColor: `${colors.primary}15`,
@@ -285,8 +308,9 @@ const Staff = () => {
                                                         </a>
                                                     )}
                                                     {member.github && (
-                                                        <a 
+                                                        <a
                                                             href={member.github}
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                                             style={{
                                                                 backgroundColor: `${colors.primary}15`,
@@ -297,8 +321,9 @@ const Staff = () => {
                                                         </a>
                                                     )}
                                                     {member.email && (
-                                                        <a 
+                                                        <a
                                                             href={`mailto:${member.email}`}
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
                                                             style={{
                                                                 backgroundColor: `${colors.primary}15`,

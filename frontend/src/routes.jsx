@@ -16,7 +16,18 @@ import StaffList from "./pages/StaffList";
 import StaffDetail from "./pages/StaffDetail";
 import ServiceDetail from "./pages/ServiceDetail";
 import BlogList from "./pages/BlogList";
-import BlogDetail from "./pages/BlogDetail";import NewsletterConfirm from './pages/NewsletterConfirm';
+import BlogDetail from "./pages/BlogDetail";
+import About from "./pages/About";
+import Products from "./pages/Products";
+import Contact from "./pages/Contact";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Careers from "./pages/Careers";
+import PetroFlow from "./pages/products/PetroFlow";
+import DukaFlow from "./pages/products/DukaFlow";
+import KejaLink from "./pages/products/KejaLink";
+import AngiTunes from "./pages/products/AngiTunes";
+import NewsletterConfirm from './pages/NewsletterConfirm';
 import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';import AppLayout from "./layouts/AppLayout";
 import AdminLogin from './admin/AdminLogin';
 import AdminLayout from './admin/AdminLayout';
@@ -46,6 +57,7 @@ const SocialMediaAdmin = lazy(() => import('./admin/crud/SocialMediaAdmin'));
 const QuotesAdmin = lazy(() => import('./admin/crud/QuotesAdmin'));
 const SiteSettingsAdmin = lazy(() => import('./admin/crud/SiteSettingsAdmin'));
 const ChatConversationsAdmin = lazy(() => import('./admin/crud/ChatConversationsAdmin'));
+const ProductsAdmin = lazy(() => import('./admin/crud/ProductsAdmin'));
 
 const AdminProtectedLayout = () => {
   const isLoggedIn = !!localStorage.getItem('adminToken');
@@ -89,6 +101,16 @@ const RoutesComponent = () => {
             <Route index element={<ClientDashboard />} />
             <Route path="projects/:id" element={<ClientProjectTracking />} />
           </Route>
+          <Route path="about" element={<About />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/petroflow" element={<PetroFlow />} />
+          <Route path="products/dukaflow" element={<DukaFlow />} />
+          <Route path="products/kejalink" element={<KejaLink />} />
+          <Route path="products/angitunes" element={<AngiTunes />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="careers" element={<Careers />} />
+          <Route path="privacy" element={<Privacy />} />
+          <Route path="terms" element={<Terms />} />
           <Route path="newsletter/confirm" element={<NewsletterConfirm />} />
           <Route path="newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
           <Route path="*" element={<NotFound />} />
@@ -121,6 +143,7 @@ const RoutesComponent = () => {
           <Route path="social-media" element={<SocialMediaAdmin />} />
           <Route path="quotes" element={<QuotesAdmin />} />
           <Route path="chat-conversations" element={<ChatConversationsAdmin />} />
+          <Route path="products" element={<ProductsAdmin />} />
           <Route path="system" element={<SystemPanel />} />
           <Route path="*" element={<NotFoundAdmin />} />
         </Route>

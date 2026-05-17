@@ -42,6 +42,11 @@ model Employee {
   publicPhone         String?
   profilePublished    Boolean  @default(true)
   profileOrder        Int      @default(0)
+  cvUrl               String?   // Resume / CV file
+  portfolioUrl        String?
+  experienceJson      Json?     // Array of { title, company, startDate, endDate, description }
+  educationJson       Json?     // Array of { institution, degree, year }
+  resumePublished     Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   posts               BlogPost[]
@@ -53,24 +58,40 @@ model Employee {
   projectComments     ProjectComment[]
   refreshTokens       RefreshToken[]
   backupCodes         TwoFactorBackupCode[]
+  staffBlogs          StaffBlog[]
+  certifications      Certification[]
+  projectContributions ProjectEmployee[]
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
+  MANAGER
   MARKETING
   DEVELOPER
+  HR
+  STAFF
+  CONTENT_CREATOR
+  BLOG_MANAGER
 }
 
 model Client {
-  id        String    @id @default(uuid())
-  name      String
-  email     String    @unique
-  phone     String?
-  org       String?
-  createdAt DateTime  @default(now())
-  bookings  Booking[]
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  org           String?
+  passwordHash  String?
+  avatarUrl     String?
+  location      String?
+  verified      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
   clientProjects ClientProject[]
-  accessTokens ClientAccessToken[]
+  accessTokens  ClientAccessToken[]
+  supportTickets SupportTicket[]
+  inquiries     ProductInquiry[]
 }
 
 model Booking {
@@ -159,12 +180,17 @@ model Service {
   categoryId       String?
   categoryRef      ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   priceFrom        Float?
+  currency         String   @default("KES")
   targetAudience   String?  // Comma-separated or JSON; e.g., "Startups, Businesses, Enterprises"
   scope            String?  // Project duration/scope; e.g., "2-12 weeks"
+  features         String[] @default([])
   images           String[]
+  seoTitle         String?
+  seoDesc          String?
   authorId         String?
   author           Employee? @relation(fields: [authorId], references: [id])
   published        Boolean   @default(false)
+  featured         Boolean   @default(false)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -192,11 +218,16 @@ model Project {
   demoUrl     String?
   repoUrl     String?
   techStack   String[]
+  industry    String?
+  featured    Boolean  @default(false)
+  seoTitle    String?
+  seoDesc     String?
   authorId    String?
   author      Employee? @relation("authoredProjects", fields: [authorId], references: [id], onDelete: SetNull)
   published   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  employees   ProjectEmployee[]
 }
 
 model ClientProject {
@@ -353,17 +384,30 @@ model ClientAccessToken {
   @@index([expiresAt])
 }
 model BlogPost {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  content     String
-  authorId    String
-  author      Employee @relation(fields: [authorId], references: [id])
-  tags        String[]
-  published   Boolean  @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  content        String
+  coverImage     String?
+  excerpt        String?
+  readingTime    Int?
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String[]      @default([])
+  featured       Boolean       @default(false)
+  views          Int           @default(0)
+  likes          Int           @default(0)
+  categoryId     String?
+  category       BlogCategory? @relation(fields: [categoryId], references: [id])
+  authorId       String
+  author         Employee      @relation(fields: [authorId], references: [id])
+  tags           String[]
+  published      Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  comments       BlogComment[]
+  reactions      BlogReaction[]
 }
 
 model File {
@@ -394,16 +438,36 @@ model Setting {
 }
 
 model Testimonial {
-  id        String   @id @default(uuid())
-  name      String
-  company   String?
-  role      String?
-  text      String
-  rating    Int?
-  imageUrl  String?
-  confirmed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  name            String
+  company         String?
+  role            String?
+  text            String
+  rating          Int?
+  imageUrl        String?
+  videoUrl        String?
+  location        String?
+  projectType     String?
+  productId       String?
+  confirmed       Boolean  @default(false)
+  featured        Boolean  @default(false)
+  rejected        Boolean  @default(false)
+  rejectionReason String?
+  adminReply      String?
+  helpfulCount    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  reactions       ReviewReaction[]
+}
+
+model ReviewReaction {
+  id            String      @id @default(uuid())
+  testimonialId String
+  testimonial   Testimonial @relation(fields: [testimonialId], references: [id], onDelete: Cascade)
+  visitorKey    String
+  type          String      @default("helpful")
+  createdAt     DateTime    @default(now())
+  @@unique([testimonialId, visitorKey])
 }
 
 model Note {
@@ -413,6 +477,196 @@ model Note {
   authorId  String?
   text      String
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  userType  String   @default("employee")
+  type      String
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  meta      Json?
+  createdAt DateTime @default(now())
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  body        String
+  audience    String   @default("all")
+  priority    String   @default("normal")
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  authorId    String?
+  createdAt   DateTime @default(now())
+}
+
+
+model Newsletter {
+  id             String   @id @default(uuid())
+  subject        String
+  body           String
+  htmlBody       String?
+  status         String   @default("draft")
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  recipientCount Int      @default(0)
+  openCount      Int      @default(0)
+  clickCount     Int      @default(0)
+  authorId       String?
+  createdAt      DateTime @default(now())
+}
+
+model Survey {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  audience    String   @default("clients")
+  status      String   @default("draft")
+  questions   Json
+  publishedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime @default(now())
+  responses   SurveyResponse[]
+}
+
+model SurveyResponse {
+  id           String   @id @default(uuid())
+  surveyId     String
+  survey       Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  respondentId String?
+  answers      Json
+  createdAt    DateTime @default(now())
+  @@index([surveyId])
+}
+
+model BlogCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  posts       BlogPost[]
+}
+
+model BlogComment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String?
+  parentId  String?
+  name      String?
+  email     String?
+  body      String
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([postId])
+}
+
+model BlogReaction {
+  id         String   @id @default(uuid())
+  postId     String
+  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  visitorKey String
+  type       String   @default("like")
+  createdAt  DateTime @default(now())
+  @@unique([postId, visitorKey])
+}
+
+model Lead {
+  id           String   @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  source       String?
+  status       String   @default("new")
+  notes        String?
+  assignedToId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SupportTicket {
+  id           String   @id @default(uuid())
+  clientId     String?
+  client       Client?  @relation(fields: [clientId], references: [id])
+  subject      String
+  body         String
+  status       String   @default("open")
+  priority     String   @default("normal")
+  assignedToId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  messages     TicketMessage[]
+}
+
+model TicketMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String?
+  body      String
+  internal  Boolean       @default(false)
+  createdAt DateTime      @default(now())
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  tagline     String?
+  description String
+  category    String?
+  logoUrl     String?
+  bannerUrl   String?
+  features    Json?
+  pricing     Json?
+  screenshots Json?
+  demoUrl     String?
+  status      ProductStatus @default(DEVELOPMENT)
+  seoTitle    String?
+  seoDesc     String?
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  inquiries   ProductInquiry[]
+  faqs        ProductFaq[]
+}
+
+enum ProductStatus {
+  PLANNED
+  DEVELOPMENT
+  BETA
+  LIVE
+  MAINTENANCE
+  DEPRECATED
+}
+
+model PageView {
+  id        String   @id @default(uuid())
+  path      String
+  referrer  String?
+  userAgent String?
+  ip        String?
+  sessionId String?
+  createdAt DateTime @default(now())
+  @@index([path, createdAt])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  type      String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+  @@index([type, createdAt])
 }
 
 model RefreshToken {
@@ -459,6 +713,7 @@ model Subscriber {
   subscribedAt  DateTime @default(now())
   confirmedAt   DateTime?
   unsubscribedAt DateTime?
+  preferences   SubscriberPreference[]
 }
 
 // ─── FAQ (fetched by ChatWidget and FAQ page) ───────────────────────
@@ -504,4 +759,128 @@ model ChatMessage {
 
   @@index([conversationId])
   @@index([createdAt])
+}
+
+// ─── Staff Certifications ──────────────────────────────────────────
+model Certification {
+  id        String   @id @default(uuid())
+  employeeId String
+  employee  Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name      String
+  issuer    String
+  year      Int?
+  url       String?
+  createdAt DateTime @default(now())
+  @@index([employeeId])
+}
+
+// ─── Staff Blogs (personal blogs / portfolio posts) ─────────────────
+model StaffBlog {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title      String
+  slug       String   @unique
+  content    String
+  coverImage String?
+  tags       String[] @default([])
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([employeeId])
+}
+
+// ─── Job Postings / Careers ────────────────────────────────────────
+model JobPosting {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  department   String?
+  location     String    @default("Nairobi, Kenya")
+  type         String    @default("full-time") // full-time, part-time, contract, internship
+  description  String
+  requirements String[]
+  benefits     String[]
+  salaryRange  String?
+  published    Boolean   @default(false)
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ─── Company Stats (key facts section) ─────────────────────────────
+model CompanyStat {
+  id        String   @id @default(uuid())
+  label     String
+  value     Int
+  suffix    String   @default("")
+  icon      String?
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ─── Homepage Sections (dynamic section ordering) ──────────────────
+model HomePageSection {
+  id        String   @id @default(uuid())
+  sectionId String   @unique
+  title     String
+  visible   Boolean  @default(true)
+  order     Int      @default(0)
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Product Inquiries ─────────────────────────────────────────────
+model ProductInquiry {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    String   @default("new") // new, contacted, qualified, closed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([productId])
+  @@index([status])
+}
+
+// ─── Product FAQs ──────────────────────────────────────────────────
+model ProductFaq {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  @@index([productId])
+}
+
+// ─── Project Employee Contributions ────────────────────────────────
+model ProjectEmployee {
+  id         String   @id @default(uuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  role       String?  // "lead", "developer", "designer", etc.
+  createdAt  DateTime @default(now())
+  @@unique([projectId, employeeId])
+}
+
+// ─── Subscriber Tags / Preferences ─────────────────────────────────
+model SubscriberPreference {
+  id           String   @id @default(uuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  tag          String
+  createdAt    DateTime @default(now())
+  @@unique([subscriberId, tag])
 }

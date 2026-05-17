@@ -1,85 +1,75 @@
-//tailwind.config.js
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+
   theme: {
     extend: {
       colors: {
-        light: 'gray-100',
-        dark: 'gray-900',
-        'text-light': '#757575',
-        'text-dark': '#e8f5e9',
-        accent: '#14B8A6', // AngiSoft Teal
-        'accent-light': '#5EEAD4',
-        'accent-dark': '#0D9488',
-        'brand-teal': {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-        },
-        'brand-peach': {
-          50: '#fff7ed',
-          100: '#ffedd5',
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316',
-          600: '#ea580c',
-        },
-        'card-light': '#ffffff',
-        'card-dark': '#1e1e1e',
-        divider: '#bdbdbd',
+        primary: '#0875FF',
+        'primary-light': '#18D8FF',
+        'primary-dark': '#003BCE',
+
+        secondary: '#00AFFF',
+        'secondary-light': '#7EF7FF',
+        'secondary-dark': '#008CFF',
+
+        accent: '#8A2BE2',
+
+        success: '#27D94B',
+        'success-light': '#5DFF62',
+        'success-dark': '#19C83D',
+
+        warning: '#F59E0B',
+        error: '#EF4444',
+        info: '#00AFFF',
+
+        navy: '#07142B',
+        'navy-dark': '#061324',
+        'navy-light': '#0B1E3D',
+        'navy-lighter': '#102A55',
+
+        'brand-blue': '#003BCE',
+        'brand-electric': '#0875FF',
+        'brand-cyan': '#00AFFF',
+        'brand-glow': '#18D8FF',
+        'brand-green': '#27D94B',
+        'brand-lime': '#5DFF62',
+        'brand-purple': '#8A2BE2',
+
+        'off-white': '#F5F7FA',
+        divider: '#D7E3FF',
       },
+
+      backgroundImage: {
+        'angi-gradient': 'linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%)',
+        'angi-dark': 'linear-gradient(180deg, #07142B 0%, #061324 100%)',
+        'angi-glow': 'radial-gradient(circle at center, rgba(0,175,255,0.35), transparent 60%)',
+      },
+
       boxShadow: {
         custom: '0 4px 12px rgba(0, 0, 0, 0.1)',
+        glow: '0 0 20px rgba(8, 117, 255, 0.35)',
+        'glow-cyan': '0 0 24px rgba(0, 175, 255, 0.45)',
+        'glow-green': '0 0 20px rgba(39, 217, 75, 0.35)',
       },
+
       transitionProperty: {
         custom: 'all 0.3s ease',
       },
+
       fontFamily: {
-        sans: ['Poppins', 'system-ui', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
-      },
-      fontSize: {
-        sm: '0.875rem',
-        base: '1rem',
-        lg: '1.25rem',
-        xl: '1.5rem',
-        '2xl': '1.8rem',
-        '3xl': '2.0rem',
-        '4xl': '2.5rem',
-        '5xl': '3.0rem',
-        '6xl': '3.5rem',
-        '7xl': '4.0rem',
-        '8xl': '4.5rem',
-        '9xl': '5.0rem',
-        '10xl': '6.0rem',
-        '11xl': '7.0rem',
-      },
-      spacing: {
-        '10p': '10%',
-        0.5: "0.125rem",
-        1.5: "0.375rem",
-        2.5: "0.625rem",
-        3.5: "0.875rem",
-        4.5: "1.125rem",
-        5.5: "1.375rem",
-        6.5: "1.625rem",
-        7.5: "1.875rem",
-        8.5: "2.125rem",
-        9.5: "2.375rem",
-        10.5: "2.625rem",
-        11.5: "2.875rem",
-        72: "18rem",
-        80: "20rem",
+        sans: [
+          'DM Sans',
+          'system-ui',
+          'sans-serif',
+        ],
+        display: [
+          'Sora',
+          'DM Sans',
+          'sans-serif',
+        ],
       },
     },
   },
-  darkMode: "class", 
+
   plugins: [],
 };

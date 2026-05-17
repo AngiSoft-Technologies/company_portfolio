@@ -262,18 +262,14 @@ const BookingStatus = () => {
     const currentStepIndex = timelineSteps.findIndex(s => s.status === booking.status);
 
     return (
-        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen angi-page-shell--resume">
             {/* Hero */}
             <ParallaxSection
-                speed={0.3}
+                speed={0.12}
+                treatment="plain"
                 className="relative py-16 overflow-hidden"
             >
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${currentStatus.color}20 0%, ${colors.secondary}10 100%)`
-                    }}
-                />
+                <div className="absolute inset-0 angi-technical-grid-soft opacity-15" />
 
                 <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">

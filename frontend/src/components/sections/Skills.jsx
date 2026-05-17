@@ -33,7 +33,7 @@ const Skills = ({ theme }) => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-12">
                     {sectionCopy.title && (
-                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight bg-gradient-to-r from-teal-500 to-teal-600 bg-clip-text text-transparent">
+                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight bg-gradient-to-r from-[#0A3DFF] to-[#00C2FF] bg-clip-text text-transparent">
                             {sectionCopy.title}
                         </h2>
                     )}

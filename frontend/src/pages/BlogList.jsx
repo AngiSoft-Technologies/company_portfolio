@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
+import { getBlogDetailPath } from '../utils/detailPaths';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
@@ -52,13 +53,8 @@ const BlogList = () => {
 
   return (
     <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
-      <ParallaxSection speed={0.3} className="relative py-28 overflow-hidden">
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background: `linear-gradient(135deg, ${colors.primary}18 0%, ${colors.secondary}18 50%, ${colors.primaryDark}18 100%)`
-          }}
-        />
+      <ParallaxSection speed={0.2} treatment="subtle" className="relative py-28 overflow-hidden">
+        <div className="absolute inset-0 angi-technical-grid-soft opacity-20" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
           <ScrollReveal animation="fadeUp">
             {pageCopy.badge && (
@@ -122,7 +118,7 @@ const BlogList = () => {
                   <ScrollReveal key={post.id || idx} animation="fadeUp" delay={idx * 100}>
                     <div
                       className="group h-full cursor-pointer"
-                      onClick={() => navigate(`/blog/${post.slug || post.id}`)}
+                      onClick={() => navigate(getBlogDetailPath(post))}
                     >
                       <GlassmorphismCard className="p-8 h-full flex flex-col gap-5 transition-all duration-300 hover:-translate-y-2">
                         <div className="flex items-center justify-between text-sm" style={{ color: colors.textSecondary }}>

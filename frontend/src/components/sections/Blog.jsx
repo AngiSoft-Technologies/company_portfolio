@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { getBlogDetailPath } from '../../utils/detailPaths';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaBlog, 
@@ -30,7 +31,7 @@ const Blog = () => {
                 const data = await apiGet('/blogs');
                 const published = Array.isArray(data) ? data.filter(p => p.published !== false) : [];
                 setPosts(published);
-            } catch (err) {
+            } catch {
                 setError('No blog posts available yet.');
             } finally {
                 setLoading(false);
@@ -188,7 +189,7 @@ const Blog = () => {
                             <ScrollReveal animation="fadeUp" delay={100}>
                                 <div 
                                     className="relative mb-12 rounded-3xl overflow-hidden group cursor-pointer"
-                                    onClick={() => navigate(`/blog/${displayPosts[0].slug || displayPosts[0].id}`)}
+                                    onClick={() => navigate(getBlogDetailPath(displayPosts[0]))}
                                     style={{
                                         background: isDark 
                                             ? 'linear-gradient(135deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
@@ -308,7 +309,7 @@ const Blog = () => {
                                 <ScrollReveal key={post.id || idx} animation="fadeUp" delay={(idx + 1) * 100}>
                                     <div 
                                         className="group h-full rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-3"
-                                        onClick={() => navigate(`/blog/${post.slug || post.id}`)}
+                                        onClick={() => navigate(getBlogDetailPath(post))}
                                         style={{
                                             background: isDark 
                                                 ? 'rgba(30,41,59,0.6)'

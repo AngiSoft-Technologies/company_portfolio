@@ -46,13 +46,8 @@ const BlogDetail = () => {
 
   return (
     <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
-      <ParallaxSection speed={0.25} className="relative py-24 overflow-hidden">
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background: `linear-gradient(135deg, ${colors.primary}18 0%, ${colors.secondary}18 50%, ${colors.primaryDark}18 100%)`
-          }}
-        />
+      <ParallaxSection speed={0.15} treatment="plain" className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 angi-technical-grid-soft opacity-15" />
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           <ScrollReveal animation="fadeUp">
             {pageCopy.badge && (

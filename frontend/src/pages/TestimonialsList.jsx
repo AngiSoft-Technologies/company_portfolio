@@ -55,38 +55,10 @@ const TestimonialsList = () => {
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
             {/* Hero Section */}
             <ParallaxSection
-                speed={0.3}
+                speed={0.2}
+                treatment="subtle"
                 className="relative py-32 overflow-hidden"
             >
-                {/* Background gradient */}
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
-                    }}
-                />
-                
-                {/* Floating shapes */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                    <div 
-                        className="absolute w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                            top: '5%',
-                            right: '10%'
-                        }}
-                    />
-                    <div 
-                        className="absolute w-72 h-72 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.secondary}, transparent)`,
-                            bottom: '15%',
-                            left: '5%',
-                            animationDelay: '1.5s'
-                        }}
-                    />
-                </div>
-
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">
                         {pageCopy.badge && (

@@ -24,12 +24,29 @@ import healthRouter from './routes/health';
 import siteRouter from './routes/site';
 import newsletterRouter from './routes/newsletter';
 import faqRouter from './routes/faq';
+import notificationsRouter from './routes/notifications';
+import announcementsRouter from './routes/announcements';
+import newslettersRouter from './routes/newsletters';
+import surveysRouter from './routes/surveys';
+import leadsRouter from './routes/leads';
+import supportTicketsRouter from './routes/support-tickets';
+import productsRouter from './routes/products';
+import { trackPageView } from './services/analytics';
 import { authRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/auth';
 import { sanitizeMiddleware } from './middleware/validation';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { initSentry } from './services/monitoring/sentry';
 import prisma from './db';
+
+// New route imports
+import careersRouter from './routes/careers';
+import companyStatsRouter from './routes/company-stats';
+import homeSectionsRouter from './routes/home-sections';
+import staffBlogsRouter from './routes/staff-blogs';
+import certificationsRouter from './routes/certifications';
+import productInquiriesRouter from './routes/product-inquiries';
+import productFaqsRouter from './routes/product-faqs';
 
 dotenv.config();
 initSentry();
@@ -205,7 +222,29 @@ app.use('/api/site', siteRouter(prisma));
 app.use('/api/newsletter', newsletterRouter(prisma));
 app.use('/api/faqs', faqRouter(prisma));
 app.use('/api/chatbot', chatbotRouter(prisma));
+app.use('/api/notifications', notificationsRouter());
+app.use('/api/announcements', announcementsRouter());
+app.use('/api/newsletters', newslettersRouter());
+app.use('/api/surveys', surveysRouter());
+app.use('/api/leads', leadsRouter());
+app.use('/api/support-tickets', supportTicketsRouter());
+app.use('/api/products', productsRouter());
+app.use('/api/careers', careersRouter());
+app.use('/api/company-stats', companyStatsRouter());
+app.use('/api/home-sections', homeSectionsRouter());
+app.use('/api/staff-blogs', staffBlogsRouter());
+app.use('/api/certifications', certificationsRouter());
+app.use('/api/product-inquiries', productInquiriesRouter());
+app.use('/api/product-faqs', productFaqsRouter());
 app.use('/health', healthRouter(prisma));
+
+// Analytics middleware
+app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/health')) {
+        trackPageView(req.path, req).catch(() => {});
+    }
+    next();
+});
 
 // Legacy admin route (kept for compatibility)
 app.post('/api/admin/revoke/:employeeId', requireAuth, async (req, res) => {

@@ -1,5 +1,6 @@
 // Application constants
 export const APP_NAME = 'AngiSoft Technologies';
+export const APP_MOTTO = 'Innovate • Build • Empower';
 export const APP_TAGLINE = 'Innovative Software Solutions';
 
 // API Configuration
@@ -10,8 +11,8 @@ const normalizeOrigin = (origin) => {
 
 const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL) || (import.meta.env.PROD
     ? 'https://api.angisoft.co.ke'
-    : 'http://localhost:5000');
-export const API_BASE_URL = `${API_ORIGIN.replace(/\/+$/, '')}/api`;
+    : '');
+export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/api` : '/api';
 
 // File Upload Limits
 export const FILE_LIMITS = {
@@ -40,12 +41,63 @@ export const BOOKING_STATUS_COLORS = {
     CANCELLED: 'bg-gray-500'
 };
 
-// Brand Colors
+// Product Ecosystem
+export const PRODUCTS = [
+  {
+    name: 'PetroFlow',
+    slug: 'petroflow',
+    tagline: 'Fuel Station Automation Platform',
+    description: 'Complete fuel station management with pump control, inventory tracking, analytics, and staff management.',
+    icon: 'FaGasPump',
+    gradient: 'linear-gradient(135deg, #0A3DFF 0%, #00C2FF 100%)',
+    features: ['Fuel Management', 'Pump Control', 'Inventory Tracking', 'Analytics Dashboard', 'Staff Management'],
+  },
+  {
+    name: 'DukaFlow',
+    slug: 'dukaflow',
+    tagline: 'POS & ERP Platform',
+    description: 'All-in-one point-of-sale and ERP system for retail, wholesale, and restaurant businesses.',
+    icon: 'FaStore',
+    gradient: 'linear-gradient(135deg, #8A2BE2 0%, #00C2FF 100%)',
+    features: ['Sales Management', 'Inventory', 'Customer CRM', 'Supplier Management', 'Multi-branch'],
+  },
+  {
+    name: 'KejaLink',
+    slug: 'kejalink',
+    tagline: 'Property Discovery Platform',
+    description: 'Modern property discovery platform connecting tenants with landlords through smart search and booking.',
+    icon: 'FaHome',
+    gradient: 'linear-gradient(135deg, #39FF6A 0%, #00C2FF 100%)',
+    features: ['House Hunting', 'Property Listings', 'Landlord Management', 'Maps Integration', 'Booking'],
+  },
+  {
+    name: 'AngiTunes',
+    slug: 'angitunes',
+    tagline: 'Music Streaming & Distribution',
+    description: 'Music platform for streaming, artist promotion, uploads, and monetization.',
+    icon: 'FaMusic',
+    gradient: 'linear-gradient(135deg, #EF4444 0%, #8A2BE2 100%)',
+    features: ['Music Streaming', 'Artist Pages', 'Uploads', 'Monetization', 'Playlists'],
+  },
+];
+
+// Brand Colors — AngiSoft Official Palette
 export const BRAND_COLORS = {
-    primary: '#0B5CFF',
-    secondary: '#12A86B',
-    accent: '#D6A327',
-    dark: '#061A36',
-    light: '#F7FAFC'
+    primary: '#0A3DFF',
+    primaryLight: '#3B6FFF',
+    primaryDark: '#0029CC',
+    secondary: '#00C2FF',
+    secondaryLight: '#5DD8FF',
+    secondaryDark: '#0099CC',
+    accent: '#8A2BE2',
+    success: '#39FF6A',
+    successDark: '#16C95B',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    navy: '#07142B',
+    navyLight: '#0B1E3D',
+    offWhite: '#F5F7FA',
+    text: '#07142B',
+    textSecondary: '#334155',
 };
 

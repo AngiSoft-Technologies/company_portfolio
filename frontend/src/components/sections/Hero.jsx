@@ -29,11 +29,11 @@ const Hero = () => {
   const mouseMoveFrameRef = useRef(null);
   const pendingMousePositionRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [heroData, setHeroData] = useState(null);
   const [branding, setBranding] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const getResponsiveValue = (values) => {
     const w = window.innerWidth;
@@ -59,10 +59,7 @@ const Hero = () => {
         ]);
         setHeroData(hero || getDefaultHeroData());
         setBranding(brand || null);
-        console.log('Hero data fetched:', hero);
-      } catch (err) {
-        console.error('Failed to fetch hero data:', err);
-        console.warn('Using fallback hero data');
+      } catch {
         setHeroData(getDefaultHeroData());
       } finally {
         setLoading(false);
@@ -86,10 +83,22 @@ const Hero = () => {
       { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
     ],
     backgroundVideo: "/videos/Matrix_rain_code.mp4",
-    backgroundImage: "/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
+    backgroundImage: "/images/Software-Development-Company.jpg"
   });
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updateMotionPreference = () => setReduceMotion(mediaQuery.matches);
+
+    updateMotionPreference();
+    mediaQuery.addEventListener('change', updateMotionPreference);
+
+    return () => mediaQuery.removeEventListener('change', updateMotionPreference);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
     const handleMouseMove = (e) => {
       pendingMousePositionRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 20,
@@ -111,7 +120,7 @@ const Hero = () => {
         cancelAnimationFrame(mouseMoveFrameRef.current);
       }
     };
-  }, []);
+  }, [reduceMotion]);
 
   const content = heroData;
   const stats = (content?.stats || []).map(s => ({
@@ -130,37 +139,29 @@ const Hero = () => {
 
   // Handle video autoplay with fallback
   useEffect(() => {
-    console.log('Setting up video autoplay');
-    if (!backgroundVideo) {
+    if (!backgroundVideo || reduceMotion) {
       setVideoLoaded(false);
       return;
     }
 
     const video = videoRef.current;
-    if (!video) {
-      console.log('⚠️ Video ref not found');
-      return;
-    }
+    if (!video) return;
 
-    console.log('Video ref found, current src:', video.src);
     video.setAttribute('autoplay', '');
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
 
     const playVideo = async () => {
       try {
-        console.log('Attempting to play video...');
         await video.play();
-        console.log('✅ Video playing');
-      } catch (error) {
-        console.log('❌ Autoplay failed, showing poster:', error);
+      } catch {
         setVideoLoaded(false);
       }
     };
 
     const playTimeout = setTimeout(playVideo, 500);
     return () => clearTimeout(playTimeout);
-  }, [backgroundVideo]);
+  }, [backgroundVideo, reduceMotion]);
 
   if (loading) {
     return (
@@ -221,16 +222,15 @@ const Hero = () => {
             alt="Hero Background"
             className="absolute inset-0 w-full h-full object-cover"
             style={{
-              opacity: videoLoaded ? 0 : 0.8,
-              transition: 'opacity 0.8s ease-in-out'
+              opacity: videoLoaded ? 0 : 0.48,
+              transition: 'opacity 0.8s ease-in-out',
+              filter: 'saturate(0.85) contrast(1.08)'
             }}
-            onLoad={() => console.log('✅ Image loaded')}
-            onError={(e) => console.error('❌ Image failed:', e.target.src)}
           />
         )}
 
         {/* Video Element */}
-        {backgroundVideo && (
+        {backgroundVideo && !reduceMotion && (
           <video
             ref={videoRef}
             autoPlay={true}
@@ -239,19 +239,9 @@ const Hero = () => {
             playsInline={true}
             controls={false}
             disablePictureInPicture={true}
-            preload="auto"
-            onLoadedData={() => {
-              console.log('✅ Video loaded (onLoadedData)');
-              setVideoLoaded(true);
-            }}
-            onCanPlay={() => {
-              console.log('✅ Video can play (onCanPlay)');
-            }}
-            onError={(e) => {
-              console.error('❌ Video error:', e);
-              setVideoLoaded(false);
-            }}
-            onPlay={() => console.log('✅ Video playing')}
+            preload="metadata"
+            onLoadedData={() => setVideoLoaded(true)}
+            onError={() => setVideoLoaded(false)}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               opacity: videoLoaded ? 0.4 : 0,
@@ -269,13 +259,13 @@ const Hero = () => {
         )}
       </div>
 
-      {/* Animated Gradient Overlay */}
+      {/* Refined Ambient Overlay */}
       <div
         className="absolute inset-0 z-1"
         style={{
-          background: `radial-gradient(ellipse at ${50 + mousePosition.x}% ${50 + mousePosition.y}%, 
-            ${colors.primary}30 0%, 
-            transparent 50%)`,
+          background: `radial-gradient(ellipse at ${50 + mousePosition.x}% ${50 + mousePosition.y}%,
+            ${colors.primary}18 0%,
+            transparent 46%)`,
           pointerEvents: 'none'
         }}
       />

@@ -66,37 +66,13 @@ const ServicesList = () => {
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
             {/* Hero Section with Parallax */}
             <ParallaxSection
-                speed={0.3}
+                speed={0.25}
+                treatment="image"
+                backgroundImage="/images/Software-Development-Company.jpg"
+                backgroundPosition="center 42%"
                 className="relative py-32 overflow-hidden"
             >
-                {/* Background with gradient */}
-                <div 
-                    className="absolute inset-0 z-0"
-                    style={{
-                        background: `linear-gradient(135deg, ${colors.primary}15 0%, ${colors.secondary}15 50%, ${colors.primaryDark}15 100%)`
-                    }}
-                />
-                
-                {/* Floating shapes */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                    <div 
-                        className="absolute w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                            top: '10%',
-                            left: '10%'
-                        }}
-                    />
-                    <div 
-                        className="absolute w-72 h-72 rounded-full blur-3xl opacity-20 animate-pulse"
-                        style={{ 
-                            background: `radial-gradient(circle, ${colors.secondary}, transparent)`,
-                            bottom: '10%',
-                            right: '15%',
-                            animationDelay: '1s'
-                        }}
-                    />
-                </div>
+                <div className="angi-spotlight" />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <ScrollReveal animation="fadeUp">

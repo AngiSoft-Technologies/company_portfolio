@@ -8,14 +8,14 @@ const normalizeOrigin = (origin) => {
 
 const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL) || (import.meta.env.PROD
   ? "https://api.angisoft.co.ke"
-  : "http://localhost:5000");
+  : "");
 
 const buildApiUrl = (endpoint) => {
   if (endpoint.startsWith('http')) return endpoint;
   const normalized = endpoint.startsWith('/api')
     ? endpoint
     : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-  return `${API_ORIGIN}${normalized}`;
+  return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
 };
 
 let notificationHandler = null;

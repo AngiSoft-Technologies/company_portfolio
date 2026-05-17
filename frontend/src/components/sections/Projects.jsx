@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
+import { getProjectDetailPath } from '../../utils/detailPaths';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaFolder, 
@@ -26,6 +27,7 @@ const Projects = () => {
     const [error, setError] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [hoveredProject, setHoveredProject] = useState(null);
+    const navigate = useNavigate();
     const isDark = mode === 'dark';
     const sectionCopy = uiCopy?.home?.projects || {};
 
@@ -35,7 +37,7 @@ const Projects = () => {
                 const data = await apiGet('/projects');
                 const published = Array.isArray(data) ? data.filter(p => p.published !== false) : [];
                 setProjects(published);
-            } catch (err) {
+            } catch {
                 setError('No projects available yet.');
             } finally {
                 setLoading(false);
@@ -217,12 +219,15 @@ const Projects = () => {
                                 const CategoryIcon = getCategoryIcon(categoryLabel);
                                 const projectYear = project.createdAt ? new Date(project.createdAt).getFullYear() : null;
                                 const primaryImage = Array.isArray(project.images) && project.images.length > 0 ? project.images[0] : null;
+                                const detailPath = getProjectDetailPath(project);
                                 const isHovered = hoveredProject === idx;
                                 
                                 return (
                                     <ScrollReveal key={project.id || idx} animation="scaleUp" delay={idx * 100}>
                                         <div 
-                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500"
+                                            className="group relative h-full rounded-3xl overflow-hidden transition-all duration-500 cursor-pointer"
+                                            role="link"
+                                            tabIndex={0}
                                             style={{
                                                 background: isDark 
                                                     ? 'rgba(30,41,59,0.6)'
@@ -235,6 +240,13 @@ const Projects = () => {
                                             }}
                                             onMouseEnter={() => setHoveredProject(idx)}
                                             onMouseLeave={() => setHoveredProject(null)}
+                                            onClick={() => navigate(detailPath)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    navigate(detailPath);
+                                                }
+                                            }}
                                         >
                                             {/* Image Container */}
                                             <div className="relative h-48 overflow-hidden">
@@ -267,9 +279,10 @@ const Projects = () => {
                                                         opacity: isHovered ? 1 : 0
                                                     }}
                                                 >
-                                                    {(project.slug || project.id) && (
+                                                    {detailPath && (
                                                         <Link
-                                                            to={`/project/${project.slug || project.id}`}
+                                                            to={detailPath}
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
                                                             style={{
                                                                 backgroundColor: colors.primary
@@ -279,20 +292,22 @@ const Projects = () => {
                                                         </Link>
                                                     )}
                                                     {project.demoUrl && (
-                                                        <a 
+                                                        <a
                                                             href={project.demoUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 backdrop-blur transition-transform hover:scale-110"
                                                         >
                                                             <FaExternalLinkAlt className="text-white" />
                                                         </a>
                                                     )}
                                                     {project.repoUrl && (
-                                                        <a 
+                                                        <a
                                                             href={project.repoUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            onClick={(event) => event.stopPropagation()}
                                                             className="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 backdrop-blur transition-transform hover:scale-110"
                                                         >
                                                             <FaGithub className="text-white" />
