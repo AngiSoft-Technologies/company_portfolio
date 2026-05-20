@@ -60,6 +60,7 @@ const HeroSlider = () => {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [branding, setBranding] = useState(null);
   const [hero, setHero] = useState(null);
+  const [loadedImages, setLoadedImages] = useState({});
   const videoRef = useRef(null);
   const intervalRef = useRef(null);
   const isDark = mode === 'dark';
