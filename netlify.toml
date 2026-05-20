@@ -1,6 +1,5 @@
 [build]
   base = "frontend"
-  package = "frontend"
   command = "npm ci && npm run build"
   publish = "dist"
   functions = "netlify/functions"
@@ -11,7 +10,6 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  region = "us-east-2"
 
 [[redirects]]
   from = "/*"
