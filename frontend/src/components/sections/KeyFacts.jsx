@@ -1,14 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import AnimatedCounter from '../modern/AnimatedCounter';
+import { apiGet } from '../../js/httpClient';
 
-const facts = [
-  { value: 5, suffix: '+', label: 'Years of Expertise' },
-  { value: 100, suffix: '+', label: 'Projects Delivered' },
-  { value: 15, suffix: '+', label: 'IT Professionals' },
-  { value: 10, suffix: '+', label: 'Industries Served' },
+const fallbackFacts = [
+  { value: 2024, suffix: '', label: 'Founded From Grassroots Work' },
+  { value: 6, suffix: '+', label: 'Core Service Lines' },
+  { value: 4, suffix: '', label: 'Product Ecosystems' },
+  { value: 1, suffix: '', label: 'Mission: Empower' },
 ];
 
 const KeyFacts = () => {
+  const [facts, setFacts] = useState(fallbackFacts);
+
+  useEffect(() => {
+    apiGet('/company-stats')
+      .then((data) => {
+        if (Array.isArray(data) && data.length) {
+          setFacts(data.map((stat) => ({
+            value: stat.value,
+            suffix: stat.suffix || '',
+            label: stat.label,
+            description: stat.description,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="angi-section angi-section-gradient" id="key-facts">
       <div className="angi-container">
@@ -28,7 +46,7 @@ const KeyFacts = () => {
         }}>
           {facts.map((fact, i) => (
             <div
-              key={i}
+              key={`${fact.label}-${i}`}
               className="angi-card"
               style={{ textAlign: 'center', padding: '2.5rem 1.5rem' }}
             >
@@ -42,15 +60,26 @@ const KeyFacts = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
-                <AnimatedCounter end={fact.value} suffix={fact.suffix} />
+                <AnimatedCounter end={fact.value} suffix={fact.suffix} useGrouping={!/found/i.test(fact.label)} />
               </div>
               <p style={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 color: 'rgba(245,247,250,0.55)',
+                marginBottom: fact.description ? '0.5rem' : 0,
               }}>
                 {fact.label}
               </p>
+              {fact.description && (
+                <p style={{
+                  fontSize: '0.75rem',
+                  lineHeight: 1.5,
+                  color: 'rgba(245,247,250,0.45)',
+                  margin: 0,
+                }}>
+                  {fact.description}
+                </p>
+              )}
             </div>
           ))}
         </div>

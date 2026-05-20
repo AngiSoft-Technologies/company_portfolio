@@ -12,6 +12,7 @@ import SolutionsWeDeliver from '../components/sections/SolutionsWeDeliver';
 import SuccessStories from '../components/sections/SuccessStories';
 import TechPlatforms from '../components/sections/TechPlatforms';
 import FaqSection from '../components/sections/FaqSection';
+import Blog from '../components/sections/Blog';
 
 // Icons
 import {
@@ -24,7 +25,7 @@ import {
 const Home = () => {
   return (
     <>
-      {/* 1. HERO */}
+      {/* 1. HERO */ }
       <HeroSlider />
 
       {/* 2. KEY FACTS */}
@@ -48,16 +49,19 @@ const Home = () => {
       {/* 8. BOTTOM CTA */}
       <BrandCTA />
 
-      {/* 9. TESTIMONIALS */}
+      {/* 9. BLOG */}
+      <Blog />
+
+      {/* 10. TESTIMONIALS */}
       <TestimonialSlider />
 
-      {/* 10 . TECH PLATFORMS */}
+      {/* 11 . TECH PLATFORMS */}
       <TechPlatforms />
 
-      {/* 11. FAQ */}
+      {/* 12. FAQ */}
       <FaqSection />
 
-      {/* 12. CONTACT */}
+      {/* 13. CONTACT */}
       <ContactSection />
 
 

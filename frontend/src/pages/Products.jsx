@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { PRODUCT_LOGOS } from '../utils/brandAssets';
+import { apiGet } from '../js/httpClient';
+import { resolveAssetUrl } from '../utils/constants';
 import { getProductDetailPath } from '../utils/detailPaths';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import {
@@ -10,7 +12,7 @@ import {
     FaMobile, FaCloud, FaUsers
 } from 'react-icons/fa';
 
-const products = [
+const fallbackProducts = [
     {
         id: 'petroflow',
         name: 'PetroFlow',
@@ -61,6 +63,26 @@ const Products = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
     const [hoveredCard, setHoveredCard] = useState(null);
+    const [products, setProducts] = useState(fallbackProducts);
+    const [pageCopy, setPageCopy] = useState(null);
+
+    useEffect(() => {
+        Promise.all([
+            apiGet('/products').catch(() => null),
+            apiGet('/site/products-page').catch(() => null),
+        ]).then(([productData, copy]) => {
+            if (Array.isArray(productData) && productData.length) {
+                setProducts(productData.map((product) => ({
+                    ...product,
+                    logo: product.bannerUrl || product.logoUrl || product.logo,
+                    color: product.color || 'from-blue-500 to-cyan-500',
+                    features: Array.isArray(product.features) ? product.features : [],
+                    status: product.status || 'DEVELOPMENT',
+                })));
+            }
+            setPageCopy(copy);
+        });
+    }, []);
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -85,13 +107,13 @@ const Products = () => {
 
                     <ScrollReveal animation="fadeUp" delay={100}>
                         <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span style={{ color: '#fff' }}>Purpose-Built </span>
+                            {pageCopy?.titlePrefix || 'Purpose-Built'}
                             <span style={{
                                 background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent'
                             }}>
-                                Software
+                            {pageCopy?.titleHighlight || 'Software'}
                             </span>
                         </h1>
                     </ScrollReveal>
@@ -101,7 +123,7 @@ const Products = () => {
                             className="text-lg md:text-xl max-w-3xl mx-auto mb-10"
                             style={{ color: 'rgba(255,255,255,0.72)' }}
                         >
-                            Scalable SaaS products designed to solve real business challenges across multiple industries
+                            {pageCopy?.subtitle || 'Scalable SaaS products and platform directions shaped by real AngiSoft service work, local business needs, and digital empowerment goals.'}
                         </p>
                     </ScrollReveal>
 
@@ -161,7 +183,7 @@ const Products = () => {
                                     {/* Product logo header */}
                                     <div className="relative h-44 overflow-hidden">
                                         <img
-                                            src={product.logo}
+                                            src={resolveAssetUrl(product.logo || product.logoUrl || product.bannerUrl)}
                                             alt={`${product.name} logo`}
                                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             loading="lazy"

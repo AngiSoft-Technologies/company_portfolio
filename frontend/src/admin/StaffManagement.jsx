@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
-import { API_BASE_URL } from '../utils/constants';
+import { API_BASE_URL, resolveAssetUrl } from '../utils/constants';
 import { 
     FaUser, FaEnvelope, FaPhone, FaEdit, FaSave, FaTimes,
     FaCamera, FaPlus, FaSearch, FaTrash, FaUserPlus,
@@ -290,7 +290,7 @@ const StaffManagement = () => {
                                 {/* Avatar */}
                                 {employee.avatarUrl ? (
                                     <img
-                                        src={employee.avatarUrl}
+                                        src={resolveAssetUrl(employee.avatarUrl)}
                                         alt={employee.firstName}
                                         className="w-16 h-16 rounded-xl object-cover"
                                     />
@@ -391,7 +391,7 @@ const StaffManagement = () => {
                             <div className="relative">
                                 {formData.avatarUrl ? (
                                     <img
-                                        src={formData.avatarUrl}
+                                        src={resolveAssetUrl(formData.avatarUrl)}
                                         alt="Avatar"
                                         className="w-24 h-24 rounded-2xl object-cover"
                                     />

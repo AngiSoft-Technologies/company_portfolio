@@ -1,12 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-const AnimatedCounter = ({ 
-  end, 
-  duration = 2000, 
-  suffix = '', 
+const AnimatedCounter = ({
+  end,
+  duration = 2000,
+  suffix = '',
   prefix = '',
   decimals = 0,
-  className = ''
+  className = '',
+  useGrouping = true
 }) => {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -57,9 +58,9 @@ const AnimatedCounter = ({
     requestAnimationFrame(animate);
   }, [isVisible, end, duration]);
 
-  const displayValue = decimals > 0 
-    ? count.toFixed(decimals) 
-    : Math.floor(count).toLocaleString();
+  const displayValue = decimals > 0
+    ? count.toFixed(decimals)
+    : Math.floor(count).toLocaleString(undefined, { useGrouping });
 
   return (
     <span ref={counterRef} className={className}>

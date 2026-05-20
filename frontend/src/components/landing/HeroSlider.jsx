@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FaChevronLeft, FaChevronRight, FaPlay, FaArrowRight } from 'react-icons/fa';
 import { apiGet } from '../../js/httpClient';
+import { resolveAssetUrl } from '../../utils/constants';
 
-const slides = [
+const defaultSlides = [
   {
     id: 0,
     type: 'video',
@@ -58,6 +59,7 @@ const HeroSlider = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [branding, setBranding] = useState(null);
+  const [hero, setHero] = useState(null);
   const videoRef = useRef(null);
   const intervalRef = useRef(null);
   const isDark = mode === 'dark';
@@ -71,10 +73,41 @@ const HeroSlider = () => {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Fetch branding
+  // Fetch branding and hero CMS content
   useEffect(() => {
-    apiGet('/site/branding').then(setBranding).catch(() => {});
+    Promise.all([
+      apiGet('/site/branding').catch(() => null),
+      apiGet('/site/hero').catch(() => null),
+    ]).then(([brandingData, heroData]) => {
+      setBranding(brandingData);
+      setHero(heroData);
+    });
   }, []);
+
+  const cmsSlides = hero?.slides?.length
+    ? hero.slides.map((item, index) => {
+      const video = resolveAssetUrl(item.videoUrl || item.video);
+      const image = resolveAssetUrl(item.imageUrl || item.image || item.poster || hero.backgroundImage);
+      const poster = resolveAssetUrl(item.poster || item.imageUrl || item.image || hero.backgroundImage);
+      const primaryCta = item.primaryCta || hero.ctaPrimary;
+      const secondaryCta = item.secondaryCta || hero.ctaSecondary;
+
+      return {
+        id: item.id ?? index,
+        type: video ? 'video' : 'image',
+        video,
+        poster,
+        image,
+        badge: item.badge || hero.eyebrow || 'AngiSoft Technologies',
+        headline: item.title || item.headline || hero.headline,
+        headlineHighlight: item.highlight || item.headlineHighlight || hero.headlineHighlight,
+        tagline: item.description || item.tagline || hero.tagline,
+        primaryCta: { label: item.ctaLabel || primaryCta?.label || primaryCta?.text || 'Start Your Project', to: item.ctaUrl || primaryCta?.to || primaryCta?.link || '/booking' },
+        secondaryCta: { label: item.secondaryCtaLabel || secondaryCta?.label || secondaryCta?.text || 'Explore Products', to: item.secondaryCtaUrl || secondaryCta?.to || secondaryCta?.link || '/products' },
+      };
+    })
+    : null;
+  const slides = cmsSlides || defaultSlides;
 
   const brandName = branding?.siteName || 'AngiSoft Technologies';
 
@@ -118,15 +151,15 @@ const HeroSlider = () => {
             loop
             muted
             playsInline
-            poster={slide.poster}
+            poster={resolveAssetUrl(slide.poster)}
             preload="metadata"
           >
-            <source src={slide.video} type="video/mp4" />
+            <source src={resolveAssetUrl(slide.video)} type="video/mp4" />
           </video>
         ) : (
           <div
             className="hero-slider__image"
-            style={{ backgroundImage: `url(${slide.image || slide.poster})` }}
+            style={{ backgroundImage: `url(${resolveAssetUrl(slide.image || slide.poster)})` }}
           />
         )}
         {/* Bottom fade into page bg */}

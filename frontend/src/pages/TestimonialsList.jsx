@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { resolveAssetUrl } from '../utils/constants';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
 import { 
@@ -188,7 +189,7 @@ const TestimonialsList = () => {
                                                 <div className="flex items-center gap-4 pt-4 border-t" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
                                                     {testimonial.avatar || testimonial.avatarUrl ? (
                                                         <img
-                                                            src={testimonial.avatar || testimonial.avatarUrl}
+                                                            src={resolveAssetUrl(testimonial.avatar || testimonial.avatarUrl)}
                                                             alt={testimonial.name || testimonial.author}
                                                             className="w-12 h-12 rounded-full object-cover"
                                                             style={{ border: `2px solid ${colors.primary}` }}

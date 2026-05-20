@@ -104,7 +104,7 @@ const EnhancedAdminDashboard = () => {
       title: 'Total Clients', 
       value: stats?.totalClients || 0, 
       icon: FaUserPlus,
-      link: '/admin/clients',
+      link: '/admin/client-projects',
       color: '#06B6D4',
       bgColor: '#06B6D415'
     }

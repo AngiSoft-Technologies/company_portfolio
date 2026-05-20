@@ -61,6 +61,9 @@ model Employee {
   staffBlogs          StaffBlog[]
   certifications      Certification[]
   projectContributions ProjectEmployee[]
+  roleAssignments     EmployeeRoleAssignment[]
+  portfolioItems      EmployeePortfolioItem[]
+  profileStats        EmployeeProfileStat[]
 }
 
 enum Role {
@@ -73,6 +76,86 @@ enum Role {
   STAFF
   CONTENT_CREATOR
   BLOG_MANAGER
+}
+
+model AppRole {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assignments EmployeeRoleAssignment[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model EmployeeRoleAssignment {
+  id         String   @id @default(uuid())
+  employeeId String
+  roleId     String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  role       AppRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, roleId])
+  @@index([employeeId])
+  @@index([roleId])
+}
+
+model EmployeePortfolioItem {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  slug        String?
+  category    String?
+  summary     String
+  description String?
+  imageUrl    String?
+  projectUrl  String?
+  repoUrl     String?
+  techStack   String[] @default([])
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([employeeId, published])
+}
+
+model EmployeeProfileStat {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  label       String
+  value       Int
+  suffix      String   @default("")
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([employeeId, published])
 }
 
 model Client {
@@ -505,6 +588,7 @@ model Announcement {
   expiresAt   DateTime?
   authorId    String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 
@@ -771,6 +855,7 @@ model Certification {
   year      Int?
   url       String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([employeeId])
 }
 
@@ -813,19 +898,23 @@ model CompanyStat {
   id        String   @id @default(uuid())
   label     String
   value     Int
-  suffix    String   @default("")
-  icon      String?
-  order     Int      @default(0)
+  suffix      String   @default("")
+  icon        String?
+  description String?
+  order       Int      @default(0)
   published Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Homepage Sections (dynamic section ordering) ──────────────────
 model HomePageSection {
   id        String   @id @default(uuid())
-  sectionId String   @unique
-  title     String
-  visible   Boolean  @default(true)
+  sectionId   String   @unique
+  title       String
+  component   String?
+  description String?
+  visible     Boolean  @default(true)
   order     Int      @default(0)
   settings  Json?
   createdAt DateTime @default(now())
@@ -860,6 +949,7 @@ model ProductFaq {
   order     Int      @default(0)
   published Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([productId])
 }
 

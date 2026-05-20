@@ -23,12 +23,25 @@ const ServiceDetail = () => {
             try {
                 const services = await apiGet('/services');
                 const found = services.find(s => s.slug === slug);
-                if (!found) {
-                    setError('Service not found');
-                    setLoading(false);
-                    return;
+                if (found) {
+                    setService(found);
+                } else {
+                    // Try matching by category slug as fallback
+                    const categories = await apiGet('/service-categories').catch(() => []);
+                    const cat = Array.isArray(categories) ? categories.find(c => c.slug === slug) : null;
+                    if (cat) {
+                        setService({
+                            title: cat.name,
+                            slug: cat.slug,
+                            description: cat.description,
+                            features: (Array.isArray(services) ? services : [])
+                              .filter(s => s.category === cat.name || s.categoryId === cat.id)
+                              .map(s => s.title),
+                        });
+                    } else {
+                        setError('Service not found');
+                    }
                 }
-                setService(found);
             } catch (err) {
                 setError(err.message);
             } finally {

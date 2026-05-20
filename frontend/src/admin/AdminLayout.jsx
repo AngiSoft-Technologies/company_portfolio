@@ -6,7 +6,7 @@ import {
     FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar,
     FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck,
     FaTrash, FaChevronDown, FaSearch, FaGlobe, FaBlog,
-    FaRobot, FaBox
+    FaRobot, FaBox, FaQuestionCircle, FaBullhorn, FaChartBar, FaSitemap, FaAward
 } from 'react-icons/fa';
 import AngiSoftLogo from '../components/brand/AngiSoftLogo';
 import { apiGet, apiPatch } from '../js/httpClient';
@@ -30,6 +30,19 @@ const navSections = [
             { to: '/admin/service-categories', label: 'Service Categories', icon: FaArchive },
             { to: '/admin/projects', label: 'Projects', icon: FaProjectDiagram },
             { to: '/admin/products', label: 'Products', icon: FaBox },
+            { to: '/admin/product-faqs', label: 'Product FAQs', icon: FaQuestionCircle },
+        ]
+    },
+    {
+        title: 'Public Content',
+        items: [
+            { to: '/admin/site-settings', label: 'Site Settings', icon: FaGlobe },
+            { to: '/admin/home-sections', label: 'Home Sections', icon: FaSitemap },
+            { to: '/admin/company-stats', label: 'Company Stats', icon: FaChartBar },
+            { to: '/admin/faqs', label: 'FAQs', icon: FaQuestionCircle },
+            { to: '/admin/announcements', label: 'Announcements', icon: FaBullhorn },
+            { to: '/admin/careers', label: 'Careers', icon: FaBriefcase },
+            { to: '/admin/certifications', label: 'Certifications', icon: FaAward },
         ]
     },
     {

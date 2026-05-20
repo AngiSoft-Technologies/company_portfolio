@@ -1,240 +1,285 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
-import { FaStar, FaQuoteLeft, FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa';
-import ScrollReveal from '../modern/ScrollReveal';
+import { Link } from 'react-router-dom';
+import { FaStar, FaArrowRight, FaExternalLinkAlt } from 'react-icons/fa';
+import { resolveAssetUrl } from '../../utils/constants';
 
 const TestimonialSlider = () => {
   const { colors, mode } = useTheme();
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
   const isDark = mode === 'dark';
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = () => setReduceMotion(mq.matches);
-    handler();
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  useEffect(() => {
-    apiGet('/testimonials')
+    apiGet('/api/testimonials')
       .then((data) => setTestimonials(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load testimonials:', err))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (!isPlaying || testimonials.length === 0 || reduceMotion) return;
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % testimonials.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [isPlaying, testimonials.length, reduceMotion]);
-
-  const prev = () => {
-    setIsPlaying(false);
-    setActiveIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
-  };
-
-  const next = () => {
-    setIsPlaying(false);
-    setActiveIndex((prev) => (prev + 1) % testimonials.length);
-  };
-
   const renderStars = (rating = 5) =>
     Array.from({ length: 5 }, (_, i) => (
-      <FaStar key={i} className={i < rating ? 'text-amber-400' : 'text-gray-400'} />
+      <FaStar key={i} style={{ color: i < rating ? '#FBBF24' : 'rgba(255,255,255,0.15)', fontSize: '0.75rem' }} />
     ));
 
   if (loading || testimonials.length === 0) return null;
 
-  const t = testimonials[activeIndex];
-  const name = t.name || 'Client';
-  const role = t.role || '';
-  const message = t.text || t.message || '';
-  const company = t.company || '';
-  const avatar = t.imageUrl || null;
+  const top = testimonials.slice(0, 5);
 
   return (
-    <section
-      className="testimonial-slider"
-      style={{
-        background: isDark
-          ? 'linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%)'
-          : 'linear-gradient(180deg, #F8FAFF 0%, #EFF5FF 50%, #F8FAFF 100%)',
-        color: isDark ? '#fff' : '#07142B',
-      }}
-    >
-      <div className="relative z-10 max-w-5xl mx-auto px-6">
-        <ScrollReveal animation="fadeUp">
-          <div className="text-center mb-14">
-            <div
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold mb-5"
-              style={{ backgroundColor: `${colors.primary}15`, color: colors.primary }}
-            >
-              <FaStar />
-              What Our Clients Say
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold">
-              Trusted by <span style={{ color: colors.primary }}>Businesses</span> Across Africa
-            </h2>
-          </div>
-        </ScrollReveal>
+    <section style={{
+      position: 'relative',
+      padding: '5rem 0 4rem',
+      overflow: 'hidden',
+      background: isDark
+        ? 'linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%)'
+        : 'linear-gradient(180deg, #F8FAFF 0%, #EFF5FF 50%, #F8FAFF 100%)',
+      color: isDark ? '#fff' : '#07142B',
+    }}>
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto', padding: '0 1.5rem' }}>
 
-        {/* Main testimonial card */}
-        <div className="relative">
-          <div
-            className="testimonial-slider__card"
-            style={{
-              background: isDark
-                ? 'rgba(255,255,255,0.04)'
-                : 'rgba(255,255,255,0.9)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-              backdropFilter: 'blur(16px)',
-            }}
-          >
-            <FaQuoteLeft
-              className="text-4xl mb-6 opacity-20"
-              style={{ color: colors.primary }}
-            />
-
-            <p className="testimonial-slider__message">
-              {message}
-            </p>
-
-            <div className="testimonial-slider__author">
-              {avatar && (
-                <img
-                  src={avatar}
-                  alt={name}
-                  className="testimonial-slider__avatar"
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-              )}
-              <div>
-                <div className="font-semibold text-lg">{name}</div>
-                {role && (
-                  <div style={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)' }}>
-                    {role}{company ? ` · ${company}` : ''}
-                  </div>
-                )}
-                <div className="flex gap-1 mt-1">{renderStars(t.rating || 5)}</div>
-              </div>
-            </div>
+        {/* ── Header ── */}
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            padding: '0.5rem 1.25rem', borderRadius: '999px',
+            fontSize: '0.8125rem', fontWeight: 600,
+            background: `${colors.primary}15`,
+            color: colors.primary,
+            marginBottom: '1.25rem',
+          }}>
+            <FaStar style={{ fontSize: '0.7rem' }} />
+            What Our Clients Say
           </div>
 
-          {/* Navigation */}
-          <div className="testimonial-slider__nav">
-            <button onClick={prev} aria-label="Previous testimonial" className="testimonial-slider__arrow">
-              <FaChevronLeft />
-            </button>
-            <div className="testimonial-slider__dots">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  aria-label={`Testimonial ${i + 1}`}
-                  onClick={() => { setIsPlaying(false); setActiveIndex(i); }}
-                  className="testimonial-slider__dot"
-                  style={i === activeIndex ? { backgroundColor: colors.primary, transform: 'scale(1.3)' } : {}}
-                />
-              ))}
-            </div>
-            <button onClick={next} aria-label="Next testimonial" className="testimonial-slider__arrow">
-              <FaChevronRight />
-            </button>
-          </div>
+          <h2 style={{
+            fontFamily: "'Sora', sans-serif",
+            fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
+            fontWeight: 800,
+            lineHeight: 1.2,
+            marginBottom: '0.75rem',
+          }}>
+            Trusted by{' '}
+            <span style={{
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>Businesses</span>{' '}
+            Across Africa
+          </h2>
+
+          <p style={{
+            fontSize: '1rem',
+            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+            maxWidth: '520px',
+            margin: '0 auto',
+            lineHeight: 1.6,
+          }}>
+            Hear from the businesses and teams we've helped build, scale, and innovate.
+          </p>
         </div>
 
-        {/* Link to all testimonials */}
-        <div className="text-center mt-10">
+        {/* ── Vertical Stack ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {top.map((t, i) => {
+            const name = t.name || 'Client';
+            const role = t.role || '';
+            const company = t.company || '';
+            const message = t.text || t.message || '';
+            const avatar = resolveAssetUrl(t.imageUrl || null);
+            const projectId = t.productId || null;
+            const testimonialId = t.id || null;
+
+            return (
+              <div key={t.id || i} style={{
+                background: isDark ? 'rgba(255,255,255,0.04)' : '#fff',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                borderRadius: '1rem',
+                padding: '1.75rem 2rem',
+                display: 'grid',
+                gridTemplateColumns: '180px 1fr',
+                gap: '1.5rem',
+                transition: 'border-color 0.3s, box-shadow 0.3s',
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = `${colors.primary}30`;
+                  e.currentTarget.style.boxShadow = `0 4px 24px ${colors.primary}08`;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {/* ── Column 1: Company name ── */}
+                <div style={{
+                  fontFamily: "'Sora', sans-serif",
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  lineHeight: 1.4,
+                  paddingTop: '0.25rem',
+                }}>
+                  {company || 'Client'}
+                </div>
+
+                {/* ── Column 2 ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Row 1: avatar + name + title (left) | stars (right) */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                      {avatar ? (
+                        <img
+                          src={avatar}
+                          alt={name}
+                          style={{
+                            width: '44px', height: '44px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: `2px solid ${colors.primary}30`,
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div style={{
+                        width: '44px', height: '44px',
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+                        display: avatar ? 'none' : 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.9rem', fontWeight: 700, color: '#fff',
+                        flexShrink: 0,
+                      }}>
+                        {name.charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{
+                          fontFamily: "'Sora', sans-serif",
+                          fontWeight: 700,
+                          fontSize: '0.9375rem',
+                          color: isDark ? '#fff' : '#1e293b',
+                          lineHeight: 1.3,
+                        }}>
+                          {name}
+                        </div>
+                        {role && (
+                          <div style={{
+                            fontSize: '0.8125rem',
+                            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                            marginTop: '0.125rem',
+                          }}>
+                            {role}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.2rem' }}>
+                      {renderStars(t.rating || 5)}
+                    </div>
+                  </div>
+
+                  {/* Row 2: Testimonial text */}
+                  <p style={{
+                    fontSize: '0.9375rem',
+                    fontWeight: 400,
+                    lineHeight: 1.7,
+                    color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
+                  }}>
+                    {message}
+                  </p>
+
+                  {/* Row 3: Optional action buttons */}
+                  {(projectId || testimonialId) && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                      {projectId && (
+                        <Link
+                          to={`/projects/${projectId}`}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: colors.primary,
+                            textDecoration: 'none',
+                            border: `1px solid ${colors.primary}30`,
+                            background: 'transparent',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `${colors.primary}10`;
+                            e.currentTarget.style.borderColor = `${colors.primary}50`;
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.borderColor = `${colors.primary}30`;
+                          }}
+                        >
+                          View Project <FaExternalLinkAlt style={{ fontSize: '0.6rem' }} />
+                        </Link>
+                      )}
+                      {testimonialId && (
+                        <Link
+                          to={`/testimonials/${testimonialId}`}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: '#fff',
+                            textDecoration: 'none',
+                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
+                          onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                        >
+                          View Testimonial <FaArrowRight style={{ fontSize: '0.6rem' }} />
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── View All Button ── */}
+        <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <Link
             to="/testimonials"
-            className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
-            style={{ color: colors.primary }}
+            style={{
+              display: 'inline-block',
+              padding: '0.875rem 2rem',
+              borderRadius: '0.75rem',
+              fontSize: '0.9375rem',
+              fontWeight: 600,
+              color: '#fff',
+              textDecoration: 'none',
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+              boxShadow: `0 4px 16px ${colors.primary}25`,
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = `0 6px 20px ${colors.primary}35`;
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}25`;
+            }}
           >
-            Read All Testimonials <FaArrowRight />
+            View All Testimonials
           </Link>
         </div>
       </div>
-
-      <style>{`
-        .testimonial-slider {
-          position: relative;
-          padding: 5rem 0;
-          overflow: hidden;
-        }
-        .testimonial-slider__card {
-          max-width: 720px;
-          margin: 0 auto;
-          padding: 2.5rem 2rem;
-          border-radius: 1.25rem;
-          text-align: center;
-        }
-        .testimonial-slider__message {
-          font-size: clamp(1rem, 2vw, 1.25rem);
-          line-height: 1.7;
-          margin-bottom: 2rem;
-          font-style: italic;
-        }
-        .testimonial-slider__author {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1rem;
-        }
-        .testimonial-slider__avatar {
-          width: 52px;
-          height: 52px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 2px solid rgba(0,194,255,0.3);
-        }
-        .testimonial-slider__nav {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1.5rem;
-          margin-top: 1.5rem;
-        }
-        .testimonial-slider__arrow {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          border: 1px solid rgba(128,128,128,0.25);
-          background: transparent;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: inherit;
-          transition: background 0.2s;
-        }
-        .testimonial-slider__arrow:hover {
-          background: rgba(128,128,128,0.1);
-        }
-        .testimonial-slider__dots {
-          display: flex;
-          gap: 0.5rem;
-        }
-        .testimonial-slider__dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          border: none;
-          background: rgba(128,128,128,0.3);
-          cursor: pointer;
-          transition: background 0.3s, transform 0.3s;
-        }
-        @media (max-width: 640px) {
-          .testimonial-slider__card { padding: 2rem 1.25rem; }
-        }
-      `}</style>
     </section>
   );
 };

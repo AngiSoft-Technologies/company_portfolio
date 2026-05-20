@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 export interface AppError extends Error {
     statusCode?: number;
@@ -61,6 +61,10 @@ export function errorHandler(err: AppError, req: Request, res: Response, next: N
         ...(isDevelopment && { stack: err.stack, details: err })
     });
 }
+
+export const asyncHandler = (handler: RequestHandler): RequestHandler => (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch(next);
+};
 
 export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
     res.status(404).json({

@@ -119,9 +119,12 @@ export const clientApiPatch = (endpoint, data) => clientPortalRequest('PATCH', e
  * @param {string|null} token - Optional auth token
  * @returns {Promise<object>} - The backend response (should include a 'url' field)
  */
-export const apiUpload = async (endpoint, file, token = null) => {
+export const apiUpload = async (endpoint, file, token = null, metadata = {}) => {
   const url = buildApiUrl(endpoint);
   const formData = new FormData();
+  Object.entries(metadata).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
   formData.append('file', file);
   const res = await fetch(url, {
     method: 'POST',

@@ -43,5 +43,5 @@ export const PRODUCT_DETAIL_PATHS = {
 
 export const getProductDetailPath = (product) => {
   const key = slugify(firstIdentifier(product?.slug, product?.key, product?.id, product?.name, product?.title));
-  return PRODUCT_DETAIL_PATHS[key] || '/products';
+  return key ? `/products/${key}` : '/products';
 };

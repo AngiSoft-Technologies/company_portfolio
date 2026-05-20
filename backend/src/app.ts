@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -35,7 +36,7 @@ import { trackPageView } from './services/analytics';
 import { authRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/auth';
 import { sanitizeMiddleware } from './middleware/validation';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { errorHandler, notFoundHandler, asyncHandler } from './middleware/errorHandler';
 import { initSentry } from './services/monitoring/sentry';
 import prisma from './db';
 
@@ -47,6 +48,8 @@ import staffBlogsRouter from './routes/staff-blogs';
 import certificationsRouter from './routes/certifications';
 import productInquiriesRouter from './routes/product-inquiries';
 import productFaqsRouter from './routes/product-faqs';
+import rolesRouter from './routes/roles';
+import employeeProfilesRouter from './routes/employee-profiles';
 
 dotenv.config();
 initSentry();
@@ -71,6 +74,13 @@ app.use(cors({ origin: allowed, credentials: true } as any));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+app.use('/uploads/public', express.static(path.resolve(process.cwd(), 'uploads/public'), {
+    immutable: true,
+    maxAge: '30d',
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+    }
+}));
 app.use(sanitizeMiddleware);
 
 app.get('/', (req, res) => {
@@ -229,6 +239,8 @@ app.use('/api/surveys', surveysRouter());
 app.use('/api/leads', leadsRouter());
 app.use('/api/support-tickets', supportTicketsRouter());
 app.use('/api/products', productsRouter());
+app.use('/api/roles', rolesRouter());
+app.use('/api/employee-profiles', employeeProfilesRouter());
 app.use('/api/careers', careersRouter());
 app.use('/api/company-stats', companyStatsRouter());
 app.use('/api/home-sections', homeSectionsRouter());
@@ -247,12 +259,12 @@ app.use((req, res, next) => {
 });
 
 // Legacy admin route (kept for compatibility)
-app.post('/api/admin/revoke/:employeeId', requireAuth, async (req, res) => {
+app.post('/api/admin/revoke/:employeeId', requireAuth, asyncHandler(async (req, res) => {
     if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Not allowed' });
     const employeeId = (req.params as any).employeeId;
     await prisma.refreshToken.deleteMany({ where: { employeeId } });
     res.json({ ok: true });
-});
+}));
 
 
 

@@ -88,13 +88,15 @@ const FileUpload = ({
         try {
             const token = localStorage.getItem('adminToken');
             const uploadPromises = files.map(async (file) => {
+                const isImageUpload = file.type.startsWith('image/') && category !== 'document' && category !== 'cv';
+                const endpoint = isImageUpload ? '/uploads/local/image' : '/uploads/local/document';
                 const formData = new FormData();
-                formData.append('file', file);
                 formData.append('ownerType', ownerType);
                 formData.append('ownerId', ownerId);
                 formData.append('category', category);
+                formData.append('file', file);
 
-                const response = await fetch(`${API_BASE_URL}/admin/upload`, {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`

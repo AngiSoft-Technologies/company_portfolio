@@ -1,57 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { apiGet } from '../js/httpClient';
 import {
     FaBuilding, FaLightbulb, FaEye, FaHeart, FaHistory, FaUsers,
     FaRocket, FaCheckCircle, FaStar, FaHandshake, FaAward, FaGlobe,
-    FaArrowRight, FaEnvelope, FaCogs, FaShieldAlt, FaChartLine, FaCode
+    FaArrowRight, FaEnvelope, FaCogs, FaShieldAlt, FaChartLine, FaCode,
+    FaHandsHelping, FaSeedling
 } from 'react-icons/fa';
+
+const iconRegistry = {
+    FaBuilding, FaLightbulb, FaEye, FaHeart, FaHistory, FaUsers,
+    FaRocket, FaCheckCircle, FaStar, FaHandshake, FaAward, FaGlobe,
+    FaArrowRight, FaEnvelope, FaCogs, FaShieldAlt, FaChartLine, FaCode,
+    FaHandsHelping, FaSeedling
+};
+
+const resolveIcon = (iconName, fallback = FaLightbulb) => iconRegistry[iconName] || fallback;
 
 const timeline = [
     {
-        year: '2018',
-        title: 'Founded',
-        description: 'AngiSoft Technologies was established in Nairobi, Kenya, with a vision to deliver innovative software solutions across Africa.'
+        year: 'December 2024',
+        title: 'Official Beginning',
+        description: 'AngiSoft officially began with Prof Angera as the only developer and operator, solving practical everyday technical problems for students, businesses, creators, and local communities.'
     },
     {
-        year: '2019',
-        title: 'First Major Client',
-        description: 'Secured our first enterprise contract, building a custom POS system for a growing retail chain.'
+        year: 'Foundation',
+        title: 'Practical Technical Work',
+        description: 'Early work included debugging student projects, coding school and university projects, teaching beginners programming, editing documents, creating presentations, KRA/SHA/good conduct support, installations, OS support, graphics, forms, Excel/Python data analysis, email support, networking, MikroTik configuration, and digital music content distribution.'
     },
     {
-        year: '2020',
-        title: 'Mobile Expansion',
-        description: 'Expanded into mobile development with Flutter and Kotlin, launching DukaFlow for small businesses.'
+        year: 'Evolution',
+        title: 'From Services to Platforms',
+        description: 'The vision expanded from local technical support into scalable platforms, software products, automation, cloud systems, AI, and digital ecosystems.'
     },
     {
-        year: '2021',
-        title: 'Team Growth',
-        description: 'Grew to a team of 10+ engineers, designers, and project managers serving clients across East Africa.'
-    },
-    {
-        year: '2022',
-        title: 'Product Launches',
-        description: 'Launched KejaLink and PetroFlow, purpose-built SaaS products for property and fuel station management.'
-    },
-    {
-        year: '2023',
-        title: 'Regional Expansion',
-        description: 'Expanded operations to serve clients in Uganda, Tanzania, and Rwanda with localized solutions.'
-    },
-    {
-        year: '2024',
-        title: 'AI Integration',
-        description: 'Integrated AI-powered features into our product suite, including smart analytics and automated workflows.'
-    },
-    {
-        year: '2025',
-        title: 'Continued Innovation',
-        description: 'Launching AngiTunes and expanding our cyber services division to serve a broader market.'
+        year: 'Today',
+        title: 'African Technology Ecosystem',
+        description: 'AngiSoft is growing into a software engineering company, digital innovation brand, SaaS/product company, educational technology platform, technology empowerment ecosystem, digital transformation partner, and future-focused African technology brand.'
     }
 ];
 
-const values = [
+const fallbackValues = [
     {
         icon: FaLightbulb,
         title: 'Innovation',
@@ -84,7 +75,7 @@ const values = [
     }
 ];
 
-const whyChooseUs = [
+const fallbackWhyChooseUs = [
     {
         icon: FaCode,
         title: 'Expert Engineering',
@@ -110,6 +101,21 @@ const whyChooseUs = [
 const About = () => {
     const navigate = useNavigate();
     const { colors } = useTheme();
+    const [about, setAbout] = useState(null);
+
+    useEffect(() => {
+        apiGet('/site/about').then(setAbout).catch(() => {});
+    }, []);
+
+    const descriptions = about?.description || [];
+    const values = (about?.values || fallbackValues).map((value) => ({
+        ...value,
+        icon: typeof value.icon === 'string' ? resolveIcon(value.icon) : value.icon,
+    }));
+    const whyChooseUs = about?.positioning?.shouldBePositionedAs
+        ? about.positioning.shouldBePositionedAs.map((text) => ({ icon: FaCheckCircle, title: text, desc: 'TODO_PROF_ANGERA_EXACT_COPY' }))
+        : fallbackWhyChooseUs;
+    const timelineItems = about?.timeline || timeline;
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
@@ -198,13 +204,13 @@ const About = () => {
                                 </h2>
                                 <div className="space-y-4">
                                     <p style={{ color: colors.textSecondary }}>
-                                        Founded in 2018, AngiSoft Technologies began with a simple mission: to provide African businesses with world-class software solutions that are affordable, reliable, and tailored to local needs.
+                                        {descriptions[0] || 'AngiSoft officially began in December 2024 from practical everyday technical work for students, businesses, creators, and local communities.'}
                                     </p>
                                     <p style={{ color: colors.textSecondary }}>
-                                        What started as a small team of passionate developers has grown into a full-service technology company, offering custom software development, mobile applications, data analytics, cyber services, and a suite of proprietary SaaS products.
+                                        {descriptions[2] || 'Our philosophy is Innovate → Build → Empower: identify real problems, engineer practical digital solutions, and help people grow through technology.'}
                                     </p>
                                     <p style={{ color: colors.textSecondary }}>
-                                        Today, we serve clients across East Africa and beyond, helping startups, SMEs, and enterprises harness the power of technology to grow, compete, and thrive in the digital economy.
+                                        {descriptions[1] || 'That hands-on beginning shaped AngiSoft into an evolving African technology ecosystem focused on software, products, automation, data, education, infrastructure, and digital empowerment.'}
                                     </p>
                                 </div>
                             </div>
@@ -366,7 +372,7 @@ const About = () => {
                             }}
                         />
 
-                        {timeline.map((item, idx) => (
+                        {timelineItems.map((item, idx) => (
                             <ScrollReveal key={idx} animation={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={idx * 100}>
                                 <div className={`relative flex items-start mb-12 ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                                     {/* Year badge */}

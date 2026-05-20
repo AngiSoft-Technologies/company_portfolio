@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { getStaffDetailPath } from '../utils/detailPaths';
+import { resolveAssetUrl } from '../utils/constants';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
@@ -204,7 +205,7 @@ const StaffList = () => {
                                                             {member.avatarUrl ? (
                                                                 <div className="relative">
                                                                     <img
-                                                                        src={member.avatarUrl}
+                                                                        src={resolveAssetUrl(member.avatarUrl)}
                                                                         alt={`${member.firstName} ${member.lastName}`}
                                                                         className="w-28 h-28 rounded-full object-cover transition-transform duration-500"
                                                                         style={{

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FaReact, FaNodeJs, FaPython, FaJava, FaPhp,
   FaDocker, FaAws, FaLinux, FaHtml5, FaJs,
@@ -14,94 +14,80 @@ import {
   SiVuedotjs, SiGraphql, SiTensorflow,
   SiStripe, SiOpenai, SiAngular,
 } from 'react-icons/si';
+import { apiGet } from '../../js/httpClient';
 
-const categories = [
-  {
-    name: 'Frontend',
-    items: [
-      { name: 'React', icon: FaReact, color: '#61DAFB' },
-      { name: 'Vue.js', icon: SiVuedotjs, color: '#4FC08D' },
-      { name: 'Angular', icon: SiAngular, color: '#DD0031' },
-      { name: 'Next.js', icon: SiNextdotjs, color: '#fff' },
-      { name: 'TypeScript', icon: SiTypescript, color: '#3178C6' },
-      { name: 'JavaScript', icon: FaJs, color: '#F7DF1E' },
-      { name: 'HTML5', icon: FaHtml5, color: '#E34F26' },
-      { name: 'Tailwind CSS', icon: SiTailwindcss, color: '#06B6D4' },
-    ],
-  },
-  {
-    name: 'Backend',
-    items: [
-      { name: 'Node.js', icon: FaNodeJs, color: '#339933' },
-      { name: 'Python', icon: FaPython, color: '#3776AB' },
-      { name: 'Laravel', icon: SiLaravel, color: '#FF2D20' },
-      { name: 'Django', icon: SiDjango, color: '#092E20' },
-      { name: 'Spring Boot', icon: SiSpringboot, color: '#6DB33F' },
-      { name: 'PHP', icon: FaPhp, color: '#777BB4' },
-      { name: 'GraphQL', icon: SiGraphql, color: '#E10098' },
-      { name: 'Java', icon: FaJava, color: '#007396' },
-    ],
-  },
-  {
-    name: 'Mobile Development',
-    items: [
-      { name: 'Flutter', icon: SiFlutter, color: '#02569B' },
-      { name: 'React Native', icon: FaReact, color: '#61DAFB' },
-      { name: 'Kotlin', icon: SiKotlin, color: '#7F52FF' },
-      { name: 'Android', icon: FaAndroid, color: '#3DDC84' },
-      { name: 'iOS', icon: FaApple, color: '#fff' },
-    ],
-  },
-  {
-    name: 'Databases',
-    items: [
-      { name: 'PostgreSQL', icon: SiPostgresql, color: '#4169E1' },
-      { name: 'MongoDB', icon: SiMongodb, color: '#47A248' },
-      { name: 'MySQL', icon: SiMysql, color: '#4479A1' },
-      { name: 'Firebase', icon: SiFirebase, color: '#FFCA28' },
-      { name: 'Redis', icon: SiRedis, color: '#DC382D' },
-    ],
-  },
-  {
-    name: 'Cloud & DevOps',
-    items: [
-      { name: 'AWS', icon: FaAws, color: '#FF9900' },
-      { name: 'Docker', icon: FaDocker, color: '#2496ED' },
-      { name: 'Kubernetes', icon: SiKubernetes, color: '#326CE5' },
-      { name: 'Linux', icon: FaLinux, color: '#FCC624' },
-      { name: 'Nginx', icon: SiNginx, color: '#009639' },
-      { name: 'Terraform', icon: SiTerraform, color: '#7B42BC' },
-      { name: 'Git', icon: FaGitAlt, color: '#F05032' },
-    ],
-  },
-  {
-    name: 'AI & Data',
-    items: [
-      { name: 'TensorFlow', icon: SiTensorflow, color: '#FF6F00' },
-      { name: 'OpenAI', icon: SiOpenai, color: '#412991' },
-      { name: 'Python', icon: FaPython, color: '#3776AB' },
-      { name: 'Power BI', icon: FaChartBar, color: '#F2C811' },
-      { name: 'Stripe', icon: SiStripe, color: '#635BFF' },
-      { name: 'Azure', icon: FaMicrosoft, color: '#0078D4' },
-    ],
-  },
-];
+const iconRegistry = {
+  FaReact,
+  FaNodeJs,
+  FaPython,
+  FaJava,
+  FaPhp,
+  FaDocker,
+  FaAws,
+  FaLinux,
+  FaHtml5,
+  FaJs,
+  FaGitAlt,
+  FaAndroid,
+  FaApple,
+  FaMicrosoft,
+  FaDatabase,
+  FaChartBar,
+  SiTypescript,
+  SiTailwindcss,
+  SiNextdotjs,
+  SiLaravel,
+  SiDjango,
+  SiSpringboot,
+  SiFlutter,
+  SiKotlin,
+  SiPostgresql,
+  SiMongodb,
+  SiFirebase,
+  SiRedis,
+  SiKubernetes,
+  SiTerraform,
+  SiMysql,
+  SiNginx,
+  SiVuedotjs,
+  SiGraphql,
+  SiTensorflow,
+  SiStripe,
+  SiOpenai,
+  SiAngular,
+};
+
+const resolveIcon = (iconName) => iconRegistry[iconName] || FaDatabase;
 
 const TechPlatforms = () => {
+  const [cms, setCms] = useState(null);
+  const categories = (cms?.categories || cms?.groups || []).map((group) => ({
+    name: group.name || group.title,
+    items: (group.items || []).map((item) => (
+      typeof item === 'string'
+        ? { name: item, icon: FaDatabase, color: '#00AFFF' }
+        : { ...item, icon: resolveIcon(item.icon), color: item.color || '#00AFFF' }
+    )),
+  }));
+
+  useEffect(() => {
+    apiGet('/site/tech-platforms').then(setCms).catch(() => {});
+  }, []);
+
   return (
     <section className="angi-section angi-section-dark" id="tech">
       <div className="angi-container">
         <div className="angi-section-header">
-          <div className="angi-section-badge">Technologies</div>
+          <div className="angi-section-badge">{cms?.badge || 'Technologies'}</div>
           <h2 className="angi-section-title">
-            Technologies and Platforms <span className="angi-section-title-gradient">We Work With</span>
+            {cms?.title || 'Technologies and Platforms'} <span className="angi-section-title-gradient">We Work With</span>
           </h2>
+          {cms?.subtitle && <p className="angi-section-subtitle">{cms.subtitle}</p>}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', maxWidth: '1024px', margin: '0 auto' }}>
           {categories.map((cat) => (
             <div key={cat.name}>
-              {/* Category heading */}
               <h3 style={{
                 fontFamily: "'Sora', sans-serif", fontSize: '1.25rem', fontWeight: 700,
                 color: 'var(--text-primary)', marginBottom: '1rem',
@@ -109,7 +95,6 @@ const TechPlatforms = () => {
                 {cat.name}
               </h3>
 
-              {/* Tech tiles row */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${Math.min(cat.items.length, 8)}, 1fr)`,
@@ -120,7 +105,7 @@ const TechPlatforms = () => {
                   const Icon = tech.icon;
                   return (
                     <div
-                      key={i}
+                      key={`${tech.name}-${i}`}
                       style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
                         padding: '1rem 0.5rem', borderRadius: '0.75rem',

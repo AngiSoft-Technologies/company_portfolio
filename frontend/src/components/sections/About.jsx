@@ -14,6 +14,7 @@ import {
   FaCheckCircle
 } from "react-icons/fa";
 import { ScrollReveal, GlassmorphismCard, AnimatedCounter } from "../modern";
+import { resolveAssetUrl } from '../../utils/constants';
 
 const About = () => {
     const { colors, mode } = useTheme();
@@ -69,7 +70,8 @@ const About = () => {
     const storyTitle = content?.storyTitle || content?.subtitle;
     const highlightStat = (content?.stats || []).find((stat) => /year|experience/i.test(stat.label || '')) || (content?.stats || [])[0];
     const hasVideo = !!content?.videoUrl;
-    const posterImage = content?.imageUrl || undefined;
+    const videoUrl = resolveAssetUrl(content?.videoUrl);
+    const posterImage = resolveAssetUrl(content?.imageUrl || undefined);
     const sectionCopy = uiCopy?.home?.about || {};
 
     if (loading) {
@@ -227,7 +229,7 @@ const About = () => {
                                             poster={posterImage}
                                         >
                                             {hasVideo && (
-                                                <source src={content.videoUrl} type="video/mp4" />
+                                                <source src={videoUrl} type="video/mp4" />
                                             )}
                                         </video>
                                         

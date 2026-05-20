@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../js/httpClient';
 import { toast } from '../../utils/toast';
+import { resolveAssetUrl } from '../../utils/constants';
 import CrudModal from '../../components/CrudModal';
 import {
   FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaBox,
@@ -184,7 +185,7 @@ const ProductsAdmin = () => {
                 height: '120px',
                 borderRadius: '12px 12px 0 0',
                 background: product.bannerUrl
-                  ? `url(${product.bannerUrl}) center/cover`
+                  ? `url(${resolveAssetUrl(product.bannerUrl)}) center/cover`
                   : `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                 display: 'flex',
                 alignItems: 'center',

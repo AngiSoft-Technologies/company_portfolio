@@ -13,6 +13,19 @@ const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL) || (import
     ? 'https://api.angisoft.co.ke'
     : '');
 export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/api` : '/api';
+export const ASSET_BASE_URL = normalizeOrigin(import.meta.env.VITE_ASSET_BASE_URL) || API_ORIGIN;
+
+export const resolveAssetUrl = (value) => {
+    if (!value || typeof value !== 'string') return value;
+    if (/^(https?:|data:|blob:)/i.test(value)) return value;
+    if (value.startsWith('/uploads/')) {
+        return ASSET_BASE_URL ? `${ASSET_BASE_URL}${value}` : value;
+    }
+    if (value.startsWith('/api/uploads/')) {
+        return API_ORIGIN ? `${API_ORIGIN}${value}` : value;
+    }
+    return value;
+};
 
 // File Upload Limits
 export const FILE_LIMITS = {

@@ -19,14 +19,13 @@ import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
 import About from "./pages/About";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import Contact from "./pages/Contact";
+import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import CategoryDetail from "./pages/CategoryDetail";
 import Careers from "./pages/Careers";
-import PetroFlow from "./pages/products/PetroFlow";
-import DukaFlow from "./pages/products/DukaFlow";
-import KejaLink from "./pages/products/KejaLink";
-import AngiTunes from "./pages/products/AngiTunes";
 import NewsletterConfirm from './pages/NewsletterConfirm';
 import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';import AppLayout from "./layouts/AppLayout";
 import AdminLogin from './admin/AdminLogin';
@@ -58,6 +57,13 @@ const QuotesAdmin = lazy(() => import('./admin/crud/QuotesAdmin'));
 const SiteSettingsAdmin = lazy(() => import('./admin/crud/SiteSettingsAdmin'));
 const ChatConversationsAdmin = lazy(() => import('./admin/crud/ChatConversationsAdmin'));
 const ProductsAdmin = lazy(() => import('./admin/crud/ProductsAdmin'));
+const FaqsAdmin = lazy(() => import('./admin/crud/FaqsAdmin'));
+const CareersAdmin = lazy(() => import('./admin/crud/CareersAdmin'));
+const CompanyStatsAdmin = lazy(() => import('./admin/crud/CompanyStatsAdmin'));
+const HomeSectionsAdmin = lazy(() => import('./admin/crud/HomeSectionsAdmin'));
+const AnnouncementsAdmin = lazy(() => import('./admin/crud/AnnouncementsAdmin'));
+const ProductFaqsAdmin = lazy(() => import('./admin/crud/ProductFaqsAdmin'));
+const CertificationsAdmin = lazy(() => import('./admin/crud/CertificationsAdmin'));
 
 const AdminProtectedLayout = () => {
   const isLoggedIn = !!localStorage.getItem('adminToken');
@@ -103,13 +109,14 @@ const RoutesComponent = () => {
           </Route>
           <Route path="about" element={<About />} />
           <Route path="products" element={<Products />} />
-          <Route path="products/petroflow" element={<PetroFlow />} />
-          <Route path="products/dukaflow" element={<DukaFlow />} />
-          <Route path="products/kejalink" element={<KejaLink />} />
-          <Route path="products/angitunes" element={<AngiTunes />} />
+          <Route path="products/:slug" element={<ProductDetail />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="pricing" element={<Pricing />} />
           <Route path="careers" element={<Careers />} />
           <Route path="privacy" element={<Privacy />} />
+          <Route path="industry/:slug" element={<CategoryDetail />} />
+          <Route path="solution/:slug" element={<CategoryDetail />} />
+          <Route path="technology/:slug" element={<CategoryDetail />} />
           <Route path="terms" element={<Terms />} />
           <Route path="newsletter/confirm" element={<NewsletterConfirm />} />
           <Route path="newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
@@ -144,6 +151,13 @@ const RoutesComponent = () => {
           <Route path="quotes" element={<QuotesAdmin />} />
           <Route path="chat-conversations" element={<ChatConversationsAdmin />} />
           <Route path="products" element={<ProductsAdmin />} />
+          <Route path="product-faqs" element={<ProductFaqsAdmin />} />
+          <Route path="faqs" element={<FaqsAdmin />} />
+          <Route path="careers" element={<CareersAdmin />} />
+          <Route path="company-stats" element={<CompanyStatsAdmin />} />
+          <Route path="home-sections" element={<HomeSectionsAdmin />} />
+          <Route path="announcements" element={<AnnouncementsAdmin />} />
+          <Route path="certifications" element={<CertificationsAdmin />} />
           <Route path="system" element={<SystemPanel />} />
           <Route path="*" element={<NotFoundAdmin />} />
         </Route>

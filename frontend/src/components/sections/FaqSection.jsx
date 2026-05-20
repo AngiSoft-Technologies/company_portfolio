@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
-import ScrollReveal from '../modern/ScrollReveal';
-import SectionBadge from '../common/SectionBadge';
-import { FaChevronDown, FaQuestionCircle } from 'react-icons/fa';
+import { FaChevronDown, FaQuestionCircle, FaWhatsapp } from 'react-icons/fa';
+import { IoSparkles } from 'react-icons/io5';
 
 const FaqSection = () => {
     const { colors, mode } = useTheme();
@@ -18,7 +17,7 @@ const FaqSection = () => {
             .then(data => {
                 if (Array.isArray(data)) setFaqs(data);
             })
-            .catch(() => {})
+            .catch((err) => console.error('Failed to load FAQs:', err))
             .finally(() => setLoading(false));
     }, []);
 
@@ -33,136 +32,268 @@ const FaqSection = () => {
     if (faqs.length === 0) return null;
 
     return (
-        <section id="faq" className="py-20 md:py-28 relative overflow-hidden">
-            {/* Background */}
-            <div className="absolute inset-0" style={{
-                background: isDark
-                    ? 'linear-gradient(180deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)'
-                    : 'linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)'
+        <section id="faq" style={{
+            position: 'relative',
+            padding: '5rem 0 6rem',
+            overflow: 'hidden',
+            background: '#070E1A',
+        }}>
+            {/* Subtle grid pattern */}
+            <div style={{
+                position: 'absolute', inset: 0,
+                backgroundImage: `
+                    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '60px 60px',
+                pointerEvents: 'none',
             }} />
 
-            <div className="relative max-w-4xl mx-auto px-6">
-                {/* Header */}
-                <ScrollReveal animation="fadeUp">
-                    <div className="text-center mb-14">
-                        <SectionBadge icon={FaQuestionCircle} text="FAQs" />
-                        <h2 className="text-3xl md:text-4xl font-bold mt-4" style={{ color: isDark ? '#fff' : '#1e293b' }}>
-                            Frequently Asked <span style={{ color: colors.primary }}>Questions</span>
-                        </h2>
-                        <p className="mt-3 text-lg" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }}>
-                            Quick answers to common questions about our services
-                        </p>
-                    </div>
-                </ScrollReveal>
+            {/* Blue radial glow */}
+            <div style={{
+                position: 'absolute',
+                top: '30%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '900px', height: '600px',
+                background: 'radial-gradient(ellipse, rgba(8,117,255,0.08) 0%, rgba(0,175,255,0.04) 40%, transparent 70%)',
+                pointerEvents: 'none',
+            }} />
 
-                {/* Category Tabs */}
+            {/* Decorative sparkle top-right */}
+            <IoSparkles style={{
+                position: 'absolute',
+                top: '3rem', right: '3rem',
+                fontSize: '2.5rem',
+                color: 'rgba(0,175,255,0.25)',
+                filter: 'drop-shadow(0 0 12px rgba(0,175,255,0.3))',
+            }} />
+
+            <div style={{ position: 'relative', zIndex: 1, maxWidth: '1080px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+                {/* ── Header ── */}
+                <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                    {/* Badge */}
+                    <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.5rem 1rem', borderRadius: '999px',
+                        fontSize: '0.8125rem', fontWeight: 600,
+                        background: 'rgba(8,117,255,0.1)',
+                        border: '1px solid rgba(8,117,255,0.2)',
+                        color: colors.primary,
+                        marginBottom: '1.25rem',
+                    }}>
+                        <FaQuestionCircle style={{ fontSize: '0.75rem' }} />
+                        FAQs
+                    </div>
+
+                    <h2 style={{
+                        fontFamily: "'Sora', sans-serif",
+                        fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                        fontWeight: 800,
+                        color: '#fff',
+                        lineHeight: 1.2,
+                        marginBottom: '0.75rem',
+                    }}>
+                        Frequently Asked{' '}
+                        <span style={{
+                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.accent || '#00AFFF'})`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}>Questions</span>
+                    </h2>
+
+                    <p style={{
+                        fontSize: '1rem',
+                        color: 'rgba(255,255,255,0.5)',
+                        maxWidth: '480px',
+                        margin: '0 auto',
+                        lineHeight: 1.6,
+                    }}>
+                        Quick answers to common questions about our services
+                    </p>
+                </div>
+
+                {/* ── Category Tabs ── */}
                 {categories.length > 2 && (
-                    <ScrollReveal animation="fadeUp" delay={100}>
-                        <div className="flex flex-wrap justify-center gap-2 mb-10">
-                            {categories.map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => { setActiveCategory(cat); setActiveIndex(null); }}
-                                    className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                                    style={{
-                                        background: activeCategory === cat
-                                            ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`
-                                            : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                                        color: activeCategory === cat ? '#fff' : isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
-                                        border: `1px solid ${activeCategory === cat ? 'transparent' : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-                                    }}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
+                    <div style={{
+                        display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem',
+                        marginBottom: '2.5rem',
+                    }}>
+                        <div style={{
+                            display: 'flex', flexWrap: 'wrap', gap: '0.375rem',
+                            padding: '0.375rem',
+                            borderRadius: '999px',
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                            backdropFilter: 'blur(12px)',
+                        }}>
+                            {categories.map((cat) => {
+                                const isActive = activeCategory === cat;
+                                return (
+                                    <button
+                                        key={cat}
+                                        onClick={() => { setActiveCategory(cat); setActiveIndex(null); }}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '999px',
+                                            fontSize: '0.8125rem',
+                                            fontWeight: 600,
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.25s ease',
+                                            background: isActive
+                                                ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`
+                                                : 'transparent',
+                                            color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
+                                            boxShadow: isActive ? `0 2px 12px ${colors.primary}30` : 'none',
+                                        }}
+                                    >
+                                        {cat}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </ScrollReveal>
+                    </div>
                 )}
 
-                {/* Accordion */}
-                <div className="space-y-3">
-                    {filtered.map((faq, idx) => (
-                        <ScrollReveal key={faq.id} animation="fadeUp" delay={100 + idx * 50}>
+                {/* ── FAQ Accordion ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {filtered.map((faq, idx) => {
+                        const isOpen = activeIndex === idx;
+                        const num = String(idx + 1).padStart(2, '0');
+
+                        return (
                             <div
-                                className="rounded-2xl overflow-hidden transition-all"
+                                key={faq.id}
+                                onClick={() => toggle(idx)}
                                 style={{
-                                    background: isDark ? 'rgba(255,255,255,0.03)' : '#fff',
-                                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                                    boxShadow: activeIndex === idx
-                                        ? `0 4px 24px ${colors.primary}15`
-                                        : '0 1px 3px rgba(0,0,0,0.04)',
+                                    borderRadius: '1rem',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.3s ease',
+                                    background: isOpen ? 'rgba(8,117,255,0.06)' : 'rgba(255,255,255,0.03)',
+                                    border: `1px solid ${isOpen ? 'rgba(8,117,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                                    cursor: 'pointer',
                                 }}
                             >
-                                <button
-                                    onClick={() => toggle(idx)}
-                                    className="w-full px-6 py-5 flex items-center justify-between gap-4 text-left"
-                                >
-                                    <span
-                                        className="font-semibold text-base"
-                                        style={{ color: activeIndex === idx ? colors.primary : isDark ? '#fff' : '#1e293b' }}
-                                    >
+                                {/* Question row */}
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '1rem',
+                                    padding: '1.25rem 1.5rem',
+                                }}>
+                                    {/* Number */}
+                                    <span style={{
+                                        fontFamily: "'Sora', sans-serif",
+                                        fontSize: '1.25rem',
+                                        fontWeight: 800,
+                                        color: isOpen ? colors.primary : 'rgba(255,255,255,0.2)',
+                                        minWidth: '2rem',
+                                        transition: 'color 0.3s ease',
+                                    }}>
+                                        {num}
+                                    </span>
+
+                                    {/* Question text */}
+                                    <span style={{
+                                        flex: 1,
+                                        fontFamily: "'Sora', sans-serif",
+                                        fontSize: '0.9375rem',
+                                        fontWeight: 600,
+                                        color: isOpen ? '#fff' : 'rgba(255,255,255,0.85)',
+                                        lineHeight: 1.4,
+                                    }}>
                                         {faq.question}
                                     </span>
-                                    <FaChevronDown
-                                        className="flex-shrink-0 transition-transform duration-300"
-                                        style={{
-                                            transform: activeIndex === idx ? 'rotate(180deg)' : 'rotate(0deg)',
-                                            color: activeIndex === idx ? colors.primary : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)',
-                                        }}
-                                    />
-                                </button>
-                                <div
-                                    className="overflow-hidden transition-all duration-300"
-                                    style={{
-                                        maxHeight: activeIndex === idx ? '500px' : '0px',
-                                        opacity: activeIndex === idx ? 1 : 0,
-                                    }}
-                                >
-                                    <div
-                                        className="px-6 pb-5 text-sm leading-relaxed"
-                                        style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
-                                    >
+
+                                    {/* Chevron */}
+                                    <FaChevronDown style={{
+                                        flexShrink: 0,
+                                        fontSize: '0.75rem',
+                                        color: isOpen ? colors.primary : 'rgba(255,255,255,0.3)',
+                                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.3s ease, color 0.3s ease',
+                                    }} />
+                                </div>
+
+                                {/* Answer */}
+                                <div style={{
+                                    maxHeight: isOpen ? '300px' : '0px',
+                                    opacity: isOpen ? 1 : 0,
+                                    overflow: 'hidden',
+                                    transition: 'max-height 0.35s ease, opacity 0.3s ease',
+                                }}>
+                                    <div style={{
+                                        padding: '0 1.5rem 1.25rem',
+                                        paddingLeft: 'calc(1.5rem + 2rem + 1rem)', // align with question text
+                                        fontSize: '0.875rem',
+                                        lineHeight: 1.7,
+                                        color: 'rgba(255,255,255,0.5)',
+                                    }}>
                                         {faq.answer}
                                     </div>
                                 </div>
                             </div>
-                        </ScrollReveal>
-                    ))}
+                        );
+                    })}
                 </div>
 
-                {/* CTA */}
-                <ScrollReveal animation="fadeUp" delay={300}>
-                    <div className="mt-12 text-center">
-                        <p className="mb-4" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
-                            Still have questions?
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-3">
-                            <a
-                                href="https://wa.me/254710398690"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-6 py-3 rounded-xl font-semibold text-white transition-all hover:-translate-y-0.5"
-                                style={{
-                                    background: '#25D366',
-                                    boxShadow: '0 4px 16px rgba(37,211,102,0.3)',
-                                }}
-                            >
-                                💬 WhatsApp Us
-                            </a>
-                            <a
-                                href="mailto:support@angisoft.co.ke"
-                                className="px-6 py-3 rounded-xl font-semibold transition-all hover:-translate-y-0.5"
-                                style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || colors.primary})`,
-                                    color: '#fff',
-                                    boxShadow: `0 4px 16px ${colors.primary}30`,
-                                }}
-                            >
-                                📧 Email Support
-                            </a>
-                        </div>
+                {/* ── CTA ── */}
+                <div style={{
+                    textAlign: 'center',
+                    marginTop: '3.5rem',
+                }}>
+                    <p style={{
+                        fontSize: '0.9375rem',
+                        color: 'rgba(255,255,255,0.45)',
+                        marginBottom: '1.25rem',
+                    }}>
+                        Still have questions?
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {/* WhatsApp */}
+                        <a
+                            href="https://wa.me/254710398690"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '0.75rem',
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                color: '#fff',
+                                textDecoration: 'none',
+                                background: '#25D366',
+                                boxShadow: '0 4px 16px rgba(37,211,102,0.25)',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37,211,102,0.35)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(37,211,102,0.25)'; }}
+                        >
+                            <FaWhatsapp /> WhatsApp Us
+                        </a>
+
+                        {/* Email */}
+                        <a
+                            href="mailto:support@angisoft.co.ke"
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '0.75rem',
+                                fontSize: '0.875rem',
+                                fontWeight: 600,
+                                color: '#fff',
+                                textDecoration: 'none',
+                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+                                boxShadow: `0 4px 16px ${colors.primary}25`,
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 6px 20px ${colors.primary}35`; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}25`; }}
+                        >
+                            Email Support
+                        </a>
                     </div>
-                </ScrollReveal>
+                </div>
             </div>
         </section>
     );

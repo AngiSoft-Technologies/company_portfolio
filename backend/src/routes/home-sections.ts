@@ -5,6 +5,9 @@ import { requireRoles } from '../middleware/roles';
 import prisma from '../db';
 
 const updateSchema = z.object({
+    title: z.string().min(1).optional(),
+    component: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
     visible: z.boolean().optional(),
     order: z.number().optional(),
     settings: z.any().optional()

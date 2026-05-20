@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { apiGet } from '../../js/httpClient';
 import { getStaffDetailPath } from '../../utils/detailPaths';
+import { resolveAssetUrl } from '../../utils/constants';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { 
     FaUserTie, 
@@ -211,7 +212,7 @@ const Staff = () => {
                                                 >
                                                     {member.avatarUrl ? (
                                                         <img 
-                                                            src={member.avatarUrl}
+                                                            src={resolveAssetUrl(member.avatarUrl)}
                                                             alt={fullName}
                                                             className="w-full h-full rounded-full object-cover"
                                                         />

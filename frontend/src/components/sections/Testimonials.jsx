@@ -11,6 +11,7 @@ import {
     FaTwitter,
     FaUser
 } from 'react-icons/fa';
+import { resolveAssetUrl } from '../../utils/constants';
 import { ScrollReveal, GlassmorphismCard } from '../modern';
 
 const Testimonials = () => {
@@ -75,7 +76,7 @@ const Testimonials = () => {
     const getRole = (t) => t.role || '';
     const getMessage = (t) => t.text || '';
     const getCompany = (t) => t.company || '';
-    const getAvatar = (t) => t.imageUrl || null;
+    const getAvatar = (t) => resolveAssetUrl(t.imageUrl || null);
 
     return (
         <section 

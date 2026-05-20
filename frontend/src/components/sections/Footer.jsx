@@ -11,14 +11,20 @@ import {
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const [contactData, setContactData] = useState(null);
+  const [footerData, setFooterData] = useState(null);
   const [nlEmail, setNlEmail] = useState('');
   const [nlStatus, setNlStatus] = useState('');
   const [nlMessage, setNlMessage] = useState('');
 
   useEffect(() => {
-    apiGet('/site/contact').then(setContactData).catch(() => {});
+    Promise.all([
+      apiGet('/site/contact').catch(() => null),
+      apiGet('/site/footer').catch(() => null),
+    ]).then(([contact, footer]) => setFooterData({ contact, footer }));
   }, []);
+
+  const contactData = footerData?.contact;
+  const footer = footerData?.footer || {};
 
   const handleSubscribe = async () => {
     if (!nlEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nlEmail)) {
@@ -35,7 +41,7 @@ const Footer = () => {
     }
   };
 
-  const columns = [
+  const columns = footer.columns || [
     {
       title: 'Company',
       links: [
@@ -48,43 +54,43 @@ const Footer = () => {
     {
       title: 'Services',
       links: [
-        { label: 'Software Development', href: '/services' },
-        { label: 'IT Consulting', href: '/services' },
-        { label: 'Mobile Apps', href: '/services' },
-        { label: 'AI & Automation', href: '/services' },
-        { label: 'Cybersecurity', href: '/services' },
-        { label: 'Data Analytics', href: '/services' },
+        { label: 'Custom Software', href: '/service/custom-software-development' },
+        { label: 'Data Analysis', href: '/service/data-analysis-dashboards' },
+        { label: 'Cyber Services', href: '/service/cyber-document-services' },
+        { label: 'Government Services', href: '/service/kra-sha-applications' },
+        { label: 'Advertising', href: '/service/advertising-brand-promotion' },
+        { label: 'Internet Services', href: '/service/internet-services' },
       ],
     },
     {
       title: 'Industries',
       links: [
-        { label: 'Healthcare', href: '/services' },
-        { label: 'Finance', href: '/services' },
-        { label: 'Education', href: '/services' },
-        { label: 'Real Estate', href: '/services' },
-        { label: 'Retail & eCommerce', href: '/services' },
-        { label: 'Telecommunications', href: '/services' },
+        { label: 'Healthcare', href: '/industry/healthcare' },
+        { label: 'Finance', href: '/industry/finance' },
+        { label: 'Education', href: '/industry/education' },
+        { label: 'Real Estate', href: '/industry/real-estate' },
+        { label: 'Retail & eCommerce', href: '/industry/retail-ecommerce' },
+        { label: 'Transport & Logistics', href: '/industry/transport-logistics' },
       ],
     },
     {
       title: 'Solutions',
       links: [
-        { label: 'Enterprise Applications', href: '/projects' },
-        { label: 'Mobile Applications', href: '/projects' },
-        { label: 'Data Dashboards', href: '/projects' },
-        { label: 'AngiMusic Platform', href: '/products' },
-        { label: 'ISP Management', href: '/projects' },
+        { label: 'POS Systems', href: '/solution/pos-systems' },
+        { label: 'Management Systems', href: '/solution/management-systems' },
+        { label: 'Mobile Apps', href: '/solution/mobile-apps' },
+        { label: 'Data Dashboards', href: '/solution/data-dashboards' },
+        { label: 'Web Platforms', href: '/solution/web-platforms' },
       ],
     },
     {
       title: 'Technologies',
       links: [
-        { label: 'React & Node.js', href: '/services' },
-        { label: 'Flutter & Kotlin', href: '/services' },
-        { label: 'Python & AI', href: '/services' },
-        { label: 'Cloud & DevOps', href: '/services' },
-        { label: 'PostgreSQL & MongoDB', href: '/services' },
+        { label: 'React.js', href: '/technology/react' },
+        { label: 'Flutter & Kotlin', href: '/technology/flutter' },
+        { label: 'Python', href: '/technology/python' },
+        { label: 'Tailwind CSS', href: '/technology/tailwind-css' },
+        { label: 'Bash & Shell', href: '/technology/bash-shell' },
       ],
     },
   ];
@@ -117,7 +123,7 @@ const Footer = () => {
               </div>
             </Link>
             <p style={{ fontSize: '0.8125rem', lineHeight: 1.7, color: 'rgba(245,247,250,0.6)', marginBottom: '1rem' }}>
-              Building reliable, scalable, and secure digital solutions for businesses in Kenya and beyond.
+              {footer.description || 'AngiSoft Technologies is a Kenyan-rooted technology ecosystem growing from practical grassroots support into scalable software products and digital empowerment solutions.'}
             </p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {socialLinks.map((s) => (
