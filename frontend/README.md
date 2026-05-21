@@ -1,36 +1,73 @@
-# AngiSoft Technologies
+# AngiSoft Frontend
 
-AngiSoft Technologies — Innovative Software Solutions based in Kenya, delivering projects worldwide. This repository contains the codebase for the AngiSoft website and admin platform.
+React + Vite single-page application for the AngiSoft Technologies website.
 
----
+## Tech Stack
 
-## 🌐 Explore My Portfolio Website
+- **React 19** with React Router v7
+- **Vite 7** for build and dev server
+- **Tailwind CSS 4** + RippleUI + MUI components
+- **Redux Toolkit** for state management
+- **Axios** for API calls (proxied to backend in dev)
+- **Nivo + Chart.js** for data visualizations
+- **Formik + Yup** for forms and validation
 
-Check out my work, skills, experiences, and contact details here:
+## Project Structure
 
-👉 **[https://portfolio-be948.web.app/](https://portfolio-be948.web.app/)**
+```
+frontend/
+├── public/              Static assets
+├── netlify/             Netlify functions
+├── src/
+│   ├── admin/           Admin CMS pages
+│   ├── components/
+│   │   ├── cards/       Reusable card components
+│   │   ├── landing/     Homepage sections
+│   │   ├── modern/      Styled UI components
+│   │   └── sections/    Page sections (Staff, Projects, etc.)
+│   ├── pages/           Route-level page components
+│   └── assets/          Images and static files
+├── index.html           Entry point
+├── vite.config.js       Vite + proxy config
+└── tailwind.config.js   Tailwind theme
+```
 
----
+## Development
 
-## 🔧 What I Do
+```bash
+npm install
+npm run dev          # http://localhost:5173 (proxies /api → localhost:5000)
+```
 
-- 💻 **Web Development** – HTML, CSS, JavaScript, React, PHP  
-- ⚙️ **Backend Development** – Spring Boot, REST APIs, SQL/NoSQL  
-- 📱 **Mobile Development** – Kotlin (Android), Flutter (cross-platform)  
-- 🖥️ **Desktop Development** – Java Swing  
-- 📊 **Data Analysis** – Python, SQL, Excel  
-- 🧠 **Low-Level Programming** – C, C++  
-- 🛠️ **IT Support & Digital Transformation Projects**
+### Available Scripts
 
----
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server with HMR |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run Vitest (jsdom) |
 
-## 📫 Get in Touch
+### Environment Variables
 
-- **Email**: [angerasilas@gmail.com](mailto:angerasilas@gmail.com)  
-- **Phone**: [+254 797 630 228](tel:+254797630228)  
-- **GitHub**: [github.com/Angera-Silas](https://github.com/Angera-Silas)  
-- **LinkedIn**: [linkedin.com/in/angerasilas](https://linkedin.com/in/angerasilas)
+Create a `.env` file in this directory:
 
----
+```
+VITE_API_BASE_URL=http://localhost:5000
+```
 
-Thanks for stopping by! 🚀
+In production (Netlify), set this to your Railway backend URL.
+
+## Deployment
+
+Deployed to **Netlify** via `.github/workflows/netlify-deploy.yml` on push to `main`.
+
+Build config is in `../netlify.toml` — `npm ci && npm run build`, publishes `dist/`.
+
+## Coding Conventions
+
+- 2-space indentation with semicolons
+- React components use `PascalCase` filenames (e.g., `StaffDetail.jsx`)
+- Custom hooks use `useX` naming (e.g., `useAuth`)
+- Follow existing file style for consistency
