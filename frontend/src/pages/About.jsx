@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { ScrollReveal, GlassmorphismCard, AnimatedCounter } from '../components/modern';
+import { ScrollReveal, GlassmorphismCard } from '../components/modern';
 import { apiGet } from '../js/httpClient';
 import { resolveAssetUrl } from '../utils/constants';
 import { getStaffDetailPath } from '../utils/detailPaths';
@@ -83,17 +83,35 @@ const techStack = [
     { name: 'Docker', icon: FaDocker, color: '#2496ED' },
 ];
 
+/* ───────── Hardcoded dark theme fallback ───────── */
+const DARK_BG = '#07142B';
+const DARK_SURFACE = '#0B1E3D';
+const BLUE_PRIMARY = '#0875FF';
+const BLUE_SECONDARY = '#00AFFF';
+const CYAN_ACCENT = '#18D8FF';
+const GREEN = '#39FF6A';
+
 const About = () => {
     const navigate = useNavigate();
-    const { colors } = useTheme();
+    const theme = useTheme();
+    const colors = theme?.colors || {};
     const [about, setAbout] = useState(null);
     const [staff, setStaff] = useState([]);
     const [activeTab, setActiveTab] = useState('who');
+
+    /* Resolve colors with hardcoded fallbacks so the page never renders white */
+    const bg          = colors.background       || DARK_BG;
+    const text        = colors.text             || '#F5F7FA';
+    const primary     = colors.primary          || BLUE_PRIMARY;
+    const secondary   = colors.secondary        || BLUE_SECONDARY;
+    const primaryDark = colors.primaryDark      || '#003BCE';
 
     useEffect(() => {
         apiGet('/site/about').then(setAbout).catch(() => {});
         apiGet('/staff').then((data) => { if (Array.isArray(data)) setStaff(data); }).catch(() => {});
     }, []);
+
+    const teamCount = staff.length > 0 ? staff.length : null; // null = API hasn't responded yet
 
     const descriptions = about?.description || [];
     const values = (about?.values || fallbackValues).map((v) => ({
@@ -105,7 +123,7 @@ const About = () => {
     const activeTabData = companyTabs.find(t => t.id === activeTab);
 
     return (
-        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+        <div style={{ backgroundColor: bg, color: text }} className="min-h-screen">
 
             {/* ╔══════════════════════════════════════════════════════╗
                 ║  SECTION 1 — CINEMATIC SPLIT HERO                   ║
@@ -114,16 +132,16 @@ const About = () => {
                 {/* Ambient glow orbs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute w-[800px] h-[800px] rounded-full blur-[200px] opacity-[0.07]"
-                        style={{ background: colors.primary, top: '-30%', right: '-15%' }} />
+                        style={{ background: primary, top: '-30%', right: '-15%' }} />
                     <div className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.05]"
-                        style={{ background: colors.secondary, bottom: '-20%', left: '-10%' }} />
+                        style={{ background: secondary, bottom: '-20%', left: '-10%' }} />
                     <div className="absolute w-[300px] h-[300px] rounded-full blur-[100px] opacity-[0.04]"
                         style={{ background: '#39FF6A', top: '50%', left: '50%' }} />
                 </div>
                 {/* Diagonal grid */}
                 <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
                     style={{
-                        backgroundImage: `linear-gradient(${colors.primary} 1px, transparent 1px), linear-gradient(90deg, ${colors.primary} 1px, transparent 1px)`,
+                        backgroundImage: `linear-gradient(${primary} 1px, transparent 1px), linear-gradient(90deg, ${primary} 1px, transparent 1px)`,
                         backgroundSize: '60px 60px',
                         transform: 'skY(-3deg)',
                     }} />
@@ -135,12 +153,12 @@ const About = () => {
                             <ScrollReveal animation="fadeUp">
                                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
                                     style={{
-                                        background: `${colors.primary}10`,
-                                        border: `1px solid ${colors.primary}20`,
+                                        background: `${primary}10`,
+                                        border: `1px solid ${primary}20`,
                                     }}>
-                                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: colors.primary }} />
+                                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: primary }} />
                                     <span className="text-xs font-semibold uppercase tracking-[0.15em]"
-                                        style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                        style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                         Est. 2024 · Nairobi, Kenya
                                     </span>
                                 </div>
@@ -152,7 +170,7 @@ const About = () => {
                                     <span style={{ color: '#fff' }}>We Don't Just</span><br />
                                     <span style={{ color: '#fff' }}>Write Code.</span><br />
                                     <span style={{
-                                        background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
+                                        background: `linear-gradient(135deg, ${primary}, #39FF6A)`,
                                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                     }}>We Build Futures.</span>
                                 </h1>
@@ -170,9 +188,9 @@ const About = () => {
                                     <button onClick={() => navigate('/book')}
                                         className="group inline-flex items-center gap-3 px-7 py-4 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                                         style={{
-                                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                                            background: `linear-gradient(135deg, ${primary}, ${primaryDark})`,
                                             color: '#fff', fontFamily: 'Sora, sans-serif',
-                                            boxShadow: `0 8px 32px ${colors.primary}30`,
+                                            boxShadow: `0 8px 32px ${primary}30`,
                                         }}>
                                         Start a Project
                                         <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -196,7 +214,7 @@ const About = () => {
                             <div className="relative hidden lg:block">
                                 {/* Glow frame */}
                                 <div className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl"
-                                    style={{ background: `linear-gradient(135deg, ${colors.primary}40, ${colors.secondary}20)` }} />
+                                    style={{ background: `linear-gradient(135deg, ${primary}40, ${secondary}20)` }} />
                                 {/* Image container */}
                                 <div className="relative rounded-2xl overflow-hidden"
                                     style={{ border: `1px solid rgba(255,255,255,0.08)` }}>
@@ -218,12 +236,12 @@ const About = () => {
                                 <div className="absolute -bottom-6 -left-6 px-6 py-4 rounded-2xl"
                                     style={{
                                         background: 'rgba(7,20,43,0.9)',
-                                        border: `1px solid ${colors.primary}30`,
+                                        border: `1px solid ${primary}30`,
                                         backdropFilter: 'blur(20px)',
                                         boxShadow: `0 20px 60px rgba(0,0,0,0.5)`,
                                     }}>
-                                    <div className="text-3xl font-bold" style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                        <AnimatedCounter end={2024} duration={1500} />
+                                    <div className="text-3xl font-bold" style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
+                                        2024
                                     </div>
                                     <div className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Year Founded</div>
                                 </div>
@@ -232,7 +250,7 @@ const About = () => {
                                     <div className="absolute -top-4 -right-4 px-5 py-3 rounded-2xl"
                                         style={{
                                             background: 'rgba(7,20,43,0.9)',
-                                            border: `1px solid ${colors.secondary}30`,
+                                            border: `1px solid ${secondary}30`,
                                             backdropFilter: 'blur(20px)',
                                             boxShadow: `0 20px 60px rgba(0,0,0,0.5)`,
                                         }}>
@@ -240,12 +258,12 @@ const About = () => {
                                             <div className="flex -space-x-2">
                                                 {staff.slice(0, 3).map((m, i) => (
                                                     <div key={i} className="w-8 h-8 rounded-full overflow-hidden border-2"
-                                                        style={{ borderColor: colors.background }}>
+                                                        style={{ borderColor: bg }}>
                                                         {m.avatarUrl ? (
                                                             <img src={resolveAssetUrl(m.avatarUrl)} alt="" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white"
-                                                                style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                                                                style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
                                                                 {m.firstName?.[0]}
                                                             </div>
                                                         )}
@@ -254,7 +272,7 @@ const About = () => {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold" style={{ fontFamily: 'Sora, sans-serif' }}>
-                                                    <AnimatedCounter end={staff.length} duration={1200} />+
+                                                    {staff.length}+
                                                 </div>
                                                 <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Team Members</div>
                                             </div>
@@ -272,25 +290,25 @@ const About = () => {
                 ╚══════════════════════════════════════════════════════╝ */}
             <section className="py-20 px-6 relative">
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, ${colors.primary}06, transparent)` }} />
+                    style={{ background: `linear-gradient(180deg, ${primary}06, transparent)` }} />
                 <div className="relative z-10 max-w-6xl mx-auto">
                     <ScrollReveal animation="fadeUp">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                             {[
-                                { end: staff.length || 5, suffix: '+', label: 'Team Members', icon: FaUsers },
-                                { end: 15, suffix: '+', label: 'Projects Delivered', icon: FaRocket },
-                                { end: 4, suffix: '', label: 'SaaS Products', icon: FaBolt },
-                                { end: 100, suffix: '%', label: 'Client Satisfaction', icon: FaAward },
+                                { value: `${teamCount ?? 5}+`, label: 'Team Members', icon: FaUsers },
+                                { value: '15+', label: 'Projects Delivered', icon: FaRocket },
+                                { value: '4', label: 'SaaS Products', icon: FaBolt },
+                                { value: '100%', label: 'Client Satisfaction', icon: FaAward },
                             ].map((stat, idx) => (
                                 <div key={idx} className="text-center p-8 rounded-2xl transition-all duration-500 hover:-translate-y-1"
                                     style={{
                                         background: 'rgba(255,255,255,0.02)',
                                         border: '1px solid rgba(255,255,255,0.05)',
                                     }}>
-                                    <stat.icon className="text-2xl mx-auto mb-4" style={{ color: colors.primary, opacity: 0.6 }} />
+                                    <stat.icon className="text-2xl mx-auto mb-4" style={{ color: primary, opacity: 0.6 }} />
                                     <div className="text-4xl md:text-5xl font-bold mb-2"
                                         style={{ fontFamily: 'Sora, sans-serif', color: '#fff' }}>
-                                        <AnimatedCounter end={stat.end} suffix={stat.suffix} duration={2000} />
+                                        {stat.value}
                                     </div>
                                     <div className="text-xs uppercase tracking-[0.15em] font-medium"
                                         style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -313,14 +331,14 @@ const About = () => {
                         <div className="lg:col-span-3">
                             <ScrollReveal animation="fadeLeft">
                                 <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                    style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                    style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                     Company Profile
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-bold mb-10 leading-tight"
                                     style={{ fontFamily: 'Sora, sans-serif' }}>
                                     Building Africa's{' '}
                                     <span style={{
-                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                        background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                     }}>Digital Future</span>
                                 </h2>
@@ -336,7 +354,7 @@ const About = () => {
                                             className="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300"
                                             style={{
                                                 background: activeTab === tab.id
-                                                    ? `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`
+                                                    ? `linear-gradient(135deg, ${primary}, ${primaryDark})`
                                                     : 'transparent',
                                                 color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.4)',
                                                 fontFamily: 'Sora, sans-serif',
@@ -360,9 +378,9 @@ const About = () => {
                                                 {activeTabData.highlights.map((h, i) => (
                                                     <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                                                         style={{
-                                                            background: `${colors.primary}10`,
-                                                            color: colors.primary,
-                                                            border: `1px solid ${colors.primary}15`,
+                                                            background: `${primary}10`,
+                                                            color: primary,
+                                                            border: `1px solid ${primary}15`,
                                                         }}>
                                                         <FaCheckCircle className="text-[10px]" /> {h}
                                                     </span>
@@ -379,9 +397,9 @@ const About = () => {
                             <ScrollReveal animation="fadeRight" delay={200}>
                                 <div className="space-y-5">
                                     {[
-                                        { icon: FaRocket, label: 'Mission', text: 'To empower businesses with innovative, reliable, and affordable technology solutions that drive growth.', gradient: [colors.primary, colors.primaryDark] },
-                                        { icon: FaEye, label: 'Vision', text: 'To be the leading software provider in Africa, recognized for excellence and positive community impact.', gradient: [colors.secondary, colors.primary] },
-                                        { icon: FaHeart, label: 'Philosophy', text: 'Innovate → Build → Empower. Identify real problems, engineer practical solutions, help people grow through technology.', gradient: ['#39FF6A', colors.primary] },
+                                        { icon: FaRocket, label: 'Mission', text: 'To empower businesses with innovative, reliable, and affordable technology solutions that drive growth.', gradient: [primary, primaryDark] },
+                                        { icon: FaEye, label: 'Vision', text: 'To be the leading software provider in Africa, recognized for excellence and positive community impact.', gradient: [secondary, primary] },
+                                        { icon: FaHeart, label: 'Philosophy', text: 'Innovate → Build → Empower. Identify real problems, engineer practical solutions, help people grow through technology.', gradient: ['#39FF6A', primary] },
                                     ].map((card, idx) => (
                                         <div key={idx} className="p-6 rounded-2xl flex gap-5 transition-all duration-500 hover:-translate-y-1 group"
                                             style={{
@@ -416,27 +434,27 @@ const About = () => {
                 ╚══════════════════════════════════════════════════════╝ */}
             <section className="py-28 px-6 relative">
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.primary}04, transparent)` }} />
+                    style={{ background: `linear-gradient(180deg, transparent, ${primary}04, transparent)` }} />
                 <div className="relative z-10 max-w-6xl mx-auto">
                     <ScrollReveal animation="fadeUp">
                         <div className="flex items-end justify-between mb-16">
                             <div>
                                 <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                    style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                    style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                     What We Do
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-bold"
                                     style={{ fontFamily: 'Sora, sans-serif' }}>
                                     Our{' '}
                                     <span style={{
-                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                        background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                     }}>Expertise</span>
                                 </h2>
                             </div>
                             <button onClick={() => navigate('/services')}
                                 className="hidden md:inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 hover:gap-3"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                 All Services <FaArrowRight />
                             </button>
                         </div>
@@ -480,14 +498,14 @@ const About = () => {
                     <ScrollReveal animation="fadeUp">
                         <div className="mb-16">
                             <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                 What We Stand For
                             </span>
                             <h2 className="text-4xl md:text-5xl font-bold"
                                 style={{ fontFamily: 'Sora, sans-serif' }}>
                                 Core{' '}
                                 <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                    background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                 }}>Values</span>
                             </h2>
@@ -511,8 +529,8 @@ const About = () => {
                                         </div>
                                         <div className="relative z-10">
                                             <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                                                style={{ background: `linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}15)` }}>
-                                                <IconComp className="text-lg" style={{ color: colors.primary }} />
+                                                style={{ background: `linear-gradient(135deg, ${primary}15, ${secondary}15)` }}>
+                                                <IconComp className="text-lg" style={{ color: primary }} />
                                             </div>
                                             <h3 className="text-lg font-bold mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
                                                 {value.title}
@@ -534,19 +552,19 @@ const About = () => {
                 ╚══════════════════════════════════════════════════════╝ */}
             <section className="py-24 px-6 relative">
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.secondary}04, transparent)` }} />
+                    style={{ background: `linear-gradient(180deg, transparent, ${secondary}04, transparent)` }} />
                 <div className="relative z-10 max-w-6xl mx-auto">
                     <ScrollReveal animation="fadeUp">
                         <div className="text-center mb-14">
                             <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                 Our Toolkit
                             </span>
                             <h2 className="text-4xl md:text-5xl font-bold"
                                 style={{ fontFamily: 'Sora, sans-serif' }}>
                                 Technologies We{' '}
                                 <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                    background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                 }}>Master</span>
                             </h2>
@@ -582,14 +600,14 @@ const About = () => {
                     <ScrollReveal animation="fadeUp">
                         <div className="text-center mb-20">
                             <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                 Our Journey
                             </span>
                             <h2 className="text-4xl md:text-5xl font-bold"
                                 style={{ fontFamily: 'Sora, sans-serif' }}>
                                 How We{' '}
                                 <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                    background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                 }}>Got Here</span>
                             </h2>
@@ -600,7 +618,7 @@ const About = () => {
                     <div className="relative">
                         {/* Center line */}
                         <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[1px] md:-translate-x-[0.5px]"
-                            style={{ background: `linear-gradient(to bottom, ${colors.primary}30, ${colors.secondary}30, ${colors.primary}30)` }} />
+                            style={{ background: `linear-gradient(to bottom, ${primary}30, ${secondary}30, ${primary}30)` }} />
 
                         {timelineItems.map((item, idx) => (
                             <ScrollReveal key={idx} animation={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={idx * 120}>
@@ -609,8 +627,8 @@ const About = () => {
                                     <div className="absolute left-6 md:left-1/2 -translate-x-1/2 z-10">
                                         <div className="w-5 h-5 rounded-full"
                                             style={{
-                                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                                boxShadow: `0 0 24px ${colors.primary}60`,
+                                                background: `linear-gradient(135deg, ${primary}, ${secondary})`,
+                                                boxShadow: `0 0 24px ${primary}60`,
                                             }} />
                                     </div>
 
@@ -624,8 +642,8 @@ const About = () => {
                                             <div className="flex items-center gap-3 mb-3">
                                                 <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider"
                                                     style={{
-                                                        background: `${colors.primary}15`,
-                                                        color: colors.primary,
+                                                        background: `${primary}15`,
+                                                        color: primary,
                                                         fontFamily: 'Sora, sans-serif',
                                                     }}>
                                                     {item.year}
@@ -651,18 +669,18 @@ const About = () => {
                 ╚══════════════════════════════════════════════════════╝ */}
             <section className="py-24 px-6 relative">
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.primary}06, transparent)` }} />
+                    style={{ background: `linear-gradient(180deg, transparent, ${primary}06, transparent)` }} />
                 <div className="relative z-10 max-w-4xl mx-auto">
                     <ScrollReveal animation="scaleUp">
                         <div className="text-center">
-                            <FaQuoteLeft className="text-4xl mx-auto mb-8 opacity-20" style={{ color: colors.primary }} />
+                            <FaQuoteLeft className="text-4xl mx-auto mb-8 opacity-20" style={{ color: primary }} />
                             <blockquote className="text-2xl md:text-3xl font-bold leading-snug mb-8"
                                 style={{ fontFamily: 'Sora, sans-serif', color: 'rgba(255,255,255,0.85)' }}>
                                 "Technology should solve real problems for real people. That's not just our tagline — it's how every project starts at AngiSoft."
                             </blockquote>
                             <div className="flex items-center justify-center gap-4">
                                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white"
-                                    style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                                    style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
                                     PA
                                 </div>
                                 <div className="text-left">
@@ -685,21 +703,21 @@ const About = () => {
                             <div className="flex items-end justify-between mb-16">
                                 <div>
                                     <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                        style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                        style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                         The People
                                     </span>
                                     <h2 className="text-4xl md:text-5xl font-bold"
                                         style={{ fontFamily: 'Sora, sans-serif' }}>
                                         Meet the{' '}
                                         <span style={{
-                                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                            background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                         }}>Team</span>
                                     </h2>
                                 </div>
                                 <button onClick={() => navigate('/staff')}
                                     className="hidden md:inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 hover:gap-3"
-                                    style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                    style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                     View All <FaArrowRight />
                                 </button>
                             </div>
@@ -723,7 +741,7 @@ const About = () => {
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white"
-                                                    style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                                                    style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
                                                     {member.firstName?.[0]}{member.lastName?.[0]}
                                                 </div>
                                             )}
@@ -733,7 +751,7 @@ const About = () => {
                                                 <h3 className="text-lg font-bold" style={{ fontFamily: 'Sora, sans-serif' }}>
                                                     {member.firstName} {member.lastName}
                                                 </h3>
-                                                <p className="text-xs" style={{ color: colors.primary }}>
+                                                <p className="text-xs" style={{ color: primary }}>
                                                     {member.publicTitle || member.role?.toLowerCase().replace('_', ' ')}
                                                 </p>
                                             </div>
@@ -750,9 +768,9 @@ const About = () => {
                                                     {member.skills.slice(0, 3).map((skill, sIdx) => (
                                                         <span key={sIdx} className="px-2 py-0.5 rounded text-[10px] font-medium"
                                                             style={{
-                                                                background: `${colors.primary}12`,
-                                                                color: colors.primary,
-                                                                border: `1px solid ${colors.primary}20`,
+                                                                background: `${primary}12`,
+                                                                color: primary,
+                                                                border: `1px solid ${primary}20`,
                                                             }}>
                                                             {skill}
                                                         </span>
@@ -760,7 +778,7 @@ const About = () => {
                                                 </div>
                                             )}
                                             <div className="flex items-center gap-2 text-xs font-semibold transition-all duration-300 opacity-60 group-hover:opacity-100"
-                                                style={{ color: colors.primary }}>
+                                                style={{ color: primary }}>
                                                 View Profile <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
                                             </div>
                                         </div>
@@ -773,7 +791,7 @@ const About = () => {
                             <button onClick={() => navigate('/staff')}
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold"
                                 style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                    background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                     color: '#fff',
                                 }}>
                                 View All Team Members <FaArrowRight />
@@ -788,19 +806,19 @@ const About = () => {
                 ╚══════════════════════════════════════════════════════╝ */}
             <section className="py-24 px-6 relative">
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.secondary}04, transparent)` }} />
+                    style={{ background: `linear-gradient(180deg, transparent, ${secondary}04, transparent)` }} />
                 <div className="relative z-10 max-w-6xl mx-auto">
                     <ScrollReveal animation="fadeUp">
                         <div className="text-center mb-14">
                             <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                style={{ color: primary, fontFamily: 'Sora, sans-serif' }}>
                                 Where We Operate
                             </span>
                             <h2 className="text-4xl md:text-5xl font-bold"
                                 style={{ fontFamily: 'Sora, sans-serif' }}>
                                 East African{' '}
                                 <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                                    background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                                 }}>Presence</span>
                             </h2>
@@ -818,8 +836,8 @@ const About = () => {
                                 <div key={idx}
                                     className="flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 hover:-translate-y-1"
                                     style={{
-                                        background: loc.primary ? `${colors.primary}10` : 'rgba(255,255,255,0.02)',
-                                        border: `1px solid ${loc.primary ? `${colors.primary}25` : 'rgba(255,255,255,0.05)'}`,
+                                        background: loc.primary ? `${primary}10` : 'rgba(255,255,255,0.02)',
+                                        border: `1px solid ${loc.primary ? `${primary}25` : 'rgba(255,255,255,0.05)'}`,
                                     }}>
                                     <span className="text-3xl">{loc.flag}</span>
                                     <div>
@@ -832,7 +850,7 @@ const About = () => {
                                     </div>
                                     {loc.primary && (
                                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
-                                            style={{ background: `${colors.primary}20`, color: colors.primary }}>
+                                            style={{ background: `${primary}20`, color: primary }}>
                                             HQ
                                         </span>
                                     )}
@@ -851,8 +869,8 @@ const About = () => {
                     <ScrollReveal animation="scaleUp">
                         <div className="relative rounded-3xl overflow-hidden p-12 md:p-20 text-center"
                             style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
-                                boxShadow: `0 40px 100px ${colors.primary}25`,
+                                background: `linear-gradient(135deg, ${primary}, ${primaryDark})`,
+                                boxShadow: `0 40px 100px ${primary}25`,
                             }}>
                             {/* Noise texture */}
                             <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -878,7 +896,7 @@ const About = () => {
                                 <div className="flex flex-wrap justify-center gap-4">
                                     <button onClick={() => navigate('/book')}
                                         className="group inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
-                                        style={{ backgroundColor: '#fff', color: colors.primaryDark, fontFamily: 'Sora, sans-serif' }}>
+                                        style={{ backgroundColor: '#fff', color: primaryDark, fontFamily: 'Sora, sans-serif' }}>
                                         Start a Conversation
                                         <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
                                     </button>

@@ -60,7 +60,6 @@ const HeroSlider = () => {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [branding, setBranding] = useState(null);
   const [hero, setHero] = useState(null);
-  const [loadedImages, setLoadedImages] = useState({});
   const videoRef = useRef(null);
   const intervalRef = useRef(null);
   const isDark = mode === 'dark';
@@ -138,6 +137,19 @@ const HeroSlider = () => {
     }
   }, [current, reduceMotion]);
 
+  // Preload adjacent slide images so navigation is instant
+  useEffect(() => {
+    const prevIdx = current === 0 ? slides.length - 1 : current - 1;
+    const nextIdx = (current + 1) % slides.length;
+    [prevIdx, nextIdx].forEach((i) => {
+      const s = slides[i];
+      if (s?.type === 'image') {
+        const url = resolveAssetUrl(s.image || s.poster);
+        if (url) new Image().src = url;
+      }
+    });
+  }, [current, slides]);
+
   const slide = slides[current];
 
   return (
@@ -158,9 +170,17 @@ const HeroSlider = () => {
             <source src={resolveAssetUrl(slide.video)} type="video/mp4" />
           </video>
         ) : (
-          <div
+          <img
+            key={slide.id}
+            src={resolveAssetUrl(slide.image || slide.poster)}
+            alt=""
             className="hero-slider__image"
-            style={{ backgroundImage: `url(${resolveAssetUrl(slide.image || slide.poster)})` }}
+            loading="eager"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              const fallback = e.target.parentElement;
+              if (fallback) fallback.style.backgroundImage = `url(${resolveAssetUrl(hero?.backgroundImage || '/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png')})`;
+            }}
           />
         )}
         {/* Bottom fade into page bg */}
@@ -293,10 +313,7 @@ const HeroSlider = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-        }
-        .hero-slider__image {
-          background-size: cover;
-          background-position: center;
+          z-index: 0;
         }
         .hero-slider__fade-bottom {
           position: absolute;

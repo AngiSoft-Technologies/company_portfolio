@@ -120,6 +120,7 @@ async function main() {
         ctaSecondary: { text: "Explore Our Products", link: "/products" },
 
         slides: [
+
             {
                 id: 0,
                 type: 'video',
@@ -136,6 +137,41 @@ async function main() {
             {
                 id: 1,
                 type: 'image',
+                image: '/images/Software-Development-Company.jpg',
+                badge: 'Our Products',
+                headline: 'Purpose-Built',
+                headlineHighlight: 'Software',
+                tagline: 'PetroFlow, DukaFlow, KejaLink, AngiTunes — solutions designed for real business challenges.',
+                primaryCta: { label: 'Explore Products', to: '/products' },
+                secondaryCta: { label: 'See Services', to: '/services' },
+            },
+            {
+                id: 2,
+                type: 'image',
+                image: '/images/programming-background-with-person-working-with-codes-computer.jpg',
+                badge: 'Innovate. Build. Empower.',
+                headline: 'Technology That',
+                headlineHighlight: 'Moves Businesses',
+                tagline: 'From fuel stations to property management — our platforms power industries across East Africa.',
+                primaryCta: { label: 'Book a Consultation', to: '/book' },
+                secondaryCta: { label: 'View Projects', to: '/projects' },
+            },
+            {
+                id: 3,
+                type: 'image',
+                image: '/images/developer-8829735_1280.jpg',
+                badge: 'Our Team',
+                headline: 'Expert Developers,',
+                headlineHighlight: 'Real Results',
+                tagline: 'A passionate team delivering custom software, data analytics, and cybersecurity solutions.',
+                primaryCta: { label: 'Meet the Team', to: '/staff' },
+                secondaryCta: { label: 'Testimonials', to: '/testimonials' },
+            },
+    
+
+            {
+                id: 4,
+                type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-1-image-ef04f24e3d.jpg',
                 badge: 'Software Engineering',
                 headline: 'Scalable',
@@ -146,7 +182,7 @@ async function main() {
             },
 
             {
-                id: 2,
+                id: 5,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-2-image-d38cea0e91.jpg',
                 badge: 'Mobile Development',
@@ -158,7 +194,7 @@ async function main() {
             },
 
             {
-                id: 3,
+                id: 6,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-3-image-492996b936.jpg',
                 badge: 'AI & Automation',
@@ -170,7 +206,7 @@ async function main() {
             },
 
             {
-                id: 4,
+                id: 7,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-4-image-00dd48572b.jpg',
                 badge: 'Data & Analytics',
@@ -182,7 +218,7 @@ async function main() {
             },
 
             {
-                id: 5,
+                id: 8,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-5-image-b4a4625a97.jpg',
                 badge: 'Digital Empowerment',
@@ -194,7 +230,7 @@ async function main() {
             },
 
             {
-                id: 6,
+                id: 9,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-6-image-10d57800bf.jpg',
                 badge: 'Product Ecosystem',
@@ -206,7 +242,7 @@ async function main() {
             },
 
             {
-                id: 7,
+                id: 10,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-7-image-c572fad272.jpg',
                 badge: 'Business Transformation',
@@ -218,7 +254,7 @@ async function main() {
             },
 
             {
-                id: 8,
+                id: 11,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-8-image-7850d801bf.jpg',
                 badge: 'Cloud & Infrastructure',
@@ -230,7 +266,7 @@ async function main() {
             },
 
             {
-                id: 9,
+                id: 12,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-9-image-9774f2a544.jpg',
                 badge: 'Future Innovation',
@@ -1267,204 +1303,204 @@ async function main() {
     console.log('  ✅ Pricing settings');
 
     await seedSetting('site_booking', {
-    hero: {
-        badge: 'Start a Consultation',
-        title: 'Tell Us About Your',
-        highlight: 'Project',
-        subtitle:
-            'Share your idea, business challenge, workflow, or digital product need. AngiSoft will review your request and help map the right solution, scope, timeline, and pricing approach.'
-    },
+        hero: {
+            badge: 'Start a Consultation',
+            title: 'Tell Us About Your',
+            highlight: 'Project',
+            subtitle:
+                'Share your idea, business challenge, workflow, or digital product need. AngiSoft will review your request and help map the right solution, scope, timeline, and pricing approach.'
+        },
 
-    intro: {
-        title: 'How Booking Works',
-        description:
-            'Booking is not just about submitting a task. It begins a discovery process where we understand your goals, users, features, integrations, infrastructure, and expected outcomes before preparing a clear proposal.'
-    },
+        intro: {
+            title: 'How Booking Works',
+            description:
+                'Booking is not just about submitting a task. It begins a discovery process where we understand your goals, users, features, integrations, infrastructure, and expected outcomes before preparing a clear proposal.'
+        },
 
-    success: {
-        title: 'Request Submitted Successfully',
-        message:
-            'AngiSoft has received your request. Our team will review your requirements and respond with practical next steps, possible engagement options, and any clarifications needed.'
-    },
+        success: {
+            title: 'Request Submitted Successfully',
+            message:
+                'AngiSoft has received your request. Our team will review your requirements and respond with practical next steps, possible engagement options, and any clarifications needed.'
+        },
 
-    labels: {
-        next: 'Next',
-        back: 'Back',
-        submit: 'Submit Request',
-        submitting: 'Submitting...',
-        viewStatus: 'Track Request',
-        returnHome: 'Return Home',
-        saveDraft: 'Save Draft',
-        continueLater: 'Continue Later'
-    },
+        labels: {
+            next: 'Next',
+            back: 'Back',
+            submit: 'Submit Request',
+            submitting: 'Submitting...',
+            viewStatus: 'Track Request',
+            returnHome: 'Return Home',
+            saveDraft: 'Save Draft',
+            continueLater: 'Continue Later'
+        },
 
-    steps: [
-        {
-            title: 'Basic Information',
-            icon: 'FaUser',
-            description: 'Tell us who you are and how we can contact you.'
-        },
-        {
-            title: 'Project Type',
-            icon: 'FaLayerGroup',
-            description: 'Choose the type of solution, service, or support you need.'
-        },
-        {
-            title: 'Requirements & Goals',
-            icon: 'FaFileAlt',
-            description: 'Describe what you want to build, improve, automate, analyze, or solve.'
-        },
-        {
-            title: 'Files & References',
-            icon: 'FaCloudUploadAlt',
-            description: 'Upload documents, screenshots, designs, reports, references, or sample files if available.'
-        },
-        {
-            title: 'Review & Submit',
-            icon: 'FaCheckCircle',
-            description: 'Confirm your request before sending it to AngiSoft for review.'
-        }
-    ],
+        steps: [
+            {
+                title: 'Basic Information',
+                icon: 'FaUser',
+                description: 'Tell us who you are and how we can contact you.'
+            },
+            {
+                title: 'Project Type',
+                icon: 'FaLayerGroup',
+                description: 'Choose the type of solution, service, or support you need.'
+            },
+            {
+                title: 'Requirements & Goals',
+                icon: 'FaFileAlt',
+                description: 'Describe what you want to build, improve, automate, analyze, or solve.'
+            },
+            {
+                title: 'Files & References',
+                icon: 'FaCloudUploadAlt',
+                description: 'Upload documents, screenshots, designs, reports, references, or sample files if available.'
+            },
+            {
+                title: 'Review & Submit',
+                icon: 'FaCheckCircle',
+                description: 'Confirm your request before sending it to AngiSoft for review.'
+            }
+        ],
 
-    discoveryQuestions: [
-        {
-            question: 'What problem are you trying to solve?',
-            placeholder:
-                'Example: I want to manage sales, customers, inventory, payments, reports, or bookings digitally.'
-        },
-        {
-            question: 'Who will use this solution?',
-            placeholder:
-                'Example: customers, staff, students, admins, artists, DJs, tenants, managers, or business owners.'
-        },
-        {
-            question: 'Which features do you need?',
-            placeholder:
-                'Example: login, dashboard, reports, payments, notifications, file upload, admin panel, roles, analytics.'
-        },
-        {
-            question: 'Do you need integrations?',
-            placeholder:
-                'Example: M-Pesa, PayPal, Stripe, SMS, email, Google services, maps, AI tools, existing systems.'
-        },
-        {
-            question: 'Do you already have designs, documents, or examples?',
-            placeholder:
-                'You can describe them here or upload files in the next step.'
-        }
-    ],
+        discoveryQuestions: [
+            {
+                question: 'What problem are you trying to solve?',
+                placeholder:
+                    'Example: I want to manage sales, customers, inventory, payments, reports, or bookings digitally.'
+            },
+            {
+                question: 'Who will use this solution?',
+                placeholder:
+                    'Example: customers, staff, students, admins, artists, DJs, tenants, managers, or business owners.'
+            },
+            {
+                question: 'Which features do you need?',
+                placeholder:
+                    'Example: login, dashboard, reports, payments, notifications, file upload, admin panel, roles, analytics.'
+            },
+            {
+                question: 'Do you need integrations?',
+                placeholder:
+                    'Example: M-Pesa, PayPal, Stripe, SMS, email, Google services, maps, AI tools, existing systems.'
+            },
+            {
+                question: 'Do you already have designs, documents, or examples?',
+                placeholder:
+                    'You can describe them here or upload files in the next step.'
+            }
+        ],
 
-    paymentStep: {
-        title: 'Payment & Proposal',
-        icon: 'FaCreditCard',
-        description:
-            'Payment is handled after your request is reviewed, the scope is understood, and a clear quotation or proposal is shared. Some projects may require a deposit before development begins.'
-    },
+        paymentStep: {
+            title: 'Payment & Proposal',
+            icon: 'FaCreditCard',
+            description:
+                'Payment is handled after your request is reviewed, the scope is understood, and a clear quotation or proposal is shared. Some projects may require a deposit before development begins.'
+        },
 
-    projectTypes: [
-        {
-            value: 'SOFTWARE_DEVELOPMENT',
-            label: 'Custom Software Development',
-            icon: '💻',
-            description: 'Web applications, APIs, dashboards, portals, admin panels, and business systems.'
-        },
-        {
-            value: 'MOBILE_APP',
-            label: 'Mobile App Development',
-            icon: '📱',
-            description: 'Android, iOS, and cross-platform mobile apps using Flutter, Kotlin, or other modern tools.'
-        },
-        {
-            value: 'SAAS_PRODUCT',
-            label: 'SaaS / Product Development',
-            icon: '🚀',
-            description: 'Scalable platforms, MVPs, subscription systems, creator platforms, and long-term product builds.'
-        },
-        {
-            value: 'BUSINESS_SYSTEM',
-            label: 'Business System / ERP / POS',
-            icon: '🏢',
-            description: 'POS systems, inventory, CRM, HR, billing, reports, operations, and management platforms.'
-        },
-        {
-            value: 'AI_AUTOMATION',
-            label: 'AI & Automation',
-            icon: '🤖',
-            description: 'AI chatbots, workflow automation, document processing, reports, scripts, and smart systems.'
-        },
-        {
-            value: 'DATA_ANALYTICS',
-            label: 'Data Analytics & Dashboards',
-            icon: '📊',
-            description: 'Excel/Python analysis, Power BI, dashboards, reports, ETL pipelines, and business insights.'
-        },
-        {
-            value: 'CLOUD_INFRASTRUCTURE',
-            label: 'Cloud, DevOps & Infrastructure',
-            icon: '☁️',
-            description: 'Cloud deployment, Docker, Linux servers, CI/CD, hosting, backups, monitoring, and scaling.'
-        },
-        {
-            value: 'NETWORKING_ISP',
-            label: 'Networking / ISP Systems',
-            icon: '🌐',
-            description: 'MikroTik, ISP billing, customer portals, network monitoring, routers, servers, and connectivity systems.'
-        },
-        {
-            value: 'CYBERSECURITY',
-            label: 'Cybersecurity & Digital Safety',
-            icon: '🛡️',
-            description: 'Security reviews, vulnerability checks, access control, data protection, and awareness training.'
-        },
-        {
-            value: 'WEBSITE_PORTAL',
-            label: 'Website / Web Portal',
-            icon: '🌍',
-            description: 'Company websites, landing pages, portfolios, client portals, blogs, and content platforms.'
-        },
-        {
-            value: 'CREATOR_MUSIC_PLATFORM',
-            label: 'Creator / Music / Entertainment Platform',
-            icon: '🎧',
-            description: 'Artist platforms, DJ mix distribution, AngiTunes-style systems, content upload, promotion, and monetization.'
-        },
-        {
-            value: 'DIGITAL_SUPPORT',
-            label: 'Digital Support Services',
-            icon: '📝',
-            description: 'Documents, reports, presentations, CVs, applications, Google Forms, software setup, and technical support.'
-        },
-        {
-            value: 'TRAINING_EDUCATION',
-            label: 'Training / Education Support',
-            icon: '🎓',
-            description: 'Programming guidance, beginner training, digital skills, project help, and technical mentorship.'
-        },
-        {
-            value: 'OTHER',
-            label: 'Other Project or Idea',
-            icon: '✨',
-            description: 'Use this if your request does not fit the categories above.'
-        }
-    ],
+        projectTypes: [
+            {
+                value: 'SOFTWARE_DEVELOPMENT',
+                label: 'Custom Software Development',
+                icon: '💻',
+                description: 'Web applications, APIs, dashboards, portals, admin panels, and business systems.'
+            },
+            {
+                value: 'MOBILE_APP',
+                label: 'Mobile App Development',
+                icon: '📱',
+                description: 'Android, iOS, and cross-platform mobile apps using Flutter, Kotlin, or other modern tools.'
+            },
+            {
+                value: 'SAAS_PRODUCT',
+                label: 'SaaS / Product Development',
+                icon: '🚀',
+                description: 'Scalable platforms, MVPs, subscription systems, creator platforms, and long-term product builds.'
+            },
+            {
+                value: 'BUSINESS_SYSTEM',
+                label: 'Business System / ERP / POS',
+                icon: '🏢',
+                description: 'POS systems, inventory, CRM, HR, billing, reports, operations, and management platforms.'
+            },
+            {
+                value: 'AI_AUTOMATION',
+                label: 'AI & Automation',
+                icon: '🤖',
+                description: 'AI chatbots, workflow automation, document processing, reports, scripts, and smart systems.'
+            },
+            {
+                value: 'DATA_ANALYTICS',
+                label: 'Data Analytics & Dashboards',
+                icon: '📊',
+                description: 'Excel/Python analysis, Power BI, dashboards, reports, ETL pipelines, and business insights.'
+            },
+            {
+                value: 'CLOUD_INFRASTRUCTURE',
+                label: 'Cloud, DevOps & Infrastructure',
+                icon: '☁️',
+                description: 'Cloud deployment, Docker, Linux servers, CI/CD, hosting, backups, monitoring, and scaling.'
+            },
+            {
+                value: 'NETWORKING_ISP',
+                label: 'Networking / ISP Systems',
+                icon: '🌐',
+                description: 'MikroTik, ISP billing, customer portals, network monitoring, routers, servers, and connectivity systems.'
+            },
+            {
+                value: 'CYBERSECURITY',
+                label: 'Cybersecurity & Digital Safety',
+                icon: '🛡️',
+                description: 'Security reviews, vulnerability checks, access control, data protection, and awareness training.'
+            },
+            {
+                value: 'WEBSITE_PORTAL',
+                label: 'Website / Web Portal',
+                icon: '🌍',
+                description: 'Company websites, landing pages, portfolios, client portals, blogs, and content platforms.'
+            },
+            {
+                value: 'CREATOR_MUSIC_PLATFORM',
+                label: 'Creator / Music / Entertainment Platform',
+                icon: '🎧',
+                description: 'Artist platforms, DJ mix distribution, AngiTunes-style systems, content upload, promotion, and monetization.'
+            },
+            {
+                value: 'DIGITAL_SUPPORT',
+                label: 'Digital Support Services',
+                icon: '📝',
+                description: 'Documents, reports, presentations, CVs, applications, Google Forms, software setup, and technical support.'
+            },
+            {
+                value: 'TRAINING_EDUCATION',
+                label: 'Training / Education Support',
+                icon: '🎓',
+                description: 'Programming guidance, beginner training, digital skills, project help, and technical mentorship.'
+            },
+            {
+                value: 'OTHER',
+                label: 'Other Project or Idea',
+                icon: '✨',
+                description: 'Use this if your request does not fit the categories above.'
+            }
+        ],
 
-    expectations: {
-        title: 'What Happens After Submission?',
-        items: [
-            'We review your request and understand your goals.',
-            'We may contact you for clarification where needed.',
-            'We identify the right solution type and engagement model.',
-            'We estimate scope, timeline, and technical requirements.',
-            'We prepare a quotation or proposal before payment begins.',
-            'Once agreed, the project moves into planning and delivery.'
-        ]
-    },
+        expectations: {
+            title: 'What Happens After Submission?',
+            items: [
+                'We review your request and understand your goals.',
+                'We may contact you for clarification where needed.',
+                'We identify the right solution type and engagement model.',
+                'We estimate scope, timeline, and technical requirements.',
+                'We prepare a quotation or proposal before payment begins.',
+                'Once agreed, the project moves into planning and delivery.'
+            ]
+        },
 
-    note:
-        'Submitting a booking does not mean payment starts immediately. Pricing is confirmed after AngiSoft reviews your requirements and prepares a clear scope or proposal.'
-});
+        note:
+            'Submitting a booking does not mean payment starts immediately. Pricing is confirmed after AngiSoft reviews your requirements and prepares a clear scope or proposal.'
+    });
 
-console.log('  ✅ Booking copy settings');
+    console.log('  ✅ Booking copy settings');
 
     // ==================== SERVICES ====================
     const services = [
