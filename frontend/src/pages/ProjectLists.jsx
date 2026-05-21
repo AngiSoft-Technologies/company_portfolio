@@ -227,6 +227,8 @@ const ProjectLists = () => {
                                                     {/* Image Container */}
                                                     <div className="relative h-56 overflow-hidden">
                                                         <img
+                                                            loading="lazy"
+                                                            decoding="async"
                                                             src={mainImage}
                                                             alt={project.title}
                                                             className="w-full h-full object-cover transition-transform duration-700"

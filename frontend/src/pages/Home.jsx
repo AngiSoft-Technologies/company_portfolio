@@ -159,6 +159,8 @@ const ServicesSection = () => {
             {/* Image below heading + description */}
             <div style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(0,175,255,0.1)' }}>
               <img
+                loading="lazy"
+                decoding="async"
                 src={categories[activeTab].image}
                 alt={categories[activeTab].name}
                 style={{

@@ -61,6 +61,8 @@ const ProductDetail = () => {
           </div>
           <div style={{ border: '1px solid rgba(0,175,255,0.16)', borderRadius: '2rem', padding: '2rem', background: 'rgba(255,255,255,0.04)', textAlign: 'center' }}>
             {logo && <img src={logo} alt={product.name} style={{ maxWidth: '180px', maxHeight: '180px', objectFit: 'contain', marginBottom: '1.5rem' }} />}
+            loading="lazy"
+            decoding="async"
             <p style={{ margin: 0, color: '#00AF55', fontWeight: 800 }}>{product.status || 'DEVELOPMENT'}</p>
           </div>
         </div>

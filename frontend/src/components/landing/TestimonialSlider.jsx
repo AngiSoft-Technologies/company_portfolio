@@ -134,6 +134,8 @@ const TestimonialSlider = () => {
                         <img
                           src={avatar}
                           alt={name}
+                          loading="lazy"
+                          decoding="async"
                           style={{
                             width: '44px', height: '44px',
                             borderRadius: '50%',

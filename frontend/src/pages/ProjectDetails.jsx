@@ -131,6 +131,8 @@ const ProjectDetails = () => {
                         <FaChevronLeft />
                     </button>
                     <img
+                        loading="lazy"
+                        decoding="async"
                         src={allImages[currentImage]}
                         alt={`${project.title} - Image ${currentImage + 1}`}
                         className="max-w-full max-h-[90vh] object-contain"
@@ -181,6 +183,8 @@ const ProjectDetails = () => {
                                     onClick={() => setLightboxOpen(true)}
                                 >
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={allImages[currentImage]}
                                         alt={project.title}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -246,6 +250,8 @@ const ProjectDetails = () => {
                                                 }}
                                             >
                                                 <img
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     src={img}
                                                     alt={`Thumbnail ${idx + 1}`}
                                                     className="w-full h-full object-cover"
@@ -450,6 +456,8 @@ const ProjectDetails = () => {
                                         >
                                             <div className="relative h-48 overflow-hidden">
                                                 <img
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     src={projImage}
                                                     alt={proj.title}
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"

@@ -215,6 +215,8 @@ const Staff = () => {
                                                             src={resolveAssetUrl(member.avatarUrl)}
                                                             alt={fullName}
                                                             className="w-full h-full rounded-full object-cover"
+                                                            loading="lazy"
+                                                            decoding="async"
                                                         />
                                                     ) : (
                                                         fullName?.charAt(0) || 'A'

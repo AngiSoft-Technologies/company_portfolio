@@ -189,6 +189,8 @@ const TestimonialsList = () => {
                                                 <div className="flex items-center gap-4 pt-4 border-t" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
                                                     {testimonial.avatar || testimonial.avatarUrl ? (
                                                         <img
+                                                            loading="lazy"
+                                                            decoding="async"
                                                             src={resolveAssetUrl(testimonial.avatar || testimonial.avatarUrl)}
                                                             alt={testimonial.name || testimonial.author}
                                                             className="w-12 h-12 rounded-full object-cover"

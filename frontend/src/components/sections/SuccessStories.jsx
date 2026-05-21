@@ -82,6 +82,8 @@ const SuccessStories = () => {
                   <img
                     src={story.logo}
                     alt={story.tagline}
+                    loading="lazy"
+                    decoding="async"
                     style={{ height: '36px', objectFit: 'contain', filter: 'brightness(1.1)' }}
                   />
                   <span style={{

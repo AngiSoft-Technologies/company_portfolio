@@ -259,6 +259,8 @@ const StaffDashboard = () => {
                         <div className="flex flex-col items-center">
                             <div className="relative">
                                 {formData.avatarUrl ? <img src={resolveAssetUrl(formData.avatarUrl)} alt="Avatar" className="w-32 h-32 rounded-2xl object-cover" style={{ border: `3px solid ${colors.primary}` }} /> : <div className="w-32 h-32 rounded-2xl flex items-center justify-center text-4xl font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark || colors.primary})` }}>{(formData.firstName?.charAt(0) || '') + (formData.lastName?.charAt(0) || '')}</div>}
+                                loading="lazy"
+                                decoding="async"
                                 {editing && <label className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer text-white" style={{ backgroundColor: colors.primary }}><FaCamera /><input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploading} /></label>}
                             </div>
                             {uploading && <p className="text-sm mt-2" style={{ color: colors.textSecondary }}>Uploading...</p>}

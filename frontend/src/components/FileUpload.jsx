@@ -207,6 +207,8 @@ const FileUpload = ({
                     {previews.map((preview, index) => (
                         <div key={index} className="relative group">
                             <img
+                                loading="lazy"
+                                decoding="async"
                                 src={preview.url}
                                 alt={`Preview ${index + 1}`}
                                 className="w-full h-32 object-cover rounded-lg"

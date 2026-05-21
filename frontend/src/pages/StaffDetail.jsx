@@ -92,7 +92,7 @@ const StaffDetail = () => {
                             <GlassmorphismCard className="p-8 text-center sticky top-24">
                                 <div className="relative inline-block mb-6">
                                     {staff.avatarUrl ? (
-                                        <img src={resolveAssetUrl(staff.avatarUrl)} alt={fullName} className="w-40 h-40 rounded-full object-cover mx-auto" style={{ border: `4px solid ${colors.primary}` }} />
+                                        <img src={resolveAssetUrl(staff.avatarUrl)} alt={fullName} loading="lazy" decoding="async" className="w-40 h-40 rounded-full object-cover mx-auto" style={{ border: `4px solid ${colors.primary}` }} />
                                     ) : (
                                         <div className="w-40 h-40 rounded-full flex items-center justify-center text-white text-5xl font-bold mx-auto" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
                                             {staff.firstName?.[0]}{staff.lastName?.[0]}

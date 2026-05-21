@@ -7,6 +7,8 @@ const SkillCard = ({ image, name, theme }) => {
     return (
         <div className={`${bgColor} p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-xl min-w-[100px]`}>
             <img
+                loading="lazy"
+                decoding="async"
                 src={image}
                 alt={name}
                 className="w-12 h-12 md:w-14 md:h-14 object-contain"

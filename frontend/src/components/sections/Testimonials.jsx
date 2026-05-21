@@ -234,6 +234,8 @@ const Testimonials = () => {
                                                     src={getAvatar(displayTestimonials[activeIndex])}
                                                     alt={getName(displayTestimonials[activeIndex])}
                                                     className="w-full h-full rounded-full object-cover"
+                                                    loading="lazy"
+                                                    decoding="async"
                                                 />
                                             ) : (
                                                 getName(displayTestimonials[activeIndex])?.charAt(0) || 'A'
@@ -379,6 +381,8 @@ const Testimonials = () => {
                                                         src={getAvatar(testimonial)}
                                                         alt={getName(testimonial)}
                                                         className="w-full h-full rounded-full object-cover"
+                                                        loading="lazy"
+                                                        decoding="async"
                                                     />
                                                 ) : (
                                                     getName(testimonial)?.charAt(0)

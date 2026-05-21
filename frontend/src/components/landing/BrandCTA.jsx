@@ -115,6 +115,8 @@ const BrandCTA = () => {
                     key={i}
                     src={img.src}
                     alt={img.alt}
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       position: 'absolute', inset: 0, width: '100%', height: '100%',
                       objectFit: 'contain', padding: '2rem',

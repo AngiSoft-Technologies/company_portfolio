@@ -290,6 +290,8 @@ const StaffManagement = () => {
                                 {/* Avatar */}
                                 {employee.avatarUrl ? (
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={resolveAssetUrl(employee.avatarUrl)}
                                         alt={employee.firstName}
                                         className="w-16 h-16 rounded-xl object-cover"
@@ -391,6 +393,8 @@ const StaffManagement = () => {
                             <div className="relative">
                                 {formData.avatarUrl ? (
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={resolveAssetUrl(formData.avatarUrl)}
                                         alt="Avatar"
                                         className="w-24 h-24 rounded-2xl object-cover"

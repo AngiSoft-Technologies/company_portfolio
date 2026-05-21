@@ -65,7 +65,7 @@ const TeamMemberCard = ({
             style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)' }}
           >
             {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+              <img src={avatar} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
             ) : (
               <div
                 className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"

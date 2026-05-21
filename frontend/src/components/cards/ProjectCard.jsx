@@ -19,6 +19,8 @@ const ProjectCard = ({ image, title, description, id, slug, theme}) => {
             {/* Image Section */}
             <div className="relative overflow-hidden h-52">
                 <img 
+                    loading="lazy"
+                    decoding="async"
                     src={image} 
                     alt={title} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 

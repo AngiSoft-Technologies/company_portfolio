@@ -46,6 +46,8 @@ const ModernProjectCard = ({
         
         {/* Image */}
         <img
+          loading="lazy"
+          decoding="async"
           src={image || '/images/project-placeholder.png'}
           alt={title}
           className="w-full h-full object-cover transition-all duration-700"

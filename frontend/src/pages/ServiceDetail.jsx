@@ -237,6 +237,8 @@ const ServiceDetail = () => {
                                 <div className="relative">
                                     <div className="relative rounded-2xl overflow-hidden aspect-video shadow-2xl">
                                         <img
+                                            loading="lazy"
+                                            decoding="async"
                                             src={service.images[currentImage]}
                                             alt={`${service.title} - Image ${currentImage + 1}`}
                                             className="w-full h-full object-cover"

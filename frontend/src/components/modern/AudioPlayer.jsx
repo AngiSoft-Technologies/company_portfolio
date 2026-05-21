@@ -99,7 +99,7 @@ const AudioPlayer = ({
           }}
         >
           {cover ? (
-            <img src={cover} alt={title} className="w-full h-full object-cover" />
+            <img src={cover} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <FaMusic size={24} className="text-white" />
           )}

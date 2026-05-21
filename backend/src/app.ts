@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
+import compression from 'compression';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
@@ -54,6 +55,8 @@ import employeeProfilesRouter from './routes/employee-profiles';
 dotenv.config();
 initSentry();
 const app = express();
+// gzip/deflate compression for all responses
+app.use(compression());
 // security middlewares
 app.use(helmet({
     contentSecurityPolicy: {

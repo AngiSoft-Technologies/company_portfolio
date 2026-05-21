@@ -50,6 +50,8 @@ const ModernServiceCard = ({
       {image && (
         <div className="relative h-48 overflow-hidden">
           <img
+            loading="lazy"
+            decoding="async"
             src={image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-700"
