@@ -1,134 +1,101 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { getStaffDetailPath } from '../utils/detailPaths';
 import { resolveAssetUrl } from '../utils/constants';
 import { useTheme } from '../contexts/ThemeContext';
-import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
-import { useSiteCopy } from '../hooks/useSiteCopy';
-import { 
-    FaUsers, FaLinkedin, FaTwitter, FaGithub, FaEnvelope,
-    FaArrowRight, FaUserTie, FaCode, FaPaintBrush, FaCog,
-    FaStar, FaBriefcase
+import { ScrollReveal } from '../components/modern';
+import {
+    FaUsers, FaLinkedin, FaTwitter, FaGithub, FaGlobe,
+    FaArrowRight, FaEnvelope, FaMapMarkerAlt, FaBriefcase
 } from 'react-icons/fa';
-
-const roleIcons = {
-    'admin': FaUserTie,
-    'developer': FaCode,
-    'designer': FaPaintBrush,
-    'manager': FaBriefcase,
-    'default': FaCog
-};
-
-const getRoleIcon = (role) => {
-    if (!role) return roleIcons['default'];
-    const roleLower = role.toLowerCase();
-    for (const [key, icon] of Object.entries(roleIcons)) {
-        if (roleLower.includes(key)) return icon;
-    }
-    return roleIcons['default'];
-};
 
 const StaffList = () => {
     const navigate = useNavigate();
-    const { colors, mode } = useTheme();
-    const { copy: uiCopy } = useSiteCopy();
+    const { colors } = useTheme();
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [hoveredCard, setHoveredCard] = useState(null);
-    const pageCopy = uiCopy?.pages?.staff || {};
 
     useEffect(() => {
-        const fetchStaff = async () => {
-            try {
-                const data = await apiGet('/staff');
-                setStaff(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchStaff();
+        apiGet('/staff')
+            .then(setStaff)
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
     }, []);
 
-    const stats = [
-        { value: staff.length, label: pageCopy.stats?.teamLabel || '' },
-        { value: new Set(staff.map(s => s.role)).size, label: pageCopy.stats?.departmentsLabel || '' },
-        { value: pageCopy.stats?.experienceValue || '5+', label: pageCopy.stats?.experienceLabel || '' },
-    ].filter(stat => stat.label);
+    const roleCount = new Set(staff.map(s => s.role)).size;
 
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
-            {/* Hero Section */}
-            <ParallaxSection
-                speed={0.15}
-                treatment="resume"
-                className="relative py-28 overflow-hidden"
-            >
-                <div className="absolute inset-0 angi-technical-grid-soft opacity-20" />
 
-                <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
+            {/* ═══════ Cinematic Hero ═══════ */}
+            <section className="relative py-32 md:py-44 overflow-hidden">
+                {/* Ambient glows */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.06]"
+                        style={{ background: colors.primary, top: '-25%', left: '-10%' }} />
+                    <div className="absolute w-[400px] h-[400px] rounded-full blur-[140px] opacity-[0.04]"
+                        style={{ background: colors.secondary, bottom: '-15%', right: '5%' }} />
+                </div>
+                {/* Grid texture */}
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
+                    style={{
+                        backgroundImage: `linear-gradient(${colors.primary} 1px, transparent 1px), linear-gradient(90deg, ${colors.primary} 1px, transparent 1px)`,
+                        backgroundSize: '80px 80px',
+                    }} />
+
+                <div className="relative z-10 max-w-6xl mx-auto px-4">
                     <ScrollReveal animation="fadeUp">
-                        {pageCopy.badge && (
-                            <span 
-                                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                                style={{ 
-                                    backgroundColor: `${colors.primary}20`,
-                                    color: colors.primary,
-                                    border: `1px solid ${colors.primary}40`
-                                }}
-                            >
-                                <FaUsers className="inline mr-2" />
-                                {pageCopy.badge}
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-12 h-[2px]" style={{ background: `linear-gradient(90deg, ${colors.primary}, transparent)` }} />
+                            <span className="text-sm font-semibold uppercase tracking-[0.2em]"
+                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                Our People
                             </span>
-                        )}
-                    </ScrollReveal>
-                    
-                    <ScrollReveal animation="fadeUp" delay={100}>
-                        {pageCopy.title && (
-                            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                                <span style={{ color: colors.text }}>{pageCopy.title}</span>
-                            </h1>
-                        )}
-                    </ScrollReveal>
-                    
-                    <ScrollReveal animation="fadeUp" delay={200}>
-                        {pageCopy.subtitle && (
-                            <p 
-                                className="text-xl md:text-2xl max-w-3xl mx-auto mb-12"
-                                style={{ color: colors.textSecondary }}
-                            >
-                                {pageCopy.subtitle}
-                            </p>
-                        )}
+                        </div>
                     </ScrollReveal>
 
-                    {/* Stats */}
-                    {stats.length > 0 && (
+                    <ScrollReveal animation="fadeUp" delay={100}>
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] mb-8"
+                            style={{ fontFamily: 'Sora, sans-serif' }}>
+                            <span style={{ color: '#fff' }}>The Minds</span><br />
+                            <span style={{
+                                background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
+                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                            }}>Behind The Code</span>
+                        </h1>
+                    </ScrollReveal>
+
+                    <ScrollReveal animation="fadeUp" delay={200}>
+                        <p className="text-lg md:text-xl max-w-2xl mb-12 leading-relaxed"
+                            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'DM Sans, sans-serif' }}>
+                            Our talented team of engineers, designers, and strategists is the backbone of everything we build. Get to know the people shaping African tech.
+                        </p>
+                    </ScrollReveal>
+
+                    {/* Live stats */}
+                    {!loading && staff.length > 0 && (
                         <ScrollReveal animation="fadeUp" delay={300}>
-                            <div className="flex flex-wrap justify-center gap-8">
-                                {stats.map((stat, idx) => (
-                                    <div 
-                                        key={idx}
-                                        className="text-center px-6 py-4 rounded-2xl"
-                                        style={{ 
-                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                            backdropFilter: 'blur(10px)'
-                                        }}
-                                    >
-                                        <div 
-                                            className="text-3xl font-bold mb-1"
-                                            style={{ color: colors.primary }}
-                                        >
-                                            {stat.value}{typeof stat.value === 'number' ? '+' : ''}
+                            <div className="flex flex-wrap gap-6">
+                                {[
+                                    { value: staff.length, label: 'Team Members' },
+                                    { value: roleCount, label: 'Departments' },
+                                    { value: '2024', label: 'Founded' },
+                                    { value: 'Nairobi', label: 'Headquarters' },
+                                ].map((stat, idx) => (
+                                    <div key={idx} className="px-6 py-4 rounded-2xl"
+                                        style={{
+                                            background: 'rgba(255,255,255,0.04)',
+                                            border: '1px solid rgba(255,255,255,0.06)',
+                                            backdropFilter: 'blur(12px)',
+                                        }}>
+                                        <div className="text-2xl md:text-3xl font-bold mb-1"
+                                            style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                            {stat.value}
                                         </div>
-                                        <div 
-                                            className="text-sm"
-                                            style={{ color: colors.textSecondary }}
-                                        >
+                                        <div className="text-xs uppercase tracking-wider"
+                                            style={{ color: 'rgba(255,255,255,0.4)' }}>
                                             {stat.label}
                                         </div>
                                     </div>
@@ -137,288 +104,235 @@ const StaffList = () => {
                         </ScrollReveal>
                     )}
                 </div>
-            </ParallaxSection>
+            </section>
 
-            {/* Team Grid */}
-            <section className="py-20 px-4">
+            {/* ═══════ Team Grid ═══════ */}
+            <section className="py-24 px-4">
                 <div className="max-w-7xl mx-auto">
+
                     {loading && (
-                        <div className="flex justify-center items-center py-20">
-                            <div 
-                                className="w-16 h-16 border-4 rounded-full animate-spin"
-                                style={{ 
-                                    borderColor: `${colors.primary}30`,
-                                    borderTopColor: colors.primary
-                                }}
-                            />
+                        <div className="flex justify-center py-24">
+                            <div className="w-12 h-12 border-2 rounded-full animate-spin"
+                                style={{ borderColor: `${colors.primary}20`, borderTopColor: colors.primary }} />
                         </div>
                     )}
-                    
+
                     {error && (
-                        <ScrollReveal animation="scaleUp">
-                            <div 
-                                className="text-center p-8 rounded-2xl"
-                                style={{ backgroundColor: `${colors.danger || '#ef4444'}20` }}
-                            >
-                                <p style={{ color: colors.danger || '#ef4444' }}>{error}</p>
-                            </div>
-                        </ScrollReveal>
+                        <div className="text-center py-20 rounded-2xl"
+                            style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)' }}>
+                            <p className="text-sm" style={{ color: '#ef4444' }}>{error}</p>
+                        </div>
                     )}
-                    
-                    {!loading && !error && (
-                        <>
-                            {staff.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                                    {staff.map((member, idx) => {
-                                        const profilePath = getStaffDetailPath(member);
-                                        const RoleIcon = getRoleIcon(member.role);
-                                        return (
-                                            <ScrollReveal 
-                                                key={member.id} 
-                                                animation="fadeUp" 
-                                                delay={idx * 100}
-                                            >
-                                                <div 
-                                                    className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-500"
-                                                    style={{
-                                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                                                        border: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                                                        transform: hoveredCard === idx ? 'translateY(-10px)' : 'translateY(0)',
-                                                        boxShadow: hoveredCard === idx 
-                                                            ? `0 25px 50px -12px ${colors.primary}30`
-                                                            : '0 4px 6px -1px rgba(0,0,0,0.1)'
-                                                    }}
-                                                    onMouseEnter={() => setHoveredCard(idx)}
-                                                    onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(profilePath)}
-                                                >
-                                                    {/* Avatar Section */}
-                                                    <div 
-                                                        className="relative pt-8 pb-4 px-6"
-                                                        style={{
-                                                            background: hoveredCard === idx 
-                                                                ? `linear-gradient(135deg, ${colors.primary}20, ${colors.secondary}20)`
-                                                                : 'transparent'
-                                                        }}
-                                                    >
-                                                        <div className="flex justify-center">
-                                                            {member.avatarUrl ? (
-                                                                <div className="relative">
-                                                                    <img
-                                                                        src={resolveAssetUrl(member.avatarUrl)}
-                                                                        alt={`${member.firstName} ${member.lastName}`}
-                                                                        className="w-28 h-28 rounded-full object-cover transition-transform duration-500"
-                                                                        style={{
-                                                                            border: `4px solid ${colors.primary}`,
-                                                                            transform: hoveredCard === idx ? 'scale(1.1)' : 'scale(1)'
-                                                                        }}
-                                                                    />
-                                                                    {/* Online indicator */}
-                                                                    <div 
-                                                                        className="absolute bottom-2 right-2 w-5 h-5 rounded-full border-2"
-                                                                        style={{ 
-                                                                            backgroundColor: '#22c55e',
-                                                                            borderColor: colors.background
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div 
-                                                                    className="w-28 h-28 rounded-full flex items-center justify-center text-white text-3xl font-bold transition-transform duration-500"
-                                                                    style={{
-                                                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                                                        transform: hoveredCard === idx ? 'scale(1.1)' : 'scale(1)'
-                                                                    }}
-                                                                >
-                                                                    {member.firstName[0]}{member.lastName[0]}
-                                                                </div>
-                                                            )}
-                                                        </div>
+
+                    {!loading && !error && staff.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {staff.map((member, idx) => {
+                                const fullName = `${member.firstName} ${member.lastName}`;
+                                const hasSocials = member.linkedinUrl || member.twitterUrl || member.githubUrl || member.websiteUrl;
+                                return (
+                                    <ScrollReveal key={member.id} animation="fadeUp" delay={idx * 80}>
+                                        <div onClick={() => navigate(getStaffDetailPath(member))}
+                                            className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2"
+                                            style={{
+                                                background: 'rgba(255,255,255,0.02)',
+                                                border: '1px solid rgba(255,255,255,0.05)',
+                                            }}>
+
+                                            {/* Large avatar area */}
+                                            <div className="relative h-64 overflow-hidden">
+                                                {member.avatarUrl ? (
+                                                    <img src={resolveAssetUrl(member.avatarUrl)}
+                                                        alt={fullName}
+                                                        loading="lazy" decoding="async"
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white"
+                                                        style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                                                        {member.firstName?.[0]}{member.lastName?.[0]}
                                                     </div>
-                                                    
-                                                    {/* Content */}
-                                                    <div className="p-6 pt-2 text-center">
-                                                        <h3 
-                                                            className="text-xl font-bold mb-1 transition-colors duration-300"
-                                                            style={{ color: hoveredCard === idx ? colors.primary : colors.text }}
-                                                        >
-                                                            {member.firstName} {member.lastName}
-                                                        </h3>
-                                                        
-                                                        <div 
-                                                            className="flex items-center justify-center gap-2 mb-3"
-                                                        >
-                                                            <RoleIcon 
-                                                                className="text-sm"
-                                                                style={{ color: colors.primary }}
-                                                            />
-                                                            <span 
-                                                                className="text-sm font-medium capitalize"
-                                                                style={{ color: colors.primary }}
-                                                            >
-                                                                {member.publicTitle || member.role?.toLowerCase().replace('_', ' ')}
-                                                            </span>
-                                                        </div>
-                                                        
-                                                        {(member.publicSummary || member.bio) && (
-                                                            <p
-                                                                className="text-sm mb-4 line-clamp-2"
-                                                                style={{ color: colors.textSecondary }}
-                                                            >
-                                                                {member.publicSummary || member.bio}
-                                                            </p>
-                                                        )}
-                                                        
-                                                        {/* Social Links */}
-                                                        <div className="flex justify-center gap-3 mb-4">
-                                                            {member.linkedinUrl && (
-                                                                <a
-                                                                    href={member.linkedinUrl}
-                                                                    onClick={(event) => event.stopPropagation()}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                    style={{
-                                                                        backgroundColor: `${colors.primary}20`,
-                                                                        color: colors.primary
-                                                                    }}
-                                                                >
-                                                                    <FaLinkedin />
-                                                                </a>
-                                                            )}
-                                                            {member.twitterUrl && (
-                                                                <a
-                                                                    href={member.twitterUrl}
-                                                                    onClick={(event) => event.stopPropagation()}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                    style={{
-                                                                        backgroundColor: `${colors.primary}20`,
-                                                                        color: colors.primary
-                                                                    }}
-                                                                >
-                                                                    <FaTwitter />
-                                                                </a>
-                                                            )}
-                                                            {member.githubUrl && (
-                                                                <a
-                                                                    href={member.githubUrl}
-                                                                    onClick={(event) => event.stopPropagation()}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                    style={{
-                                                                        backgroundColor: `${colors.primary}20`,
-                                                                        color: colors.primary
-                                                                    }}
-                                                                >
-                                                                    <FaGithub />
-                                                                </a>
-                                                            )}
-                                                            {member.publicEmail && (
-                                                                <a
-                                                                    href={`mailto:${member.publicEmail}`}
-                                                                    onClick={(event) => event.stopPropagation()}
-                                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                    style={{
-                                                                        backgroundColor: `${colors.primary}20`,
-                                                                        color: colors.primary
-                                                                    }}
-                                                                >
-                                                                    <FaEnvelope />
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                        
-                                                        {/* View Profile */}
-                                                        <div 
-                                                            className="flex items-center justify-center gap-2 font-semibold transition-all duration-300"
-                                                            style={{ 
-                                                                color: colors.primary,
-                                                                opacity: hoveredCard === idx ? 1 : 0.7
-                                                            }}
-                                                        >
-                                                            <span>View Profile</span>
-                                                            <FaArrowRight 
-                                                                className="transition-transform duration-300"
-                                                                style={{
-                                                                    transform: hoveredCard === idx ? 'translateX(5px)' : 'translateX(0)'
-                                                                }}
-                                                            />
-                                                        </div>
+                                                )}
+                                                {/* Bottom gradient */}
+                                                <div className="absolute inset-0"
+                                                    style={{ background: 'linear-gradient(to top, rgba(7,20,43,0.95) 0%, rgba(7,20,43,0.3) 40%, transparent 70%)' }} />
+
+                                                {/* Location badge */}
+                                                {member.location && (
+                                                    <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-[11px] font-medium flex items-center gap-1.5"
+                                                        style={{
+                                                            background: 'rgba(0,0,0,0.5)',
+                                                            backdropFilter: 'blur(12px)',
+                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                            color: 'rgba(255,255,255,0.7)',
+                                                        }}>
+                                                        <FaMapMarkerAlt className="text-[9px]" style={{ color: colors.primary }} />
+                                                        {member.location}
+                                                    </div>
+                                                )}
+
+                                                {/* Name + role overlay */}
+                                                <div className="absolute bottom-4 left-5 right-5">
+                                                    <h3 className="text-xl font-bold mb-1"
+                                                        style={{ fontFamily: 'Sora, sans-serif' }}>
+                                                        {fullName}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <FaBriefcase className="text-xs" style={{ color: colors.primary }} />
+                                                        <span className="text-sm capitalize" style={{ color: colors.primary }}>
+                                                            {member.publicTitle || member.role?.toLowerCase().replace('_', ' ')}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            </ScrollReveal>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <ScrollReveal animation="fadeUp">
-                                    <div 
-                                        className="text-center py-20 rounded-2xl"
-                                        style={{ 
-                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'
-                                        }}
-                                    >
-                                        <FaUsers 
-                                            className="text-6xl mx-auto mb-4"
-                                            style={{ color: colors.textSecondary }}
-                                        />
-                                        <p style={{ color: colors.textSecondary }}>
-                                            No team members available at the moment.
-                                        </p>
-                                    </div>
-                                </ScrollReveal>
-                            )}
-                        </>
+                                            </div>
+
+                                            {/* Card body */}
+                                            <div className="p-5">
+                                                {/* Summary */}
+                                                {(member.publicSummary || member.bio) && (
+                                                    <p className="text-sm mb-4 line-clamp-2 leading-relaxed"
+                                                        style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'DM Sans, sans-serif' }}>
+                                                        {member.publicSummary || member.bio}
+                                                    </p>
+                                                )}
+
+                                                {/* Skills */}
+                                                {member.skills && member.skills.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                                        {member.skills.slice(0, 4).map((skill, sIdx) => (
+                                                            <span key={sIdx}
+                                                                className="px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide"
+                                                                style={{
+                                                                    background: `${colors.primary}10`,
+                                                                    color: colors.primary,
+                                                                    border: `1px solid ${colors.primary}18`,
+                                                                }}>
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                        {member.skills.length > 4 && (
+                                                            <span className="px-2 py-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                                                                +{member.skills.length - 4}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Specialties as secondary tags */}
+                                                {member.specialties && member.specialties.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                                        {member.specialties.slice(0, 3).map((spec, sIdx) => (
+                                                            <span key={sIdx}
+                                                                className="px-2 py-0.5 rounded text-[10px]"
+                                                                style={{
+                                                                    background: 'rgba(255,255,255,0.04)',
+                                                                    color: 'rgba(255,255,255,0.4)',
+                                                                    border: '1px solid rgba(255,255,255,0.06)',
+                                                                }}>
+                                                                {spec}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Footer: socials + view */}
+                                                <div className="flex items-center justify-between pt-3"
+                                                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    {/* Social links */}
+                                                    <div className="flex gap-2">
+                                                        {member.linkedinUrl && (
+                                                            <a href={member.linkedinUrl} target="_blank" rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
+                                                                <FaLinkedin className="text-xs" />
+                                                            </a>
+                                                        )}
+                                                        {member.twitterUrl && (
+                                                            <a href={member.twitterUrl} target="_blank" rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
+                                                                <FaTwitter className="text-xs" />
+                                                            </a>
+                                                        )}
+                                                        {member.githubUrl && (
+                                                            <a href={member.githubUrl} target="_blank" rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
+                                                                <FaGithub className="text-xs" />
+                                                            </a>
+                                                        )}
+                                                        {member.websiteUrl && (
+                                                            <a href={member.websiteUrl} target="_blank" rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
+                                                                <FaGlobe className="text-xs" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+
+                                                    {/* View profile */}
+                                                    <span className="flex items-center gap-1.5 text-xs font-semibold transition-all duration-300 opacity-60 group-hover:opacity-100"
+                                                        style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
+                                                        Profile <FaArrowRight className="text-[10px] transition-transform duration-300 group-hover:translate-x-1" />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </ScrollReveal>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Empty state */}
+                    {!loading && !error && staff.length === 0 && (
+                        <div className="text-center py-24 rounded-2xl"
+                            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <FaUsers className="text-5xl mx-auto mb-4 opacity-30" />
+                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                                Team profiles coming soon.
+                            </p>
+                        </div>
                     )}
                 </div>
             </section>
 
-            {/* Join Our Team Section */}
-            <section 
-                className="py-20 px-4"
-                style={{
-                    background: `linear-gradient(135deg, ${colors.primary}10 0%, ${colors.secondary}10 100%)`
-                }}
-            >
+            {/* ═══════ Join CTA ═══════ */}
+            <section className="py-24 px-4">
                 <div className="max-w-4xl mx-auto">
                     <ScrollReveal animation="scaleUp">
-                        <GlassmorphismCard className="p-12 text-center">
-                            <div 
-                                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
+                        <div className="relative rounded-3xl overflow-hidden p-12 md:p-16 text-center"
+                            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})` }}>
+                            <div className="absolute inset-0 opacity-10 pointer-events-none"
                                 style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
-                                }}
-                            >
-                                <FaStar className="text-3xl text-white" />
+                                    backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+                                    backgroundSize: '24px 24px',
+                                }} />
+                            <div className="relative z-10">
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4"
+                                    style={{ fontFamily: 'Sora, sans-serif' }}>
+                                    Want to Join the Team?
+                                </h2>
+                                <p className="text-lg text-white/70 mb-8 max-w-xl mx-auto"
+                                    style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                                    We're always looking for talented people. Check out our open positions or reach out directly.
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-4">
+                                    <button onClick={() => navigate('/careers')}
+                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
+                                        style={{ backgroundColor: '#fff', color: colors.primaryDark }}>
+                                        <FaBriefcase /> View Open Roles
+                                    </button>
+                                    <a href="mailto:careers@angisoft.co.ke"
+                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>
+                                        <FaEnvelope /> Get in Touch
+                                    </a>
+                                </div>
                             </div>
-                            <h2 
-                                className="text-3xl md:text-4xl font-bold mb-6"
-                                style={{ color: colors.text }}
-                            >
-                                Join Our Team
-                            </h2>
-                            <p 
-                                className="text-xl mb-8 max-w-2xl mx-auto"
-                                style={{ color: colors.textSecondary }}
-                            >
-                                We're always looking for talented individuals to join our growing team.
-                                If you're passionate about technology, we'd love to hear from you.
-                            </p>
-                            <button
-                                onClick={() => navigate('/#contact-me')}
-                                className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105"
-                                style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
-                                    color: 'white'
-                                }}
-                            >
-                                <FaEnvelope />
-                                Get in Touch
-                            </button>
-                        </GlassmorphismCard>
+                        </div>
                     </ScrollReveal>
                 </div>
             </section>
