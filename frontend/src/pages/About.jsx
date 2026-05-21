@@ -11,11 +11,8 @@ import {
     FaArrowRight, FaEnvelope, FaCogs, FaShieldAlt, FaChartLine, FaCode,
     FaMapMarkerAlt, FaLinkedin, FaQuoteLeft, FaPlay, FaChevronRight,
     FaMobile, FaPaintBrush, FaDatabase, FaCloud, FaLock, FaBolt,
-    FaPython, FaReact, FaNodeJs, FaFlutter, FaDocker
+    FaPython, FaReact, FaNodeJs, FaDocker
 } from 'react-icons/fa';
-import {
-    SiPostgresql, SiTypescript, SiTailwindcss, SiExpress
-} from 'react-icons/si';
 
 /* ───────── Icon registry for CMS values ───────── */
 const iconRegistry = {
@@ -81,8 +78,8 @@ const techStack = [
     { name: 'Flutter', icon: FaCode, color: '#02569B' },
     { name: 'Python', icon: FaPython, color: '#3776AB' },
     { name: 'PostgreSQL', icon: FaDatabase, color: '#4169E1' },
-    { name: 'TypeScript', icon: SiTypescript, color: '#3178C6' },
-    { name: 'Tailwind', icon: SiTailwindcss, color: '#06B6D4' },
+    { name: 'TypeScript', icon: FaCode, color: '#3178C6' },
+    { name: 'Tailwind', icon: FaPaintBrush, color: '#06B6D4' },
     { name: 'Docker', icon: FaDocker, color: '#2496ED' },
 ];
 
