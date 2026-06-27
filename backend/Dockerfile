@@ -19,7 +19,11 @@ RUN npx prisma generate
 
 # Copy source code
 COPY tsconfig.json ./
+COPY logger.js ./
 COPY src ./src
+COPY uploads ./uploads
+COPY middleware ./middleware
+
 
 # Build TypeScript and verify output
 RUN npm run build && echo "=== BUILD OUTPUT ===" && ls -la dist/ && cat dist/index.js | head -20
