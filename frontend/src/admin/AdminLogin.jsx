@@ -292,7 +292,7 @@ const AdminLogin = () => {
                     className="text-center mt-8 text-sm"
                     style={{ color: colors.textSecondary }}
                 >
-                    &copy; {new Date().getFullYear()} Angera Silas. All rights reserved.
+                    &copy; {new Date().getFullYear()} AngiSoft Technologies. All rights reserved.
                 </p>
             </div>
         </div>

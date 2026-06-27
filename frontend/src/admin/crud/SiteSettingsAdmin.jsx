@@ -26,7 +26,7 @@ const SiteSettingsAdmin = ({ theme }) => {
     const [hero, setHero] = useState({});
     const [about, setAbout] = useState({});
     const [contact, setContact] = useState({});
-    const [footer, setFooter] = useState({});
+    const [, setFooter] = useState({});
     const [branding, setBranding] = useState({});
     const [uiCopy, setUiCopy] = useState({});
     const [bookingSettings, setBookingSettings] = useState({});
@@ -54,7 +54,7 @@ const SiteSettingsAdmin = ({ theme }) => {
             setBranding(brandingData || {});
             setUiCopy(uiData || {});
             setBookingSettings(bookingData || {});
-        } catch (err) {
+        } catch {
             setMessage({ type: 'error', text: 'Failed to load settings' });
         } finally {
             setLoading(false);
@@ -71,7 +71,7 @@ const SiteSettingsAdmin = ({ theme }) => {
             }
             setMessage({ type: 'success', text: `${key.charAt(0).toUpperCase() + key.slice(1)} settings saved successfully!` });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-        } catch (err) {
+        } catch {
             setMessage({ type: 'error', text: `Failed to save ${key} settings` });
         } finally {
             setSaving(false);
@@ -86,6 +86,63 @@ const SiteSettingsAdmin = ({ theme }) => {
         { id: 'ui', label: 'UI Copy', icon: FaFont },
         { id: 'booking', label: 'Booking Copy', icon: FaClipboardList }
     ];
+
+    const parseJsonField = (value, fallback = []) => {
+        try {
+            return JSON.parse(value || 'null') ?? fallback;
+        } catch {
+            setMessage({ type: 'error', text: 'Invalid JSON. Please fix the field before saving.' });
+            return fallback;
+        }
+    };
+
+    const stringifyJsonField = (value) => JSON.stringify(value || [], null, 2);
+
+    const updateAboutHero = (field, value) => {
+        setAbout((prev) => ({
+            ...prev,
+            hero: {
+                ...(prev.hero || {}),
+                [field]: value
+            }
+        }));
+    };
+
+    const updateAboutHeroCta = (ctaKey, field, value) => {
+        setAbout((prev) => ({
+            ...prev,
+            hero: {
+                ...(prev.hero || {}),
+                [ctaKey]: {
+                    ...((prev.hero || {})[ctaKey] || {}),
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    const updateAboutCta = (field, value) => {
+        setAbout((prev) => ({
+            ...prev,
+            cta: {
+                ...(prev.cta || {}),
+                [field]: value
+            }
+        }));
+    };
+
+    const updateAboutCtaButton = (buttonKey, field, value) => {
+        setAbout((prev) => ({
+            ...prev,
+            cta: {
+                ...(prev.cta || {}),
+                [buttonKey]: {
+                    ...((prev.cta || {})[buttonKey] || {}),
+                    [field]: value
+                }
+            }
+        }));
+    };
 
     const inputClass = `w-full px-4 py-3 rounded-lg border transition-all focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${
         theme === 'dark' 
@@ -356,9 +413,9 @@ const SiteSettingsAdmin = ({ theme }) => {
             {activeTab === 'about' && (
                 <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-slate-800/50' : 'bg-white shadow'}`}>
                     <h2 className={`text-xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        About Section Content
+                        About Page Content
                     </h2>
-                    <div className="grid gap-6">
+                    <div className="grid gap-8">
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Title</label>
@@ -377,20 +434,211 @@ const SiteSettingsAdmin = ({ theme }) => {
                                     className={inputClass}
                                     value={about.subtitle || ''}
                                     onChange={(e) => setAbout({...about, subtitle: e.target.value})}
-                                    placeholder="Your Trusted Technology Partner"
+                                    placeholder="A grassroots-origin African technology ecosystem"
                                 />
                             </div>
                         </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Hero Badge</label>
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={about.hero?.badge || ''}
+                                    onChange={(e) => updateAboutHero('badge', e.target.value)}
+                                    placeholder="Est. 2024 · Nairobi, Kenya"
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Hero Image URL</label>
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={about.hero?.imageUrl || ''}
+                                    onChange={(e) => updateAboutHero('imageUrl', e.target.value)}
+                                    placeholder="/uploads/public/images/..."
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Hero Headline</label>
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={about.hero?.headline || ''}
+                                    onChange={(e) => updateAboutHero('headline', e.target.value)}
+                                    placeholder="We Don’t Just Write Code."
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Hero Highlight</label>
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={about.hero?.highlight || ''}
+                                    onChange={(e) => updateAboutHero('highlight', e.target.value)}
+                                    placeholder="We Build Futures."
+                                />
+                            </div>
+                        </div>
+
                         <div>
-                            <label className={labelClass}>Description (one paragraph per line)</label>
+                            <label className={labelClass}>Hero Intro</label>
+                            <textarea
+                                className={inputClass}
+                                rows={4}
+                                value={about.hero?.intro || ''}
+                                onChange={(e) => updateAboutHero('intro', e.target.value)}
+                                placeholder="Short hero paragraph shown under the headline"
+                            />
+                        </div>
+
+                        <div className="grid md:grid-cols-4 gap-4">
+                            <div>
+                                <label className={labelClass}>Primary CTA Label</label>
+                                <input className={inputClass} value={about.hero?.primaryCta?.label || ''} onChange={(e) => updateAboutHeroCta('primaryCta', 'label', e.target.value)} placeholder="Start a Project" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Primary CTA Path</label>
+                                <input className={inputClass} value={about.hero?.primaryCta?.to || ''} onChange={(e) => updateAboutHeroCta('primaryCta', 'to', e.target.value)} placeholder="/booking" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Secondary CTA Label</label>
+                                <input className={inputClass} value={about.hero?.secondaryCta?.label || ''} onChange={(e) => updateAboutHeroCta('secondaryCta', 'label', e.target.value)} placeholder="Our Services" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Secondary CTA Path</label>
+                                <input className={inputClass} value={about.hero?.secondaryCta?.to || ''} onChange={(e) => updateAboutHeroCta('secondaryCta', 'to', e.target.value)} placeholder="/services" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Description (one paragraph per blank line)</label>
                             <textarea
                                 className={inputClass}
                                 rows={6}
                                 value={Array.isArray(about.description) ? about.description.join('\n\n') : about.description || ''}
                                 onChange={(e) => setAbout({...about, description: e.target.value.split('\n\n').filter(p => p.trim())})}
-                                placeholder="AngiSoft Technologies is a premier software development company..."
+                                placeholder="AngiSoft officially began in December 2024..."
                             />
                         </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Profile Tabs JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={10}
+                                    value={stringifyJsonField(about.profileTabs)}
+                                    onChange={(e) => setAbout({...about, profileTabs: parseJsonField(e.target.value, about.profileTabs || [])})}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Principles JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={10}
+                                    value={stringifyJsonField(about.principles)}
+                                    onChange={(e) => setAbout({...about, principles: parseJsonField(e.target.value, about.principles || [])})}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Service Highlights JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={10}
+                                    value={stringifyJsonField(about.serviceHighlights)}
+                                    onChange={(e) => setAbout({...about, serviceHighlights: parseJsonField(e.target.value, about.serviceHighlights || [])})}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Core Values JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={10}
+                                    value={stringifyJsonField(about.values)}
+                                    onChange={(e) => setAbout({...about, values: parseJsonField(e.target.value, about.values || [])})}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Technology Stack JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={8}
+                                    value={stringifyJsonField(about.techStack)}
+                                    onChange={(e) => setAbout({...about, techStack: parseJsonField(e.target.value, about.techStack || [])})}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Locations JSON</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={8}
+                                    value={stringifyJsonField(about.locations)}
+                                    onChange={(e) => setAbout({...about, locations: parseJsonField(e.target.value, about.locations || [])})}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Quote Text</label>
+                                <textarea
+                                    className={inputClass}
+                                    rows={4}
+                                    value={about.quote?.text || ''}
+                                    onChange={(e) => setAbout({...about, quote: {...(about.quote || {}), text: e.target.value}})}
+                                    placeholder="We are building AngiSoft from real problems..."
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Quote Source</label>
+                                <input
+                                    className={inputClass}
+                                    value={about.quote?.source || ''}
+                                    onChange={(e) => setAbout({...about, quote: {...(about.quote || {}), source: e.target.value}})}
+                                    placeholder="AngiSoft Technologies"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>CTA Title</label>
+                            <input
+                                className={inputClass}
+                                value={about.cta?.title || ''}
+                                onChange={(e) => updateAboutCta('title', e.target.value)}
+                                placeholder="Let’s Build Something Extraordinary Together"
+                            />
+                        </div>
+                        <div>
+                            <label className={labelClass}>CTA Description</label>
+                            <textarea
+                                className={inputClass}
+                                rows={4}
+                                value={about.cta?.description || ''}
+                                onChange={(e) => updateAboutCta('description', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid md:grid-cols-4 gap-4">
+                            <div>
+                                <label className={labelClass}>CTA Primary Label</label>
+                                <input className={inputClass} value={about.cta?.primary?.label || ''} onChange={(e) => updateAboutCtaButton('primary', 'label', e.target.value)} placeholder="Start a Project" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>CTA Primary Path</label>
+                                <input className={inputClass} value={about.cta?.primary?.to || ''} onChange={(e) => updateAboutCtaButton('primary', 'to', e.target.value)} placeholder="/booking" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>CTA Secondary Label</label>
+                                <input className={inputClass} value={about.cta?.secondary?.label || ''} onChange={(e) => updateAboutCtaButton('secondary', 'label', e.target.value)} placeholder="Talk to Us" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>CTA Secondary Path</label>
+                                <input className={inputClass} value={about.cta?.secondary?.to || ''} onChange={(e) => updateAboutCtaButton('secondary', 'to', e.target.value)} placeholder="/contact" />
+                            </div>
+                        </div>
+
                         <div>
                             <label className={labelClass}>Achievements (one per line)</label>
                             <textarea
@@ -398,7 +646,7 @@ const SiteSettingsAdmin = ({ theme }) => {
                                 rows={4}
                                 value={Array.isArray(about.achievements) ? about.achievements.join('\n') : ''}
                                 onChange={(e) => setAbout({...about, achievements: e.target.value.split('\n').filter(a => a.trim())})}
-                                placeholder="ISO 27001 Security Standards Compliant&#10;24/7 Support & Maintenance"
+                                placeholder="Built from real community technical support and practical problem-solving"
                             />
                         </div>
                     </div>

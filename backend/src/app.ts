@@ -69,7 +69,7 @@ app.use(helmet({
     },
 }));
 // Production CORS: allow frontend domains (set CORS_ORIGIN in env or use defaults)
-const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke'];
+const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke', 'https://admin.angisoft.co.ke', 'https://www.admin.angisoft.co.ke', 'https://client.angisoft.co.ke', 'https://www.client.angisoft.co.ke','https://www.angisoft.co.ke/'];
 const allowed = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
   : defaultOrigins;

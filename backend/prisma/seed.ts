@@ -294,12 +294,55 @@ async function main() {
 
     // About Section
     await seedSetting('site_about', {
+        eyebrow: "Est. 2024 · Nairobi, Kenya",
         title: "Who We Are",
         subtitle: "A grassroots-origin African technology ecosystem",
+        hero: {
+            badge: "Est. 2024 · Nairobi, Kenya",
+            headline: "We Don’t Just Write Code.",
+            highlight: "We Build Futures.",
+            intro: "AngiSoft Technologies began from hands-on problem solving: debugging student projects, building school and business systems, editing documents, supporting online services, installing software, creating reports, and helping people solve everyday digital problems.",
+            imageUrl: "/uploads/public/images/cms/setting-site_hero-value-slides-9-image-9774f2a544.jpg",
+            primaryCta: { label: "Start a Project", to: "/booking" },
+            secondaryCta: { label: "Our Services", to: "/services" }
+        },
         description: [
             "AngiSoft officially began in December 2024 from practical technical work: debugging student projects, building school and business systems, editing documents, supporting online services, installing software, creating reports, and helping local users solve everyday digital problems.",
             "That hands-on beginning shaped our direction. Today AngiSoft is evolving into a product-focused technology company building custom software, SaaS platforms, data systems, automation tools, digital services, creator platforms, and infrastructure support for African businesses and global users.",
             "Our philosophy is simple: Innovate → Build → Empower. We identify real problems, engineer practical digital solutions, and help people grow through technology, education, content, tools, and opportunity."
+        ],
+        profileTabs: [
+            {
+                id: "who",
+                label: "Who We Are",
+                text: "AngiSoft Technologies is a Nairobi-based software company founded in December 2024. We grew from practical technical support into a serious engineering brand focused on business systems, mobile applications, data products, cloud deployment, automation, and digital empowerment.",
+                badges: ["Founded Dec 2024", "Nairobi, Kenya", "African-first focus"]
+            },
+            {
+                id: "what",
+                label: "What We Do",
+                text: "We build web apps, Flutter and Kotlin mobile apps, dashboards, reports, POS systems, management platforms, automation workflows, cloud infrastructure, document services, and digital products that solve real operational problems.",
+                badges: ["Software", "Data", "Automation", "Digital services"]
+            },
+            {
+                id: "how",
+                label: "How We Work",
+                text: "We listen first, map the business process, build in focused iterations, test with real users, and keep improving after launch. Our work combines technical depth with practical local understanding.",
+                badges: ["Discover", "Design", "Build", "Improve"]
+            }
+        ],
+        principles: [
+            { icon: "FaRocket", title: "Mission", color: "#0875FF", description: "To empower businesses, students, creators, and communities with reliable, affordable, and innovative technology solutions that drive growth." },
+            { icon: "FaEye", title: "Vision", color: "#00AFFF", description: "To become a leading African software and digital products company recognized for excellence, accessibility, and positive community impact." },
+            { icon: "FaHeart", title: "Philosophy", color: "#39FF6A", description: "Innovate → Build → Empower. Identify real problems, engineer practical solutions, and help people grow through technology." }
+        ],
+        serviceHighlights: [
+            { icon: "FaCode", title: "Custom Software", description: "Web apps, management systems, POS platforms, portfolios, and internal tools tailored to business operations." },
+            { icon: "FaMobile", title: "Mobile Development", description: "Flutter and Kotlin mobile apps for Android and cross-platform use, designed for real customer workflows." },
+            { icon: "FaChartLine", title: "Data Analytics", description: "Python, Excel, dashboards, reports, and decision-support tools for teams that need clarity from data." },
+            { icon: "FaPaintBrush", title: "Brand & Interface Design", description: "Clean interfaces, posters, presentations, public pages, and digital assets that make services easier to understand." },
+            { icon: "FaCloud", title: "Cloud & DevOps", description: "Deployment, Docker, Linux servers, CI/CD, API hosting, networking support, and infrastructure maintenance." },
+            { icon: "FaShieldAlt", title: "Digital Support Services", description: "Document editing, KRA/SHA applications, good conduct support, software setup, troubleshooting, and online services." }
         ],
         values: [
             { icon: "FaLightbulb", title: "Innovate", text: "We start with real problems faced by businesses, creators, students, and communities." },
@@ -308,10 +351,20 @@ async function main() {
             { icon: "FaSeedling", title: "Authentic Growth", text: "We embrace our grassroots origin while building scalable technology for the future." }
         ],
         stats: [
-            { value: 2024, label: "Founded", prefix: "" },
-            { value: 15, suffix: "+", label: "Service Lines" },
-            { value: 5, suffix: "+", label: "Product Ecosystems" },
-            { value: 3, suffix: "", label: "Mission: Empower" }
+            { value: 2024, suffix: "", label: "Year Founded", icon: "FaSeedling" },
+            { value: 15, suffix: "+", label: "Projects Delivered", icon: "FaRocket" },
+            { value: 10, suffix: "+", label: "Service Lines", icon: "FaLayerGroup" },
+            { value: 4, suffix: "+", label: "Product Ecosystems", icon: "FaCogs" }
+        ],
+        techStack: [
+            { name: "React", icon: "FaReact" },
+            { name: "Node.js", icon: "FaNodeJs" },
+            { name: "Flutter", icon: "FaMobile" },
+            { name: "Python", icon: "FaPython" },
+            { name: "PostgreSQL", icon: "FaDatabase" },
+            { name: "TypeScript", icon: "FaCode" },
+            { name: "Tailwind", icon: "FaPaintBrush" },
+            { name: "Docker", icon: "FaDocker" }
         ],
         achievements: [
             "Built from real community technical support and practical problem-solving",
@@ -328,19 +381,35 @@ async function main() {
             {
                 year: "Foundation",
                 title: "Practical Technical Work",
-                description: "Early work included debugging student projects, coding school and university projects, teaching beginners programming, writing CVs and resumes, editing reports and project documentation, writing and formatting research reports, creating presentations, editing PDF documents, helping people apply for jobs and scholarships, KRA PIN applications and online services, software installations and system setup, Windows/Linux/macOS support, Microsoft Office installation and activation, designing posters and graphics, creating Google Forms, Excel and Python data analysis, email account support, networking support and MikroTik configuration, and distributing and selling DJ music mixes and digital music content."
+                description: "Early work included debugging student projects, coding school and university projects, teaching beginners programming, editing documents, helping with KRA/SHA applications, installing software, preparing reports, creating presentations, data analysis, email support, networking, and digital music distribution."
             },
             {
                 year: "Evolution",
                 title: "From Services to Platforms",
-                description: "Over time, it became clear that many local technical challenges could be solved at larger scale using platforms, software products, automation, cloud systems, AI, and digital ecosystems."
+                description: "The work expanded from individual services into scalable platforms, software products, automation, cloud systems, AI, and digital ecosystems."
             },
             {
                 year: "Today",
                 title: "African Technology Ecosystem",
-                description: "AngiSoft is growing into a software engineering company, digital innovation brand, SaaS and product company, educational technology platform, technology empowerment ecosystem, digital transformation partner, and future-focused African technology brand."
+                description: "AngiSoft is growing into a software engineering company, digital innovation brand, SaaS and product company, educational platform, and digital transformation partner."
             }
         ],
+        quote: {
+            text: "We are building AngiSoft from real problems, real users, and real community needs — not from theory. Every product, service, and platform must help someone move forward.",
+            source: "AngiSoft Technologies"
+        },
+        locations: [
+            { country: "Kenya", city: "Nairobi · HQ", flag: "🇰🇪" },
+            { country: "Uganda", city: "Kampala", flag: "🇺🇬" },
+            { country: "Tanzania", city: "Dar es Salaam", flag: "🇹🇿" },
+            { country: "Rwanda", city: "Kigali", flag: "🇷🇼" }
+        ],
+        cta: {
+            title: "Let’s Build Something Extraordinary Together",
+            description: "Whether you need custom software, a SaaS product, data dashboards, automation, mobile apps, or digital support, AngiSoft can help turn the idea into a practical working system.",
+            primary: { label: "Start a Project", to: "/booking" },
+            secondary: { label: "Talk to Us", to: "/contact" }
+        },
         positioning: {
             shouldNotBePositionedAs: [
                 "a cyber café",

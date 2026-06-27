@@ -25,6 +25,7 @@ import {
 const Home = () => {
   return (
     <>
+    
       {/* 1. HERO */ }
       <HeroSlider />
 
