@@ -111,75 +111,87 @@ const Footer = () => {
   ];
 
   return (
-    <AngiSoftFooterWave>
-      <div className="angi-container" style={{ position: 'relative', zIndex: 20 }}>
-        {/* TOP: 6 columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(0,175,255,0.12)' }}>
-          {/* Brand */}
-          <div style={{ gridColumn: 'span 1' }}>
-            <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
-              <div style={{ width: '7rem', filter: 'drop-shadow(0 0 12px rgba(0,175,255,0.25))' }}>
-                <AngiSoftLogo size="sm" />
-              </div>
-            </Link>
-            <p style={{ fontSize: '0.8125rem', lineHeight: 1.7, color: 'rgba(245,247,250,0.6)', marginBottom: '1rem' }}>
-              {footer.description || 'AngiSoft Technologies is a Kenyan-rooted technology ecosystem growing from practical grassroots support into scalable software products and digital empowerment solutions.'}
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {socialLinks.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
-                  className="angi-card" style={{ width: '2.25rem', height: '2.25rem', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.5rem', color: 'var(--secondary)', fontSize: '0.875rem', textDecoration: 'none' }}>
-                  <s.icon />
-                </a>
-              ))}
-            </div>
-          </div>
 
-          {/* Link Columns */}
-          {columns.map((col) => (
-            <div key={col.title}>
-              <div className="angi-footer-heading">{col.title}</div>
-              {col.links.map((link) => (
-                <Link key={link.label} to={link.href} className="angi-footer-link">{link.label}</Link>
-              ))}
+    <div className="angi-container" style={{ position: 'relative', zIndex: 20 }}>
+      {/* TOP: 5 columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '3rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(0,175,255,0.12)', borderTop: '2px solid rgba(0,175,255,0.12)', paddingTop: '3rem' }}>
+        {/* Brand */}
+        <div style={{ gridColumn: 'span 1' }}>
+          <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
+            <div style={{ width: '15rem', filter: 'drop-shadow(0 0 12px rgba(0,175,255,0.25))' }}>
+              <AngiSoftLogo size="md" />
             </div>
-          ))}
+          </Link>
+          <p style={{ fontSize: '0.8125rem', lineHeight: 1.7, color: 'rgba(245,247,250,0.6)', marginBottom: '1rem' }}>
+            {footer.description || 'AngiSoft Technologies is a Kenyan-rooted technology ecosystem growing from practical grassroots support into scalable software products and digital empowerment solutions.'}
+          </p>
+
         </div>
 
-        {/* MIDDLE: Contact + Newsletter */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(0,175,255,0.12)' }}>
-          <div>
-            <div className="angi-footer-heading">Contact</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {contacts.map((item) => (
-                <a key={item.label} href={item.href} className="angi-footer-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <item.icon style={{ color: 'var(--secondary)', flexShrink: 0 }} /> {item.label}
-                </a>
-              ))}
-            </div>
+        {/* Link Columns */}
+        {columns.map((col) => (
+          <div key={col.title}>
+            <div className="angi-footer-heading">{col.title}</div>
+            {col.links.map((link) => (
+              <Link key={link.label} to={link.href} className="angi-footer-link">{link.label}</Link>
+            ))}
           </div>
-          <div>
-            <div className="angi-footer-heading">Newsletter</div>
-            <p style={{ fontSize: '0.8125rem', color: 'rgba(245,247,250,0.55)', marginBottom: '1rem' }}>
-              Get the latest insights on software development, AI, and digital transformation.
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="email" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)}
-                placeholder="Your email address"
-                className="angi-input" style={{ flex: 1, marginBottom: 0 }}
-              />
-              <button onClick={handleSubscribe}
-                style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', flexShrink: 0, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FaPaperPlane />
-              </button>
-            </div>
-            {nlMessage && <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: nlStatus === 'success' ? 'var(--success)' : 'var(--primary)' }}>{nlMessage}</p>}
+        ))}
+
+        <div>
+          <div className="angi-footer-heading">Contact</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {contacts.map((item) => (
+              <a key={item.label} href={item.href} className="angi-footer-link" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <item.icon style={{ color: 'var(--secondary)', flexShrink: 0 }} /> {item.label}
+              </a>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* BOTTOM */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 0', fontSize: '0.8125rem', color: 'rgba(245,247,250,0.4)' }}>
+      {/* MIDDLE: Social Hndles + Newsletter */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(0,175,255,0.12)' }}>
+        <div>
+          <div className="angi-footer-heading">Social Handles</div>
+          <p style={{ fontSize: '0.8125rem', color: 'rgba(245,247,250,0.55)', marginBottom: '1rem' }}>
+            Follow us on social media to stay updated with our latest news and offerings.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+
+            {socialLinks.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
+                className="angi-card" style={{ width: '2.25rem', height: '2.25rem', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.5rem', color: 'var(--secondary)', fontSize: '0.875rem', textDecoration: 'none' }}>
+                <s.icon />
+              </a>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="angi-footer-heading">Newsletter</div>
+          <p style={{ fontSize: '0.8125rem', color: 'rgba(245,247,250,0.55)', marginBottom: '1rem' }}>
+            Get the latest insights on software development, AI, and digital transformation.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="email" value={nlEmail} onChange={(e) => setNlEmail(e.target.value)}
+              placeholder="Your email address"
+              className="angi-input" style={{ flex: 1, marginBottom: 0 }}
+            />
+            <button onClick={handleSubscribe}
+              style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', flexShrink: 0, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FaPaperPlane />
+            </button>
+          </div>
+          {nlMessage && <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: nlStatus === 'success' ? 'var(--success)' : 'var(--primary)' }}>{nlMessage}</p>}
+        </div>
+
+
+      </div>
+
+      {/* BOTTOM */}
+      <AngiSoftFooterWave>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', fontSize: '0.8125rem', color: 'rgba(245,247,250,0.4)' }}>
           <div>&copy; {currentYear} AngiSoft Technologies. All rights reserved.</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -191,8 +203,10 @@ const Footer = () => {
             </Link>
           </div>
         </div>
-      </div>
-    </AngiSoftFooterWave>
+      </AngiSoftFooterWave>
+
+    </div>
+
   );
 };
 

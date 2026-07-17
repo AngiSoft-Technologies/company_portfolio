@@ -1,343 +1,496 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../js/httpClient';
-import { getStaffDetailPath } from '../utils/detailPaths';
-import { resolveAssetUrl } from '../utils/constants';
-import { useTheme } from '../contexts/ThemeContext';
-import { ScrollReveal } from '../components/modern';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
-    FaUsers, FaLinkedin, FaTwitter, FaGithub, FaGlobe,
-    FaArrowRight, FaEnvelope, FaMapMarkerAlt, FaBriefcase
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+import {
+  FaArrowRight,
+  FaBriefcase,
+  FaEnvelope,
+  FaGithub,
+  FaGlobe,
+  FaLinkedin,
+  FaMapMarkerAlt,
+  FaTwitter,
+  FaUsers,
 } from 'react-icons/fa';
 
+import { apiGet } from '../js/httpClient';
+import {
+  getStaffDetailPath,
+} from '../utils/detailPaths';
+import {
+  resolveAssetUrl,
+} from '../utils/constants';
+
 const StaffList = () => {
-    const navigate = useNavigate();
-    const { colors } = useTheme();
-    const [staff, setStaff] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        apiGet('/staff')
-            .then(setStaff)
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
-    }, []);
+  const [staff, setStaff] =
+    useState([]);
 
-    const roleCount = new Set(staff.map(s => s.role)).size;
+  const [loading, setLoading] =
+    useState(true);
 
-    return (
-        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+  const [error, setError] =
+    useState('');
 
-            {/* ═══════ Cinematic Hero ═══════ */}
-            <section className="relative py-32 md:py-44 overflow-hidden">
-                {/* Ambient glows */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.06]"
-                        style={{ background: colors.primary, top: '-25%', left: '-10%' }} />
-                    <div className="absolute w-[400px] h-[400px] rounded-full blur-[140px] opacity-[0.04]"
-                        style={{ background: colors.secondary, bottom: '-15%', right: '5%' }} />
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchStaff = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response =
+          await apiGet('/staff');
+
+        if (!mounted) {
+          return;
+        }
+
+        setStaff(
+          Array.isArray(response)
+            ? response
+            : response?.data || []
+        );
+      } catch (requestError) {
+        if (!mounted) {
+          return;
+        }
+
+        setError(
+          requestError?.message ||
+            'Unable to load team profiles.'
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchStaff();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const roleCount = useMemo(
+    () =>
+      new Set(
+        staff
+          .map(
+            (member) =>
+              member.publicTitle ||
+              member.role
+          )
+          .filter(Boolean)
+      ).size,
+    [staff]
+  );
+
+  return (
+    <main className="min-h-screen bg-[#07142B] text-white">
+      <section className="border-b border-white/10 py-14 md:py-18 lg:py-20">
+        <div className="container">
+          <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto]">
+            <div className="max-w-4xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#00C2FF]">
+                Our People
+              </p>
+
+              <h1
+                className="mt-4 text-4xl font-black leading-[1.04] tracking-[-0.045em] text-white md:text-5xl lg:text-6xl"
+                style={{
+                  fontFamily:
+                    'Sora, sans-serif',
+                }}
+              >
+                The People Building
+                AngiSoft
+              </h1>
+
+              <p className="mt-6 max-w-3xl text-sm leading-7 text-white/62 md:text-base">
+                Meet the engineers,
+                developers, designers and
+                technology professionals
+                contributing to AngiSoft’s
+                products, projects and
+                practical digital services.
+              </p>
+            </div>
+
+            {!loading &&
+              staff.length > 0 && (
+                <div className="grid grid-cols-2 border border-white/12 bg-[#0A1B38]">
+                  <Stat
+                    value={
+                      staff.length
+                    }
+                    label="Team profiles"
+                  />
+
+                  <Stat
+                    value={
+                      roleCount
+                    }
+                    label="Roles"
+                    bordered
+                  />
                 </div>
-                {/* Grid texture */}
-                <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
-                    style={{
-                        backgroundImage: `linear-gradient(${colors.primary} 1px, transparent 1px), linear-gradient(90deg, ${colors.primary} 1px, transparent 1px)`,
-                        backgroundSize: '80px 80px',
-                    }} />
-
-                <div className="relative z-10 max-w-6xl mx-auto px-4">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-12 h-[2px]" style={{ background: `linear-gradient(90deg, ${colors.primary}, transparent)` }} />
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em]"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                Our People
-                            </span>
-                        </div>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] mb-8"
-                            style={{ fontFamily: 'Sora, sans-serif' }}>
-                            <span style={{ color: '#fff' }}>The Minds</span><br />
-                            <span style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
-                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                            }}>Behind The Code</span>
-                        </h1>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={200}>
-                        <p className="text-lg md:text-xl max-w-2xl mb-12 leading-relaxed"
-                            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'DM Sans, sans-serif' }}>
-                            Our talented team of engineers, designers, and strategists is the backbone of everything we build. Get to know the people shaping African tech.
-                        </p>
-                    </ScrollReveal>
-
-                    {/* Live stats */}
-                    {!loading && staff.length > 0 && (
-                        <ScrollReveal animation="fadeUp" delay={300}>
-                            <div className="flex flex-wrap gap-6">
-                                {[
-                                    { value: staff.length, label: 'Team Members' },
-                                    { value: roleCount, label: 'Departments' },
-                                    { value: '2024', label: 'Founded' },
-                                    { value: 'Nairobi', label: 'Headquarters' },
-                                ].map((stat, idx) => (
-                                    <div key={idx} className="px-6 py-4 rounded-2xl"
-                                        style={{
-                                            background: 'rgba(255,255,255,0.04)',
-                                            border: '1px solid rgba(255,255,255,0.06)',
-                                            backdropFilter: 'blur(12px)',
-                                        }}>
-                                        <div className="text-2xl md:text-3xl font-bold mb-1"
-                                            style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                            {stat.value}
-                                        </div>
-                                        <div className="text-xs uppercase tracking-wider"
-                                            style={{ color: 'rgba(255,255,255,0.4)' }}>
-                                            {stat.label}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollReveal>
-                    )}
-                </div>
-            </section>
-
-            {/* ═══════ Team Grid ═══════ */}
-            <section className="py-24 px-4">
-                <div className="max-w-7xl mx-auto">
-
-                    {loading && (
-                        <div className="flex justify-center py-24">
-                            <div className="w-12 h-12 border-2 rounded-full animate-spin"
-                                style={{ borderColor: `${colors.primary}20`, borderTopColor: colors.primary }} />
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="text-center py-20 rounded-2xl"
-                            style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)' }}>
-                            <p className="text-sm" style={{ color: '#ef4444' }}>{error}</p>
-                        </div>
-                    )}
-
-                    {!loading && !error && staff.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {staff.map((member, idx) => {
-                                const fullName = `${member.firstName} ${member.lastName}`;
-                                const hasSocials = member.linkedinUrl || member.twitterUrl || member.githubUrl || member.websiteUrl;
-                                return (
-                                    <ScrollReveal key={member.id} animation="fadeUp" delay={idx * 80}>
-                                        <div onClick={() => navigate(getStaffDetailPath(member))}
-                                            className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2"
-                                            style={{
-                                                background: 'rgba(255,255,255,0.02)',
-                                                border: '1px solid rgba(255,255,255,0.05)',
-                                            }}>
-
-                                            {/* Large avatar area */}
-                                            <div className="relative h-64 overflow-hidden">
-                                                {member.avatarUrl ? (
-                                                    <img src={resolveAssetUrl(member.avatarUrl)}
-                                                        alt={fullName}
-                                                        loading="lazy" decoding="async"
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white"
-                                                        style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
-                                                        {member.firstName?.[0]}{member.lastName?.[0]}
-                                                    </div>
-                                                )}
-                                                {/* Bottom gradient */}
-                                                <div className="absolute inset-0"
-                                                    style={{ background: 'linear-gradient(to top, rgba(7,20,43,0.95) 0%, rgba(7,20,43,0.3) 40%, transparent 70%)' }} />
-
-                                                {/* Location badge */}
-                                                {member.location && (
-                                                    <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-[11px] font-medium flex items-center gap-1.5"
-                                                        style={{
-                                                            background: 'rgba(0,0,0,0.5)',
-                                                            backdropFilter: 'blur(12px)',
-                                                            border: '1px solid rgba(255,255,255,0.1)',
-                                                            color: 'rgba(255,255,255,0.7)',
-                                                        }}>
-                                                        <FaMapMarkerAlt className="text-[9px]" style={{ color: colors.primary }} />
-                                                        {member.location}
-                                                    </div>
-                                                )}
-
-                                                {/* Name + role overlay */}
-                                                <div className="absolute bottom-4 left-5 right-5">
-                                                    <h3 className="text-xl font-bold mb-1"
-                                                        style={{ fontFamily: 'Sora, sans-serif' }}>
-                                                        {fullName}
-                                                    </h3>
-                                                    <div className="flex items-center gap-2">
-                                                        <FaBriefcase className="text-xs" style={{ color: colors.primary }} />
-                                                        <span className="text-sm capitalize" style={{ color: colors.primary }}>
-                                                            {member.publicTitle || member.role?.toLowerCase().replace('_', ' ')}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Card body */}
-                                            <div className="p-5">
-                                                {/* Summary */}
-                                                {(member.publicSummary || member.bio) && (
-                                                    <p className="text-sm mb-4 line-clamp-2 leading-relaxed"
-                                                        style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'DM Sans, sans-serif' }}>
-                                                        {member.publicSummary || member.bio}
-                                                    </p>
-                                                )}
-
-                                                {/* Skills */}
-                                                {member.skills && member.skills.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1.5 mb-4">
-                                                        {member.skills.slice(0, 4).map((skill, sIdx) => (
-                                                            <span key={sIdx}
-                                                                className="px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide"
-                                                                style={{
-                                                                    background: `${colors.primary}10`,
-                                                                    color: colors.primary,
-                                                                    border: `1px solid ${colors.primary}18`,
-                                                                }}>
-                                                                {skill}
-                                                            </span>
-                                                        ))}
-                                                        {member.skills.length > 4 && (
-                                                            <span className="px-2 py-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                                                                +{member.skills.length - 4}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {/* Specialties as secondary tags */}
-                                                {member.specialties && member.specialties.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1.5 mb-4">
-                                                        {member.specialties.slice(0, 3).map((spec, sIdx) => (
-                                                            <span key={sIdx}
-                                                                className="px-2 py-0.5 rounded text-[10px]"
-                                                                style={{
-                                                                    background: 'rgba(255,255,255,0.04)',
-                                                                    color: 'rgba(255,255,255,0.4)',
-                                                                    border: '1px solid rgba(255,255,255,0.06)',
-                                                                }}>
-                                                                {spec}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Footer: socials + view */}
-                                                <div className="flex items-center justify-between pt-3"
-                                                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                                    {/* Social links */}
-                                                    <div className="flex gap-2">
-                                                        {member.linkedinUrl && (
-                                                            <a href={member.linkedinUrl} target="_blank" rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
-                                                                <FaLinkedin className="text-xs" />
-                                                            </a>
-                                                        )}
-                                                        {member.twitterUrl && (
-                                                            <a href={member.twitterUrl} target="_blank" rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
-                                                                <FaTwitter className="text-xs" />
-                                                            </a>
-                                                        )}
-                                                        {member.githubUrl && (
-                                                            <a href={member.githubUrl} target="_blank" rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
-                                                                <FaGithub className="text-xs" />
-                                                            </a>
-                                                        )}
-                                                        {member.websiteUrl && (
-                                                            <a href={member.websiteUrl} target="_blank" rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                                                style={{ background: `${colors.primary}15`, color: colors.primary }}>
-                                                                <FaGlobe className="text-xs" />
-                                                            </a>
-                                                        )}
-                                                    </div>
-
-                                                    {/* View profile */}
-                                                    <span className="flex items-center gap-1.5 text-xs font-semibold transition-all duration-300 opacity-60 group-hover:opacity-100"
-                                                        style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                                        Profile <FaArrowRight className="text-[10px] transition-transform duration-300 group-hover:translate-x-1" />
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </ScrollReveal>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Empty state */}
-                    {!loading && !error && staff.length === 0 && (
-                        <div className="text-center py-24 rounded-2xl"
-                            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <FaUsers className="text-5xl mx-auto mb-4 opacity-30" />
-                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                                Team profiles coming soon.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            {/* ═══════ Join CTA ═══════ */}
-            <section className="py-24 px-4">
-                <div className="max-w-4xl mx-auto">
-                    <ScrollReveal animation="scaleUp">
-                        <div className="relative rounded-3xl overflow-hidden p-12 md:p-16 text-center"
-                            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})` }}>
-                            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                                style={{
-                                    backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                                    backgroundSize: '24px 24px',
-                                }} />
-                            <div className="relative z-10">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4"
-                                    style={{ fontFamily: 'Sora, sans-serif' }}>
-                                    Want to Join the Team?
-                                </h2>
-                                <p className="text-lg text-white/70 mb-8 max-w-xl mx-auto"
-                                    style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                                    We're always looking for talented people. Check out our open positions or reach out directly.
-                                </p>
-                                <div className="flex flex-wrap justify-center gap-4">
-                                    <button onClick={() => navigate('/careers')}
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
-                                        style={{ backgroundColor: '#fff', color: colors.primaryDark }}>
-                                        <FaBriefcase /> View Open Roles
-                                    </button>
-                                    <a href="mailto:careers@angisoft.co.ke"
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>
-                                        <FaEnvelope /> Get in Touch
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </ScrollReveal>
-                </div>
-            </section>
+              )}
+          </div>
         </div>
-    );
+      </section>
+
+      <section className="py-14 md:py-18 lg:py-20">
+        <div className="container">
+          {loading && (
+            <LoadingState />
+          )}
+
+          {!loading && error && (
+            <ErrorState
+              message={error}
+            />
+          )}
+
+          {!loading &&
+            !error &&
+            staff.length === 0 && (
+              <EmptyState />
+            )}
+
+          {!loading &&
+            !error &&
+            staff.length > 0 && (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {staff.map(
+                  (
+                    member,
+                    index
+                  ) => (
+                    <StaffCard
+                      key={
+                        member.id ||
+                        member.username ||
+                        index
+                      }
+                      member={
+                        member
+                      }
+                      onOpen={() =>
+                        navigate(
+                          getStaffDetailPath(
+                            member
+                          )
+                        )
+                      }
+                    />
+                  )
+                )}
+              </div>
+            )}
+        </div>
+      </section>
+
+      <section className="border-t border-white/10 bg-[#0A1B38] py-12 md:py-14">
+        <div className="container">
+          <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00C2FF]">
+                Careers at AngiSoft
+              </p>
+
+              <h2 className="mt-3 text-2xl font-black tracking-[-0.03em] text-white md:text-3xl">
+                Interested in Building
+                Technology With Us?
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/58">
+                Explore available roles
+                or contact AngiSoft when
+                you believe your skills
+                can contribute to our
+                products and projects.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/careers"
+                className="inline-flex min-h-11 items-center gap-2 bg-[#0A3DFF] px-5 py-3 text-xs font-bold text-white no-underline transition hover:bg-[#3B6FFF]"
+              >
+                <FaBriefcase />
+
+                View Open Roles
+              </Link>
+
+              <a
+                href="mailto:careers@angisoft.co.ke"
+                className="inline-flex min-h-11 items-center gap-2 border border-white/20 px-5 py-3 text-xs font-bold text-white no-underline transition hover:border-[#00C2FF] hover:text-[#00C2FF]"
+              >
+                <FaEnvelope />
+
+                Contact Careers
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 };
+
+const Stat = ({
+  value,
+  label,
+  bordered = false,
+}) => (
+  <div
+    className={`min-w-[130px] px-5 py-4 ${
+      bordered
+        ? 'border-l border-white/12'
+        : ''
+    }`}
+  >
+    <strong className="block text-2xl font-black text-[#00C2FF]">
+      {value}
+    </strong>
+
+    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+      {label}
+    </span>
+  </div>
+);
+
+const StaffCard = ({
+  member,
+  onOpen,
+}) => {
+  const fullName = [
+    member.firstName,
+    member.lastName,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const role =
+    member.publicTitle ||
+    member.role
+      ?.toLowerCase()
+      .replaceAll('_', ' ');
+
+  const summary =
+    member.publicSummary ||
+    member.bio ||
+    '';
+
+  const skills =
+    Array.isArray(member.skills)
+      ? member.skills.slice(0, 3)
+      : [];
+
+  const socials = [
+    {
+      label: 'LinkedIn',
+      url: member.linkedinUrl,
+      icon: FaLinkedin,
+    },
+    {
+      label: 'Twitter',
+      url: member.twitterUrl,
+      icon: FaTwitter,
+    },
+    {
+      label: 'GitHub',
+      url: member.githubUrl,
+      icon: FaGithub,
+    },
+    {
+      label: 'Website',
+      url: member.websiteUrl,
+      icon: FaGlobe,
+    },
+  ].filter(
+    (item) => item.url
+  );
+
+  const initials = [
+    member.firstName?.[0],
+    member.lastName?.[0],
+  ]
+    .filter(Boolean)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Enter' ||
+          event.key === ' '
+        ) {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="group flex cursor-pointer flex-col overflow-hidden border border-white/12 bg-[#0A1B38] outline-none transition duration-300 hover:-translate-y-1 hover:border-[#00C2FF]/50 focus-visible:ring-2 focus-visible:ring-[#00C2FF]"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#07142B]">
+        {member.avatarUrl ? (
+          <img
+            src={resolveAssetUrl(
+              member.avatarUrl
+            )}
+            alt={
+              fullName ||
+              'AngiSoft team member'
+            }
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.045]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A3DFF]/55 to-[#07142B] text-5xl font-black text-white">
+            {initials || 'AT'}
+          </div>
+        )}
+
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-[#07142B]/95 via-[#07142B]/10 to-transparent"
+          aria-hidden="true"
+        />
+
+        {member.location && (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 border border-white/15 bg-[#07142B]/75 px-2.5 py-1.5 text-[9px] font-semibold text-white/65 backdrop-blur-sm">
+            <FaMapMarkerAlt className="text-[#00C2FF]" />
+
+            {
+              member.location
+            }
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 p-5">
+          <h2 className="text-xl font-black leading-tight text-white">
+            {fullName}
+          </h2>
+
+          {role && (
+            <p className="mt-1 text-xs font-semibold capitalize text-[#00C2FF]">
+              {role}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
+        {summary && (
+          <p className="line-clamp-3 text-sm leading-6 text-white/55">
+            {summary}
+          </p>
+        )}
+
+        {skills.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {skills.map(
+              (skill) => (
+                <span
+                  key={skill}
+                  className="border border-[#0A3DFF]/25 bg-[#0A3DFF]/8 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#5DD8FF]"
+                >
+                  {skill}
+                </span>
+              )
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
+          <div className="flex items-center gap-2">
+            {socials.map(
+              (social) => {
+                const Icon =
+                  social.icon;
+
+                return (
+                  <a
+                    key={
+                      social.label
+                    }
+                    href={
+                      social.url
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(
+                      event
+                    ) =>
+                      event.stopPropagation()
+                    }
+                    className="flex h-7 w-7 items-center justify-center border border-white/12 text-[11px] text-white/55 transition hover:border-[#00C2FF] hover:text-[#00C2FF]"
+                    aria-label={
+                      social.label
+                    }
+                  >
+                    <Icon />
+                  </a>
+                );
+              }
+            )}
+          </div>
+
+          <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[#00C2FF]">
+            View Profile
+
+            <FaArrowRight className="text-[8px] transition group-hover:translate-x-1" />
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const LoadingState = () => (
+  <div className="flex min-h-[320px] items-center justify-center">
+    <div className="h-11 w-11 animate-spin rounded-full border-2 border-white/10 border-t-[#00C2FF]" />
+  </div>
+);
+
+const ErrorState = ({
+  message,
+}) => (
+  <div className="border border-red-400/25 bg-red-400/[0.04] px-6 py-12 text-center">
+    <p className="text-sm text-red-300">
+      {message}
+    </p>
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="border border-white/10 bg-[#0A1B38] px-6 py-16 text-center">
+    <FaUsers className="mx-auto text-4xl text-[#00C2FF]/45" />
+
+    <h2 className="mt-4 text-xl font-bold text-white">
+      Team Profiles Coming Soon
+    </h2>
+
+    <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-white/50">
+      Published AngiSoft staff
+      profiles will appear here.
+    </p>
+  </div>
+);
 
 export default StaffList;

@@ -520,6 +520,20 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+model AboutSection {
+  id        String   @id @default(uuid())
+  key       String   @unique // stable identifier used by the frontend (hero, intro, numberStories, geography, timeline, industries, clients, clientStats, clientHighlights, serviceGallery, solutionTypes, whyGuarantee, fullServices, pricing, merchandise, technologies, quotation, cta)
+  title     String
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  content   Json // section-specific payload (rich shape per key)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+  @@index([published])
+}
+
 model Testimonial {
   id              String   @id @default(uuid())
   name            String

@@ -106,6 +106,48 @@ async function main() {
         });
     };
 
+    // Break the flat about object into composed AboutSection rows (one row per
+    // key), preserving the declared order. This makes the About page editable as
+    // individual DB rows via the admin CMS (/api/about-sections).
+    const seedAboutSections = async (about: Record<string, any>) => {
+        const order: string[] = [
+            'hero', 'intro', 'numberStories', 'geography', 'timeline', 'industries',
+            'clients', 'clientStats', 'clientHighlights', 'serviceGallery', 'solutionTypes',
+            'whyGuarantee', 'fullServices', 'pricing', 'merchandise', 'technologies',
+            'quotation', 'cta'
+        ];
+        const titles: Record<string, string> = {
+            hero: 'Hero Slides', intro: 'Intro', numberStories: 'AngiSoft in Numbers',
+            geography: 'Global Reach Map', timeline: 'Our Journey', industries: 'Industries We Serve',
+            clients: 'Clients & Partners', clientStats: 'Client Stats', clientHighlights: 'Client Highlights',
+            serviceGallery: 'Service Map Gallery', solutionTypes: 'Solutions We Cover', whyGuarantee: 'Why We Guarantee Success',
+            fullServices: 'All of the Following', pricing: 'Pricing', merchandise: 'Merchandise Gallery',
+            technologies: 'Technologies', quotation: 'Quotation', cta: 'Final Call to Action'
+        };
+        const seen = new Set<string>();
+        let idx = 0;
+        for (const key of order) {
+            if (!(key in about)) continue;
+            seen.add(key);
+            await prisma.aboutSection.upsert({
+                where: { key },
+                update: overwritePublicContent ? { content: about[key], order: idx, title: titles[key] || key, published: true } : {},
+                create: { key, title: titles[key] || key, order: idx, published: true, content: about[key] }
+            });
+            idx += 1;
+        }
+        // Any keys not in the canonical order list still get seeded (future-proofing).
+        for (const key of Object.keys(about)) {
+            if (seen.has(key)) continue;
+            await prisma.aboutSection.upsert({
+                where: { key },
+                update: overwritePublicContent ? { content: about[key], order: idx } : {},
+                create: { key, title: key, order: idx, published: true, content: about[key] }
+            });
+            idx += 1;
+        }
+    };
+
     // ==================== SITE SETTINGS ====================
     console.log('\n📝 Seeding site settings...');
 
@@ -292,144 +334,274 @@ async function main() {
     await seedSetting('site_hero', heroValue);
     console.log('  ✅ Hero settings');
 
-    // About Section
-    await seedSetting('site_about', {
-        eyebrow: "Est. 2024 · Nairobi, Kenya",
-        title: "Who We Are",
-        subtitle: "A grassroots-origin African technology ecosystem",
-        hero: {
-            badge: "Est. 2024 · Nairobi, Kenya",
-            headline: "We Don’t Just Write Code.",
-            highlight: "We Build Futures.",
-            intro: "AngiSoft Technologies began from hands-on problem solving: debugging student projects, building school and business systems, editing documents, supporting online services, installing software, creating reports, and helping people solve everyday digital problems.",
-            imageUrl: "/uploads/public/images/cms/setting-site_hero-value-slides-9-image-9774f2a544.jpg",
-            primaryCta: { label: "Start a Project", to: "/booking" },
-            secondaryCta: { label: "Our Services", to: "/services" }
-        },
-        description: [
-            "AngiSoft officially began in December 2024 from practical technical work: debugging student projects, building school and business systems, editing documents, supporting online services, installing software, creating reports, and helping local users solve everyday digital problems.",
-            "That hands-on beginning shaped our direction. Today AngiSoft is evolving into a product-focused technology company building custom software, SaaS platforms, data systems, automation tools, digital services, creator platforms, and infrastructure support for African businesses and global users.",
-            "Our philosophy is simple: Innovate → Build → Empower. We identify real problems, engineer practical digital solutions, and help people grow through technology, education, content, tools, and opportunity."
+    // About Section — ScienceSoft-style section structure, AngiSoft dark identity.
+    // Image paths live under /uploads/public/images/about (served by the backend
+    // and resolved via resolveAssetUrl on the frontend).
+    const aboutValue = {
+        heroSlides: [
+            { id: 1, imageUrl: "/uploads/public/images/about/hero/prof-angera-founder.jpg", title: "Prof Angera Silas", subtitle: "Founder and Lead Software Engineer" },
+            { id: 2, imageUrl: "/uploads/public/images/about/hero/angisoft-product-work.jpg", title: "Engineering Practical Solutions", subtitle: "Software shaped by real business and community needs" },
+            { id: 3, imageUrl: "/uploads/public/images/about/hero/angisoft-team.jpg", title: "A Collaborative Team", subtitle: "Engineers, data and digital-service specialists" },
+            { id: 4, imageUrl: "/uploads/public/images/about/hero/angisoft-product-work.jpg", title: "Building Product Ecosystems", subtitle: "PetroFlow, DukaFlow, KejaLink and AngiTunes" }
         ],
-        profileTabs: [
+        intro: {
+            badge: "Est. 2024 · Nairobi, Kenya",
+            eyebrow: "About AngiSoft Technologies",
+            headline: "Building Africa’s Digital Future",
+            paragraph: "AngiSoft Technologies is a Nairobi-based software company building practical systems, data products and digital services from real community and business needs.",
+            primaryCta: { label: "Start a Project", to: "/booking" }
+        },
+        stats: [
+            { id: "founded", value: 2024, suffix: "", label: "Year AngiSoft was founded" },
+            { id: "projects", value: 8, suffix: "+", label: "Projects contributed to" },
+            { id: "products", value: 4, suffix: "", label: "Product ecosystems" },
+            { id: "services", value: 10, suffix: "+", label: "Digital service areas" }
+        ],
+        numberStories: [
             {
-                id: "who",
-                label: "Who We Are",
-                text: "AngiSoft Technologies is a Nairobi-based software company founded in December 2024. We grew from practical technical support into a serious engineering brand focused on business systems, mobile applications, data products, cloud deployment, automation, and digital empowerment.",
-                badges: ["Founded Dec 2024", "Nairobi, Kenya", "African-first focus"]
+                id: "founded",
+                eyebrow: "Our Origin",
+                statistic: 2024,
+                suffix: "",
+                title: "Founded in 2024",
+                text: "AngiSoft Technologies began from practical grassroots technology work: debugging student systems, teaching beginner coding, preparing documents, analysing data, installing software, creating posters and helping people complete essential online applications.",
+                imageUrl: "/uploads/public/images/about/numbers/founded-2024.jpg",
+                link: { label: "Read our story", to: "/about" }
             },
             {
-                id: "what",
-                label: "What We Do",
-                text: "We build web apps, Flutter and Kotlin mobile apps, dashboards, reports, POS systems, management platforms, automation workflows, cloud infrastructure, document services, and digital products that solve real operational problems.",
-                badges: ["Software", "Data", "Automation", "Digital services"]
+                id: "projects",
+                eyebrow: "Practical Work",
+                statistic: 8,
+                suffix: "+",
+                title: "Projects and practical work",
+                text: "Our experience has grown through practical contribution to real systems, including websites, mobile applications, management platforms, databases, data workflows and software recovery projects.",
+                images: [
+                    { url: "/uploads/public/images/about/numbers/projects.jpg", caption: "Websites & platforms" },
+                    { url: "/uploads/public/images/about/numbers/product-ecosystems.jpg", caption: "Product work" }
+                ],
+                link: { label: "See our work", to: "/services" }
             },
             {
-                id: "how",
-                label: "How We Work",
-                text: "We listen first, map the business process, build in focused iterations, test with real users, and keep improving after launch. Our work combines technical depth with practical local understanding.",
-                badges: ["Discover", "Design", "Build", "Improve"]
+                id: "products",
+                eyebrow: "Our Products",
+                statistic: 4,
+                suffix: "",
+                title: "Product ecosystems",
+                text: "AngiSoft is moving beyond one-off technical work into original technology products built around African business, property, fuel, retail and creative-industry needs.",
+                images: [
+                    { url: "/uploads/public/images/about/numbers/product-ecosystems.jpg", caption: "PetroFlow, DukaFlow, KejaLink, AngiTunes" }
+                ],
+                link: { label: "Explore products", to: "/products" }
+            },
+            {
+                id: "empowerment",
+                eyebrow: "Long-Term Impact",
+                statistic: 10,
+                suffix: "+",
+                title: "Technology that empowers",
+                text: "We do not build software only for delivery. We create systems, transfer knowledge, support users and help businesses build lasting digital capacity.",
+                imageUrl: "/uploads/public/images/about/numbers/digital-empowerment.jpg",
+                link: { label: "Our approach", to: "/services" }
             }
         ],
-        principles: [
-            { icon: "FaRocket", title: "Mission", color: "#0875FF", description: "To empower businesses, students, creators, and communities with reliable, affordable, and innovative technology solutions that drive growth." },
-            { icon: "FaEye", title: "Vision", color: "#00AFFF", description: "To become a leading African software and digital products company recognized for excellence, accessibility, and positive community impact." },
-            { icon: "FaHeart", title: "Philosophy", color: "#39FF6A", description: "Innovate → Build → Empower. Identify real problems, engineer practical solutions, and help people grow through technology." }
-        ],
-        serviceHighlights: [
-            { icon: "FaCode", title: "Custom Software", description: "Web apps, management systems, POS platforms, portfolios, and internal tools tailored to business operations." },
-            { icon: "FaMobile", title: "Mobile Development", description: "Flutter and Kotlin mobile apps for Android and cross-platform use, designed for real customer workflows." },
-            { icon: "FaChartLine", title: "Data Analytics", description: "Python, Excel, dashboards, reports, and decision-support tools for teams that need clarity from data." },
-            { icon: "FaPaintBrush", title: "Brand & Interface Design", description: "Clean interfaces, posters, presentations, public pages, and digital assets that make services easier to understand." },
-            { icon: "FaCloud", title: "Cloud & DevOps", description: "Deployment, Docker, Linux servers, CI/CD, API hosting, networking support, and infrastructure maintenance." },
-            { icon: "FaShieldAlt", title: "Digital Support Services", description: "Document editing, KRA/SHA applications, good conduct support, software setup, troubleshooting, and online services." }
-        ],
-        values: [
-            { icon: "FaLightbulb", title: "Innovate", text: "We start with real problems faced by businesses, creators, students, and communities." },
-            { icon: "FaCode", title: "Build", text: "We engineer reliable web, mobile, data, automation, and product systems." },
-            { icon: "FaHandsHelping", title: "Empower", text: "We share skills, create tools, support creators, and help businesses digitize." },
-            { icon: "FaSeedling", title: "Authentic Growth", text: "We embrace our grassroots origin while building scalable technology for the future." }
-        ],
-        stats: [
-            { value: 2024, suffix: "", label: "Year Founded", icon: "FaSeedling" },
-            { value: 15, suffix: "+", label: "Projects Delivered", icon: "FaRocket" },
-            { value: 10, suffix: "+", label: "Service Lines", icon: "FaLayerGroup" },
-            { value: 4, suffix: "+", label: "Product Ecosystems", icon: "FaCogs" }
-        ],
-        techStack: [
-            { name: "React", icon: "FaReact" },
-            { name: "Node.js", icon: "FaNodeJs" },
-            { name: "Flutter", icon: "FaMobile" },
-            { name: "Python", icon: "FaPython" },
-            { name: "PostgreSQL", icon: "FaDatabase" },
-            { name: "TypeScript", icon: "FaCode" },
-            { name: "Tailwind", icon: "FaPaintBrush" },
-            { name: "Docker", icon: "FaDocker" }
-        ],
-        achievements: [
-            "Built from real community technical support and practical problem-solving",
-            "Expanding from services into SaaS and product ecosystems",
-            "Focused on software, data, automation, creators, education, and digital transformation",
-            "Kenyan-rooted and Africa-facing, with globally accessible digital solutions"
+        geography: {
+            eyebrow: "Where We Work",
+            title: "AngiSoft Across Africa",
+            intro: "AngiSoft Technologies operates from Nairobi and delivers digital work across East Africa and the wider continent, with remote collaboration reaching clients globally.",
+            regions: [
+                { id: "nairobi", title: "Nairobi, Kenya", label: "Headquarters", description: "AngiSoft Technologies operates from Nairobi and serves clients through both direct and remote collaboration.", x: 66, y: 63 },
+                { id: "east-africa", title: "East Africa", label: "Primary Growth Region", description: "We are building solutions relevant to businesses, institutions, creators and communities across East Africa.", x: 71, y: 54 },
+                { id: "africa", title: "Africa", label: "Long-Term Market", description: "Our product vision is to build adaptable African technology platforms capable of scaling across borders.", x: 51, y: 57 },
+                { id: "global", title: "Global Digital Delivery", label: "Long-Term Reach", description: "We collaborate with remote clients worldwide, delivering and supporting systems across time zones.", x: 30, y: 40 }
+            ],
+            supplementary: [
+                { country: "Kenya", city: "Nairobi (HQ)", note: "Primary delivery hub" },
+                { country: "East Africa", city: "Regional", note: "Cross-border clients" },
+                { country: "Global", city: "Remote", note: "Remote delivery" }
+            ]
+        },
+        empowermentCommitment: {
+            eyebrow: "Social Responsibility",
+            title: "Our Commitment to Digital Empowerment",
+            text: "We believe technology should create practical opportunity. AngiSoft supports digital inclusion through accessible software, beginner-friendly technical guidance, community services, knowledge sharing and tools designed around real African needs.",
+            imageUrl: "/uploads/public/images/about/numbers/digital-empowerment.jpg",
+            cta: { label: "Read Our Empowerment Philosophy", to: "/about" }
+        },
+        collaborationModels: [
+            { id: "flexible", title: "Flexible Engagement Models", icon: "/uploads/public/images/about/collaboration/flexible-delivery.svg", items: ["End-to-end project delivery", "Product development", "Feature upgrades", "Technical support", "Ongoing maintenance"] },
+            { id: "integration", title: "Smooth Integration", icon: "/uploads/public/images/about/collaboration/seamless-integration.svg", items: ["Fast onboarding", "Existing-codebase support", "Database and API integration", "Workflow alignment", "Remote collaboration"] },
+            { id: "communication", title: "Clear Communication and Ownership", icon: "/uploads/public/images/about/collaboration/communication-ownership.svg", items: ["Defined milestones", "Progress tracking", "Transparent communication", "Demonstrations and reviews", "Clear responsibilities"] }
         ],
         timeline: [
-            {
-                year: "December 2024",
-                title: "Official Beginning",
-                description: "AngiSoft officially began with Prof Angera as the only developer and operator, solving practical everyday technical problems for students, businesses, creators, and local communities."
-            },
-            {
-                year: "Foundation",
-                title: "Practical Technical Work",
-                description: "Early work included debugging student projects, coding school and university projects, teaching beginners programming, editing documents, helping with KRA/SHA applications, installing software, preparing reports, creating presentations, data analysis, email support, networking, and digital music distribution."
-            },
-            {
-                year: "Evolution",
-                title: "From Services to Platforms",
-                description: "The work expanded from individual services into scalable platforms, software products, automation, cloud systems, AI, and digital ecosystems."
-            },
-            {
-                year: "Today",
-                title: "African Technology Ecosystem",
-                description: "AngiSoft is growing into a software engineering company, digital innovation brand, SaaS and product company, educational platform, and digital transformation partner."
-            }
+            { year: "Before 2024", title: "Grassroots Technology Work", description: "Coding support, documents, data work, installations, applications, posters and beginner technology training.", imageUrl: "/uploads/public/images/about/highlights/grassroots-origin.jpg" },
+            { year: "Dec 2024", title: "AngiSoft Technologies Officially Begins", description: "Prof Angera Silas establishes AngiSoft as a unified African technology brand.", imageUrl: "/uploads/public/images/about/highlights/founding-2024.jpg" },
+            { year: "2025", title: "Growth into Software Systems", description: "AngiSoft expands into websites, management platforms, mobile applications and database-driven solutions.", imageUrl: "/uploads/public/images/about/highlights/systems-growth-2025.jpg" },
+            { year: "2026", title: "Building Original Product Ecosystems", description: "Development continues across PetroFlow, DukaFlow, KejaLink and AngiTunes.", imageUrl: "/uploads/public/images/about/highlights/ecosystems-2026.jpg" }
         ],
-        quote: {
-            text: "We are building AngiSoft from real problems, real users, and real community needs — not from theory. Every product, service, and platform must help someone move forward.",
-            source: "AngiSoft Technologies"
+        transitionBanner: {
+            eyebrow: "Our Vision",
+            title: "Let’s Build Africa’s Digital Future Together",
+            subtitle: "Across every project we ask the same question: how does this technology create real, lasting opportunity?",
+            primaryCta: { label: "Start a Project", to: "/booking" }
         },
-        locations: [
-            { country: "Kenya", city: "Nairobi · HQ", flag: "🇰🇪" },
-            { country: "Uganda", city: "Kampala", flag: "🇺🇬" },
-            { country: "Tanzania", city: "Dar es Salaam", flag: "🇹🇿" },
-            { country: "Rwanda", city: "Kigali", flag: "🇷🇼" }
+        industries: [
+            { id: "retail", title: "Retail and SMEs", context: "POS, inventory and SME platforms", imageUrl: "/uploads/public/images/about/industries/retail.jpg" },
+            { id: "education", title: "Education", context: "Learning systems and student tooling", imageUrl: "/uploads/public/images/about/industries/education.jpg" },
+            { id: "real-estate", title: "Real Estate", context: "Property platforms like KejaLink", imageUrl: "/uploads/public/images/about/industries/real-estate.jpg" },
+            { id: "oil-gas", title: "Oil and Gas", context: "Fuel and depot systems like PetroFlow", imageUrl: "/uploads/public/images/about/industries/oil-gas.jpg" },
+            { id: "creative", title: "Creative and Entertainment", context: "Music platforms like AngiTunes", imageUrl: "/uploads/public/images/about/industries/creative-industry.jpg" },
+            { id: "professional", title: "Professional Services", context: "Practice and consulting systems", imageUrl: "/uploads/public/images/about/industries/professional-services.jpg" },
+            { id: "hospitality", title: "Hospitality", context: "Booking and operations tools", imageUrl: "/uploads/public/images/about/industries/hospitality.jpg" },
+            { id: "transport", title: "Transport and Logistics", context: "Fleet and dispatch workflows", imageUrl: "/uploads/public/images/about/industries/transport.jpg" },
+            { id: "community", title: "Community and Personal Services", context: "KRA/SHA and document services", imageUrl: "/uploads/public/images/about/industries/community.jpg" },
+            { id: "startups", title: "Technology Startups", context: "MVPs and product engineering", imageUrl: "/uploads/public/images/about/industries/startups.jpg" }
         ],
-        cta: {
-            title: "Let’s Build Something Extraordinary Together",
-            description: "Whether you need custom software, a SaaS product, data dashboards, automation, mobile apps, or digital support, AngiSoft can help turn the idea into a practical working system.",
-            primary: { label: "Start a Project", to: "/booking" },
-            secondary: { label: "Talk to Us", to: "/contact" }
+        clients: [
+            { id: "kingsway", name: "Kingsway School System", logoUrl: "/uploads/public/images/about/clients/kingsway.svg", note: "School management system" },
+            { id: "primestack", name: "PrimeStack", logoUrl: "/uploads/public/images/about/clients/primestack.svg", note: "Engineering client" },
+            { id: "petroflow", name: "PetroFlow", logoUrl: "/uploads/public/images/about/clients/petroflow.png", note: "AngiSoft product" },
+            { id: "dukaflow", name: "DukaFlow", logoUrl: "/uploads/public/images/about/clients/dukaflow.png", note: "AngiSoft product" },
+            { id: "kejalink", name: "KejaLink", logoUrl: "/uploads/public/images/about/clients/kejalink.png", note: "AngiSoft product" },
+            { id: "angitunes", name: "AngiTunes", logoUrl: "/uploads/public/images/about/clients/angitunes.png", note: "AngiSoft product" }
+        ],
+        intro: {
+            badge: "About AngiSoft",
+            headline: "More Than a Software Company.",
+            paragraph: "AngiSoft Technologies is an African technology company building practical software, data and digital services — and the original product ecosystems that grow around them.",
+            primaryCta: { label: "Explore Our Services", to: "/services" },
+            imageUrl: "/uploads/public/images/about/hero/angisoft-team.jpg"
         },
-        positioning: {
-            shouldNotBePositionedAs: [
-                "a cyber café",
-                "a random freelancer page",
-                "a student-only service",
-                "a generic software agency",
-                "a template startup",
-                "a local repair shop"
-            ],
-            shouldBePositionedAs: [
-                "an evolving African technology ecosystem",
-                "a serious software engineering brand",
-                "an innovation-driven company",
-                "a product-focused technology company",
-                "a digital empowerment platform",
-                "a scalable future-oriented tech company"
+        quotation: {
+            quote: "We build technology that fits how African businesses actually work — practical, secure and made to last.",
+            author: "Prof Angera Silas",
+            role: "Founder, AngiSoft Technologies"
+        },
+        awards: {
+            eyebrow: "Recognized & Trusted",
+            title: "Partnerships & Recognitions",
+            description: "The institutions and ecosystems we collaborate with across the continent.",
+            items: [
+                { id: "education", title: "Education institutions we support with systems and training", logoUrl: "/uploads/public/images/about/clients/kingsway.svg", url: "" },
+                { id: "products", title: "Original AngiSoft product ecosystems: PetroFlow, DukaFlow, KejaLink, AngiTunes", logoUrl: "", url: "/products" },
+                { id: "community", title: "Community digital-services programmes (KRA/SHA, documents)", logoUrl: "", url: "" },
+                { id: "open", title: "Open-source and technical communities we contribute to", logoUrl: "", url: "" }
             ]
+        },
+        solutionTypes: {
+            eyebrow: "What We Build",
+            title: "Solution Types",
+            description: "From a single debug to a complete platform — choose the engagement that fits.",
+            items: [
+                { id: "custom", title: "Custom Software", description: "Web, mobile and desktop applications built around your workflow.", to: "/services" },
+                { id: "products", title: "Product Ecosystems", description: "Original AngiSoft products for African industries.", to: "/products" },
+                { id: "data", title: "Data & Analysis", description: "Dashboards, reports and clean data workflows.", to: "/services" },
+                { id: "cyber", title: "Cyber & Document Services", description: "Secure documents, applications and digital services.", to: "/services" },
+                { id: "support", title: "Support & Maintenance", description: "Ongoing care, upgrades and monitoring.", to: "/services" },
+                { id: "consulting", title: "Technical Consulting", description: "Architecture, recovery and advisory.", to: "/contact" }
+            ]
+        },
+        clientStats: {
+            description: "Trusted by organizations across Africa and beyond.",
+            metrics: [
+                { value: "6+", label: "AngiSoft product & service clients" },
+                { value: "4", label: "Original product ecosystems" },
+                { value: "10+", label: "Core service categories" },
+                { value: "100%", label: "African-built and owned" }
+            ]
+        },
+        clientHighlights: [
+            { id: "kingsway", title: "Kingsway School System", summary: "School management platform built for Kenyan institutions.", imageUrl: "/uploads/public/images/about/industries/education.jpg", link: "" },
+            { id: "petroflow", title: "PetroFlow", summary: "Fuel depot and station management system for the oil & gas sector.", imageUrl: "/uploads/public/images/about/industries/oil-gas.jpg", link: "" },
+            { id: "kejalink", title: "KejaLink", summary: "Property and rental platform connecting landlords and tenants.", imageUrl: "/uploads/public/images/about/industries/real-estate.jpg", link: "" }
+        ],
+        serviceGallery: {
+            eyebrow: "What We Deliver",
+            title: "Service Map Gallery",
+            items: [
+                { id: "web", title: "Web Applications", imageUrl: "/uploads/public/images/about/industries/startups.jpg", tag: "Web" },
+                { id: "mobile", title: "Mobile Apps", imageUrl: "/uploads/public/images/about/hero/dev-working.jpg", tag: "Mobile" },
+                { id: "pos", title: "POS & Retail", imageUrl: "/uploads/public/images/about/industries/retail.jpg", tag: "Retail" },
+                { id: "data", title: "Data Dashboards", imageUrl: "/uploads/public/images/about/industries/community.jpg", tag: "Data" },
+                { id: "docs", title: "Documents & Cyber", imageUrl: "/uploads/public/images/about/industries/professional-services.jpg", tag: "Cyber" },
+                { id: "cloud", title: "Cloud & DevOps", imageUrl: "/uploads/public/images/about/industries/transport.jpg", tag: "Cloud" },
+                { id: "branding", title: "Branding & Media", imageUrl: "/uploads/public/images/about/merchandise/campaign.png", tag: "Brand" },
+                { id: "support", title: "Support & Care", imageUrl: "/uploads/public/images/about/industries/hospitality.jpg", tag: "Support" }
+            ]
+        },
+        whyGuarantee: {
+            eyebrow: "Our Promise",
+            title: "Why We Guarantee Project Success",
+            description: "Practical safeguards that keep your software reliable, secure and on track.",
+            items: [
+                { id: "clear", title: "Clear Scope & Milestones", description: "Defined deliverables and review points from day one." },
+                { id: "secure", title: "Security by Default", description: "Secure coding, access controls and safe data handling." },
+                { id: "owned", title: "You Own the Code", description: "Full source, documentation and handover included." },
+                { id: "supported", title: "Ongoing Support", description: "Maintenance, monitoring and upgrades after launch." }
+            ]
+        },
+        fullServices: {
+            eyebrow: "Everything We Offer",
+            title: "All of the Following",
+            description: "From enterprise platforms to everyday digital errands — if it's technical, we help.",
+            groups: [
+                { id: "software", title: "Custom Software", items: ["Web applications", "Mobile apps (Flutter / Kotlin)", "POS & management systems", "Portfolios & websites", "Database-driven platforms", "API & integrations"] },
+                { id: "data", title: "Data & Analysis", items: ["Python dashboards", "Excel reporting", "Data cleanup & workflows", "Analytics & insight"] },
+                { id: "cyber", title: "Cyber & Document Services", items: ["Reports & attachments", "Thesis & posters", "Presentations", "Secure document handling"] },
+                { id: "errands", title: "Everyday Digital Help", items: ["KRA / SHA applications", "Good Conduct certificates", "Online applications & forms", "Beginner tech guidance", "Print & design support"] }
+            ]
+        },
+        pricing: {
+            eyebrow: "How We Price",
+            title: "Transparent, Practical Pricing",
+            description: "Honest pricing shaped around scope, not surprises.",
+            items: [
+                { id: "scoped", title: "Scoped Projects", description: "Fixed quotation after we understand your requirements and workflow.", badge: "Most Popular" },
+                { id: "hourly", title: "Support & Advisory", description: "Hourly or retainer for maintenance, debugging and consulting." },
+                { id: "products", title: "Product Subscriptions", description: "AngiSoft products priced per station, module or tenant." }
+            ],
+            note: "Quotations are shared before any payment begins. Some projects may require a deposit before development starts."
+        },
+        merchandise: {
+            eyebrow: "AngiSoft Merch",
+            title: "Merchandise Gallery",
+            description: "Wear the brand. Real AngiSoft branded merchandise and campaign visuals.",
+            items: [
+                { id: "hoodie", title: "AngiSoft Hoodie", imageUrl: "/uploads/public/images/about/merchandise/hoodie.png" },
+                { id: "tshirt", title: "AngiSoft T-Shirt", imageUrl: "/uploads/public/images/about/merchandise/tshirt.png" },
+                { id: "mug", title: "AngiSoft Mug", imageUrl: "/uploads/public/images/about/merchandise/mug.png" },
+                { id: "cap", title: "AngiSoft Cap", imageUrl: "/uploads/public/images/about/merchandise/cap.png" },
+                { id: "stickers", title: "AngiSoft Stickers", imageUrl: "/uploads/public/images/about/merchandise/stickers.png" },
+                { id: "notebook", title: "AngiSoft Notebook", imageUrl: "/uploads/public/images/about/merchandise/notebook.png" },
+                { id: "campaign", title: "Campaign Banner", imageUrl: "/uploads/public/images/about/merchandise/campaign.png" },
+                { id: "wallpaper", title: "Desktop Wallpaper", imageUrl: "/uploads/public/images/about/merchandise/wallpaper.png" }
+            ]
+        },
+        technologies: {
+            eyebrow: "Our Stack",
+            title: "Technologies We Use",
+            description: "Modern, reliable tools for building and shipping software.",
+            items: [
+                { id: "react", name: "React", icon: "/uploads/public/images/about/technologies/react.svg", to: "" },
+                { id: "flutter", name: "Flutter", icon: "/uploads/public/images/about/technologies/flutter.svg", to: "" },
+                { id: "kotlin", name: "Kotlin", icon: "/uploads/public/images/about/technologies/kotlin.svg", to: "" },
+                { id: "node", name: "Node.js", icon: "/uploads/public/images/about/technologies/node.svg", to: "" },
+                { id: "python", name: "Python", icon: "/uploads/public/images/about/technologies/python.svg", to: "" },
+                { id: "postgres", name: "PostgreSQL", icon: "/uploads/public/images/about/technologies/postgres.svg", to: "" },
+                { id: "aws", name: "Cloud & DevOps", icon: "/uploads/public/images/about/technologies/cloud.svg", to: "" },
+                { id: "tailwind", name: "Tailwind", icon: "/uploads/public/images/about/technologies/tailwind.svg", to: "" }
+            ]
+        },
+        cta: {
+            title: "Have a Software Idea or a Digital Challenge?",
+            description: "Let AngiSoft help you turn it into a practical, secure and scalable solution.",
+            primary: { label: "Start a Project", to: "/booking" },
+            secondary: { label: "Talk to Our Team", to: "/contact" }
         }
-    });
-    console.log('  ✅ About settings');
+    };
+
+    await seedSetting('site_about', aboutValue);
+    await seedAboutSections(aboutValue);
+    console.log('  ✅ About settings (Setting + AboutSection rows)');
 
     // Contact Section
     await seedSetting('site_contact', {

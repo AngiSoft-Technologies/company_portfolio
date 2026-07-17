@@ -1,578 +1,480 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ScrollReveal } from '../components/modern';
-import { apiGet } from '../js/httpClient';
-import { resolveAssetUrl } from '../utils/constants';
-import { getStaffDetailPath } from '../utils/detailPaths';
-import {
-  FaArrowRight,
-  FaAward,
-  FaChartLine,
-  FaCheckCircle,
-  FaChevronRight,
-  FaCloud,
-  FaCode,
-  FaCogs,
-  FaDatabase,
-  FaDocker,
-  FaEye,
-  FaHandsHelping,
-  FaHeart,
-  FaLayerGroup,
-  FaLightbulb,
-  FaMapMarkerAlt,
-  FaMobile,
-  FaNodeJs,
-  FaPaintBrush,
-  FaPython,
-  FaQuoteLeft,
-  FaReact,
-  FaRocket,
-  FaSeedling,
-  FaShieldAlt,
-  FaUsers,
-} from 'react-icons/fa';
+import React from 'react';
+import { useAboutPage } from '../hooks/useAboutPage';
 
-const DARK_BG = '#07142B';
-const DARK_SURFACE = '#0B1E3D';
-const BLUE_PRIMARY = '#0875FF';
-const BLUE_SECONDARY = '#00AFFF';
-const GREEN = '#39FF6A';
+/*
+|--------------------------------------------------------------------------
+| Reference-aligned About page sections
+|--------------------------------------------------------------------------
+*/
 
-const iconRegistry = {
-  FaAward,
-  FaChartLine,
-  FaCheckCircle,
-  FaCloud,
-  FaCode,
-  FaCogs,
-  FaDatabase,
-  FaDocker,
-  FaEye,
-  FaHandsHelping,
-  FaHeart,
-  FaLayerGroup,
-  FaLightbulb,
-  FaMapMarkerAlt,
-  FaMobile,
-  FaNodeJs,
-  FaPaintBrush,
-  FaPython,
-  FaReact,
-  FaRocket,
-  FaSeedling,
-  FaShieldAlt,
-  FaUsers,
-};
+import AboutHeroSlider from '../components/about/AboutHeroSlider';
+import AboutNumberStory from '../components/about/AboutNumberStory';
+import AboutGeographyMap from '../components/about/AboutGeographyMap';
+import AboutSustainability from '../components/about/AboutSustainability';
+import AboutCollaboration from '../components/about/AboutCollaboration';
+import AboutHighlightsSlider from '../components/about/AboutHighlightsSlider';
+import AboutIndustriesGrid from '../components/about/AboutIndustriesGrid';
+import AboutClientsSlider from '../components/about/AboutClientsSlider';
+import AboutTestimonialsSlider from '../components/about/AboutTestimonialsSlider';
+import AboutServiceMap from '../components/about/AboutServiceMap';
+import AboutTransparency from '../components/about/AboutTransparency';
+import AboutPartnerships from '../components/about/AboutPartnerships';
+import AboutSolutionTypes from '../components/about/AboutSolutionTypes';
+import AboutTechnologies from '../components/about/AboutTechnologies';
+import AboutSpecializedCapabilities from '../components/about/AboutSpecializedCapabilities';
+import AboutWhyGuarantee from '../components/about/AboutWhyGuarantee';
+import AboutPricing from '../components/about/AboutPricing';
+import AboutPricingQuotation from '../components/about/AboutPricingQuotation';
+import AboutFinalCTA from '../components/about/AboutFinalCTA';
 
-const colorCycle = [BLUE_PRIMARY, BLUE_SECONDARY, '#18D8FF', GREEN];
+/*
+|--------------------------------------------------------------------------
+| Shared loading and error states
+|--------------------------------------------------------------------------
+*/
 
-const resolveIcon = (name, fallback = FaLightbulb) => {
-  if (typeof name === 'function') return name;
-  return iconRegistry[name] || fallback;
-};
+const AboutPageSkeleton = () => (
+  <main
+    className="min-h-screen overflow-x-clip bg-[#07142B] text-white"
+    aria-busy="true"
+    aria-label="Loading About AngiSoft"
+  >
+    <section className="min-h-[640px] border-b border-white/10">
+      <div className="container grid min-h-[640px] items-center gap-10 py-16 lg:grid-cols-[0.4fr_0.6fr]">
+        <div>
+          <div className="h-4 w-36 animate-pulse bg-white/10" />
+          <div className="mt-6 h-14 max-w-lg animate-pulse bg-white/10" />
+          <div className="mt-3 h-14 max-w-md animate-pulse bg-white/10" />
+          <div className="mt-8 h-5 max-w-xl animate-pulse bg-white/5" />
+          <div className="mt-3 h-5 max-w-lg animate-pulse bg-white/5" />
+          <div className="mt-8 h-12 w-52 animate-pulse bg-[#0A3DFF]/30" />
+        </div>
 
-const normalizeCopy = (item) => item?.description || item?.text || item?.desc || '';
+        <div className="h-[440px] animate-pulse bg-white/5" />
+      </div>
+    </section>
 
-const defaultAbout = {
-  hero: {
-    badge: 'Est. 2024 · Nairobi, Kenya',
-    headline: 'We Don’t Just Write Code.',
-    highlight: 'We Build Futures.',
-    intro: 'AngiSoft Technologies builds software, data systems, digital services, and practical platforms from real community and business needs.',
-    imageUrl: '/images/Branding/AngiSoft%20T-Shirts%20Design.png',
-    primaryCta: { label: 'Start a Project', to: '/booking' },
-    secondaryCta: { label: 'Our Services', to: '/services' },
-  },
-  profileTabs: [
-    {
-      id: 'who',
-      label: 'Who We Are',
-      text: 'AngiSoft Technologies is a Nairobi-based software company founded in December 2024, growing from practical technical support into a serious engineering and digital products brand.',
-      badges: ['Founded Dec 2024', 'Nairobi, Kenya', 'African-first focus'],
-    },
-    {
-      id: 'what',
-      label: 'What We Do',
-      text: 'We build web apps, mobile apps, dashboards, business systems, automation workflows, cloud deployments, and digital support services for real operations.',
-      badges: ['Software', 'Data', 'Automation', 'Digital services'],
-    },
-    {
-      id: 'how',
-      label: 'How We Work',
-      text: 'We listen first, map the process, build in focused iterations, test with users, and keep improving after launch.',
-      badges: ['Discover', 'Design', 'Build', 'Improve'],
-    },
-  ],
-  principles: [
-    { icon: 'FaRocket', title: 'Mission', description: 'Empower people and businesses with practical, reliable, and affordable technology solutions.' },
-    { icon: 'FaEye', title: 'Vision', description: 'Become a leading African software and digital products company recognized for impact.' },
-    { icon: 'FaHeart', title: 'Philosophy', description: 'Innovate → Build → Empower. Solve real problems and help people grow through technology.' },
-  ],
-  values: [
-    { icon: 'FaLightbulb', title: 'Innovate', text: 'We start with real problems faced by businesses, creators, students, and communities.' },
-    { icon: 'FaCode', title: 'Build', text: 'We engineer reliable web, mobile, data, automation, and product systems.' },
-    { icon: 'FaHandsHelping', title: 'Empower', text: 'We share skills, create tools, support creators, and help businesses digitize.' },
-    { icon: 'FaSeedling', title: 'Authentic Growth', text: 'We embrace our grassroots origin while building scalable technology for the future.' },
-  ],
-  serviceHighlights: [],
-  techStack: [],
-  timeline: [],
-  locations: [],
-  quote: {
-    text: 'We are building AngiSoft from real problems, real users, and real community needs — not from theory.',
-    source: 'AngiSoft Technologies',
-  },
-  cta: {
-    title: 'Let’s Build Something Extraordinary Together',
-    description: 'Whether you need custom software, a SaaS product, data dashboards, automation, mobile apps, or digital support, AngiSoft can help turn the idea into a practical working system.',
-    primary: { label: 'Start a Project', to: '/booking' },
-    secondary: { label: 'Talk to Us', to: '/contact' },
-  },
-};
+    {Array.from({ length: 4 }).map((_, index) => (
+      <section
+        key={index}
+        className="border-b border-white/10 py-16 md:py-20"
+      >
+        <div className="container">
+          <div className="mx-auto h-10 w-72 animate-pulse bg-white/10" />
+          <div className="mx-auto mt-4 h-5 max-w-2xl animate-pulse bg-white/5" />
 
-const SectionHeader = ({ eyebrow, title, highlight, centered = false, action }) => (
-  <div className={`mb-10 lg:mb-14 ${centered ? 'text-center max-w-4xl mx-auto' : 'flex flex-col gap-6 md:flex-row md:items-end md:justify-between'}`}>
-    <div>
-      <span className="block mb-4 text-sm font-bold uppercase tracking-[0.28em] text-[#0875FF]" style={{ fontFamily: 'Sora, sans-serif' }}>
-        {eyebrow}
-      </span>
-      <h2 className="text-4xl font-black leading-[1.02] text-white md:text-5xl xl:text-6xl" style={{ fontFamily: 'Sora, sans-serif' }}>
-        {title}{' '}
-        {highlight && (
-          <span className="bg-gradient-to-r from-[#0875FF] via-[#00AFFF] to-[#39FF6A] bg-clip-text text-transparent">
-            {highlight}
-          </span>
-        )}
-      </h2>
-    </div>
-    {action}
-  </div>
+          <div className="mt-12 grid gap-8 lg:grid-cols-2">
+            <div className="h-80 animate-pulse bg-white/5" />
+            <div className="h-80 animate-pulse bg-white/5" />
+          </div>
+        </div>
+      </section>
+    ))}
+  </main>
 );
 
+const AboutPageError = ({ message, onRetry }) => (
+  <main className="flex min-h-[70vh] items-center bg-[#07142B] px-6 text-white">
+    <div className="container text-center">
+      <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#00C2FF]">
+        AngiSoft Technologies
+      </p>
+
+      <h1 className="mt-4 text-3xl font-black md:text-5xl">
+        The About page could not be loaded.
+      </h1>
+
+      <p className="mx-auto mt-5 max-w-xl leading-7 text-white/65">
+        {message || 'Please try again in a moment.'}
+      </p>
+
+      {typeof onRetry === 'function' && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-8 bg-[#0A3DFF] px-7 py-3.5 font-bold text-white transition hover:bg-[#3B6FFF]"
+        >
+          Try Again
+        </button>
+      )}
+    </div>
+  </main>
+);
+
+/*
+|--------------------------------------------------------------------------
+| About page
+|--------------------------------------------------------------------------
+|
+| This composer deliberately follows the reference company's full editorial
+| sequence while retaining AngiSoft's dark design system and truthful content.
+|
+*/
+
 const About = () => {
-  const navigate = useNavigate();
-  const [about, setAbout] = useState(null);
-  const [staff, setStaff] = useState([]);
-  const [companyStats, setCompanyStats] = useState([]);
-  const [activeTab, setActiveTab] = useState('who');
+  const {
+    about,
+    testimonials,
+    clientStats,
+    clientHighlights,
+    loading,
+    error,
+    refetch,
+  } = useAboutPage();
 
-  useEffect(() => {
-    apiGet('/site/about').then(setAbout).catch(() => {});
-    apiGet('/staff').then((data) => { if (Array.isArray(data)) setStaff(data); }).catch(() => {});
-    apiGet('/company-stats').then((data) => { if (Array.isArray(data)) setCompanyStats(data); }).catch(() => {});
-  }, []);
+  if (loading) {
+    return <AboutPageSkeleton />;
+  }
 
-  const content = useMemo(() => ({ ...defaultAbout, ...(about || {}) }), [about]);
-  const hero = { ...defaultAbout.hero, ...(content.hero || {}) };
-  const tabs = content.profileTabs?.length ? content.profileTabs : defaultAbout.profileTabs;
-  const activeTabData = tabs.find((tab) => tab.id === activeTab) || tabs[0];
-  const descriptions = Array.isArray(content.description) ? content.description : [];
-  const principles = content.principles?.length ? content.principles : defaultAbout.principles;
-  const services = content.serviceHighlights?.length ? content.serviceHighlights : defaultAbout.serviceHighlights;
-  const values = content.values?.length ? content.values : defaultAbout.values;
-  const timeline = content.timeline?.length ? content.timeline : [];
-  const techStack = content.techStack?.length ? content.techStack : defaultAbout.techStack;
-  const locations = content.locations?.length ? content.locations : defaultAbout.locations;
-  const quote = { ...defaultAbout.quote, ...(content.quote || {}) };
-  const cta = { ...defaultAbout.cta, ...(content.cta || {}) };
-  const teamPreview = staff.slice(0, 4);
+  if (error) {
+    return (
+      <AboutPageError
+        message={error}
+        onRetry={refetch}
+      />
+    );
+  }
 
-  const stats = useMemo(() => {
-    const cmsStats = content.stats?.length ? content.stats : [];
-    const source = companyStats.length ? companyStats : cmsStats;
-    const normalized = source.slice(0, 4).map((stat) => ({
-      value: `${stat.value ?? ''}${stat.suffix ?? ''}`,
-      label: stat.label,
-      icon: resolveIcon(stat.icon, FaAward),
-      description: stat.description,
-    }));
-
-    if (staff.length > 0) {
-      normalized[0] = { value: `${staff.length}+`, label: 'Team Members', icon: FaUsers, description: 'Published AngiSoft team profiles' };
-    }
-
-    return normalized;
-  }, [companyStats, content.stats, staff.length]);
+  if (!about) {
+    return (
+      <AboutPageError
+        message="No About page content is currently available."
+        onRetry={refetch}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen overflow-hidden text-white" style={{ backgroundColor: DARK_BG }}>
-      <div className="pointer-events-none fixed inset-0 opacity-40">
-        <div className="absolute -left-40 top-10 h-96 w-96 rounded-full bg-[#0875FF]/20 blur-[140px]" />
-        <div className="absolute right-0 top-1/3 h-[32rem] w-[32rem] rounded-full bg-[#00AFFF]/10 blur-[160px]" />
-        <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-[#39FF6A]/10 blur-[150px]" />
-      </div>
+    <main
+      id="about-company-page"
+      className="min-h-screen overflow-x-clip bg-[#07142B] text-white"
+    >
+      {/*
+      |--------------------------------------------------------------------------
+      | 01. About AngiSoft — Your Partner for Digital Success
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - company introduction on the left
+      | - leadership/company image slider on the right
+      | - introductory CTA
+      |
+      */}
 
-      <section className="relative min-h-[86vh] px-6 py-24 lg:px-8 lg:py-32">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
-          <ScrollReveal animation="fadeUp">
-            <div className="max-w-3xl text-center lg:text-left">
-              <div className="mb-7 inline-flex items-center gap-3 rounded-full border border-[#0875FF]/25 bg-[#0875FF]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#00AFFF]">
-                <span className="h-2 w-2 rounded-full bg-[#39FF6A] shadow-[0_0_18px_#39FF6A]" />
-                {hero.badge || content.eyebrow}
-              </div>
-              <h1 className="text-5xl font-black leading-[0.94] tracking-[-0.05em] md:text-6xl xl:text-7xl" style={{ fontFamily: 'Sora, sans-serif' }}>
-                {hero.headline}
-                <span className="mt-2 block bg-gradient-to-r from-[#0875FF] via-[#00AFFF] to-[#39FF6A] bg-clip-text text-transparent">
-                  {hero.highlight}
-                </span>
-              </h1>
-              <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-white/60 lg:mx-0">
-                {hero.intro || descriptions[0]}
-              </p>
-              <div className="mt-10 flex flex-wrap justify-center gap-4 lg:justify-start">
-                <button
-                  onClick={() => navigate(hero.primaryCta?.to || '/booking')}
-                  className="group inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#0875FF] to-[#003BCE] px-7 py-4 text-sm font-bold text-white shadow-[0_20px_50px_rgba(8,117,255,0.3)] transition hover:-translate-y-1"
-                >
-                  {hero.primaryCta?.label || 'Start a Project'}
-                  <FaArrowRight className="transition group-hover:translate-x-1" />
-                </button>
-                <button
-                  onClick={() => navigate(hero.secondaryCta?.to || '/services')}
-                  className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-7 py-4 text-sm font-bold text-white/80 transition hover:-translate-y-1 hover:bg-white/10"
-                >
-                  {hero.secondaryCta?.label || 'Our Services'}
-                  <FaChevronRight className="text-xs" />
-                </button>
-              </div>
-            </div>
-          </ScrollReveal>
+      <AboutHeroSlider
+        slides={about.heroSlides}
+        intro={about.intro}
+      />
 
-          <ScrollReveal animation="fadeRight" delay={140}>
-            <div className="relative mx-auto w-full max-w-2xl">
-              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#0875FF]/40 via-[#00AFFF]/10 to-[#39FF6A]/20 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 shadow-2xl">
-                <img
-                  src={resolveAssetUrl(hero.imageUrl)}
-                  alt="AngiSoft Technologies brand"
-                  className="h-[360px] w-full object-cover md:h-[520px]"
-                  onError={(event) => {
-                    event.currentTarget.src = '/images/Branding/AngiSoft%20T-Shirts%20Design.png';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#07142B] via-transparent to-transparent" />
-              </div>
-              <div className="absolute -bottom-7 left-4 rounded-2xl border border-[#0875FF]/30 bg-[#07142B]/90 px-6 py-4 backdrop-blur-xl md:left-[-1.5rem]">
-                <div className="text-4xl font-black text-[#0875FF]" style={{ fontFamily: 'Sora, sans-serif' }}>2024</div>
-                <div className="text-xs uppercase tracking-[0.18em] text-white/45">Year Founded</div>
-              </div>
-              {staff.length > 0 && (
-                <div className="absolute -top-6 right-4 rounded-2xl border border-[#00AFFF]/30 bg-[#07142B]/90 px-5 py-4 backdrop-blur-xl md:right-[-1.5rem]">
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                      {staff.slice(0, 3).map((member) => (
-                        <div key={member.id} className="h-9 w-9 overflow-hidden rounded-full border-2 border-[#07142B] bg-[#0875FF]">
-                          {member.avatarUrl ? (
-                            <img src={resolveAssetUrl(member.avatarUrl)} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs font-black">
-                              {member.firstName?.[0]}{member.lastName?.[0]}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      <div className="font-black">{staff.length}+</div>
-                      <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Team Members</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+      {/*
+      |--------------------------------------------------------------------------
+      | 02. AngiSoft in Numbers
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - top collected metric row
+      | - animated number stories
+      | - large images
+      | - split slide transitions
+      |
+      */}
 
-      {stats.length > 0 && (
-        <section className="relative px-6 py-14 lg:px-8">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 lg:grid-cols-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <ScrollReveal key={`${stat.label}-${index}`} animation="fadeUp" delay={index * 70}>
-                  <div className="group flex min-h-[150px] flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.035] p-6 text-center transition hover:-translate-y-1 hover:border-[#0875FF]/40 hover:bg-white/[0.055]">
-                    <Icon className="mb-4 text-2xl text-[#0875FF] opacity-80" />
-                    <div className="text-4xl font-black tracking-[-0.04em] md:text-5xl" style={{ fontFamily: 'Sora, sans-serif' }}>{stat.value}</div>
-                    <div className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-white/45">{stat.label}</div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <AboutNumberStory
+        stories={about.numberStories}
+        title={about.numbersHeading?.title || 'AngiSoft in Numbers'}
+        description={
+          about.numbersHeading?.description ||
+          'A growing technology company measured by real work, original products and practical impact.'
+        }
+      />
 
-      <section className="px-6 py-20 lg:px-8 lg:py-28">
-        <div className="mx-auto grid max-w-7xl items-start gap-10 lg:grid-cols-[1.08fr_0.92fr]">
-          <ScrollReveal animation="fadeLeft">
-            <div className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 md:p-8 lg:p-10">
-              <SectionHeader eyebrow="Company Profile" title="Building Africa’s" highlight="Digital Future" />
-              <div className="mb-8 flex flex-wrap justify-center gap-2 rounded-2xl bg-white/[0.04] p-2 md:justify-start">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`rounded-xl px-5 py-3 text-sm font-bold transition ${activeTabData?.id === tab.id ? 'bg-[#0875FF] text-white' : 'text-white/45 hover:bg-white/5 hover:text-white/80'}`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-center text-lg leading-9 text-white/62 md:text-left">{activeTabData?.text || activeTabData?.content}</p>
-              <div className="mt-7 flex flex-wrap justify-center gap-2 md:justify-start">
-                {(activeTabData?.badges || activeTabData?.highlights || []).map((badge) => (
-                  <span key={badge} className="inline-flex items-center gap-2 rounded-full border border-[#0875FF]/20 bg-[#0875FF]/10 px-3 py-1.5 text-xs font-bold text-[#00AFFF]">
-                    <FaCheckCircle /> {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </ScrollReveal>
+     
 
-          <div className="grid gap-4">
-            {principles.map((principle, index) => {
-              const Icon = resolveIcon(principle.icon, FaRocket);
-              const color = principle.color || colorCycle[index % colorCycle.length];
-              return (
-                <ScrollReveal key={principle.title} animation="fadeRight" delay={index * 90}>
-                  <div className="flex gap-5 rounded-3xl border border-white/10 bg-white/[0.035] p-6 transition hover:-translate-y-1 hover:bg-white/[0.055]">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ background: `linear-gradient(135deg, ${color}, ${BLUE_PRIMARY})` }}>
-                      <Icon className="text-xl" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-black uppercase tracking-[-0.04em]" style={{ color, fontFamily: 'Sora, sans-serif' }}>{principle.title}</h3>
-                      <p className="mt-2 text-base leading-7 text-white/55">{normalizeCopy(principle)}</p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/*
+      |--------------------------------------------------------------------------
+      | 04. Our Geography
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - centered heading and introduction
+      | - three regional summary columns
+      | - wide labelled map
+      |
+      */}
 
-      {services.length > 0 && (
-        <section className="relative px-6 py-20 lg:px-8 lg:py-28">
-          <div className="mx-auto max-w-7xl">
-            <ScrollReveal animation="fadeUp">
-              <SectionHeader
-                eyebrow="What We Do"
-                title="Our"
-                highlight="Expertise"
-                action={(
-                  <button onClick={() => navigate('/services')} className="inline-flex items-center gap-2 text-sm font-black text-[#0875FF] transition hover:gap-4">
-                    All Services <FaArrowRight />
-                  </button>
-                )}
-              />
-            </ScrollReveal>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {services.map((service, index) => {
-                const Icon = resolveIcon(service.icon, FaCode);
-                const color = service.color || colorCycle[index % colorCycle.length];
-                return (
-                  <ScrollReveal key={service.title} animation="fadeUp" delay={index * 70}>
-                    <div className="group h-full rounded-3xl border border-white/10 bg-white/[0.035] p-7 transition hover:-translate-y-2 hover:border-[#0875FF]/35 hover:bg-white/[0.055]">
-                      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition group-hover:scale-110" style={{ background: `${color}18` }}>
-                        <Icon className="text-2xl" style={{ color }} />
-                      </div>
-                      <h3 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: 'Sora, sans-serif' }}>{service.title}</h3>
-                      <p className="mt-3 text-base leading-7 text-white/52">{normalizeCopy(service)}</p>
-                    </div>
-                  </ScrollReveal>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      <AboutGeographyMap
+        content={about.geography}
+      />
 
-      <section className="px-6 py-20 lg:px-8 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <ScrollReveal animation="fadeUp">
-            <SectionHeader eyebrow="What We Stand For" title="Core" highlight="Values" centered />
-          </ScrollReveal>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {values.map((value, index) => {
-              const Icon = resolveIcon(value.icon, FaLightbulb);
-              return (
-                <ScrollReveal key={value.title} animation="fadeUp" delay={index * 80}>
-                  <div className="relative h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] p-7 text-center transition hover:-translate-y-2 hover:bg-white/[0.055] md:text-left">
-                    <div className="absolute -right-2 -top-4 text-[7rem] font-black leading-none text-white/[0.025]" style={{ fontFamily: 'Sora, sans-serif' }}>{String(index + 1).padStart(2, '0')}</div>
-                    <div className="relative">
-                      <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0875FF]/15 md:mx-0">
-                        <Icon className="text-xl text-[#0875FF]" />
-                      </div>
-                      <h3 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: 'Sora, sans-serif' }}>{value.title}</h3>
-                      <p className="mt-3 text-base leading-7 text-white/52">{normalizeCopy(value)}</p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/*
+      |--------------------------------------------------------------------------
+      | 05. Delivery Reach and Operational Benefits
+      |--------------------------------------------------------------------------
+      |
+      | Reference equivalent:
+      | international delivery paragraph followed by a capability list.
+      |
+      */}
 
-      {techStack.length > 0 && (
-        <section className="px-6 py-20 lg:px-8 lg:py-24">
-          <div className="mx-auto max-w-6xl text-center">
-            <ScrollReveal animation="fadeUp">
-              <SectionHeader eyebrow="Our Toolkit" title="Technologies We" highlight="Master" centered />
-              <div className="flex flex-wrap justify-center gap-3">
-                {techStack.map((tech, index) => {
-                  const Icon = resolveIcon(tech.icon, FaCode);
-                  const color = tech.color || colorCycle[index % colorCycle.length];
-                  return (
-                    <span key={tech.name} className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-bold text-white/65 transition hover:-translate-y-1 hover:text-white">
-                      <Icon style={{ color }} /> {tech.name}
-                    </span>
-                  );
-                })}
-              </div>
-            </ScrollReveal>
-          </div>
-        </section>
-      )}
+      
 
-      {timeline.length > 0 && (
-        <section className="px-6 py-20 lg:px-8 lg:py-28">
-          <div className="mx-auto max-w-6xl">
-            <ScrollReveal animation="fadeUp">
-              <SectionHeader eyebrow="Our Journey" title="How We" highlight="Got Here" centered />
-            </ScrollReveal>
-            <div className="grid gap-5 md:grid-cols-2">
-              {timeline.map((item, index) => (
-                <ScrollReveal key={`${item.year}-${item.title}`} animation="fadeUp" delay={index * 80}>
-                  <div className="h-full rounded-3xl border border-white/10 bg-white/[0.035] p-7 transition hover:-translate-y-1 hover:bg-white/[0.055]">
-                    <span className="inline-flex rounded-full bg-[#0875FF]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[#00AFFF]">{item.year}</span>
-                    <h3 className="mt-5 text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: 'Sora, sans-serif' }}>{item.title}</h3>
-                    <p className="mt-3 text-base leading-7 text-white/52">{item.description}</p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/*
+      |--------------------------------------------------------------------------
+      | 06. Sustainability and Social Responsibility
+      |--------------------------------------------------------------------------
+      |
+      | AngiSoft equivalent:
+      | ethical technology, digital inclusion, employee development,
+      | community empowerment and responsible business practices.
+      |
+      */}
 
-      <section className="px-6 py-20 lg:px-8 lg:py-24">
-        <ScrollReveal animation="scaleUp">
-          <div className="mx-auto max-w-5xl rounded-[2rem] border border-[#0875FF]/20 bg-gradient-to-br from-white/[0.06] to-white/[0.025] p-8 text-center md:p-12">
-            <FaQuoteLeft className="mx-auto mb-7 text-4xl text-[#0875FF]/40" />
-            <blockquote className="text-2xl font-black leading-tight tracking-[-0.04em] text-white/88 md:text-4xl" style={{ fontFamily: 'Sora, sans-serif' }}>
-              “{quote.text}”
-            </blockquote>
-            <div className="mt-7 text-sm font-bold uppercase tracking-[0.22em] text-[#00AFFF]">{quote.source}</div>
-          </div>
-        </ScrollReveal>
-      </section>
+      <AboutSustainability
+        content={about.sustainability}
+      />
 
-      {teamPreview.length > 0 && (
-        <section className="px-6 py-20 lg:px-8 lg:py-28">
-          <div className="mx-auto max-w-7xl">
-            <ScrollReveal animation="fadeUp">
-              <SectionHeader
-                eyebrow="The People"
-                title="Meet the"
-                highlight="Team"
-                action={(
-                  <button onClick={() => navigate('/staff')} className="inline-flex items-center gap-2 text-sm font-black text-[#0875FF] transition hover:gap-4">
-                    View All <FaArrowRight />
-                  </button>
-                )}
-              />
-            </ScrollReveal>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {teamPreview.map((member, index) => (
-                <ScrollReveal key={member.id} animation="fadeUp" delay={index * 80}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(getStaffDetailPath(member))}
-                    className="group h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] text-left transition hover:-translate-y-2 hover:border-[#0875FF]/35 hover:bg-white/[0.055]"
-                  >
-                    <div className="relative h-64 overflow-hidden bg-[#0B1E3D]">
-                      {member.avatarUrl ? (
-                        <img src={resolveAssetUrl(member.avatarUrl)} alt={`${member.firstName} ${member.lastName}`} className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0875FF] to-[#00AFFF] text-5xl font-black">
-                          {member.firstName?.[0]}{member.lastName?.[0]}
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#07142B] via-[#07142B]/30 to-transparent" />
-                      <div className="absolute bottom-5 left-5 right-5">
-                        <h3 className="text-2xl font-black leading-tight tracking-[-0.04em]" style={{ fontFamily: 'Sora, sans-serif' }}>
-                          {member.firstName} {member.lastName}
-                        </h3>
-                        <p className="mt-1 text-sm font-bold text-[#0875FF]">{member.publicTitle || member.role?.toLowerCase().replaceAll('_', ' ')}</p>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      {(member.publicSummary || member.bio) && (
-                        <p className="line-clamp-3 text-sm leading-7 text-white/52">{member.publicSummary || member.bio}</p>
-                      )}
-                      {member.skills?.length > 0 && (
-                        <div className="mt-5 flex flex-wrap gap-1.5">
-                          {member.skills.slice(0, 3).map((skill) => (
-                            <span key={skill} className="rounded-full border border-[#0875FF]/20 bg-[#0875FF]/10 px-2.5 py-1 text-[10px] font-bold text-[#00AFFF]">{skill}</span>
-                          ))}
-                        </div>
-                      )}
-                      <div className="mt-5 inline-flex items-center gap-2 text-xs font-black text-[#0875FF]">
-                        View Profile <FaArrowRight className="transition group-hover:translate-x-1" />
-                      </div>
-                    </div>
-                  </button>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/*
+      |--------------------------------------------------------------------------
+      | 07. How We Collaborate
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - three columns
+      | - custom image/illustration in every column
+      | - title and linked bullet list
+      |
+      */}
 
-      {locations.length > 0 && (
-        <section className="px-6 py-20 lg:px-8 lg:py-24">
-          <div className="mx-auto max-w-6xl text-center">
-            <ScrollReveal animation="fadeUp">
-              <SectionHeader eyebrow="Where We Operate" title="East African" highlight="Presence" centered />
-              <div className="flex flex-wrap justify-center gap-4">
-                {locations.map((location, index) => (
-                  <div key={`${location.country}-${location.city}`} className={`flex min-w-[210px] items-center justify-between gap-4 rounded-2xl border px-5 py-4 text-left ${index === 0 ? 'border-[#0875FF]/35 bg-[#0875FF]/10' : 'border-white/10 bg-white/[0.035]'}`}>
-                    <span className="text-4xl">{location.flag}</span>
-                    <div className="flex-1">
-                      <div className="font-black" style={{ fontFamily: 'Sora, sans-serif' }}>{location.country}</div>
-                      <div className="text-sm text-white/45">{location.city}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollReveal>
-          </div>
-        </section>
-      )}
+      <AboutCollaboration
+        content={about.collaboration}
+      />
 
-      <section className="px-6 py-20 lg:px-8 lg:py-28">
-        <ScrollReveal animation="scaleUp">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0875FF] via-[#0066FF] to-[#003BCE] p-8 text-center shadow-[0_40px_120px_rgba(8,117,255,0.28)] md:p-14 lg:p-20">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-            <div className="relative">
-              <h2 className="text-4xl font-black leading-tight tracking-[-0.05em] md:text-6xl" style={{ fontFamily: 'Sora, sans-serif' }}>{cta.title}</h2>
-              <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-white/72">{cta.description}</p>
-              <div className="mt-10 flex flex-wrap justify-center gap-4">
-                <button onClick={() => navigate(cta.primary?.to || '/booking')} className="group inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-sm font-black text-[#003BCE] transition hover:-translate-y-1">
-                  {cta.primary?.label || 'Start a Project'} <FaArrowRight className="transition group-hover:translate-x-1" />
-                </button>
-                <button onClick={() => navigate(cta.secondary?.to || '/contact')} className="inline-flex items-center gap-3 rounded-full border border-white/25 bg-white/10 px-8 py-4 text-sm font-black text-white transition hover:-translate-y-1 hover:bg-white/15">
-                  {cta.secondary?.label || 'Talk to Us'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-    </div>
+      {/*
+      |--------------------------------------------------------------------------
+      | 08. AngiSoft's Highlights
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - image-based history slider
+      | - synchronized year rail
+      | - animated milestone transitions
+      |
+      */}
+
+      <AboutHighlightsSlider
+        items={about.timeline}
+        heading={about.timelineHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 09. Let's Build the Future Together
+      |--------------------------------------------------------------------------
+      |
+      | Full-width transition banner placed directly after the timeline.
+      |
+      */}
+
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 10. Industries AngiSoft Serves
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - industry-specific images
+      | - responsive multi-column grid
+      | - titles layered over or associated with imagery
+      |
+      */}
+
+      <AboutIndustriesGrid
+        industries={about.industries}
+        heading={about.industriesHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 11. Our Clients
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - supporting client relationship statistic
+      | - client-logo slider/grid
+      |
+      */}
+
+      <AboutClientsSlider
+        clients={about.clients}
+        heading={about.clientsHeading}
+        clientStats={clientStats}
+        clientHighlights={clientHighlights}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 12. What Our Clients Say
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - client/company media
+      | - rating
+      | - quotation
+      | - reviewer identity
+      | - navigation
+      |
+      */}
+
+      <AboutTestimonialsSlider
+        testimonials={testimonials}
+        heading={about.testimonialsHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 13. Our Service Map
+      |--------------------------------------------------------------------------
+      |
+      | IT consulting, software development, testing, support,
+      | data, security and infrastructure equivalents.
+      |
+      */}
+
+      <AboutServiceMap
+        content={about.serviceMap}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 14. Building Trust with Transparency
+      |--------------------------------------------------------------------------
+      |
+      | Long-form editorial section explaining AngiSoft's evidence-based,
+      | transparent way of working.
+      |
+      */}
+
+      <AboutTransparency
+        content={about.transparency}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 15. Partnerships and Recognitions
+      |--------------------------------------------------------------------------
+      |
+      | Only real AngiSoft partnerships, memberships, certificates or
+      | recognitions may appear here.
+      |
+      */}
+
+      <AboutPartnerships
+        content={about.partnerships}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 16. Solutions We Cover
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - broad, categorized solution list
+      | - dense but easy-to-scan layout
+      |
+      */}
+
+      <AboutSolutionTypes
+        content={about.solutionTypes}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 17. Capabilities and Technological Expertise
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - grouped technology families
+      | - categories, subcategories and technologies
+      | - expandable/collapsible presentation where useful
+      |
+      */}
+
+      <AboutTechnologies
+        content={about.technologies}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 18. Specialized Technology Capabilities
+      |--------------------------------------------------------------------------
+      |
+      | AI, data science, big data, IoT, computer vision,
+      | AR, VR, blockchain, and other genuine AngiSoft capabilities.
+      |
+      */}
+
+      <AboutSpecializedCapabilities
+        content={about.specializedCapabilities}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 19. What We Do to Guarantee Project Success
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - introductory editorial copy
+      | - organizational/process explanation
+      | - detailed expandable practice list
+      |
+      */}
+
+      <AboutWhyGuarantee
+        content={about.whyGuarantee}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 20. Our Pricing Policy
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - pricing-model cards
+      | - explanatory copy
+      | - project-cost CTA
+      |
+      */}
+
+      <AboutPricing
+        pricing={about.pricing}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 21. Leadership Pricing Quotation
+      |--------------------------------------------------------------------------
+      |
+      | Reference equivalent:
+      | executive photo, role, long quotation and supporting investment list.
+      |
+      */}
+
+      <AboutPricingQuotation
+        content={about.pricingQuotation}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 22. Final CTA
+      |--------------------------------------------------------------------------
+      |
+      | AngiSoft-specific closing invitation.
+      |
+      */}
+      <AboutFinalCTA
+        content={about.cta}
+      />
+    </main>
   );
 };
 

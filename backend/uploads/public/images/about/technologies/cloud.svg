@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Cloud and DevOps">
+  <circle cx="32" cy="32" r="30" fill="#0B1E3D"/>
+  <path d="M22 40 a8 8 0 0 1 1-16 11 11 0 0 1 21 3 a7 7 0 0 1-1 13 Z" fill="#00C2FF"/>
+  <path d="M26 34 l4 4 7-8" fill="none" stroke="#04122B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

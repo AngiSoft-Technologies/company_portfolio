@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { apiGet } from '../js/httpClient';
-import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { ScrollReveal, ParallaxSection } from '../components/modern';
 import {
-    FaEnvelope, FaPhone, FaMapMarkerAlt, FaWhatsapp, FaClock,
-    FaPaperPlane, FaCheckCircle, FaSpinner, FaBuilding, FaGlobe
+    FaEnvelope, FaPhone, FaMapMarkerAlt, FaWhatsapp,
+    FaPaperPlane, FaCheckCircle, FaSpinner
 } from 'react-icons/fa';
 
 const Contact = () => {
@@ -37,46 +37,6 @@ const Contact = () => {
     }, []);
 
     const contact = contactData || {};
-
-    const contactCards = [
-        {
-            icon: FaPhone,
-            title: 'Call Us',
-            details: [contact.phone, contact.altPhone].filter(Boolean),
-            action: contact.phone ? `tel:${contact.phone.replace(/\s/g, '')}` : null,
-            gradient: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`
-        },
-        {
-            icon: FaEnvelope,
-            title: 'Email Us',
-            details: [contact.email, contact.supportEmail].filter(Boolean),
-            action: contact.email ? `mailto:${contact.email}` : null,
-            gradient: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`
-        },
-        {
-            icon: FaMapMarkerAlt,
-            title: 'Visit Us',
-            details: [
-                contact.address?.street,
-                [contact.address?.city, contact.address?.country].filter(Boolean).join(', ')
-            ].filter(Boolean),
-            action: 'https://maps.google.com',
-            gradient: `linear-gradient(135deg, ${colors.accent}, ${colors.primary})`
-        },
-        {
-            icon: FaWhatsapp,
-            title: 'WhatsApp',
-            details: [contact.phone || '+254 700 000 000'],
-            action: contact.phone ? `https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}` : null,
-            gradient: `linear-gradient(135deg, #25D366, #128C7E)`
-        }
-    ];
-
-    const officeHours = [
-        { day: 'Monday - Friday', hours: contact.hours?.weekdays || '8:00 AM - 6:00 PM' },
-        { day: 'Saturday', hours: contact.hours?.saturday || '9:00 AM - 1:00 PM' },
-        { day: 'Sunday & Holidays', hours: contact.hours?.weekends || 'Closed' }
-    ];
 
     const handleChange = (e) => {
         setFormData(prev => ({
@@ -167,55 +127,6 @@ const Contact = () => {
                 </div>
             </ParallaxSection>
 
-            {/* Contact Info Cards */}
-            <section className="py-20 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-                        {contactCards.map((card, idx) => (
-                            <ScrollReveal key={idx} animation="fadeUp" delay={idx * 100}>
-                                <a
-                                    href={card.action || '#'}
-                                    target={card.action?.startsWith('http') ? '_blank' : undefined}
-                                    rel={card.action?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                                    className="block h-full"
-                                >
-                                    <GlassmorphismCard className="p-6 h-full text-center">
-                                        <div
-                                            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-                                            style={{ background: card.gradient }}
-                                        >
-                                            <card.icon className="text-2xl text-white" />
-                                        </div>
-                                        <h3
-                                            className="text-lg font-bold mb-2"
-                                            style={{ color: colors.text }}
-                                        >
-                                            {card.title}
-                                        </h3>
-                                        {loading ? (
-                                            <div
-                                                className="h-4 rounded mx-auto animate-pulse"
-                                                style={{ backgroundColor: `${colors.primary}20`, width: '60%' }}
-                                            />
-                                        ) : (
-                                            card.details.map((detail, dIdx) => (
-                                                <p
-                                                    key={dIdx}
-                                                    className="text-sm"
-                                                    style={{ color: colors.textSecondary }}
-                                                >
-                                                    {detail}
-                                                </p>
-                                            ))
-                                        )}
-                                    </GlassmorphismCard>
-                                </a>
-                            </ScrollReveal>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* Form + Map Section */}
             <section
                 className="py-20 px-4"
@@ -224,9 +135,9 @@ const Contact = () => {
                 }}
             >
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid lg:grid-cols-5 gap-12">
+                    <div className="grid lg:grid-cols-2 gap-8">
                         {/* Contact Form */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-1">
                             <ScrollReveal animation="fadeLeft">
                                 <div
                                     className="p-8 md:p-10 rounded-3xl"
@@ -426,168 +337,35 @@ const Contact = () => {
                             </ScrollReveal>
                         </div>
 
-                        {/* Sidebar */}
-                        <div className="lg:col-span-2 space-y-8">
-                            {/* Office Hours */}
+                        {/* Map */}
+                        <div className="lg:col-span-1">
                             <ScrollReveal animation="fadeRight" delay={100}>
-                                <GlassmorphismCard className="p-8">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div
-                                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                                            style={{
-                                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
-                                            }}
-                                        >
-                                            <FaClock className="text-xl text-white" />
-                                        </div>
-                                        <h3
-                                            className="text-xl font-bold"
-                                            style={{ color: colors.text }}
-                                        >
-                                            Office Hours
-                                        </h3>
-                                    </div>
-                                    <div className="space-y-4">
-                                        {officeHours.map((schedule, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="flex justify-between items-center py-3"
-                                                style={{
-                                                    borderBottom: idx < officeHours.length - 1
-                                                        ? `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
-                                                        : 'none'
-                                                }}
-                                            >
-                                                <span
-                                                    className="font-medium"
-                                                    style={{ color: colors.text }}
-                                                >
-                                                    {schedule.day}
-                                                </span>
-                                                <span style={{ color: colors.textSecondary }}>
-                                                    {schedule.hours}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </GlassmorphismCard>
-                            </ScrollReveal>
-
-                            {/* Quick Contact */}
-                            <ScrollReveal animation="fadeRight" delay={200}>
-                                <GlassmorphismCard className="p-8">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div
-                                            className="w-12 h-12 rounded-xl flex items-center justify-center"
-                                            style={{
-                                                background: `linear-gradient(135deg, ${colors.accent}, ${colors.primary})`
-                                            }}
-                                        >
-                                            <FaGlobe className="text-xl text-white" />
-                                        </div>
-                                        <h3
-                                            className="text-xl font-bold"
-                                            style={{ color: colors.text }}
-                                        >
-                                            Quick Connect
-                                        </h3>
-                                    </div>
-                                    <p
-                                        className="mb-6"
-                                        style={{ color: colors.textSecondary }}
-                                    >
-                                        Need a quick response? Reach us directly through these channels.
-                                    </p>
-                                    <div className="space-y-3">
-                                        {contact.phone && (
-                                            <a
-                                                href={`tel:${contact.phone.replace(/\s/g, '')}`}
-                                                className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5"
-                                                style={{
-                                                    backgroundColor: `${colors.primary}10`,
-                                                    color: colors.primary
-                                                }}
-                                            >
-                                                <FaPhone />
-                                                <span className="font-medium">{contact.phone}</span>
-                                            </a>
-                                        )}
-                                        {contact.email && (
-                                            <a
-                                                href={`mailto:${contact.email}`}
-                                                className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5"
-                                                style={{
-                                                    backgroundColor: `${colors.secondary}10`,
-                                                    color: colors.secondary
-                                                }}
-                                            >
-                                                <FaEnvelope />
-                                                <span className="font-medium">{contact.email}</span>
-                                            </a>
-                                        )}
-                                        {contact.phone && (
-                                            <a
-                                                href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5"
-                                                style={{
-                                                    backgroundColor: '#25D36615',
-                                                    color: '#25D366'
-                                                }}
-                                            >
-                                                <FaWhatsapp />
-                                                <span className="font-medium">Chat on WhatsApp</span>
-                                            </a>
-                                        )}
-                                    </div>
-                                </GlassmorphismCard>
+                                <div
+                                    className="rounded-3xl overflow-hidden h-full min-h-[500px]"
+                                    style={{
+                                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+                                        boxShadow: isDark
+                                            ? '0 25px 80px rgba(0,0,0,0.4)'
+                                            : '0 25px 80px rgba(0,0,0,0.08)'
+                                    }}
+                                >
+                                    <iframe
+                                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127635.89687807776!2d36.7052!3d-1.3031!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f11655c311541%3A0x9dd769ac1c10b8f4!2sNairobi%2C%20Kenya!5e0!3m2!1sen!2sus!4v1640000000000!5m2!1sen!2sus"
+                                        width="100%"
+                                        height="100%"
+                                        style={{
+                                            border: 0,
+                                            filter: isDark ? 'invert(90%) hue-rotate(180deg)' : 'none'
+                                        }}
+                                        allowFullScreen=""
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        title="AngiSoft Technologies Location"
+                                    />
+                                </div>
                             </ScrollReveal>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            {/* Map Section */}
-            <section className="py-20 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                <span style={{ color: colors.text }}>Find </span>
-                                <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent'
-                                }}>
-                                    Our Office
-                                </span>
-                            </h2>
-                        </div>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={100}>
-                        <div
-                            className="rounded-3xl overflow-hidden h-[400px]"
-                            style={{
-                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`
-                            }}
-                        >
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127635.89687807776!2d36.7052!3d-1.3031!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f11655c311541%3A0x9dd769ac1c10b8f4!2sNairobi%2C%20Kenya!5e0!3m2!1sen!2sus!4v1640000000000!5m2!1sen!2sus"
-                                width="100%"
-                                height="100%"
-                                style={{
-                                    border: 0,
-                                    filter: isDark ? 'invert(90%) hue-rotate(180deg)' : 'none'
-                                }}
-                                allowFullScreen=""
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                title="AngiSoft Technologies Location"
-                            />
-                        </div>
-                    </ScrollReveal>
                 </div>
             </section>
         </div>
