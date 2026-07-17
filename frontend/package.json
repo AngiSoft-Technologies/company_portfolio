@@ -33,7 +33,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "axios": "^1.15.2",
+    "axios": "^1.16.0",
     "bcrypt": "^6.0.0",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
@@ -67,7 +67,7 @@
     "postcss": "^8.5.15",
     "tailwindcss": "^4.1.11",
     "vite": "^7.3.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "description": "Frontend for AngiSoft Technologies website",
   "browserslist": {
