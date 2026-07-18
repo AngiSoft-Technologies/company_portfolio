@@ -1,0 +1,92 @@
+/* Pricing — service grid + service cards (real priceFrom values only) */
+.pricing-filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.6rem;
+}
+.pricing-chip {
+    border: 1px solid var(--pricing-border);
+    border-radius: 999px;
+    background: var(--pricing-surface);
+    color: var(--pricing-muted);
+    font-size: 0.88rem;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.pricing-chip:hover { color: var(--pricing-text); border-color: var(--pricing-border-strong); }
+.pricing-chip--active {
+    color: var(--pricing-bg);
+    background: var(--pricing-accent);
+    border-color: var(--pricing-accent);
+    font-weight: 600;
+}
+.pricing-chip__count { opacity: 0.7; margin-left: 0.35rem; }
+
+.pricing-service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.1rem;
+}
+.pricing-service-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pricing-service-card:hover {
+    border-color: var(--pricing-border-strong);
+    transform: translateY(-3px);
+    box-shadow: var(--pricing-shadow);
+}
+.pricing-service-card--highlight {
+    border-color: var(--pricing-border-strong);
+    box-shadow: 0 0 0 1px var(--pricing-border-strong);
+}
+.pricing-service-card__price {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--pricing-accent);
+}
+.pricing-service-card__price--quote { color: var(--pricing-accent-2); font-size: 1.15rem; }
+.pricing-service-card__name {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1.12rem;
+    color: var(--pricing-text);
+}
+.pricing-service-card__cat {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pricing-muted);
+}
+.pricing-service-card__desc {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.55;
+    font-size: 0.92rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.pricing-service-card__cta {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--pricing-accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+}

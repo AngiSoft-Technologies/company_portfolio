@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import ProjectDetails from "./pages/ProjectDetails";
 import ProjectLists from "./pages/ProjectLists";
-import ServicesList from "./pages/ServicesList";
+import ServicesList from "./pages/services/ServicesList";
 import TestimonialsList from "./pages/TestimonialsList";
 import Booking from "./pages/Booking";
 import BookingStatus from "./pages/BookingStatus";
@@ -14,7 +14,7 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientProjectTracking from "./pages/ClientProjectTracking";
 import StaffList from "./pages/StaffList";
 import StaffDetail from "./pages/StaffDetail";
-import ServiceDetail from "./pages/ServiceDetail";
+import ServiceDetail from "./pages/services/ServiceDetail";
 import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
 import About from "./pages/About";
@@ -25,6 +25,10 @@ import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CategoryDetail from "./pages/CategoryDetail";
+import IndustriesList from "./pages/industries/IndustriesList";
+import IndustryDetail from "./pages/industries/IndustryDetail";
+import SolutionsList from "./pages/solutions/SolutionsList";
+import SolutionDetail from "./pages/solutions/SolutionDetail";
 import Careers from "./pages/Careers";
 import NewsletterConfirm from './pages/NewsletterConfirm';
 import NewsletterUnsubscribe from './pages/NewsletterUnsubscribe';import AppLayout from "./layouts/AppLayout";
@@ -92,8 +96,7 @@ const RoutesComponent = () => {
           <Route index element={<Home />} />
           <Route path="projects" element={<ProjectLists />} />
           <Route path="services" element={<ServicesList />} />
-          <Route path="services/:id" element={<ServiceDetail />} />
-          <Route path="service/:slug" element={<ServiceDetail />} />
+          <Route path="services/:slug" element={<ServiceDetail />} />
           <Route path="project/:slug" element={<ProjectDetails />} />
           <Route path="staff" element={<StaffList />} />
           <Route path="staff/:usernameOrId" element={<StaffDetail />} />
@@ -101,6 +104,7 @@ const RoutesComponent = () => {
           <Route path="blog" element={<BlogList />} />
           <Route path="blog/:slug" element={<BlogDetail />} />
           <Route path="book" element={<Booking />} />
+          <Route path="booking" element={<Booking />} />
           <Route path="booking/:id" element={<BookingStatus />} />
           <Route path="portal/request" element={<ClientPortalRequest />} />
           <Route path="portal/access" element={<ClientPortalAccess />} />
@@ -115,7 +119,11 @@ const RoutesComponent = () => {
           <Route path="pricing" element={<Pricing />} />
           <Route path="careers" element={<Careers />} />
           <Route path="privacy" element={<Privacy />} />
-          <Route path="industry/:slug" element={<CategoryDetail />} />
+          <Route path="industries" element={<IndustriesList />} />
+          <Route path="industry/:slug" element={<IndustryDetail />} />
+          <Route path="industries/:slug" element={<IndustryDetail />} />
+          <Route path="solutions" element={<SolutionsList />} />
+          <Route path="solutions/:slug" element={<SolutionDetail />} />
           <Route path="solution/:slug" element={<CategoryDetail />} />
           <Route path="technology/:slug" element={<CategoryDetail />} />
           <Route path="terms" element={<Terms />} />

@@ -1,0 +1,38 @@
+/* Pricing — how the engagement works (process steps) */
+.pricing-process__steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.1rem;
+}
+.pricing-step {
+    position: relative;
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    padding: 1.5rem;
+}
+.pricing-step__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--pricing-border-strong);
+    color: var(--pricing-accent);
+    font-weight: 700;
+    font-family: 'Sora', system-ui, sans-serif;
+    margin-bottom: 0.8rem;
+}
+.pricing-step__title {
+    margin: 0 0 0.4rem;
+    color: var(--pricing-text);
+    font-size: 1.05rem;
+    font-family: 'Sora', system-ui, sans-serif;
+}
+.pricing-step__desc {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.6;
+    font-size: 0.93rem;
+}
