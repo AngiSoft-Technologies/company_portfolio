@@ -12,6 +12,18 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Proxy uploaded assets to the API host. The SPA is served from Netlify,
+# but /uploads/* lives only on the backend container (api.angisoft.co.ke).
+# Without this, /uploads/public/... requests fall through to the SPA
+# catch-all below and return index.html instead of the image. The Vite dev
+# proxy does the same thing locally; this replicates it at the edge.
+# Declared BEFORE the /* catch-all so it takes precedence.
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://api.angisoft.co.ke/uploads/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

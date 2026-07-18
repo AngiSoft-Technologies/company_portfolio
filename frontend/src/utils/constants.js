@@ -15,16 +15,29 @@ const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL) || (import
 export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/api` : '/api';
 export const ASSET_BASE_URL = normalizeOrigin(import.meta.env.VITE_ASSET_BASE_URL) || API_ORIGIN;
 
+// Assets are served from `/uploads/public/...` (see backend express.static
+// mount). Older DB rows / CMS entries sometimes store the same file under a
+// legacy prefix (`/images/...` or `/uploads/images/...`) that has no static
+// handler — the request then falls through to the SPA catch-all and returns
+// index.html instead of the image. Normalize those known-bad prefixes to the
+// path the server actually serves, so stored URLs don't need manual fixes.
+const normalizeAssetPath = (p) => {
+    if (p.startsWith('/images/')) return `/uploads/public${p}`;
+    if (p.startsWith('/uploads/images/')) return p.replace('/uploads/images/', '/uploads/public/images/');
+    return p;
+};
+
 export const resolveAssetUrl = (value) => {
     if (!value || typeof value !== 'string') return value;
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
-    if (value.startsWith('/uploads/')) {
-        return ASSET_BASE_URL ? `${ASSET_BASE_URL}${value}` : value;
+    const normalized = normalizeAssetPath(value);
+    if (normalized.startsWith('/uploads/')) {
+        return ASSET_BASE_URL ? `${ASSET_BASE_URL}${normalized}` : normalized;
     }
-    if (value.startsWith('/api/uploads/')) {
-        return API_ORIGIN ? `${API_ORIGIN}${value}` : value;
+    if (normalized.startsWith('/api/uploads/')) {
+        return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
     }
-    return value;
+    return normalized;
 };
 
 // File Upload Limits
