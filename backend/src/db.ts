@@ -1,71 +1,33 @@
 import dotenv from 'dotenv';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { resolveDatabaseUrl } from './connectionUrl';
 
 dotenv.config();
 
-// ─── Resolve database URL ──────────────────────────────────────
-const databaseUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error(
-    'DATABASE_URL is not set. Provide a Postgres connection string in DATABASE_URL or NEON_DATABASE_URL.'
-  );
-}
-
-// Ensure Prisma can always read DATABASE_URL from env
+// ─── Resolve database URL (shared with prisma.config.ts) ───────
+// resolveDatabaseUrl() applies Neon-aware hardening. Ensure Prisma can
+// always read a usable DATABASE_URL from env at runtime.
+const resolvedDatabaseUrl = resolveDatabaseUrl();
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = databaseUrl;
+  process.env.DATABASE_URL = resolvedDatabaseUrl;
 }
+const rawDatabaseUrl =
+  process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || resolvedDatabaseUrl;
 
 // ─── Environment detection ─────────────────────────────────────
 const isProduction = process.env.NODE_ENV === 'production';
-const isNeonUrl = databaseUrl.includes('.neon.tech');
+const isNeonUrl = rawDatabaseUrl.includes('.neon.tech');
 
 // ─── Prisma log levels per environment ─────────────────────────
 const logConfig: Prisma.LogLevel[] = isProduction
   ? ['warn', 'error']
   : ['query', 'info', 'warn', 'error'];
 
-// ─── Connection string hardening ────────────────────────────────
-// Ensure SSL is enabled for Neon (required) and add pooling params
-function buildConnectionUrl(url: string): string {
-  const parsed = new URL(url);
-  const host = parsed.hostname;
-  const isPooler = host.includes('-pooler') || parsed.searchParams.get('pgbouncer') === 'true';
-
-  // Neon requires SSL
-  if (isNeonUrl && !parsed.searchParams.has('sslmode')) {
-    parsed.searchParams.set('sslmode', 'require');
-  }
-
-  // Prefer pgbouncer when using Neon pooler
-  if (isNeonUrl && host.includes('-pooler') && !parsed.searchParams.has('pgbouncer')) {
-    parsed.searchParams.set('pgbouncer', 'true');
-  }
-
-  // Connection pool tuning for production
-  if (isProduction) {
-    if (!parsed.searchParams.has('connection_limit')) {
-      parsed.searchParams.set('connection_limit', isPooler ? '1' : '10');
-    }
-    if (!parsed.searchParams.has('pool_timeout')) {
-      parsed.searchParams.set('pool_timeout', '30');
-    }
-  }
-
-  // Connect timeout to prevent hanging on unreachable DB
-  if (!parsed.searchParams.has('connect_timeout')) {
-    parsed.searchParams.set('connect_timeout', '10');
-  }
-
-  return parsed.toString();
-}
-
-const connectionUrl = buildConnectionUrl(databaseUrl);
-
 // ─── Build Prisma client (singleton) ───────────────────────────
+// Prisma 7 reads the connection URL from DATABASE_URL (set earlier
+// from the shared resolver). The `datasources.url` constructor option
+// is no longer supported for a URL-less schema.
 const prisma = new PrismaClient({
-  datasources: { db: { url: connectionUrl } },
   log: logConfig,
 });
 
