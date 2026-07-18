@@ -136,6 +136,21 @@ def main():
         dot_color="#9FB4D8",  # light dots for DARK backgrounds
     )
 
+    # Industry cards referenced by about-default-data.ts but never created:
+    # healthcare.jpg, telecom.jpg, finance.jpg
+    healthcare = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    healthcare = accent_dots(healthcare, n=34, color=CYAN, alpha=24, r=3)
+    save(healthcare, "about/industries/healthcare.jpg")
+
+    telecom = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    telecom = accent_dots(telecom, n=40, color=GREEN, alpha=22, r=3)
+    save(telecom, "about/industries/telecom.jpg")
+
+    finance = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    finance = accent_dots(finance, n=36, color=CYAN, alpha=20, r=3)
+    finance = accent_dots(finance, n=12, color=GREEN, alpha=22, r=2)
+    save(finance, "about/industries/finance.jpg")
+
 
 if __name__ == "__main__":
     main()
