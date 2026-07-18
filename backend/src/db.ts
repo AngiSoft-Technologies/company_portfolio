@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaNeon } from '@prisma/adapter-neon';
 import { resolveDatabaseUrl } from './connectionUrl';
 
 dotenv.config();
@@ -24,10 +25,12 @@ const logConfig: Prisma.LogLevel[] = isProduction
   : ['query', 'info', 'warn', 'error'];
 
 // ─── Build Prisma client (singleton) ───────────────────────────
-// Prisma 7 reads the connection URL from DATABASE_URL (set earlier
-// from the shared resolver). The `datasources.url` constructor option
-// is no longer supported for a URL-less schema.
+// Prisma 7 requires a driver adapter (or Accelerate URL) at runtime.
+// PrismaNeon builds its own Neon pool from the config object.
+const adapter = new PrismaNeon({ connectionString: resolvedDatabaseUrl });
+
 const prisma = new PrismaClient({
+  adapter,
   log: logConfig,
 });
 
