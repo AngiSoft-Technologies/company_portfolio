@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaLaptopCode, FaChartLine, FaShieldAlt, FaMobileAlt } from 'react-icons/fa';
 import homeServices from '../../data/homeServices';
+import { resolveAssetUrl } from '../../utils/constants';
 import '../../css/ServicesSection.css';
 
 const ICONS = { FaLaptopCode, FaChartLine, FaShieldAlt, FaMobileAlt };
@@ -55,7 +56,7 @@ const ServicesSection = () => {
                             <img
                                 loading="lazy"
                                 decoding="async"
-                                src={active.image}
+                                src={resolveAssetUrl(active.image)}
                                 alt={active.name}
                             />
                         </div>

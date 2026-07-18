@@ -20,6 +20,7 @@ import {
   FaWindows,
   FaBoxOpen,
 } from 'react-icons/fa';
+import { resolveAssetUrl } from '../../utils/constants';
 
 
 const ICONS = {
@@ -55,9 +56,11 @@ const normalizeService = (
     'web',
 
   imageUrl:
-    service?.imageUrl ||
-    service?.iconUrl ||
-    '',
+    resolveAssetUrl(
+      service?.imageUrl ||
+      service?.iconUrl ||
+      ''
+    ),
 
   imageAlt:
     service?.imageAlt ||
