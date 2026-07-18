@@ -1,6 +1,10 @@
-import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+import { Prisma } from '@prisma/client';
+
+// Reuse the app's already-configured Prisma client (Neon driver adapter),
+// which is the single source of truth for the database connection.
+import prisma from '../src/db';
 
 // Optional pre-generated About-page default content. When present, it seeds the
 // canonical 26-key contract described by the frontend hook. Regenerate with:
@@ -21,8 +25,6 @@ try {
 }
 
 dotenv.config();
-
-const prisma = new PrismaClient();
 
 function slugify(value: string) {
     return value
@@ -1586,18 +1588,24 @@ async function main() {
                 published: true
             },
             service: {
-                title: 'Software Development',
-                slug: 'software-development',
-                description: 'Custom web and mobile applications built with modern technologies — from MVPs to enterprise platforms.',
+                title: 'Web Development',
+                slug: 'web-development',
+                description: 'Modern, responsive websites and web applications built with React, Node, and TypeScript — from landing pages to full business platforms.',
+                priceFrom: 25000,
+                currency: 'KES',
+                targetAudience: 'Businesses, startups, and organizations that need a reliable web presence or web-based system.',
+                scope: 'Front-end, back-end, APIs, and deployment for brochure sites, dashboards, and SaaS products.',
                 features: [
-                    'Web Application Development',
-                    'Mobile App Development (Flutter/Kotlin)',
-                    'API & Microservices',
-                    'SaaS Product Development',
-                    'Legacy System Modernization',
-                    'UI/UX Design & Prototyping'
+                    'Responsive Website Development',
+                    'Web Application & Dashboard Development',
+                    'REST & GraphQL API Development',
+                    'CMS & Admin Panels',
+                    'E-commerce & Booking Systems',
+                    'Performance & SEO Optimization'
                 ],
                 images: ['/uploads/public/images/services/software-development.jpg'],
+                seoTitle: 'Web Development Services — AngiSoft',
+                seoDesc: 'Responsive websites and web applications built with React, Node, and TypeScript.',
                 published: true,
                 featured: true
             }
@@ -1605,53 +1613,98 @@ async function main() {
 
         {
             category: {
-                name: 'IT Consulting',
-                slug: 'it-consulting',
-                description: 'Strategic technology consulting to help businesses choose the right stack, scale infrastructure, and optimize operations.',
-                icon: 'FaCloud',
+                name: 'Software Development',
+                slug: 'software-development',
+                description: 'Custom web and mobile applications built with modern technologies — from MVPs to enterprise platforms.',
+                icon: 'FaLaptopCode',
+                order: 1,
+                published: true
+            },
+            service: {
+                title: 'Mobile Development',
+                slug: 'mobile-development',
+                description: 'Cross-platform and native mobile apps using Flutter and Kotlin — designed for performance, offline support, and a great user experience.',
+                priceFrom: 35000,
+                currency: 'KES',
+                targetAudience: 'Businesses and product teams that need Android and iOS apps without maintaining two codebases.',
+                scope: 'Flutter apps, Kotlin-native apps, API integration, and store submission support.',
+                features: [
+                    'Flutter Cross-Platform Apps',
+                    'Kotlin Native Android Apps',
+                    'Offline-First & Local Storage',
+                    'Push Notifications & Auth',
+                    'Payments & In-App Purchases',
+                    'Play Store & App Store Release'
+                ],
+                images: ['/uploads/public/images/services/web-mobile.jpg'],
+                seoTitle: 'Mobile App Development — Flutter & Kotlin',
+                seoDesc: 'Cross-platform and native mobile apps built with Flutter and Kotlin.',
+                published: true,
+                featured: true
+            }
+        },
+
+        {
+            category: {
+                name: 'Custom Software',
+                slug: 'custom-software',
+                description: 'Bespoke systems and troubleshooting that fit how your business actually works.',
+                icon: 'FaTools',
                 order: 2,
                 published: true
             },
             service: {
-                title: 'IT Consulting',
-                slug: 'it-consulting',
-                description: 'Strategic technology consulting to help businesses choose the right stack, scale infrastructure, and optimize operations.',
+                title: 'Code Debugging',
+                slug: 'code-debugging',
+                description: 'Fast, practical debugging for broken builds, runtime errors, and production incidents — plus clear guidance so the problem stays fixed.',
+                priceFrom: 5000,
+                currency: 'KES',
+                targetAudience: 'Developers and businesses dealing with failing builds, crashes, or hard-to-trace bugs.',
+                scope: 'Error reproduction, root-cause analysis, patching, and a short written summary of the fix.',
                 features: [
-                    'Technology Strategy & Roadmap',
-                    'Cloud Migration Planning',
-                    'System Architecture Review',
-                    'Digital Transformation',
-                    'IT Infrastructure Audit',
-                    'Vendor Selection & Evaluation'
+                    'Build & Runtime Error Fixes',
+                    'Performance & Memory Profiling',
+                    'Dependency & Version Conflicts',
+                    'Production Incident Triage',
+                    'Code Review & Best Practices',
+                    'Root-Cause Write-up'
                 ],
-                images: ['/uploads/public/images/services/it-consulting.jpg'],
+                images: ['/uploads/public/images/services/enterprise.jpg'],
+                seoTitle: 'Code Debugging & Troubleshooting',
+                seoDesc: 'Practical debugging for broken builds, runtime errors, and production incidents.',
                 published: true,
-                featured: true
+                featured: false
             }
         },
 
         {
             category: {
-                name: 'AI & Automation',
-                slug: 'ai-automation',
-                description: 'Integrate artificial intelligence and automation into your business processes to work smarter, not harder.',
-                icon: 'FaBrain',
+                name: 'Data & Analytics',
+                slug: 'data-analytics',
+                description: 'Turn raw data into clear, decision-ready dashboards and reports.',
+                icon: 'FaChartLine',
                 order: 3,
                 published: true
             },
             service: {
-                title: 'AI & Automation',
-                slug: 'ai-automation',
-                description: 'Integrate artificial intelligence and automation into your business processes to work smarter, not harder.',
+                title: 'Data Analysis',
+                slug: 'data-analysis',
+                description: 'Python and Excel dashboards, automated reports, and data pipelines that make your numbers easy to read and act on.',
+                priceFrom: 15000,
+                currency: 'KES',
+                targetAudience: 'Teams drowning in spreadsheets who need insight, automation, and clean reporting.',
+                scope: 'Data cleaning, dashboard design, automated reporting, and lightweight ETL.',
                 features: [
-                    'AI Chatbot Development',
-                    'Workflow Automation',
-                    'Predictive Analytics',
-                    'Document Processing AI',
-                    'Bash & Shell Scripting',
-                    'Report Generation Systems'
+                    'Excel & Power BI Dashboards',
+                    'Python Data Cleaning & Analysis',
+                    'Automated Report Generation',
+                    'KPI & Metrics Tracking',
+                    'Survey & Sales Analysis',
+                    'Data Export & Integration'
                 ],
-                images: ['/uploads/public/images/services/ai-automation.jpg'],
+                images: ['/uploads/public/images/services/data-analytics.jpg'],
+                seoTitle: 'Data Analysis & Dashboards',
+                seoDesc: 'Python and Excel dashboards, automated reports, and data pipelines.',
                 published: true,
                 featured: true
             }
@@ -1659,26 +1712,98 @@ async function main() {
 
         {
             category: {
-                name: 'Cybersecurity',
-                slug: 'cybersecurity',
-                description: 'Protect your digital assets with comprehensive security services — from code reviews to penetration testing.',
-                icon: 'FaShieldAlt',
+                name: 'Document & Cyber Services',
+                slug: 'document-cyber',
+                description: 'Document editing, applications, and compliance support handled carefully and confidentially.',
+                icon: 'FaFileAlt',
                 order: 4,
                 published: true
             },
             service: {
-                title: 'Cybersecurity',
-                slug: 'cybersecurity',
-                description: 'Protect your digital assets with comprehensive security services — from code reviews to penetration testing.',
+                title: 'Document Editing',
+                slug: 'document-editing',
+                description: 'Professional editing and formatting for reports, theses, posters, and presentations, plus assistance with KRA, SHA, and Good Conduct applications.',
+                priceFrom: 3000,
+                currency: 'KES',
+                targetAudience: 'Students, professionals, and businesses needing polished documents or government applications.',
+                scope: 'Editing, formatting, layout, and guided application support.',
                 features: [
-                    'Security Code Reviews',
-                    'Vulnerability Assessments',
-                    'Compliance Auditing',
-                    'Incident Response Planning',
-                    'Data Encryption & Protection',
-                    'Security Awareness Training'
+                    'Report & Thesis Editing',
+                    'Poster & Presentation Design',
+                    'KRA & SHA Applications',
+                    'Good Conduct Certificates',
+                    'CV & Cover Letter Polishing',
+                    'Formatting & Proofreading'
                 ],
-                images: ['/uploads/public/images/services/cybersecurity.jpg'],
+                images: ['/uploads/public/images/services/document-editing.jpg'],
+                seoTitle: 'Document Editing & Applications',
+                seoDesc: 'Editing, formatting, and government application support.',
+                published: true,
+                featured: false
+            }
+        },
+
+        {
+            category: {
+                name: 'Custom Software',
+                slug: 'custom-software',
+                description: 'Bespoke systems and troubleshooting that fit how your business actually works.',
+                icon: 'FaTools',
+                order: 2,
+                published: true
+            },
+            service: {
+                title: 'System & Database Design',
+                slug: 'database-design',
+                description: 'Clean, scalable architectures and database schemas for new and growing systems — designed before a single line of code is written.',
+                priceFrom: 20000,
+                currency: 'KES',
+                targetAudience: 'Founders and teams starting a new product or restructuring an aging system.',
+                scope: 'Data modeling, schema design, API contracts, and architecture documentation.',
+                features: [
+                    'Relational & NoSQL Schema Design',
+                    'API & Data Contracts',
+                    'Architecture Documentation',
+                    'Migration Planning',
+                    'Indexing & Query Tuning',
+                    'Security & Access Modeling'
+                ],
+                images: ['/uploads/public/images/services/system-design.jpg'],
+                seoTitle: 'System & Database Design',
+                seoDesc: 'Scalable architectures and database schemas for new and growing systems.',
+                published: true,
+                featured: false
+            }
+        },
+
+        {
+            category: {
+                name: 'Custom Software',
+                slug: 'custom-software',
+                description: 'Bespoke systems and troubleshooting that fit how your business actually works.',
+                icon: 'FaTools',
+                order: 2,
+                published: true
+            },
+            service: {
+                title: 'Custom Systems',
+                slug: 'custom-systems',
+                description: 'End-to-end custom systems — POS, management tools, booking, and internal platforms — built around your exact workflow.',
+                priceFrom: 40000,
+                currency: 'KES',
+                targetAudience: 'Businesses with workflows that off-the-shelf software cannot handle well.',
+                scope: 'Discovery, design, build, and deployment of bespoke business systems.',
+                features: [
+                    'POS & Retail Systems',
+                    'Booking & Scheduling Tools',
+                    'Inventory & Stock Management',
+                    'Internal Dashboards',
+                    'Workflow Automation',
+                    'Integrations & APIs'
+                ],
+                images: ['/uploads/public/images/services/automation-bg.jpg'],
+                seoTitle: 'Custom Software Systems',
+                seoDesc: 'End-to-end custom systems built around your exact workflow.',
                 published: true,
                 featured: true
             }
@@ -1686,55 +1811,133 @@ async function main() {
 
         {
             category: {
-                name: 'Data Analytics',
-                slug: 'data-analytics',
-                description: 'Transform raw data into actionable insights with custom dashboards, reports, and data pipelines.',
-                icon: 'FaChartLine',
+                name: 'IT Support',
+                slug: 'it-support',
+                description: 'Hands-on setup, install, and configuration so your tools just work.',
+                icon: 'FaHeadset',
                 order: 5,
                 published: true
             },
             service: {
-                title: 'Data Analytics',
-                slug: 'data-analytics',
-                description: 'Transform raw data into actionable insights with custom dashboards, reports, and data pipelines.',
+                title: 'Software Installation',
+                slug: 'software-installation',
+                description: 'Reliable installation and configuration of development tools, business software, and environments — local or remote.',
+                priceFrom: 2500,
+                currency: 'KES',
+                targetAudience: 'Individuals and teams who need software set up correctly the first time.',
+                scope: 'Install, configure, license, and verify software and toolchains.',
                 features: [
-                    'Custom BI Dashboards',
-                    'ETL Pipeline Development',
-                    'Excel & Power BI Reporting',
-                    'Real-Time Data Processing',
-                    'Data Warehouse Design',
-                    'Data Quality & Governance'
+                    'OS & Driver Setup',
+                    'Dev Toolchain Installation',
+                    'Business Software Config',
+                    'Environment Variables & Paths',
+                    'Printer & Peripheral Setup',
+                    'Remote Assistance'
                 ],
-                images: ['/uploads/public/images/services/data-analytics.jpg'],
+                images: ['/uploads/public/images/services/it-consulting.jpg'],
+                seoTitle: 'Software Installation & Setup',
+                seoDesc: 'Reliable installation and configuration of software and environments.',
                 published: true,
-                featured: true
+                featured: false
             }
         },
 
         {
             category: {
-                name: 'Infrastructure',
-                slug: 'infrastructure',
-                description: 'Design, deploy, and manage cloud infrastructure and networking solutions that scale with your business.',
-                icon: 'FaNetworkWired',
+                name: 'IT Support',
+                slug: 'it-support',
+                description: 'Hands-on setup, install, and configuration so your tools just work.',
+                icon: 'FaHeadset',
+                order: 5,
+                published: true
+            },
+            service: {
+                title: 'System Upgrades',
+                slug: 'system-upgrades',
+                description: 'Speed up slow machines, clean up bloated systems, and upgrade hardware or software safely without losing your data.',
+                priceFrom: 4000,
+                currency: 'KES',
+                targetAudience: 'Anyone on slow or cluttered machines that need a safe performance boost.',
+                scope: 'Diagnostics, cleanup, upgrades, and a backup-before-change approach.',
+                features: [
+                    'Performance Diagnostics',
+                    'OS & Software Upgrades',
+                    'Startup & Bloatware Cleanup',
+                    'Storage & Backup Setup',
+                    'Hardware Recommendations',
+                    'Data-Safe Migration'
+                ],
+                images: ['/uploads/public/images/services/infrastructure.jpg'],
+                seoTitle: 'System Upgrades & Optimization',
+                seoDesc: 'Speed up and safely upgrade slow or bloated systems.',
+                published: true,
+                featured: false
+            }
+        },
+
+        {
+            category: {
+                name: 'Design & Branding',
+                slug: 'design-branding',
+                description: 'Visual assets that make your brand look professional.',
+                icon: 'FaPaintBrush',
                 order: 6,
                 published: true
             },
             service: {
-                title: 'Infrastructure',
-                slug: 'infrastructure',
-                description: 'Design, deploy, and manage cloud infrastructure and networking solutions that scale with your business.',
+                title: 'Graphic Design',
+                slug: 'graphic-design',
+                description: 'Logos, social media creatives, posters, and brand assets designed to keep your business looking sharp and consistent.',
+                priceFrom: 5000,
+                currency: 'KES',
+                targetAudience: 'Businesses and creators who need consistent, professional visual assets.',
+                scope: 'Logo, poster, social, and brand-kit design with source files.',
                 features: [
-                    'Cloud Deployment (AWS/Azure/DO)',
-                    'Docker & Kubernetes Setup',
-                    'CI/CD Pipeline Configuration',
-                    'Network Design & Management',
-                    'ISP Billing & Management',
-                    'Server Administration'
+                    'Logo & Brand Identity',
+                    'Social Media Creatives',
+                    'Posters & Flyers',
+                    'Business Cards',
+                    'Presentation Decks',
+                    'Brand Style Guides'
                 ],
-                images: ['/uploads/public/images/services/infrastructure.jpg'],
+                images: ['/uploads/public/images/services/graphic-design.jpg'],
+                seoTitle: 'Graphic Design Services',
+                seoDesc: 'Logos, posters, and brand assets designed to look professional.',
                 published: true,
-                featured: true
+                featured: false
+            }
+        },
+
+        {
+            category: {
+                name: 'Document & Cyber Services',
+                slug: 'document-cyber',
+                description: 'Document editing, applications, and compliance support handled carefully and confidentially.',
+                icon: 'FaFileAlt',
+                order: 4,
+                published: true
+            },
+            service: {
+                title: 'Online Applications',
+                slug: 'online-applications',
+                description: 'End-to-end help with KRA, SHA, NHIF, passport, and Good Conduct applications and portal submissions — correctly and on time.',
+                priceFrom: 2000,
+                currency: 'KES',
+                targetAudience: 'Individuals and businesses who need government portals handled without the stress.',
+                scope: 'Account setup, document prep, submission, and follow-up tracking.',
+                features: [
+                    'KRA PIN & Returns',
+                    'SHA / NHIF Registration',
+                    'Passport & Visa Portals',
+                    'Good Conduct Applications',
+                    'Business & License Renewals',
+                    'Document Collection & Tracking'
+                ],
+                images: ['/uploads/public/images/services/security-bg.jpg'],
+                seoTitle: 'Online Applications & Portals',
+                seoDesc: 'Help with KRA, SHA, passport, and Good Conduct applications.',
+                published: true,
+                featured: false
             }
         }
     ];
@@ -1765,6 +1968,12 @@ async function main() {
             update: {
                 title: item.service.title,
                 description: item.service.description,
+                priceFrom: item.service.priceFrom,
+                currency: item.service.currency,
+                targetAudience: item.service.targetAudience,
+                scope: item.service.scope,
+                seoTitle: item.service.seoTitle,
+                seoDesc: item.service.seoDesc,
                 features: item.service.features,
                 images: item.service.images,
                 published: item.service.published,
@@ -1777,6 +1986,12 @@ async function main() {
                 title: item.service.title,
                 slug: item.service.slug,
                 description: item.service.description,
+                priceFrom: item.service.priceFrom,
+                currency: item.service.currency,
+                targetAudience: item.service.targetAudience,
+                scope: item.service.scope,
+                seoTitle: item.service.seoTitle,
+                seoDesc: item.service.seoDesc,
                 features: item.service.features,
                 images: item.service.images,
                 published: item.service.published,

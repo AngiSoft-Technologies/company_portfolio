@@ -46,8 +46,8 @@ export default function servicesRouter() {
             const isDeveloper = isRole(req, ['DEVELOPER']);
             const service = await servicesController.get(req.params.id, {
                 where: includeAll
-                    ? { id: req.params.id }
-                    : (isDeveloper ? { id: req.params.id, authorId: req.user?.sub } : { id: req.params.id, published: true }),
+                    ? {}
+                    : (isDeveloper ? { authorId: req.user?.sub } : { published: true }),
                 include: {
                     categoryRef: true,
                     author: { select: { id: true, firstName: true, lastName: true, role: true, avatarUrl: true } }

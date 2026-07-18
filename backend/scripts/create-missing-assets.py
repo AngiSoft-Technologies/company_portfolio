@@ -151,6 +151,20 @@ def main():
     finance = accent_dots(finance, n=12, color=GREEN, alpha=22, r=2)
     save(finance, "about/industries/finance.jpg")
 
+    # Service hero/card images referenced by the 11 canonical services seed.
+    doc = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    doc = accent_dots(doc, n=30, color=CYAN, alpha=24, r=3)
+    save(doc, "services/document-editing.jpg")
+
+    sysd = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    sysd = accent_dots(sysd, n=44, color=GREEN, alpha=20, r=4)
+    save(sysd, "services/system-design.jpg")
+
+    gd = add_grid(gradient((800, 533), NAVY, NAVY2), step=64, alpha=18)
+    gd = accent_dots(gd, n=34, color=CYAN, alpha=22, r=3)
+    gd = accent_dots(gd, n=10, color=GREEN, alpha=24, r=2)
+    save(gd, "services/graphic-design.jpg")
+
 
 if __name__ == "__main__":
     main()
