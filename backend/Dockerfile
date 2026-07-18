@@ -14,6 +14,9 @@ RUN npm ci --include=dev
 # Copy prisma schema
 COPY prisma ./prisma
 
+# Copy Prisma 7 CLI config (supplies the datasource URL for generate/migrate/seed)
+COPY prisma.config.ts ./
+
 # Generate Prisma client
 RUN npx prisma generate
 
