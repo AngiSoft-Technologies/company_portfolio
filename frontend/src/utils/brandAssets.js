@@ -15,13 +15,13 @@ export const ANGISOFT_LOGOS = {
 export const PRODUCT_LOGOS = {
   petroflow: resolveAssetUrl('/uploads/public/images/Logos/petroflow-logo.png'),
   dukaflow: resolveAssetUrl('/uploads/public/images/Logos/duka-flow-logo.png'),
-  kejalink: resolveAssetUrl('/uploads/public/images/Logos/keja-link logo.png'),
+  kejalink: resolveAssetUrl('/uploads/public/images/Logos/keja-link-logo.png'),
   angitunes: resolveAssetUrl('/uploads/public/images/Logos/angitunes-logo.png'),
 };
 
 export const PRODUCT_ICONS = {
   petroflow: resolveAssetUrl('/uploads/public/images/Logos/petroflow-mobile-icon.png'),
-  dukaflow: resolveAssetUrl('/uploads/public/images/Logos/duka flow mobile icon.png'),
-  kejalink: resolveAssetUrl('/uploads/public/images/Logos/kejalink-mobile icon.png'),
-  angitunes: resolveAssetUrl('/uploads/public/images/Logos/angitunes-mobile icon.png'),
+  dukaflow: resolveAssetUrl('/uploads/public/images/Logos/duka-flow-mobile-icon.png'),
+  kejalink: resolveAssetUrl('/uploads/public/images/Logos/kejalink-mobile-icon.png'),
+  angitunes: resolveAssetUrl('/uploads/public/images/Logos/angitunes-mobile-icon.png'),
 };

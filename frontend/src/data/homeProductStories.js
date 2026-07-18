@@ -24,7 +24,7 @@ const homeProductStories = [
     slug: 'dukaflow',
     name: 'DukaFlow',
     logo: '/uploads/public/images/Logos/duka-flow-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/duka flow mobile icon.png',
+    mobileIcon: '/uploads/public/images/Logos/duka-flow-mobile-icon.png',
     tagline: 'POS and Business Management for Retail',
     headline: 'Building a Practical Digital Backbone for Growing Businesses',
     excerpt:
@@ -39,7 +39,7 @@ const homeProductStories = [
     slug: 'angitunes',
     name: 'AngiTunes',
     logo: '/uploads/public/images/Logos/angitunes-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/angitunes-mobile icon.png',
+    mobileIcon: '/uploads/public/images/Logos/angitunes-mobile-icon.png',
     tagline: 'Music and Creator Platform',
     headline: 'Creating a Digital Space for Kenyan Artists and DJs',
     excerpt:
@@ -53,8 +53,8 @@ const homeProductStories = [
     id: 'kejalink',
     slug: 'kejalink',
     name: 'KejaLink',
-    logo: '/uploads/public/images/Logos/keja-link logo.png',
-    mobileIcon: '/uploads/public/images/Logos/kejalink-mobile icon.png',
+    logo: '/uploads/public/images/Logos/keja-link-logo.png',
+    mobileIcon: '/uploads/public/images/Logos/kejalink-mobile-icon.png',
     tagline: 'Property, Rental and Housing Platform',
     headline: 'Making Property Discovery and Rental Management More Trustworthy',
     excerpt:

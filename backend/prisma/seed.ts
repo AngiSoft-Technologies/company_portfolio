@@ -361,7 +361,7 @@ async function main() {
         ],
 
         backgroundVideo: "/videos/Matrix_rain_code.mp4",
-        backgroundImage: "/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
+        backgroundImage: "/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png"
     };
 
     await seedSetting('site_hero', heroValue);
@@ -485,7 +485,7 @@ async function main() {
         mode: "dark",
         logo: "/uploads/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
         logoDark: "/uploads/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
-        logoSymbol: "/uploads/public/images/Logos/AngiSoft Logo Symbol Only.png",
+        logoSymbol: "/uploads/public/images/Logos/AngiSoft-Logo-Symbol-Only.png",
         favicon: "/favicon.ico",
         siteName: "AngiSoft Technologies",
         motto: "Innovate \u2022 Build \u2022 Empower",

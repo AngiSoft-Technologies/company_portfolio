@@ -116,15 +116,15 @@ def main():
     cta_m = accent_dots(cta_m, n=22, color=GREEN, alpha=24, r=3)
     save(cta_m, "about/final-cta/build-with-angisoft-mobile.webp")
 
-    # Posters & Campaigns / AngiSoft Thank You.png
+    # Posters-Campaigns / AngiSoft-Thank-You.png
     ty = add_grid(gradient((1080, 1350), NAVY, NAVY2), step=72, alpha=14)
     ty = accent_dots(ty, n=34, color=CYAN, alpha=22, r=3)
-    save(ty, "Posters & Campaigns/AngiSoft Thank You.png")
+    save(ty, "Posters-Campaigns/AngiSoft-Thank-You.png")
 
-    # Wallpapers / AngiSoft Website Landing !sr Design.png
+    # Wallpapers / AngiSoft-Website-Landing-sr-Design.png
     wp = add_grid(gradient((1920, 1080), NAVY, NAVY2), step=64, alpha=18)
     wp = accent_dots(wp, n=60, color=GREEN, alpha=18, r=4)
-    save(wp, "Wallpapers/AngiSoft Website Landing !sr Design.png")
+    save(wp, "Wallpapers/AngiSoft-Website-Landing-sr-Design.png")
 
     # world-map-dots SVG variants
     world_dot_svg(

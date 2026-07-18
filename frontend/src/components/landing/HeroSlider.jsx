@@ -183,7 +183,7 @@ const HeroSlider = () => {
             onError={(e) => {
               e.target.style.display = 'none';
               const fallback = e.target.parentElement;
-              if (fallback) fallback.style.backgroundImage = `url(${resolveAssetUrl(hero?.backgroundImage || '/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png')})`;
+              if (fallback) fallback.style.backgroundImage = `url(${resolveAssetUrl(hero?.backgroundImage || '/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png')})`;
             }}
           />
         )}
@@ -207,7 +207,7 @@ const HeroSlider = () => {
         {/* Brand name */}
         <div className="hero-slider__brand">
           <img
-            src="/uploads/public/images/Logos/AngiSoft Logo Symbol Only.png"
+            src={resolveAssetUrl('/uploads/public/images/Logos/AngiSoft-Logo-Symbol-Only.png')}
             alt="AngiSoft"
             className="hero-slider__brand-logo"
             onError={(e) => { e.target.style.display = 'none'; }}

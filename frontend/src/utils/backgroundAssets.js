@@ -3,12 +3,12 @@ export const BACKGROUND_ASSETS = {
   developerPanel: '/uploads/public/images/developer-8829735_1280.jpg',
   webDevelopment: '/uploads/public/images/web-development.jpg',
   softwareCompany: '/uploads/public/images/Software-Development-Company.jpg',
-  desktopWallpaper: '/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png',
-  landingWallpaper: '/uploads/public/images/Wallpapers/AngiSoft%20Website%20Landing%20!sr%20Design.png',
-  campaignBanner: '/uploads/public/images/Posters%20%26%20Campaigns/AngiSoft%20Campaign%20Banner.png',
-  thankYouPoster: '/uploads/public/images/Posters%20%26%20Campaigns/AngiSoft%20Thank%20You.png',
-  watermark: '/uploads/public/images/Branding/AngiSoft%20Watermsrk.png',
-  carBranding: '/uploads/public/images/Branding/AngiSoft%20Car%20Branding.png',
+  desktopWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png',
+  landingWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Website-Landing-sr-Design.png',
+  campaignBanner: '/uploads/public/images/Posters-Campaigns/AngiSoft-Campaign-Banner.png',
+  thankYouPoster: '/uploads/public/images/Posters-Campaigns/AngiSoft-Thank-You.png',
+  watermark: '/uploads/public/images/Branding/AngiSoft-Watermsrk.png',
+  carBranding: '/uploads/public/images/Branding/AngiSoft-Car-Branding.png',
 };
 
 export const BACKGROUND_VARIANTS = {

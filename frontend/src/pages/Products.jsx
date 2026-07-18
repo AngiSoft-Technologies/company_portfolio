@@ -87,7 +87,7 @@ const Products = () => {
     return (
         <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
             {/* Hero Section */}
-            <ParallaxSection speed={0.25} treatment="image" backgroundImage="/uploads/public/images/Posters%20%26%20Campaigns/AngiSoft%20Campaign%20Banner.png" className="relative py-32 overflow-hidden">
+            <ParallaxSection speed={0.25} treatment="image" backgroundImage={resolveAssetUrl('/uploads/public/images/Posters-Campaigns/AngiSoft-Campaign-Banner.png')} className="relative py-32 overflow-hidden">
                 <div className="absolute inset-0 angi-spotlight" />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">

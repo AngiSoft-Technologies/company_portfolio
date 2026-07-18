@@ -8,16 +8,16 @@ import '../../css/BrandCTA.css';
 // Static fallback kept outside the component so it is created once.
 // Spelling matches the physical files (Muggs, NoteBooks, Capes, Envelop).
 const FALLBACK_MERCH = [
-  { id: 'angisoft-tshirt', filename: 'AngiSoft T-Shirts Design.png', src: '/uploads/public/images/Branding/AngiSoft T-Shirts Design.png', alt: 'AngiSoft T-Shirts' },
-  { id: 'angisoft-hoodie', filename: 'AngiSoft Hoodie Design.png', src: '/uploads/public/images/Branding/AngiSoft Hoodie Design.png', alt: 'AngiSoft Hoodie' },
-  { id: 'angisoft-muggs', filename: 'AngiSoft Muggs and cups Design.png', src: '/uploads/public/images/Branding/AngiSoft Muggs and cups Design.png', alt: 'AngiSoft Mugs & Cups' },
-  { id: 'angisoft-notebooks', filename: 'AngiSoft NoteBooks Design.png', src: '/uploads/public/images/Branding/AngiSoft NoteBooks Design.png', alt: 'AngiSoft Notebooks' },
-  { id: 'angisoft-car', filename: 'AngiSoft Car Branding.png', src: '/uploads/public/images/Branding/AngiSoft Car Branding.png', alt: 'AngiSoft Car Branding' },
-  { id: 'angisoft-capes', filename: 'AngiSoft Capes Design.png', src: '/uploads/public/images/Branding/AngiSoft Capes Design.png', alt: 'AngiSoft Caps' },
-  { id: 'angisoft-pens', filename: 'AngiSoft Pens Design.png', src: '/uploads/public/images/Branding/AngiSoft Pens Design.png', alt: 'AngiSoft Pens' },
-  { id: 'angisoft-stickers', filename: 'AngiSoft Stickers Design.png', src: '/uploads/public/images/Branding/AngiSoft Stickers Design.png', alt: 'AngiSoft Stickers' },
-  { id: 'angisoft-envelop', filename: 'AngiSoft Envelop Design.png', src: '/uploads/public/images/Branding/AngiSoft Envelop Design.png', alt: 'AngiSoft Envelope' },
-  { id: 'angisoft-business-card', filename: 'AngiSoft Business Card Front View.png', src: '/uploads/public/images/Business Cards/AngiSoft Business Card Front View.png', alt: 'Business Card' },
+  { id: 'angisoft-tshirt', filename: 'AngiSoft-T-Shirts-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-T-Shirts-Design.png'), alt: 'AngiSoft T-Shirts' },
+  { id: 'angisoft-hoodie', filename: 'AngiSoft-Hoodie-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Hoodie-Design.png'), alt: 'AngiSoft Hoodie' },
+  { id: 'angisoft-muggs', filename: 'AngiSoft-Muggs-and-cups-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Muggs-and-cups-Design.png'), alt: 'AngiSoft Mugs & Cups' },
+  { id: 'angisoft-notebooks', filename: 'AngiSoft-NoteBooks-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-NoteBooks-Design.png'), alt: 'AngiSoft Notebooks' },
+  { id: 'angisoft-car', filename: 'AngiSoft-Car-Branding.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Car-Branding.png'), alt: 'AngiSoft Car Branding' },
+  { id: 'angisoft-capes', filename: 'AngiSoft-Capes-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Capes-Design.png'), alt: 'AngiSoft Caps' },
+  { id: 'angisoft-pens', filename: 'AngiSoft-Pens-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Pens-Design.png'), alt: 'AngiSoft Pens' },
+  { id: 'angisoft-stickers', filename: 'AngiSoft-Stickers-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Stickers-Design.png'), alt: 'AngiSoft Stickers' },
+  { id: 'angisoft-envelop', filename: 'AngiSoft-Envelop-Design.png', src: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Envelop-Design.png'), alt: 'AngiSoft Envelope' },
+  { id: 'angisoft-business-card', filename: 'AngiSoft-Business-Card-Front-View.png', src: resolveAssetUrl('/uploads/public/images/Business-Cards/AngiSoft-Business-Card-Front-View.png'), alt: 'Business Card' },
 ];
 
 // Safe URL extraction across possible backend shapes.
