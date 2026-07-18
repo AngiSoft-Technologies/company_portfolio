@@ -5,7 +5,8 @@ import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/
 import { useSiteCopy } from '../hooks/useSiteCopy';
 import { useServices } from '../hooks/useServices';
 import { resolveIcon } from '../utils/iconRegistry';
-import { FaCheckCircle, FaStar, FaHeadset, FaRocket } from 'react-icons/fa';
+import { resolveAssetUrl } from '../utils/constants';
+import { FaCheckCircle, FaStar, FaHeadset, FaRocket, FaQuoteLeft } from 'react-icons/fa';
 
 const ServicesList = () => {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ const ServicesList = () => {
             <ParallaxSection
                 speed={0.25}
                 treatment="image"
-                backgroundImage="/uploads/public/images/Software-Development-Company.jpg"
+                backgroundImage={resolveAssetUrl('/uploads/public/images/Software-Development-Company.jpg')}
                 backgroundPosition="center 42%"
                 className="relative py-32 overflow-hidden"
             >
