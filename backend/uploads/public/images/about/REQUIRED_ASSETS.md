@@ -1,45 +1,86 @@
-# About Page — Required Image Assets
+# About Page — Required Image Assets (current contract)
 
-The About page (`frontend/src/pages/About.jsx` and `components/about/*`) is dark-themed
-and image-led. SVG illustrations (Africa map + 3 collaboration illustrations) are already
-present and render correctly. The **photographs** below are referenced by path but must be
-supplied as real files — drop them into the matching path. Until then those tiles show a
-broken image; the layout, sliders and animations all still work (copy is real AngiSoft
-content, not placeholder copy).
+Generated from the canonical frontend hook `frontend/src/hooks/useAboutPage.js`
+(the source of truth for `defaultAbout`). Drop each real file at the listed path.
 
-Use WebP/AVIF where possible. Recommended size: 1200–1600px wide, 4:3 or 16:9.
+Public assets served from `backend/uploads/public` → `/uploads/public/...`.
+Frontend assets served from `frontend/public` → `/images/...`.
 
-## Hero slider — `/images/about/hero/`
-- `prof-angera-founder.jpg` — Portrait of Prof Angera Silas, founder.
-- `angisoft-engineering.jpg` — Founder/team working on software.
-- `angisoft-team.jpg` — Collaborative or team-working scene.
-- `angisoft-product-work.jpg` — Branded workspace / product development.
+## Missing (31)
 
-## Number stories — `/images/about/numbers/`
-- `founded-2024.jpg` — Earliest AngiSoft / founder working environment.
-- `projects.jpg` — Websites, dashboards or management platforms.
-- `product-ecosystems.jpg` — PetroFlow / DukaFlow / KejaLink / AngiTunes interfaces.
-- `digital-empowerment.jpg` — Learner, client support or community using a system.
+### final-cta
+- frontend/public/images/about/final-cta/build-with-angisoft.webp
+- frontend/public/images/about/final-cta/build-with-angisoft-mobile.webp
 
-## Highlights timeline — `/images/about/highlights/`
-- `grassroots-origin.jpg` — Grassroots tech work (coding support, documents, training).
-- `founding-2024.jpg` — AngiSoft founding moment / founder.
-- `systems-growth-2025.jpg` — Software / web / mobile growth.
-- `ecosystems-2026.jpg` — Product ecosystems in development.
+### geography
+- frontend/public/images/about/geography/world-map-dots-light.svg
 
-## Industries — `/images/about/industries/`
-- `retail.jpg` `education.jpg` `real-estate.jpg` `oil-gas.jpg` `creative-industry.jpg`
-- `professional-services.jpg` `hospitality.jpg` `transport.jpg` `community.jpg` `startups.jpg`
-  Each: a contextual photograph (or branded illustration) relevant to that industry.
+### hero
+- backend/uploads/public/images/about/hero/prof-angera-founder-mobile.jpg
+- backend/uploads/public/images/about/hero/angisoft-product-work-mobile.jpg
+- backend/uploads/public/images/about/hero/angisoft-team-mobile.jpg
 
-## Clients / products logos — `/images/about/clients/`
-- `kingsway.png` `primestack.png` `petroflow.png` `dukaflow.png` `kejalink.png` `angitunes.png`
-  Transparent PNG logos, ~200x60, monochrome-friendly.
+### leadership
+- backend/uploads/public/images/about/leadership/prof-angera-pricing.jpg
 
-## Geography (already present)
-- `geography/africa-map-dark.svg` ✅ supplied
-- `collaboration/*.svg` ✅ supplied (3 illustrations)
+### services
+- backend/uploads/public/images/about/services/custom-systems.jpg
+- backend/uploads/public/images/about/services/data-analysis.jpg
+- backend/uploads/public/images/about/services/database-design.jpg
+- backend/uploads/public/images/about/services/debugging.jpg
+- backend/uploads/public/images/about/services/documents.jpg
+- backend/uploads/public/images/about/services/mobile-development.jpg
+- backend/uploads/public/images/about/services/online-applications.jpg
+- backend/uploads/public/images/about/services/web-development.jpg
 
-## Testimonials
-- Client/project images come from the `/testimonials` API (`imageUrl` field). Ensure seeded
-  testimonials have real `imageUrl` values (e.g. `/uploads/...` from CMS) for the carousel.
+### sustainability
+- backend/uploads/public/images/about/sustainability/digital-empowerment.jpg
+
+### technologies
+- backend/uploads/public/images/about/technologies/android.svg
+- backend/uploads/public/images/about/technologies/dart.svg
+- backend/uploads/public/images/about/technologies/django.svg
+- backend/uploads/public/images/about/technologies/docker.svg
+- backend/uploads/public/images/about/technologies/firebase.svg
+- backend/uploads/public/images/about/technologies/java.svg
+- backend/uploads/public/images/about/technologies/javascript.svg
+- backend/uploads/public/images/about/technologies/mysql.svg
+- backend/uploads/public/images/about/technologies/netlify.svg
+- backend/uploads/public/images/about/technologies/php.svg
+- backend/uploads/public/images/about/technologies/railway.svg
+- backend/uploads/public/images/about/technologies/spring.svg
+- backend/uploads/public/images/about/technologies/sqlite.svg
+- backend/uploads/public/images/about/technologies/vite.svg
+
+### transparency
+- backend/uploads/public/images/about/transparency/video-cover.jpg
+
+## Present (29)
+
+These already exist on disk and are referenced by the seed data. Left here so the
+asset dropper does not re-create them.
+
+- backend/uploads/public/images/about/hero/prof-angera-founder.jpg
+- backend/uploads/public/images/about/hero/angisoft-product-work.jpg
+- backend/uploads/public/images/about/hero/angisoft-team.jpg
+- backend/uploads/public/images/about/intro/...
+- backend/uploads/public/images/about/numbers/...
+- backend/uploads/public/images/about/geography/...
+- backend/uploads/public/images/about/sustainability/...
+- backend/uploads/public/images/about/collaboration/...
+- backend/uploads/public/images/about/timeline/...
+- backend/uploads/public/images/about/industries/...
+- backend/uploads/public/images/about/clients/...
+- backend/uploads/public/images/about/client-stats/...
+- backend/uploads/public/images/about/client-highlights/...
+- backend/uploads/public/images/about/testimonials/...
+- backend/uploads/public/images/about/service-map/...
+- backend/uploads/public/images/about/transparency/...
+- backend/uploads/public/images/about/partnerships/...
+- backend/uploads/public/images/about/solution-types/...
+- backend/uploads/public/images/about/technologies/...
+- backend/uploads/public/images/about/capabilities/...
+- backend/uploads/public/images/about/why-guarantee/...
+- backend/uploads/public/images/about/pricing/...
+- backend/uploads/public/images/about/cta/...
+- frontend/public/images/about/... (various)

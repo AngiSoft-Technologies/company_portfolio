@@ -1,6 +1,24 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+
+// Optional pre-generated About-page default content. When present, it seeds the
+// canonical 26-key contract described by the frontend hook. Regenerate with:
+//   npm run extract:about-default
+// If the file is missing, the inline fallback below is used instead.
+let aboutDefaultData: {
+  defaultAbout: Record<string, any>;
+  ABOUT_SCHEMA_VERSION: number;
+  ABOUT_SECTION_KEYS?: string[];
+} | null = null;
+let ABOUT_SECTION_KEYS: string[] = [];
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  aboutDefaultData = require('./about-default-data') as any;
+  ABOUT_SECTION_KEYS = aboutDefaultData?.ABOUT_SECTION_KEYS ?? [];
+} catch {
+  aboutDefaultData = null;
+}
 
 dotenv.config();
 
@@ -109,20 +127,31 @@ async function main() {
     // Break the flat about object into composed AboutSection rows (one row per
     // key), preserving the declared order. This makes the About page editable as
     // individual DB rows via the admin CMS (/api/about-sections).
+    // Canonical ordering matches the frontend ABOUT_SECTION_KEYS contract so the
+    // page composer assembles sections in the intended visual sequence.
     const seedAboutSections = async (about: Record<string, any>) => {
         const order: string[] = [
-            'hero', 'intro', 'numberStories', 'geography', 'timeline', 'industries',
-            'clients', 'clientStats', 'clientHighlights', 'serviceGallery', 'solutionTypes',
-            'whyGuarantee', 'fullServices', 'pricing', 'merchandise', 'technologies',
-            'quotation', 'cta'
+            'heroSlides', 'intro', 'numbersHeading', 'numberStories', 'geography',
+            'sustainability', 'collaboration', 'timelineHeading', 'timeline',
+            'industriesHeading', 'industries', 'clientsHeading', 'clients',
+            'clientStats', 'clientHighlights', 'testimonialsHeading', 'serviceMap',
+            'transparency', 'partnerships', 'solutionTypes', 'technologies',
+            'specializedCapabilities', 'whyGuarantee', 'pricing', 'pricingQuotation', 'cta'
         ];
         const titles: Record<string, string> = {
-            hero: 'Hero Slides', intro: 'Intro', numberStories: 'AngiSoft in Numbers',
-            geography: 'Global Reach Map', timeline: 'Our Journey', industries: 'Industries We Serve',
-            clients: 'Clients & Partners', clientStats: 'Client Stats', clientHighlights: 'Client Highlights',
-            serviceGallery: 'Service Map Gallery', solutionTypes: 'Solutions We Cover', whyGuarantee: 'Why We Guarantee Success',
-            fullServices: 'All of the Following', pricing: 'Pricing', merchandise: 'Merchandise Gallery',
-            technologies: 'Technologies', quotation: 'Quotation', cta: 'Final Call to Action'
+            heroSlides: 'Hero Leadership Slides', intro: 'Hero Introduction',
+            numbersHeading: 'AngiSoft in Numbers Heading', numberStories: 'AngiSoft in Numbers',
+            geography: 'Our Geography', sustainability: 'Sustainability and Social Responsibility',
+            collaboration: 'How We Collaborate', timelineHeading: 'Highlights Heading',
+            timeline: 'AngiSoft Highlights', industriesHeading: 'Industries Heading',
+            industries: 'Industries We Serve', clientsHeading: 'Our Clients Heading',
+            clients: 'Our Clients', clientStats: 'Client Stats', clientHighlights: 'Client Highlights',
+            testimonialsHeading: 'What Our Clients Say Heading', serviceMap: 'Our Service Map',
+            transparency: 'Building Trust with Transparency', partnerships: 'Partnerships and Recognitions',
+            solutionTypes: 'Solutions We Cover', technologies: 'Capabilities and Technological Expertise',
+            specializedCapabilities: 'Specialized Technology Capabilities',
+            whyGuarantee: 'What We Do to Guarantee Project Success', pricing: 'Our Pricing Policy',
+            pricingQuotation: 'Leadership Pricing Quotation', cta: 'Final Call to Action'
         };
         const seen = new Set<string>();
         let idx = 0;
@@ -131,18 +160,22 @@ async function main() {
             seen.add(key);
             await prisma.aboutSection.upsert({
                 where: { key },
-                update: overwritePublicContent ? { content: about[key], order: idx, title: titles[key] || key, published: true } : {},
-                create: { key, title: titles[key] || key, order: idx, published: true, content: about[key] }
+                update: overwritePublicContent ? { content: about[key], sortOrder: idx, title: titles[key] || key, enabled: true } : {},
+                create: { key, title: titles[key] || key, sortOrder: idx, enabled: true, content: about[key] }
             });
             idx += 1;
         }
-        // Any keys not in the canonical order list still get seeded (future-proofing).
-        for (const key of Object.keys(about)) {
-            if (seen.has(key)) continue;
+        // Any keys in the canonical contract not yet seen still get seeded.
+        // We only seed keys recognized by the frontend (ABOUT_SECTION_KEYS);
+        // metadata keys like `schemaVersion` are intentionally excluded so the
+        // admin CMS and public API expose exactly the sections the hook renders.
+        const extra = (ABOUT_SECTION_KEYS.length ? ABOUT_SECTION_KEYS : Object.keys(about))
+            .filter((k) => !seen.has(k) && k in about);
+        for (const key of extra) {
             await prisma.aboutSection.upsert({
                 where: { key },
-                update: overwritePublicContent ? { content: about[key], order: idx } : {},
-                create: { key, title: key, order: idx, published: true, content: about[key] }
+                update: overwritePublicContent ? { content: about[key], sortOrder: idx } : {},
+                create: { key, title: titles[key] || key, sortOrder: idx, enabled: true, content: about[key] }
             });
             idx += 1;
         }
@@ -167,7 +200,7 @@ async function main() {
                 id: 0,
                 type: 'video',
                 video: '/videos/Matrix_rain_code.mp4',
-                poster: '/images/Software-Development-Company.jpg',
+                poster: '/uploads/public/images/Software-Development-Company.jpg',
                 badge: 'AngiSoft Technologies',
                 headline: 'Building Africa’s',
                 headlineHighlight: 'Digital Future',
@@ -179,7 +212,7 @@ async function main() {
             {
                 id: 1,
                 type: 'image',
-                image: '/images/Software-Development-Company.jpg',
+                image: '/uploads/public/images/Software-Development-Company.jpg',
                 badge: 'Our Products',
                 headline: 'Purpose-Built',
                 headlineHighlight: 'Software',
@@ -190,7 +223,7 @@ async function main() {
             {
                 id: 2,
                 type: 'image',
-                image: '/images/programming-background-with-person-working-with-codes-computer.jpg',
+                image: '/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg',
                 badge: 'Innovate. Build. Empower.',
                 headline: 'Technology That',
                 headlineHighlight: 'Moves Businesses',
@@ -201,7 +234,7 @@ async function main() {
             {
                 id: 3,
                 type: 'image',
-                image: '/images/developer-8829735_1280.jpg',
+                image: '/uploads/public/images/developer-8829735_1280.jpg',
                 badge: 'Our Team',
                 headline: 'Expert Developers,',
                 headlineHighlight: 'Real Results',
@@ -328,7 +361,7 @@ async function main() {
         ],
 
         backgroundVideo: "/videos/Matrix_rain_code.mp4",
-        backgroundImage: "/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
+        backgroundImage: "/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png"
     };
 
     await seedSetting('site_hero', heroValue);
@@ -337,267 +370,40 @@ async function main() {
     // About Section — ScienceSoft-style section structure, AngiSoft dark identity.
     // Image paths live under /uploads/public/images/about (served by the backend
     // and resolved via resolveAssetUrl on the frontend).
-    const aboutValue = {
-        heroSlides: [
-            { id: 1, imageUrl: "/uploads/public/images/about/hero/prof-angera-founder.jpg", title: "Prof Angera Silas", subtitle: "Founder and Lead Software Engineer" },
-            { id: 2, imageUrl: "/uploads/public/images/about/hero/angisoft-product-work.jpg", title: "Engineering Practical Solutions", subtitle: "Software shaped by real business and community needs" },
-            { id: 3, imageUrl: "/uploads/public/images/about/hero/angisoft-team.jpg", title: "A Collaborative Team", subtitle: "Engineers, data and digital-service specialists" },
-            { id: 4, imageUrl: "/uploads/public/images/about/hero/angisoft-product-work.jpg", title: "Building Product Ecosystems", subtitle: "PetroFlow, DukaFlow, KejaLink and AngiTunes" }
-        ],
-        intro: {
-            badge: "Est. 2024 · Nairobi, Kenya",
-            eyebrow: "About AngiSoft Technologies",
-            headline: "Building Africa’s Digital Future",
-            paragraph: "AngiSoft Technologies is a Nairobi-based software company building practical systems, data products and digital services from real community and business needs.",
-            primaryCta: { label: "Start a Project", to: "/booking" }
-        },
-        stats: [
-            { id: "founded", value: 2024, suffix: "", label: "Year AngiSoft was founded" },
-            { id: "projects", value: 8, suffix: "+", label: "Projects contributed to" },
-            { id: "products", value: 4, suffix: "", label: "Product ecosystems" },
-            { id: "services", value: 10, suffix: "+", label: "Digital service areas" }
-        ],
-        numberStories: [
-            {
-                id: "founded",
-                eyebrow: "Our Origin",
-                statistic: 2024,
-                suffix: "",
-                title: "Founded in 2024",
-                text: "AngiSoft Technologies began from practical grassroots technology work: debugging student systems, teaching beginner coding, preparing documents, analysing data, installing software, creating posters and helping people complete essential online applications.",
-                imageUrl: "/uploads/public/images/about/numbers/founded-2024.jpg",
-                link: { label: "Read our story", to: "/about" }
-            },
-            {
-                id: "projects",
-                eyebrow: "Practical Work",
-                statistic: 8,
-                suffix: "+",
-                title: "Projects and practical work",
-                text: "Our experience has grown through practical contribution to real systems, including websites, mobile applications, management platforms, databases, data workflows and software recovery projects.",
-                images: [
-                    { url: "/uploads/public/images/about/numbers/projects.jpg", caption: "Websites & platforms" },
-                    { url: "/uploads/public/images/about/numbers/product-ecosystems.jpg", caption: "Product work" }
-                ],
-                link: { label: "See our work", to: "/services" }
-            },
-            {
-                id: "products",
-                eyebrow: "Our Products",
-                statistic: 4,
-                suffix: "",
-                title: "Product ecosystems",
-                text: "AngiSoft is moving beyond one-off technical work into original technology products built around African business, property, fuel, retail and creative-industry needs.",
-                images: [
-                    { url: "/uploads/public/images/about/numbers/product-ecosystems.jpg", caption: "PetroFlow, DukaFlow, KejaLink, AngiTunes" }
-                ],
-                link: { label: "Explore products", to: "/products" }
-            },
-            {
-                id: "empowerment",
-                eyebrow: "Long-Term Impact",
-                statistic: 10,
-                suffix: "+",
-                title: "Technology that empowers",
-                text: "We do not build software only for delivery. We create systems, transfer knowledge, support users and help businesses build lasting digital capacity.",
-                imageUrl: "/uploads/public/images/about/numbers/digital-empowerment.jpg",
-                link: { label: "Our approach", to: "/services" }
-            }
-        ],
-        geography: {
-            eyebrow: "Where We Work",
-            title: "AngiSoft Across Africa",
-            intro: "AngiSoft Technologies operates from Nairobi and delivers digital work across East Africa and the wider continent, with remote collaboration reaching clients globally.",
-            regions: [
-                { id: "nairobi", title: "Nairobi, Kenya", label: "Headquarters", description: "AngiSoft Technologies operates from Nairobi and serves clients through both direct and remote collaboration.", x: 66, y: 63 },
-                { id: "east-africa", title: "East Africa", label: "Primary Growth Region", description: "We are building solutions relevant to businesses, institutions, creators and communities across East Africa.", x: 71, y: 54 },
-                { id: "africa", title: "Africa", label: "Long-Term Market", description: "Our product vision is to build adaptable African technology platforms capable of scaling across borders.", x: 51, y: 57 },
-                { id: "global", title: "Global Digital Delivery", label: "Long-Term Reach", description: "We collaborate with remote clients worldwide, delivering and supporting systems across time zones.", x: 30, y: 40 }
-            ],
-            supplementary: [
-                { country: "Kenya", city: "Nairobi (HQ)", note: "Primary delivery hub" },
-                { country: "East Africa", city: "Regional", note: "Cross-border clients" },
-                { country: "Global", city: "Remote", note: "Remote delivery" }
-            ]
-        },
-        empowermentCommitment: {
-            eyebrow: "Social Responsibility",
-            title: "Our Commitment to Digital Empowerment",
-            text: "We believe technology should create practical opportunity. AngiSoft supports digital inclusion through accessible software, beginner-friendly technical guidance, community services, knowledge sharing and tools designed around real African needs.",
-            imageUrl: "/uploads/public/images/about/numbers/digital-empowerment.jpg",
-            cta: { label: "Read Our Empowerment Philosophy", to: "/about" }
-        },
-        collaborationModels: [
-            { id: "flexible", title: "Flexible Engagement Models", icon: "/uploads/public/images/about/collaboration/flexible-delivery.svg", items: ["End-to-end project delivery", "Product development", "Feature upgrades", "Technical support", "Ongoing maintenance"] },
-            { id: "integration", title: "Smooth Integration", icon: "/uploads/public/images/about/collaboration/seamless-integration.svg", items: ["Fast onboarding", "Existing-codebase support", "Database and API integration", "Workflow alignment", "Remote collaboration"] },
-            { id: "communication", title: "Clear Communication and Ownership", icon: "/uploads/public/images/about/collaboration/communication-ownership.svg", items: ["Defined milestones", "Progress tracking", "Transparent communication", "Demonstrations and reviews", "Clear responsibilities"] }
-        ],
-        timeline: [
-            { year: "Before 2024", title: "Grassroots Technology Work", description: "Coding support, documents, data work, installations, applications, posters and beginner technology training.", imageUrl: "/uploads/public/images/about/highlights/grassroots-origin.jpg" },
-            { year: "Dec 2024", title: "AngiSoft Technologies Officially Begins", description: "Prof Angera Silas establishes AngiSoft as a unified African technology brand.", imageUrl: "/uploads/public/images/about/highlights/founding-2024.jpg" },
-            { year: "2025", title: "Growth into Software Systems", description: "AngiSoft expands into websites, management platforms, mobile applications and database-driven solutions.", imageUrl: "/uploads/public/images/about/highlights/systems-growth-2025.jpg" },
-            { year: "2026", title: "Building Original Product Ecosystems", description: "Development continues across PetroFlow, DukaFlow, KejaLink and AngiTunes.", imageUrl: "/uploads/public/images/about/highlights/ecosystems-2026.jpg" }
-        ],
-        transitionBanner: {
-            eyebrow: "Our Vision",
-            title: "Let’s Build Africa’s Digital Future Together",
-            subtitle: "Across every project we ask the same question: how does this technology create real, lasting opportunity?",
-            primaryCta: { label: "Start a Project", to: "/booking" }
-        },
-        industries: [
-            { id: "retail", title: "Retail and SMEs", context: "POS, inventory and SME platforms", imageUrl: "/uploads/public/images/about/industries/retail.jpg" },
-            { id: "education", title: "Education", context: "Learning systems and student tooling", imageUrl: "/uploads/public/images/about/industries/education.jpg" },
-            { id: "real-estate", title: "Real Estate", context: "Property platforms like KejaLink", imageUrl: "/uploads/public/images/about/industries/real-estate.jpg" },
-            { id: "oil-gas", title: "Oil and Gas", context: "Fuel and depot systems like PetroFlow", imageUrl: "/uploads/public/images/about/industries/oil-gas.jpg" },
-            { id: "creative", title: "Creative and Entertainment", context: "Music platforms like AngiTunes", imageUrl: "/uploads/public/images/about/industries/creative-industry.jpg" },
-            { id: "professional", title: "Professional Services", context: "Practice and consulting systems", imageUrl: "/uploads/public/images/about/industries/professional-services.jpg" },
-            { id: "hospitality", title: "Hospitality", context: "Booking and operations tools", imageUrl: "/uploads/public/images/about/industries/hospitality.jpg" },
-            { id: "transport", title: "Transport and Logistics", context: "Fleet and dispatch workflows", imageUrl: "/uploads/public/images/about/industries/transport.jpg" },
-            { id: "community", title: "Community and Personal Services", context: "KRA/SHA and document services", imageUrl: "/uploads/public/images/about/industries/community.jpg" },
-            { id: "startups", title: "Technology Startups", context: "MVPs and product engineering", imageUrl: "/uploads/public/images/about/industries/startups.jpg" }
-        ],
-        clients: [
-            { id: "kingsway", name: "Kingsway School System", logoUrl: "/uploads/public/images/about/clients/kingsway.svg", note: "School management system" },
-            { id: "primestack", name: "PrimeStack", logoUrl: "/uploads/public/images/about/clients/primestack.svg", note: "Engineering client" },
-            { id: "petroflow", name: "PetroFlow", logoUrl: "/uploads/public/images/about/clients/petroflow.png", note: "AngiSoft product" },
-            { id: "dukaflow", name: "DukaFlow", logoUrl: "/uploads/public/images/about/clients/dukaflow.png", note: "AngiSoft product" },
-            { id: "kejalink", name: "KejaLink", logoUrl: "/uploads/public/images/about/clients/kejalink.png", note: "AngiSoft product" },
-            { id: "angitunes", name: "AngiTunes", logoUrl: "/uploads/public/images/about/clients/angitunes.png", note: "AngiSoft product" }
-        ],
-        intro: {
-            badge: "About AngiSoft",
-            headline: "More Than a Software Company.",
-            paragraph: "AngiSoft Technologies is an African technology company building practical software, data and digital services — and the original product ecosystems that grow around them.",
-            primaryCta: { label: "Explore Our Services", to: "/services" },
-            imageUrl: "/uploads/public/images/about/hero/angisoft-team.jpg"
-        },
-        quotation: {
-            quote: "We build technology that fits how African businesses actually work — practical, secure and made to last.",
-            author: "Prof Angera Silas",
-            role: "Founder, AngiSoft Technologies"
-        },
-        awards: {
-            eyebrow: "Recognized & Trusted",
-            title: "Partnerships & Recognitions",
-            description: "The institutions and ecosystems we collaborate with across the continent.",
-            items: [
-                { id: "education", title: "Education institutions we support with systems and training", logoUrl: "/uploads/public/images/about/clients/kingsway.svg", url: "" },
-                { id: "products", title: "Original AngiSoft product ecosystems: PetroFlow, DukaFlow, KejaLink, AngiTunes", logoUrl: "", url: "/products" },
-                { id: "community", title: "Community digital-services programmes (KRA/SHA, documents)", logoUrl: "", url: "" },
-                { id: "open", title: "Open-source and technical communities we contribute to", logoUrl: "", url: "" }
-            ]
-        },
-        solutionTypes: {
-            eyebrow: "What We Build",
-            title: "Solution Types",
-            description: "From a single debug to a complete platform — choose the engagement that fits.",
-            items: [
-                { id: "custom", title: "Custom Software", description: "Web, mobile and desktop applications built around your workflow.", to: "/services" },
-                { id: "products", title: "Product Ecosystems", description: "Original AngiSoft products for African industries.", to: "/products" },
-                { id: "data", title: "Data & Analysis", description: "Dashboards, reports and clean data workflows.", to: "/services" },
-                { id: "cyber", title: "Cyber & Document Services", description: "Secure documents, applications and digital services.", to: "/services" },
-                { id: "support", title: "Support & Maintenance", description: "Ongoing care, upgrades and monitoring.", to: "/services" },
-                { id: "consulting", title: "Technical Consulting", description: "Architecture, recovery and advisory.", to: "/contact" }
-            ]
-        },
-        clientStats: {
-            description: "Trusted by organizations across Africa and beyond.",
-            metrics: [
-                { value: "6+", label: "AngiSoft product & service clients" },
-                { value: "4", label: "Original product ecosystems" },
-                { value: "10+", label: "Core service categories" },
-                { value: "100%", label: "African-built and owned" }
-            ]
-        },
-        clientHighlights: [
-            { id: "kingsway", title: "Kingsway School System", summary: "School management platform built for Kenyan institutions.", imageUrl: "/uploads/public/images/about/industries/education.jpg", link: "" },
-            { id: "petroflow", title: "PetroFlow", summary: "Fuel depot and station management system for the oil & gas sector.", imageUrl: "/uploads/public/images/about/industries/oil-gas.jpg", link: "" },
-            { id: "kejalink", title: "KejaLink", summary: "Property and rental platform connecting landlords and tenants.", imageUrl: "/uploads/public/images/about/industries/real-estate.jpg", link: "" }
-        ],
-        serviceGallery: {
-            eyebrow: "What We Deliver",
-            title: "Service Map Gallery",
-            items: [
-                { id: "web", title: "Web Applications", imageUrl: "/uploads/public/images/about/industries/startups.jpg", tag: "Web" },
-                { id: "mobile", title: "Mobile Apps", imageUrl: "/uploads/public/images/about/hero/dev-working.jpg", tag: "Mobile" },
-                { id: "pos", title: "POS & Retail", imageUrl: "/uploads/public/images/about/industries/retail.jpg", tag: "Retail" },
-                { id: "data", title: "Data Dashboards", imageUrl: "/uploads/public/images/about/industries/community.jpg", tag: "Data" },
-                { id: "docs", title: "Documents & Cyber", imageUrl: "/uploads/public/images/about/industries/professional-services.jpg", tag: "Cyber" },
-                { id: "cloud", title: "Cloud & DevOps", imageUrl: "/uploads/public/images/about/industries/transport.jpg", tag: "Cloud" },
-                { id: "branding", title: "Branding & Media", imageUrl: "/uploads/public/images/about/merchandise/campaign.png", tag: "Brand" },
-                { id: "support", title: "Support & Care", imageUrl: "/uploads/public/images/about/industries/hospitality.jpg", tag: "Support" }
-            ]
-        },
-        whyGuarantee: {
-            eyebrow: "Our Promise",
-            title: "Why We Guarantee Project Success",
-            description: "Practical safeguards that keep your software reliable, secure and on track.",
-            items: [
-                { id: "clear", title: "Clear Scope & Milestones", description: "Defined deliverables and review points from day one." },
-                { id: "secure", title: "Security by Default", description: "Secure coding, access controls and safe data handling." },
-                { id: "owned", title: "You Own the Code", description: "Full source, documentation and handover included." },
-                { id: "supported", title: "Ongoing Support", description: "Maintenance, monitoring and upgrades after launch." }
-            ]
-        },
-        fullServices: {
-            eyebrow: "Everything We Offer",
-            title: "All of the Following",
-            description: "From enterprise platforms to everyday digital errands — if it's technical, we help.",
-            groups: [
-                { id: "software", title: "Custom Software", items: ["Web applications", "Mobile apps (Flutter / Kotlin)", "POS & management systems", "Portfolios & websites", "Database-driven platforms", "API & integrations"] },
-                { id: "data", title: "Data & Analysis", items: ["Python dashboards", "Excel reporting", "Data cleanup & workflows", "Analytics & insight"] },
-                { id: "cyber", title: "Cyber & Document Services", items: ["Reports & attachments", "Thesis & posters", "Presentations", "Secure document handling"] },
-                { id: "errands", title: "Everyday Digital Help", items: ["KRA / SHA applications", "Good Conduct certificates", "Online applications & forms", "Beginner tech guidance", "Print & design support"] }
-            ]
-        },
-        pricing: {
-            eyebrow: "How We Price",
-            title: "Transparent, Practical Pricing",
-            description: "Honest pricing shaped around scope, not surprises.",
-            items: [
-                { id: "scoped", title: "Scoped Projects", description: "Fixed quotation after we understand your requirements and workflow.", badge: "Most Popular" },
-                { id: "hourly", title: "Support & Advisory", description: "Hourly or retainer for maintenance, debugging and consulting." },
-                { id: "products", title: "Product Subscriptions", description: "AngiSoft products priced per station, module or tenant." }
-            ],
-            note: "Quotations are shared before any payment begins. Some projects may require a deposit before development starts."
-        },
-        merchandise: {
-            eyebrow: "AngiSoft Merch",
-            title: "Merchandise Gallery",
-            description: "Wear the brand. Real AngiSoft branded merchandise and campaign visuals.",
-            items: [
-                { id: "hoodie", title: "AngiSoft Hoodie", imageUrl: "/uploads/public/images/about/merchandise/hoodie.png" },
-                { id: "tshirt", title: "AngiSoft T-Shirt", imageUrl: "/uploads/public/images/about/merchandise/tshirt.png" },
-                { id: "mug", title: "AngiSoft Mug", imageUrl: "/uploads/public/images/about/merchandise/mug.png" },
-                { id: "cap", title: "AngiSoft Cap", imageUrl: "/uploads/public/images/about/merchandise/cap.png" },
-                { id: "stickers", title: "AngiSoft Stickers", imageUrl: "/uploads/public/images/about/merchandise/stickers.png" },
-                { id: "notebook", title: "AngiSoft Notebook", imageUrl: "/uploads/public/images/about/merchandise/notebook.png" },
-                { id: "campaign", title: "Campaign Banner", imageUrl: "/uploads/public/images/about/merchandise/campaign.png" },
-                { id: "wallpaper", title: "Desktop Wallpaper", imageUrl: "/uploads/public/images/about/merchandise/wallpaper.png" }
-            ]
-        },
-        technologies: {
-            eyebrow: "Our Stack",
-            title: "Technologies We Use",
-            description: "Modern, reliable tools for building and shipping software.",
-            items: [
-                { id: "react", name: "React", icon: "/uploads/public/images/about/technologies/react.svg", to: "" },
-                { id: "flutter", name: "Flutter", icon: "/uploads/public/images/about/technologies/flutter.svg", to: "" },
-                { id: "kotlin", name: "Kotlin", icon: "/uploads/public/images/about/technologies/kotlin.svg", to: "" },
-                { id: "node", name: "Node.js", icon: "/uploads/public/images/about/technologies/node.svg", to: "" },
-                { id: "python", name: "Python", icon: "/uploads/public/images/about/technologies/python.svg", to: "" },
-                { id: "postgres", name: "PostgreSQL", icon: "/uploads/public/images/about/technologies/postgres.svg", to: "" },
-                { id: "aws", name: "Cloud & DevOps", icon: "/uploads/public/images/about/technologies/cloud.svg", to: "" },
-                { id: "tailwind", name: "Tailwind", icon: "/uploads/public/images/about/technologies/tailwind.svg", to: "" }
-            ]
-        },
-        cta: {
-            title: "Have a Software Idea or a Digital Challenge?",
-            description: "Let AngiSoft help you turn it into a practical, secure and scalable solution.",
-            primary: { label: "Start a Project", to: "/booking" },
-            secondary: { label: "Talk to Our Team", to: "/contact" }
-        }
+    // Canonical 26-key About-page contract. Source of truth is the frontend
+    // hook's `defaultAbout` (generated into ./about-default-data). When that
+    // generated file exists we use it directly; otherwise we keep a minimal
+    // inline fallback so seeding never hard-fails.
+    const aboutValue = aboutDefaultData?.defaultAbout ?? {
+        heroSlides: [],
+        intro: { enabled: true, eyebrow: 'About AngiSoft Technologies', headline: "Building Africa’s", highlightedHeadline: 'Digital Future', subtitle: 'Through Software, Innovation, and Empowerment', descriptor: 'A grassroots-origin African technology ecosystem', paragraph: 'Founded in December 2024, AngiSoft Technologies builds software products, custom systems, data solutions and practical digital services.', philosophy: 'Innovate → Build → Empower', primaryCta: { label: 'Schedule an Introductory Call', to: '/booking' }, secondaryCta: { label: 'Explore Our Services', to: '/services' } },
+        numbersHeading: { enabled: true, eyebrow: 'AngiSoft in Numbers', title: 'AngiSoft in Numbers', description: 'A growing African technology ecosystem measured by real work, original products and practical impact.' },
+        numberStories: [],
+        geography: { enabled: true, intro: { title: 'Where We Work', description: 'AngiSoft serves clients across Kenya, East Africa and beyond from its Kisii base.' }, regions: [], mapImageUrl: '', mapImageAlt: '', sourceLabel: '', sourceUrl: '' },
+        sustainability: { enabled: true, eyebrow: 'Sustainability & Social Responsibility', title: 'Technology with Responsibility', description: 'We build practical, ethical technology that supports inclusion, learning and community impact.', pillars: [] },
+        collaboration: { enabled: true, eyebrow: 'How We Collaborate', title: 'How We Work With You', description: 'Clear communication and shared ownership from first conversation to ongoing support.', columns: [] },
+        timelineHeading: { enabled: true, eyebrow: 'AngiSoft Highlights', title: 'AngiSoft Highlights', description: 'Key moments in our growth as a grassroots African technology company.' },
+        timeline: [],
+        industriesHeading: { enabled: true, eyebrow: 'Industries We Serve', title: 'Industries We Serve', description: 'Sector-focused digital solutions built around real operational needs.' },
+        industries: [],
+        clientsHeading: { enabled: true, eyebrow: 'Our Clients', title: 'Our Clients', description: 'Businesses, institutions and communities we are proud to support.' },
+        clients: [],
+        clientStats: { enabled: true, items: [] },
+        clientHighlights: { enabled: true, items: [] },
+        testimonialsHeading: { enabled: true, eyebrow: 'What Our Clients Say', title: 'What Our Clients Say', description: 'Real feedback from organisations and people we have worked with.' },
+        serviceMap: { enabled: true, introTile: { title: 'Our Service Map', to: '/services' }, services: [] },
+        transparency: { enabled: true, eyebrow: 'Building Trust with Transparency', title: 'Building Trust with Transparency', introduction: 'We earn trust through evidence, clarity and responsible delivery.', guarantees: [] },
+        partnerships: { enabled: true, eyebrow: 'Partnerships & Recognitions', title: 'Partnerships and Recognitions', description: 'Enable this section when AngiSoft has approved public partnerships, certifications, memberships or recognitions.', items: [] },
+        solutionTypes: { enabled: true, eyebrow: 'Solutions We Cover', title: 'From Focused Improvements to Complete Platforms', description: 'AngiSoft supports both targeted technical work and larger end-to-end digital solutions.', items: [] },
+        technologies: { enabled: true, eyebrow: 'Capabilities & Technological Expertise', title: 'Capabilities and Technological Expertise', description: 'The tools and disciplines we use to build dependable software.', columns: [] },
+        specializedCapabilities: { enabled: true, eyebrow: 'Specialized Technology Capabilities', title: 'Specialized Technology Capabilities', description: 'Advanced capabilities we invest in to solve harder problems.', items: [] },
+        whyGuarantee: { enabled: true, eyebrow: 'What We Do to Guarantee Project Success', title: 'What We Do to Guarantee Project Success', introduction: 'Six practices keep our delivery honest, predictable and useful.', practices: [] },
+        pricing: { enabled: true, eyebrow: 'Pricing Policy', title: 'Clear Pricing for the Work Required', description: 'Pricing depends on scope, complexity, timeline, integrations, support expectations and delivery model.', models: [] },
+        pricingQuotation: { enabled: true },
+        cta: { enabled: true, eyebrow: 'Innovate • Build • Empower', title: 'Let’s Build Your Next Digital Solution', description: 'Whether you need custom software, a digital product, data automation, an upgrade or dependable technical support, AngiSoft will help you turn the requirement into a practical working solution.', imageUrl: '/uploads/public/images/about/final-cta/build-with-angisoft.webp', imageAlt: 'Building digital solutions with AngiSoft Technologies', primaryCta: { label: 'Start a Project', to: '/booking' }, secondaryCta: { label: 'Talk to AngiSoft', to: '/contact' }, contact: { phone: '+254710398690', phoneLabel: '+254 710 398 690', email: 'info@angisoft.co.ke', whatsapp: '254710398690' }, reassurance: 'Clear communication • Practical solutions • Responsible delivery' }
     };
+
+    const ABOUT_SCHEMA_VERSION_SEEDED = aboutDefaultData?.ABOUT_SCHEMA_VERSION ?? 3;
 
     await seedSetting('site_about', aboutValue);
     await seedAboutSections(aboutValue);
@@ -677,9 +483,9 @@ async function main() {
     const brandingValue = {
         themeId: "angisoft",
         mode: "dark",
-        logo: "/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
-        logoDark: "/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
-        logoSymbol: "/images/Logos/AngiSoft Logo Symbol Only.png",
+        logo: "/uploads/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
+        logoDark: "/uploads/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.svg",
+        logoSymbol: "/uploads/public/images/Logos/AngiSoft Logo Symbol Only.png",
         favicon: "/favicon.ico",
         siteName: "AngiSoft Technologies",
         motto: "Innovate \u2022 Build \u2022 Empower",
@@ -863,23 +669,36 @@ async function main() {
                 icon: 'FaBriefcase',
                 items: [
                     { label: 'All Services', href: '/services', icon: 'FaConciergeBell', description: 'Explore our full range of software, data, automation, and digital services.' },
-                    { label: 'Software Development', href: '/services/software-development', icon: 'FaCode', description: 'Custom web and mobile applications built to solve real problems.' },
-                    { label: 'IT Consulting', href: '/services/it-consulting', icon: 'FaLaptopCode', description: 'Expert advice on technology strategy, architecture, and digital transformation.' },
-                    { label: 'Mobile Apps', href: '/services/mobile-apps', icon: 'FaMobileAlt', description: 'Native mobile applications for iOS and Android.' },
-                    { label: 'AI & Automation', href: '/services/ai-automation', icon: 'FaRobot', description: 'Intelligent automation solutions for streamlined operations.' },
-                    { label: 'Cybersecurity', href: '/services/cybersecurity', icon: 'FaShieldAlt', description: 'Comprehensive security services to protect your digital assets.' },
+                    { label: 'Web Development', href: '/services/web-development', icon: 'FaCode', description: 'Custom web applications and platforms built to solve real problems.' },
+                    { label: 'Mobile Development', href: '/services/mobile-development', icon: 'FaMobileAlt', description: 'Native and cross-platform mobile applications for iOS and Android.' },
+                    { label: 'Code Debugging', href: '/services/code-debugging', icon: 'FaBug', description: 'Find, fix and prevent bugs across your existing codebase.' },
+                    { label: 'Data Analysis', href: '/services/data-analysis', icon: 'FaChartLine', description: 'Dashboards, reports and insights from your business data.' },
+                    { label: 'Document Editing', href: '/services/document-editing', icon: 'FaFileAlt', description: 'Reports, theses, posters and professional document work.' },
+                    { label: 'System & Database Design', href: '/services/database-design', icon: 'FaDatabase', description: 'Schemas, migrations and database architecture.' },
+                    { label: 'Custom Systems', href: '/services/custom-systems', icon: 'FaServer', description: 'Bespoke software tailored to your workflows.' },
+                    { label: 'Software Installation', href: '/services/software-installation', icon: 'FaDesktop', description: 'Setup, configuration and rollout of business software.' },
+                    { label: 'System Upgrades', href: '/services/system-upgrades', icon: 'FaArrowUp', description: 'Modernize and upgrade legacy systems safely.' },
+                    { label: 'Graphic Design', href: '/services/graphic-design', icon: 'FaPaintBrush', description: 'Posters, branding and visual design work.' },
+                    { label: 'Online Applications', href: '/services/online-applications', icon: 'FaGlobe', description: 'Forms, portals and online submission systems.' },
+                    { label: 'In-House Products', href: '/products', icon: 'FaBoxOpen', description: 'Ready-made products built and maintained by AngiSoft.' },
                 ]
             },
             {
                 label: 'Industries',
                 icon: 'FaGlobe',
                 items: [
-                    { label: 'Healthcare', href: '/industry/healthcare', icon: 'FaHeartbeat', description: 'EHR systems, patient portals, hospital management, and health analytics.' },
-                    { label: 'Finance', href: '/industry/finance', icon: 'FaChartLine', description: 'Financial services, investment management, and accounting solutions.' },
-                    { label: 'Education', href: '/industry/education', icon: 'FaGraduationCap', description: 'Learning management systems, educational content, and student information systems.' },
-                    { label: 'Real Estate', href: '/industry/real-estate', icon: 'FaHome', description: 'Property management, real estate listings, and mortgage services.' },
-                    { label: 'Retail & eCommerce', href: '/industry/retail-ecommerce', icon: 'FaShoppingCart', description: 'E-commerce platforms, inventory management, and customer relationship management.' },
-                    { label: 'Telecommunications', href: '/industry/telecommunications', icon: 'FaWifi', description: 'Network infrastructure, mobile services, and communication solutions.' },
+                    { label: 'Retail and SMEs', href: '/industries/retail', icon: 'FaShoppingCart', description: 'POS, stock, sales and business-management workflows.' },
+                    { label: 'Education', href: '/industries/education', icon: 'FaGraduationCap', description: 'School management, learning and student-support systems.' },
+                    { label: 'Real Estate', href: '/industries/real-estate', icon: 'FaHome', description: 'Property discovery, management and stakeholder coordination.' },
+                    { label: 'Fuel & Energy', href: '/industries/fuel-energy', icon: 'FaWarehouse', description: 'Station, pump and energy operations tooling.' },
+                    { label: 'Healthcare', href: '/industries/healthcare', icon: 'FaHeartbeat', description: 'EHR/EMR, patient portals and hospital management.' },
+                    { label: 'Telecommunications', href: '/industries/telecommunications', icon: 'FaWifi', description: 'ISP billing, network monitoring and customer-service platforms.' },
+                    { label: 'Finance', href: '/industries/finance', icon: 'FaUniversity', description: 'Payment processing, financial dashboards and compliance reporting.' },
+                    { label: 'eCommerce', href: '/industries/ecommerce', icon: 'FaStore', description: 'Online stores, POS, inventory and order fulfilment.' },
+                    { label: 'Creative Industries', href: '/industries/creative', icon: 'FaPaintBrush', description: 'Digital platforms for artists, DJs and content distribution.' },
+                    { label: 'Professional Services', href: '/industries/professional-services', icon: 'FaBriefcase', description: 'Operational systems, documents, reporting and digital workflows.' },
+                    { label: 'Hospitality', href: '/industries/hospitality', icon: 'FaConciergeBell', description: 'Booking, customer-service and operations tooling.' },
+                    { label: 'Transport & Logistics', href: '/industries/transport-logistics', icon: 'FaTruck', description: 'Fleet, dispatch, tracking and coordination workflows.' },
                 ]
             },
             {
@@ -887,10 +706,22 @@ async function main() {
                 icon: 'FaPuzzlePiece',
                 items: [
                     { label: 'All Solutions', href: '/solutions', icon: 'FaConciergeBell', description: 'Explore our tailored solutions for various business needs and challenges.' },
-                    { label: 'Enterprise Applications', href: '/solutions/enterprise-applications', icon: 'FaServer', description: 'Scalable, enterprise-grade applications designed for large-scale deployment.' },
-                    { label: 'Mobile Apps', href: '/solutions/mobile-apps', icon: 'FaMobileAlt', description: 'Native mobile applications for iOS and Android.' },
-                    { label: 'Data Analytics', href: '/solutions/data-analytics', icon: 'FaChartBar', description: 'Insightful data analysis and visualization tools.' },
-                    { label: 'AngiMusic Platform', href: '/solutions/angimusic-platform', icon: 'FaMusic', description: 'A comprehensive music streaming and discovery platform.' },
+                    { label: 'Business Management', href: '/solutions/business-management', icon: 'FaCogs', description: 'Practical operations and management systems.' },
+                    { label: 'Point of Sale', href: '/solutions/point-of-sale', icon: 'FaCashRegister', description: 'Retail and restaurant POS with stock and reporting.' },
+                    { label: 'Customer Management', href: '/solutions/customer-management', icon: 'FaUsers', description: 'CRM and customer-support workflows.' },
+                    { label: 'Operations Management', href: '/solutions/operations-management', icon: 'FaClipboardList', description: 'Scheduling, tasks and process automation.' },
+                    { label: 'Financial Tracking', href: '/solutions/financial-tracking', icon: 'FaChartLine', description: 'Budgets, expenses and financial reporting.' },
+                    { label: 'Payments & Billing', href: '/solutions/payments-billing', icon: 'FaCreditCard', description: 'Invoicing, billing and payment collection.' },
+                    { label: 'Asset Management', href: '/solutions/asset-management', icon: 'FaWarehouse', description: 'Track and maintain physical and digital assets.' },
+                    { label: 'Document Management', href: '/solutions/document-management', icon: 'FaFileContract', description: 'Document storage, versioning and workflows.' },
+                    { label: 'Staff Portals', href: '/solutions/staff-portals', icon: 'FaUserTie', description: 'Employee self-service and HR portals.' },
+                    { label: 'HR Systems', href: '/solutions/human-resource-systems', icon: 'FaUsers', description: 'Recruitment, payroll and people operations.' },
+                    { label: 'Learning Platforms', href: '/solutions/learning-platforms', icon: 'FaChalkboardTeacher', description: 'Training, courses and student information systems.' },
+                    { label: 'eCommerce', href: '/solutions/ecommerce', icon: 'FaStore', description: 'Online stores and catalog management.' },
+                    { label: 'Inventory Management', href: '/solutions/inventory-management', icon: 'FaBoxes', description: 'Stock, warehouses and procurement.' },
+                    { label: 'Property Platforms', href: '/products/kejalink', icon: 'FaBuilding', description: 'Property and rental management platforms.' },
+                    { label: 'Data Analytics', href: '/services/data-analysis', icon: 'FaBrain', description: 'Dashboards, reports and data insights.' },
+                    { label: 'Web Portals', href: '/solutions/web-portals', icon: 'FaGlobe', description: 'Client, member and partner portals.' },
                 ]
             },
 
@@ -915,7 +746,7 @@ async function main() {
         solutions: [
             {
                 name: 'Enterprise Solutions',
-                bgImage: '/images/services/enterprise.jpg',
+                bgImage: '/uploads/public/images/services/enterprise.jpg',
                 items: [
                     { icon: 'FaBuilding', name: 'Enterprise Applications' },
                     { icon: 'FaCogs', name: 'ERP Systems' },
@@ -927,7 +758,7 @@ async function main() {
             },
             {
                 name: 'Web & Mobile',
-                bgImage: '/images/services/web-mobile.jpg',
+                bgImage: '/uploads/public/images/services/web-mobile.jpg',
                 items: [
                     { icon: 'FaGlobe', name: 'Web Portals' },
                     { icon: 'FaMobileAlt', name: 'Mobile Applications' },
@@ -939,7 +770,7 @@ async function main() {
             },
             {
                 name: 'Industry Solutions',
-                bgImage: '/images/services/industry.jpg',
+                bgImage: '/uploads/public/images/services/industry.jpg',
                 items: [
                     { icon: 'FaNetworkWired', name: 'ISP Billing & Portals' },
                     { icon: 'FaSchool', name: 'School Management Systems' },
@@ -955,7 +786,7 @@ async function main() {
             {
                 name: 'Artificial Intelligence',
                 icon: 'FaBrain',
-                bgImage: '/images/services/ai-bg.jpg',
+                bgImage: '/uploads/public/images/services/ai-bg.jpg',
                 desc:
                     'We integrate machine learning, natural language processing, and intelligent automation into business applications — from smart chatbots to predictive analytics and AI-assisted workflows.',
                 caps: [
@@ -970,7 +801,7 @@ async function main() {
             {
                 name: 'Cloud',
                 icon: 'FaCloud',
-                bgImage: '/images/services/cloud-bg.jpg',
+                bgImage: '/uploads/public/images/services/cloud-bg.jpg',
                 desc:
                     'We design, deploy, and manage scalable cloud infrastructure on platforms such as AWS, Azure, and DigitalOcean, helping applications grow securely and reliably.',
                 caps: [
@@ -985,7 +816,7 @@ async function main() {
             {
                 name: 'Big Data',
                 icon: 'FaDatabase',
-                bgImage: '/images/services/bigdata-bg.jpg',
+                bgImage: '/uploads/public/images/services/bigdata-bg.jpg',
                 desc:
                     'We transform raw data into useful business insight using dashboards, ETL pipelines, real-time analytics, reports, and decision-support systems.',
                 caps: [
@@ -1000,7 +831,7 @@ async function main() {
             {
                 name: 'Automation',
                 icon: 'FaRobot',
-                bgImage: '/images/services/automation-bg.jpg',
+                bgImage: '/uploads/public/images/services/automation-bg.jpg',
                 desc:
                     'We automate repetitive tasks and complex workflows using scripts, integrations, reporting tools, notifications, and process orchestration so teams can focus on higher-value work.',
                 caps: [
@@ -1015,7 +846,7 @@ async function main() {
             {
                 name: 'Cybersecurity',
                 icon: 'FaLock',
-                bgImage: '/images/services/security-bg.jpg',
+                bgImage: '/uploads/public/images/services/security-bg.jpg',
                 desc:
                     'We help protect digital systems by embedding security into code, infrastructure, access control, data protection, and user awareness.',
                 caps: [
@@ -1048,7 +879,7 @@ async function main() {
             {
                 name: 'Healthcare',
                 icon: 'FaHeartbeat',
-                bgImage: '/images/services/healthcare-bg.jpg',
+                bgImage: '/uploads/public/images/services/healthcare-bg.jpg',
                 services: [
                     { icon: 'FaStethoscope', name: 'EHR/EMR Systems' },
                     { icon: 'FaUserMd', name: 'Patient Portals' },
@@ -1061,7 +892,7 @@ async function main() {
             {
                 name: 'Finance',
                 icon: 'FaUniversity',
-                bgImage: '/images/services/finance-bg.jpg',
+                bgImage: '/uploads/public/images/services/finance-bg.jpg',
                 services: [
                     { icon: 'FaCreditCard', name: 'Payment Processing' },
                     { icon: 'FaChartPie', name: 'Financial Dashboards' },
@@ -1074,7 +905,7 @@ async function main() {
             {
                 name: 'Education',
                 icon: 'FaGraduationCap',
-                bgImage: '/images/services/education-bg.jpg',
+                bgImage: '/uploads/public/images/services/education-bg.jpg',
                 services: [
                     { icon: 'FaSchool', name: 'School Management' },
                     { icon: 'FaLaptopCode', name: 'E-Learning Platforms' },
@@ -1087,7 +918,7 @@ async function main() {
             {
                 name: 'Real Estate',
                 icon: 'FaHome',
-                bgImage: '/images/services/realestate-bg.jpg',
+                bgImage: '/uploads/public/images/services/realestate-bg.jpg',
                 services: [
                     { icon: 'FaBuilding', name: 'Property Management' },
                     { icon: 'FaKey', name: 'Tenant Portals' },
@@ -1100,7 +931,7 @@ async function main() {
             {
                 name: 'Retail & eCommerce',
                 icon: 'FaShoppingCart',
-                bgImage: '/images/services/retail-bg.jpg',
+                bgImage: '/uploads/public/images/services/retail-bg.jpg',
                 services: [
                     { icon: 'FaBarcode', name: 'POS Systems' },
                     { icon: 'FaStore', name: 'Online Stores' },
@@ -1113,7 +944,7 @@ async function main() {
             {
                 name: 'Telecommunications',
                 icon: 'FaNetworkWired',
-                bgImage: '/images/services/telecom-bg.jpg',
+                bgImage: '/uploads/public/images/services/telecom-bg.jpg',
                 services: [
                     { icon: 'FaWifi', name: 'ISP Billing' },
                     { icon: 'FaSignal', name: 'Network Monitoring' },
@@ -1128,7 +959,7 @@ async function main() {
             {
                 name: 'Logistics',
                 icon: 'FaTruck',
-                bgImage: '/images/services/telecom-bg.jpg',
+                bgImage: '/uploads/public/images/services/telecom-bg.jpg',
                 services: [
                     { icon: 'FaRoute', name: 'Route Optimization' },
                     { icon: 'FaBoxes', name: 'Warehouse Management' },
@@ -1139,7 +970,7 @@ async function main() {
             {
                 name: 'Construction',
                 icon: 'FaHardHat',
-                bgImage: '/images/services/enterprise.jpg',
+                bgImage: '/uploads/public/images/services/enterprise.jpg',
                 services: [
                     { icon: 'FaRulerCombined', name: 'Project Tracking' },
                     { icon: 'FaDrawPolygon', name: 'BIM Integration' },
@@ -1150,7 +981,7 @@ async function main() {
             {
                 name: 'Professional Services',
                 icon: 'FaBriefcase',
-                bgImage: '/images/services/it-consulting.jpg',
+                bgImage: '/uploads/public/images/services/it-consulting.jpg',
                 services: [
                     { icon: 'FaUserTie', name: 'CRM Systems' },
                     { icon: 'FaFileContract', name: 'Contract Management' },
@@ -1161,7 +992,7 @@ async function main() {
             {
                 name: 'Entertainment & Music',
                 icon: 'FaMusic',
-                bgImage: '/images/services/ai-automation.jpg',
+                bgImage: '/uploads/public/images/services/ai-automation.jpg',
                 services: [
                     { icon: 'FaMusic', name: 'Distribution Platforms' },
                     { icon: 'FaChartPie', name: 'Royalty Tracking' },
@@ -1766,7 +1597,7 @@ async function main() {
                     'Legacy System Modernization',
                     'UI/UX Design & Prototyping'
                 ],
-                images: ['/images/services/software-development.jpg'],
+                images: ['/uploads/public/images/services/software-development.jpg'],
                 published: true,
                 featured: true
             }
@@ -1793,7 +1624,7 @@ async function main() {
                     'IT Infrastructure Audit',
                     'Vendor Selection & Evaluation'
                 ],
-                images: ['/images/services/it-consulting.jpg'],
+                images: ['/uploads/public/images/services/it-consulting.jpg'],
                 published: true,
                 featured: true
             }
@@ -1820,7 +1651,7 @@ async function main() {
                     'Bash & Shell Scripting',
                     'Report Generation Systems'
                 ],
-                images: ['/images/services/ai-automation.jpg'],
+                images: ['/uploads/public/images/services/ai-automation.jpg'],
                 published: true,
                 featured: true
             }
@@ -1847,7 +1678,7 @@ async function main() {
                     'Data Encryption & Protection',
                     'Security Awareness Training'
                 ],
-                images: ['/images/services/cybersecurity.jpg'],
+                images: ['/uploads/public/images/services/cybersecurity.jpg'],
                 published: true,
                 featured: true
             }
@@ -1874,7 +1705,7 @@ async function main() {
                     'Data Warehouse Design',
                     'Data Quality & Governance'
                 ],
-                images: ['/images/services/data-analytics.jpg'],
+                images: ['/uploads/public/images/services/data-analytics.jpg'],
                 published: true,
                 featured: true
             }
@@ -1901,7 +1732,7 @@ async function main() {
                     'ISP Billing & Management',
                     'Server Administration'
                 ],
-                images: ['/images/services/infrastructure.jpg'],
+                images: ['/uploads/public/images/services/infrastructure.jpg'],
                 published: true,
                 featured: true
             }
@@ -3080,7 +2911,7 @@ The important thing is continuing to learn and build.
             specialties: ['Business systems', 'API design', 'Dashboards'],
             profilePublished: true,
             profileOrder: 1,
-            avatarUrl: '/images/team/sharif-agoi.jpg',
+            avatarUrl: '/uploads/public/images/team/sharif-agoi.jpg',
             phone: '+254769320092',
             publicEmail: 'sharif.agoi@angisoft.co.ke'
         },
@@ -3097,7 +2928,7 @@ The important thing is continuing to learn and build.
             specialties: ['Mobile apps', 'MVP builds', 'Cross-platform delivery'],
             profilePublished: true,
             profileOrder: 2,
-            avatarUrl: '/images/team/sangera.jpg',
+            avatarUrl: '/uploads/public/images/team/sangera.jpg',
             phone: '+254797630228',
             publicEmail: 'sangera@angisoft.co.ke'
         },
@@ -3115,7 +2946,7 @@ The important thing is continuing to learn and build.
             specialties: ['Campaigns', 'Product promotion', 'Customer onboarding'],
             profilePublished: true,
             profileOrder: 4,
-            avatarUrl: '/images/team/mike-wanjala.jpg',
+            avatarUrl: '/uploads/public/images/team/mike-wanjala.jpg',
             phone: '+254769215571',
             publicEmail: 'mike.wanjala@angisoft.co.ke'
         }
@@ -3343,7 +3174,7 @@ The important thing is continuing to learn and build.
             tagline: 'Fuel Station Operations Platform',
             description: 'PetroFlow is AngiSoft’s fuel station and petroleum operations platform direction: built to support stock tracking, shift reconciliation, sales records, staff workflows, and practical reporting for station operators.',
             category: 'Fuel & Energy',
-            logoUrl: '/images/Logos/PetroFlow.png',
+            logoUrl: '/uploads/public/images/Logos/PetroFlow.png',
             features: ['Pump and shift records', 'Fuel stock tracking', 'Sales reconciliation', 'Staff workflow support', 'M-Pesa/payment readiness', 'Multi-station reporting direction', 'Daily operational summaries', 'Audit-friendly records'],
             pricing: { model: 'scoped', currency: 'KES', note: 'Pricing depends on station count, workflows, and integrations.' },
             status: 'DEVELOPMENT' as const,
@@ -3356,7 +3187,7 @@ The important thing is continuing to learn and build.
             tagline: 'Retail and SME Management System',
             description: 'DukaFlow is AngiSoft’s retail/shop/business management product direction for sales, inventory, expenses, customers, and simple business reporting for local businesses.',
             category: 'Retail & Commerce',
-            logoUrl: '/images/Logos/DukaFlow.png',
+            logoUrl: '/uploads/public/images/Logos/DukaFlow.png',
             features: ['POS sales records', 'Inventory tracking', 'Cash and M-Pesa workflow support', 'Supplier records', 'Expense tracking', 'Daily sales reports', 'Customer records', 'Simple dashboards'],
             pricing: { model: 'scoped', currency: 'KES', note: 'Starter and subscription pricing will depend on business size and modules.' },
             status: 'DEVELOPMENT' as const,
@@ -3369,7 +3200,7 @@ The important thing is continuing to learn and build.
             tagline: 'Property and Rental Workflow Platform',
             description: 'KejaLink is AngiSoft’s property and housing platform direction for rental listings, tenant records, communication, maintenance requests, and property workflow management.',
             category: 'Property & Housing',
-            logoUrl: '/images/Logos/KejaLink.png',
+            logoUrl: '/uploads/public/images/Logos/KejaLink.png',
             features: ['Property records', 'Tenant workflow support', 'Maintenance requests', 'Vacancy listing direction', 'Lease document tracking', 'Payment record workflows', 'SMS/WhatsApp communication direction', 'Document storage'],
             pricing: { model: 'planned', currency: 'KES', note: 'Pricing will be shaped around landlords, agents, and tenant workflow needs.' },
             status: 'PLANNED' as const,
@@ -3382,7 +3213,7 @@ The important thing is continuing to learn and build.
             tagline: 'Creator and Music Distribution Ecosystem',
             description: 'AngiTunes is AngiSoft’s creator economy direction for helping upcoming artists, DJs, and creators distribute, organize, and monetize digital music and creator content affordably.',
             category: 'Entertainment & Music',
-            logoUrl: '/images/Logos/AngiTunes.png',
+            logoUrl: '/uploads/public/images/Logos/AngiTunes.png',
             features: ['Creator catalog direction', 'Music upload workflows', 'DJ mix distribution direction', 'Creator profile support', 'Release organization', 'Audience engagement direction', 'Affordable monetization model', 'Rights and ownership awareness'],
             pricing: { model: 'planned', currency: 'KES', note: 'Pricing will be designed for upcoming artists, DJs, and creators.' },
             status: 'PLANNED' as const,
@@ -3449,20 +3280,185 @@ The important thing is continuing to learn and build.
     }
     console.log(`  ✅ ${stats.length} company stats seeded`);
 
-    // ==================== JOB POSTINGS ====================
-    console.log('\n💼 Seeding job postings...');
+    // ==================== CAREERS CONTENT ====================
+    console.log('\n💼 Seeding careers content...');
 
-    const jobs = [
+    const careersContent = {
+        cultureValues: [
+            { id: 'practical-innovation', number: '01', title: 'Practical Innovation', description: 'We value ideas that solve real problems. Team members are encouraged to experiment, learn and turn strong concepts into useful working solutions.' },
+            { id: 'shared-responsibility', number: '02', title: 'Shared Responsibility', description: 'Good products are built through communication, ownership and dependable collaboration across engineering, product, design and operations.' },
+            { id: 'continuous-growth', number: '03', title: 'Continuous Growth', description: 'We support learning through practical challenges, mentorship, research, documentation and exposure to new tools and technologies.' },
+            { id: 'meaningful-impact', number: '04', title: 'Meaningful Impact', description: 'Our work is shaped around businesses, institutions and communities that need better digital systems and accessible technology.' }
+        ],
+        benefits: [
+            { id: 'flexibility', title: 'Flexible Working', description: 'Role-dependent remote, hybrid and on-site working arrangements.' },
+            { id: 'learning', title: 'Learning and Development', description: 'Opportunities to improve technical, product and professional skills.' },
+            { id: 'compensation', title: 'Fair Compensation', description: 'Compensation based on role scope, experience, contribution and company capacity.' },
+            { id: 'health', title: 'Health and Wellbeing', description: 'Health support and employee wellbeing provisions as company structures grow.' },
+            { id: 'ownership', title: 'Project Ownership', description: 'Clear responsibility and space to contribute directly to products and client solutions.' },
+            { id: 'innovation', title: 'Room to Experiment', description: 'Time and support to test better approaches, tools and implementation ideas.' }
+        ]
+    };
+    await seedSetting('careers_content', careersContent);
+    console.log('  ✅ careers_content setting seeded');
+
+    // Real, currently open roles. The public API filters status: 'OPEN',
+    // so only these are visible on /careers. Replace with CMS-managed rows
+    // as hiring needs change.
+    const jobs: Prisma.JobPostingCreateInput[] = [
         {
-            title: 'Future Talent Pool',
-            slug: 'future-talent-pool',
-            department: 'AngiSoft Ecosystem',
-            location: 'Kenya / Remote-friendly',
-            type: 'interest',
-            description: 'AngiSoft is growing carefully from grassroots technical work into a broader technology ecosystem. We welcome future interest from developers, designers, marketers, testers, data analysts, and educators who want to help build practical African technology products.',
-            requirements: ['Interest in practical problem-solving', 'Willingness to learn and build', 'Portfolio, GitHub, writing samples, design samples, or project examples are welcome', 'Respect for AngiSoft’s Innovate → Build → Empower philosophy'],
-            benefits: ['Future collaboration opportunities', 'Learning and mentorship direction', 'Product-building exposure', 'Community impact work'],
-            salaryRange: 'To be defined per role or collaboration',
+            title: 'Flutter Mobile Developer',
+            slug: 'flutter-mobile-developer',
+            status: 'OPEN',
+            department: 'Engineering',
+            location: 'Nairobi, Kenya',
+            employmentType: 'Full-Time',
+            workplaceType: 'Hybrid',
+            experienceLevel: 'Mid',
+            summary: 'Build and maintain AngiSoft mobile products such as DukaFlow and client apps using Flutter and Dart.',
+            description: 'We are looking for a Flutter developer to design, build and ship cross-platform mobile applications. You will work closely with the backend team to integrate APIs, implement offline-friendly flows and improve app performance.',
+            responsibilities: [
+                'Build and maintain Flutter applications for Android and iOS',
+                'Integrate REST and GraphQL APIs into mobile screens',
+                'Implement responsive, accessible and performant UI',
+                'Work with the founder on product direction and releases'
+            ],
+            requirements: [
+                'Solid experience with Flutter and Dart',
+                'Understanding of state management and REST integration',
+                'Comfortable reading and debugging backend responses'
+            ],
+            preferredQualifications: [
+                'Experience with local storage and offline-first apps',
+                'Familiarity with CI/CD for mobile builds',
+                'Exposure to Kotlin or native Android'
+            ],
+            technologies: ['Flutter', 'Dart', 'REST', 'Firebase'],
+            salaryMin: 90000,
+            salaryMax: 160000,
+            salaryCurrency: 'KES',
+            salaryVisibility: 'RANGE',
+            openings: 1,
+            featured: true,
+            applicationDeadline: '2026-09-30T23:59:59.000Z',
+            publishedAt: '2026-07-17T08:00:00.000Z',
+            benefits: ['Flexible Working', 'Learning and Development', 'Project Ownership'],
+            published: true
+        },
+        {
+            title: 'Data Analyst',
+            slug: 'data-analyst',
+            status: 'OPEN',
+            department: 'Data',
+            location: 'Nairobi, Kenya / Remote',
+            employmentType: 'Full-Time',
+            workplaceType: 'Remote',
+            experienceLevel: 'Mid',
+            summary: 'Turn raw operational and business data into clear dashboards, reports and decision support.',
+            description: 'As a Data Analyst you will clean, model and visualize data from AngiSoft products and client engagements. You will produce dashboards and reports that help the team and clients make practical decisions.',
+            responsibilities: [
+                'Clean and prepare datasets from multiple sources',
+                'Build dashboards and recurring reports',
+                'Support product and client teams with analysis',
+                'Document data definitions and quality checks'
+            ],
+            requirements: [
+                'Strong Excel and Python data skills',
+                'Experience with dashboards or BI tools',
+                'Clear written reporting'
+            ],
+            preferredQualifications: [
+                'SQL and database querying',
+                'Experience with survey or operational data',
+                'Python data libraries (pandas, matplotlib)'
+            ],
+            technologies: ['Python', 'Excel', 'SQL', 'Power BI'],
+            salaryMin: 80000,
+            salaryMax: 140000,
+            salaryCurrency: 'KES',
+            salaryVisibility: 'RANGE',
+            openings: 1,
+            featured: false,
+            applicationDeadline: '2026-10-15T23:59:59.000Z',
+            publishedAt: '2026-07-17T08:00:00.000Z',
+            benefits: ['Flexible Working', 'Learning and Development', 'Fair Compensation'],
+            published: true
+        },
+        {
+            title: 'Cyber & Documents Associate',
+            slug: 'cyber-documents-associate',
+            status: 'OPEN',
+            department: 'Cyber Services',
+            location: 'Nairobi, Kenya',
+            employmentType: 'Part-Time',
+            workplaceType: 'On-Site',
+            experienceLevel: 'Entry',
+            summary: 'Support document preparation, report editing and digital services for clients and institutions.',
+            description: 'This role supports AngiSoft cyber and documentation services: report writing, attachment preparation, thesis and poster formatting, presentation design and KRA/SHA/good conduct application support.',
+            responsibilities: [
+                'Prepare and format client documents and reports',
+                'Design posters, presentations and academic materials',
+                'Support KRA/SHA and good conduct application assistance',
+                'Maintain quality and confidentiality standards'
+            ],
+            requirements: [
+                'Strong written and formatting skills',
+                'Attention to detail and confidentiality',
+                'Comfortable with office and design tools'
+            ],
+            preferredQualifications: [
+                'Experience with academic or institutional documents',
+                'Basic design tool familiarity'
+            ],
+            technologies: ['MS Office', 'Canva', 'PDF Tools'],
+            salaryMin: 40000,
+            salaryMax: 70000,
+            salaryCurrency: 'KES',
+            salaryVisibility: 'RANGE',
+            openings: 2,
+            featured: false,
+            applicationDeadline: '2026-11-01T23:59:59.000Z',
+            publishedAt: '2026-07-17T08:00:00.000Z',
+            benefits: ['Flexible Working', 'Learning and Development'],
+            published: true
+        },
+        {
+            title: 'Backend Engineer',
+            slug: 'backend-engineer',
+            status: 'OPEN',
+            department: 'Engineering',
+            location: 'Nairobi, Kenya / Remote',
+            employmentType: 'Full-Time',
+            workplaceType: 'Hybrid',
+            experienceLevel: 'Senior',
+            summary: 'Design and build the APIs, services and data layers behind AngiSoft products.',
+            description: 'We need a backend engineer to design APIs, model databases and integrate third-party services for AngiSoft products and client systems. You will help set engineering standards and mentor other developers.',
+            responsibilities: [
+                'Design and implement REST and GraphQL APIs',
+                'Model PostgreSQL schemas and optimize queries',
+                'Integrate payment, email and storage providers',
+                'Review code and support deployment workflows'
+            ],
+            requirements: [
+                'Strong Node.js / TypeScript backend experience',
+                'Solid PostgreSQL and ORM knowledge',
+                'Experience with authentication and API security'
+            ],
+            preferredQualifications: [
+                'DevOps and container experience',
+                'Experience with Prisma and Express',
+                'Background in product engineering'
+            ],
+            technologies: ['Node.js', 'TypeScript', 'PostgreSQL', 'Prisma'],
+            salaryMin: 150000,
+            salaryMax: 250000,
+            salaryCurrency: 'KES',
+            salaryVisibility: 'RANGE',
+            openings: 1,
+            featured: true,
+            applicationDeadline: '2026-09-15T23:59:59.000Z',
+            publishedAt: '2026-07-17T08:00:00.000Z',
+            benefits: ['Flexible Working', 'Learning and Development', 'Project Ownership', 'Fair Compensation'],
             published: true
         }
     ];

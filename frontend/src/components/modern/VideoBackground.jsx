@@ -63,8 +63,12 @@ const VideoBackground = ({
           loop
           muted
           playsInline
+          controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
+          controlsList="nodownload nofullscreen noremoteplayback"
           onLoadedData={() => setIsVideoLoaded(true)}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover angi-video-bg"
           style={{
             ...parallaxStyle,
             opacity: isVideoLoaded ? 1 : 0,

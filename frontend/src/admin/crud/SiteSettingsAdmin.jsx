@@ -391,7 +391,7 @@ const SiteSettingsAdmin = ({ theme }) => {
                                     className={inputClass}
                                     value={hero.backgroundImage || ''}
                                     onChange={(e) => setHero({...hero, backgroundImage: e.target.value})}
-                                    placeholder="/images/hero-bg.jpg"
+                                    placeholder="/uploads/public/images/hero-bg.jpg"
                                 />
                             </div>
                         </div>
@@ -847,7 +847,7 @@ const SiteSettingsAdmin = ({ theme }) => {
                                     className={inputClass}
                                     value={branding.logo || ''}
                                     onChange={(e) => setBranding({...branding, logo: e.target.value})}
-                                    placeholder="/images/logo.png"
+                                    placeholder="/uploads/public/images/logo.png"
                                 />
                             </div>
                             <div>
@@ -857,7 +857,7 @@ const SiteSettingsAdmin = ({ theme }) => {
                                     className={inputClass}
                                     value={branding.logoDark || ''}
                                     onChange={(e) => setBranding({...branding, logoDark: e.target.value})}
-                                    placeholder="/images/logo-dark.png"
+                                    placeholder="/uploads/public/images/logo-dark.png"
                                 />
                             </div>
                             <div>

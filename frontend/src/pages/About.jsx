@@ -126,6 +126,12 @@ const About = () => {
     return <AboutPageSkeleton />;
   }
 
+  /*
+   * The hook provides truthful bundled defaults during an API failure. Keep
+   * this error branch when you prefer a strict CMS-only page. Remove it when
+   * you want the public page to continue rendering defaults during downtime.
+   */
+
   if (error) {
     return (
       <AboutPageError

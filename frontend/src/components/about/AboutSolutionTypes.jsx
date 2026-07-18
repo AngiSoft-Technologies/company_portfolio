@@ -7,98 +7,6 @@ import React, {
 import { Link } from 'react-router-dom';
 import { FaArrowDown } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title: 'Solutions We Cover',
-
-  description:
-    'From business operations to customer-facing platforms, AngiSoft builds practical digital solutions across areas including:',
-
-  solutions: [
-    {
-      id: 'business-management',
-      title: 'Business Management Systems',
-      to: '/solutions/business-management',
-    },
-    {
-      id: 'point-of-sale',
-      title: 'Point of Sale Systems',
-      to: '/solutions/point-of-sale',
-    },
-    {
-      id: 'customer-management',
-      title: 'Customer Management',
-      to: '/solutions/customer-management',
-    },
-    {
-      id: 'operations-management',
-      title: 'Operations Management',
-      to: '/solutions/operations-management',
-    },
-    {
-      id: 'financial-tracking',
-      title: 'Financial Tracking',
-      to: '/solutions/financial-tracking',
-    },
-    {
-      id: 'payments-billing',
-      title: 'Payments and Billing',
-      to: '/solutions/payments-billing',
-    },
-    {
-      id: 'asset-management',
-      title: 'Asset Management',
-      to: '/solutions/asset-management',
-    },
-    {
-      id: 'document-management',
-      title: 'Document Management',
-      to: '/solutions/document-management',
-    },
-    {
-      id: 'staff-portals',
-      title: 'Staff Portals',
-      to: '/solutions/staff-portals',
-    },
-    {
-      id: 'human-resource-systems',
-      title: 'Human Resource Systems',
-      to: '/solutions/human-resource-systems',
-    },
-    {
-      id: 'learning-platforms',
-      title: 'Learning Platforms',
-      to: '/solutions/learning-platforms',
-    },
-    {
-      id: 'ecommerce',
-      title: 'eCommerce',
-      to: '/solutions/ecommerce',
-    },
-    {
-      id: 'inventory-management',
-      title: 'Inventory Management',
-      to: '/solutions/inventory-management',
-    },
-    {
-      id: 'property-platforms',
-      title: 'Property Platforms',
-      to: '/products/kejalink',
-    },
-    {
-      id: 'data-analytics',
-      title: 'Data Analytics',
-      to: '/services/data-analysis',
-    },
-    {
-      id: 'web-portals',
-      title: 'Web Portals',
-      to: '/solutions/web-portals',
-    },
-  ],
-};
-
 const normalizeSolution = (
   solution,
   index
@@ -143,7 +51,6 @@ const AboutSolutionTypes = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
     }),
     [content]
@@ -154,7 +61,7 @@ const AboutSolutionTypes = ({
       Array.isArray(data.solutions) &&
       data.solutions.length
         ? data.solutions
-        : DEFAULT_CONTENT.solutions;
+        : [];
 
     return source
       .map(normalizeSolution)

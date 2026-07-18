@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../js/httpClient';
 import { resolveAssetUrl } from '../../utils/constants';
+import '../../css/IndustryExpertise.css';
 
 const iconRegistry = {
   FaHeartbeat,
@@ -68,147 +69,215 @@ const iconRegistry = {
 
 const resolveIcon = (iconName, fallback = FaBriefcase) => iconRegistry[iconName] || fallback;
 
-const normalizeIndustry = (industry) => ({
-  ...industry,
-  icon: resolveIcon(industry.icon),
-  bgImage: resolveAssetUrl(industry.bgImage || industry.imageUrl || '/images/services/it-consulting.jpg'),
-  services: (industry.services || industry.capabilities || []).map((service) => (
-    typeof service === 'string'
+// Stable slug from a name (used as React key + active tab id, not the name string).
+const slugify = (value = '') =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || `item-${Math.random().toString(36).slice(2, 8)}`;
+
+const normalizeIndustry = (industry, index) => {
+  const name = industry?.name || `Industry ${index + 1}`;
+  const id = industry?.id || slugify(name);
+  const services = (industry?.services || industry?.capabilities || []).map((service, i) => {
+    const svc = typeof service === 'string'
       ? { icon: FaHandshake, name: service }
-      : { ...service, icon: resolveIcon(service.icon, FaHandshake) }
-  )),
-});
+      : { ...service, icon: resolveIcon(service.icon, FaHandshake) };
+    return { ...svc, id: svc.id || `${id}-svc-${i}` };
+  });
+
+  return {
+    ...industry,
+    id,
+    name,
+    icon: resolveIcon(industry?.icon),
+    bgImage: resolveAssetUrl(
+      industry?.bgImage || industry?.imageUrl || '/uploads/public/images/services/it-consulting.jpg'
+    ),
+    services,
+  };
+};
+
+// Accept either a bare array or an object wrapping { industries, moreIndustries }.
+const extractIndustries = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    return [...(data.industries || []), ...(data.moreIndustries || [])];
+  }
+  return [];
+};
+
+// Dedupe by stable id (keep first).
+const dedupe = (items) => {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+};
 
 const IndustryExpertise = () => {
-  const [content, setContent] = useState({ industries: [], moreIndustries: [] });
-  const [active, setActive] = useState('');
+  const [content, setContent] = useState({
+    badge: '',
+    title: '',
+    titleHighlight: '',
+    subtitle: '',
+    industries: [],
+  });
+  const [activeId, setActiveId] = useState('');
+  const [status, setStatus] = useState('loading'); // loading | ready | empty | error
 
   useEffect(() => {
+    let active = true;
+
     apiGet('/site/industries')
       .then((data) => {
-        const industries = [
-          ...(data?.industries || []),
-          ...(data?.moreIndustries || []),
-        ].map(normalizeIndustry);
+        if (!active) return;
+
+        const raw = extractIndustries(data)
+          .map((industry, index) => normalizeIndustry(industry, index));
+        const industries = dedupe(raw);
 
         setContent({
           badge: data?.badge || 'Our Industry Expertise',
           title: data?.title || 'Industries We Serve',
+          titleHighlight: data?.titleHighlight || '',
           subtitle: data?.subtitle || '',
           industries,
         });
-        if (industries[0]?.name) setActive(industries[0].name);
+
+        if (industries.length > 0) {
+          setActiveId(industries[0].id);
+          setStatus('ready');
+        } else {
+          setStatus('empty');
+        }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (!active) return;
+        console.error('Failed to load industries:', err);
+        setStatus('error');
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const industryMap = Object.fromEntries(content.industries.map((industry) => [industry.name, industry]));
-  const industryNames = content.industries.map((industry) => industry.name);
-  const current = industryMap[active] || null;
+  const activeIndustry =
+    content.industries.find((industry) => industry.id === activeId) || null;
+
+  const renderTitle = () => {
+    const highlight = content.titleHighlight?.trim();
+    if (highlight) {
+      const head = content.title.replace(highlight, '').trim();
+      return (
+        <>
+          {head ? `${head} ` : ''}
+          <span className="angi-section-title-gradient">{highlight}</span>
+        </>
+      );
+    }
+    // Fall back to splitting off the last two words for gradient emphasis.
+    const words = content.title.split(' ');
+    const tail = words.slice(-2).join(' ');
+    const head = words.slice(0, -2).join(' ');
+    return (
+      <>
+        {head ? `${head} ` : ''}
+        <span className="angi-section-title-gradient">{tail}</span>
+      </>
+    );
+  };
 
   return (
-    <section className="angi-section angi-section-dark" id="industries">
+    <section className="angi-industry" id="industries">
       <div className="angi-container">
         <div className="angi-section-header">
           <div className="angi-section-badge">{content.badge || 'Our Industry Expertise'}</div>
-          <h2 className="angi-section-title">
-            {(content.title || 'Industries We Serve').split(' ').slice(0, -2).join(' ') || 'Industries'}{' '}
-            <span className="angi-section-title-gradient">
-              {(content.title || 'Industries We Serve').split(' ').slice(-2).join(' ')}
-            </span>
-          </h2>
+          <h2 className="angi-section-title">{renderTitle()}</h2>
           {content.subtitle && <p className="angi-section-subtitle">{content.subtitle}</p>}
         </div>
 
-        <div className="angi-tab-group" style={{ marginBottom: '2rem' }}>
-          {industryNames.map((name) => (
-            <button
-              key={name}
-              className={`angi-tab ${active === name ? 'angi-tab-active' : ''}`}
-              onClick={() => setActive(name)}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+        {status === 'loading' && (
+          <div className="angi-industry-state" role="status">Loading industries…</div>
+        )}
+        {status === 'error' && (
+          <div className="angi-industry-state" role="alert">Could not load industries right now.</div>
+        )}
+        {status === 'empty' && (
+          <div className="angi-industry-state">No industries available yet.</div>
+        )}
 
-        {current && (
-          <IndustryPanel industry={current} columns="repeat(3, 1fr)" />
+        {status === 'ready' && content.industries.length > 0 && (
+          <>
+            <div className="angi-industry-tabs" role="tablist" aria-label="Industries">
+              {content.industries.map((industry) => (
+                <button
+                  key={industry.id}
+                  type="button"
+                  role="tab"
+                  id={`industry-tab-${industry.id}`}
+                  aria-selected={activeId === industry.id}
+                  aria-controls={`industry-panel-${industry.id}`}
+                  className="angi-industry-tab"
+                  onClick={() => setActiveId(industry.id)}
+                >
+                  {industry.name}
+                </button>
+              ))}
+            </div>
+
+            {activeIndustry && (
+              <IndustryPanel key={activeIndustry.id} industry={activeIndustry} />
+            )}
+          </>
         )}
       </div>
     </section>
   );
 };
 
-const IndustryPanel = ({ industry, columns, compact = false }) => {
+const IndustryPanel = ({ industry }) => {
   const IndustryIcon = industry.icon;
 
   return (
     <div
-      style={{
-        position: 'relative', borderRadius: '1.25rem', overflow: 'hidden',
-        border: '1px solid rgba(0,175,255,0.1)',
-      }}
+      className="angi-industry-panel"
+      role="tabpanel"
+      id={`industry-panel-${industry.id}`}
+      aria-labelledby={`industry-tab-${industry.id}`}
     >
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: `url(${industry.bgImage})`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        filter: 'brightness(0.3)',
-      }} />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(135deg, rgba(7,20,43,0.88) 0%, rgba(7,20,43,0.7) 100%)',
-      }} />
+      <div
+        className="angi-industry-panel-background"
+        aria-hidden="true"
+        style={{ '--industry-background': `url(${industry.bgImage})` }}
+      />
+      <div className="angi-industry-panel-overlay" aria-hidden="true" />
 
-      <div style={{ position: 'relative', zIndex: 2, padding: compact ? '1.5rem' : '2rem' }}>
-        {compact && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{
-              width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.875rem', color: 'var(--primary)', background: 'rgba(8,117,255,0.1)',
-            }}>
-              <IndustryIcon />
-            </div>
-            <h3 style={{
-              fontFamily: "'Sora', sans-serif", fontSize: '1.125rem', fontWeight: 700,
-              color: '#fff',
-            }}>
-              {industry.name}
-            </h3>
-          </div>
-        )}
-        <div style={{
-          display: 'grid', gridTemplateColumns: columns,
-          gap: compact ? '1rem' : '1.25rem', maxWidth: compact ? 'none' : '900px', margin: '0 auto',
-        }}>
-          {industry.services.map((svc, i) => {
+      <div className="angi-industry-panel-content">
+        <div className="angi-industry-panel-heading">
+          <span className="angi-industry-panel-icon" aria-hidden="true">
+            <IndustryIcon />
+          </span>
+          <h3 className="angi-industry-panel-title">{industry.name}</h3>
+        </div>
+
+        <ul className="angi-industry-grid">
+          {industry.services.map((svc) => {
             const Icon = svc.icon;
             return (
-              <div key={`${svc.name}-${i}`} style={{
-                textAlign: 'center', padding: compact ? '1rem 0.5rem' : '1.5rem 1rem', cursor: 'default',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '0.75rem',
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.3s ease',
-              }}>
-                <div style={{
-                  width: compact ? '2.25rem' : '2.5rem', height: compact ? '2.25rem' : '2.5rem', borderRadius: compact ? '0.5rem' : '0.625rem',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 0.75rem', fontSize: compact ? '0.875rem' : '1rem', color: 'var(--primary)',
-                  background: 'rgba(8,117,255,0.1)',
-                }}>
+              <li key={svc.id} className="angi-industry-card">
+                <span className="angi-industry-card-icon" aria-hidden="true">
                   <Icon />
-                </div>
-                <div style={{ fontSize: compact ? '0.75rem' : '0.8125rem', fontWeight: 600, color: 'rgba(245,247,250,0.9)' }}>
-                  {svc.name}
-                </div>
-              </div>
+                </span>
+                <span className="angi-industry-card-name">{svc.name}</span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </div>
   );

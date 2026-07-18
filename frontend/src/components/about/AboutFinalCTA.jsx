@@ -18,66 +18,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  eyebrow:
-    'Innovate • Build • Empower',
-
-  title:
-    'Let’s Build Your Next Digital Solution',
-
-  description:
-    'Whether you need custom software, a digital product, data automation, an upgrade to an existing system or dependable technical support, AngiSoft will help you turn the requirement into a practical working solution.',
-
-  imageUrl:
-    '/images/about/final-cta/build-with-angisoft.webp',
-
-  mobileImageUrl:
-    '/images/about/final-cta/build-with-angisoft-mobile.webp',
-
-  imageAlt:
-    'Building digital solutions with AngiSoft Technologies',
-
-  objectPosition:
-    'center',
-
-  primaryCta: {
-    label:
-      'Start a Project',
-
-    to:
-      '/booking',
-  },
-
-  secondaryCta: {
-    label:
-      'Talk to AngiSoft',
-
-    to:
-      '/contact',
-  },
-
-  contact: {
-    phone:
-      '+254710398690',
-
-    phoneLabel:
-      '+254 710 398 690',
-
-    email:
-      'info@angisoft.co.ke',
-
-    whatsapp:
-      '254710398690',
-
-    whatsappMessage:
-      'Hello AngiSoft Technologies, I would like to discuss a project.',
-  },
-
-  reassurance:
-    'Clear communication • Practical solutions • Responsible delivery',
-};
 
 const AboutFinalCTA = ({
   content = {},
@@ -90,21 +30,17 @@ const AboutFinalCTA = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       primaryCta: {
-        ...DEFAULT_CONTENT.primaryCta,
         ...(content?.primaryCta || {}),
       },
 
       secondaryCta: {
-        ...DEFAULT_CONTENT.secondaryCta,
         ...(content?.secondaryCta || {}),
       },
 
       contact: {
-        ...DEFAULT_CONTENT.contact,
         ...(content?.contact || {}),
       },
     }),

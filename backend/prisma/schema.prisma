@@ -10,6 +10,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum ProfileVisibility {
+  PRIVATE
+  INTERNAL
+  PUBLIC
+}
+
 model Employee {
   id                  String   @id @default(uuid())
   firstName           String
@@ -41,6 +47,11 @@ model Employee {
   publicEmail         String?
   publicPhone         String?
   profilePublished    Boolean  @default(true)
+  profileVisibility   ProfileVisibility @default(PUBLIC)
+  department          String?
+  seniorityLevel      String?         // Junior, Mid, Senior, Lead, Principal
+  joinYear            Int?
+  featured            Boolean  @default(false)
   profileOrder        Int      @default(0)
   cvUrl               String?   // Resume / CV file
   portfolioUrl        String?
@@ -522,16 +533,16 @@ model Setting {
 
 model AboutSection {
   id        String   @id @default(uuid())
-  key       String   @unique // stable identifier used by the frontend (hero, intro, numberStories, geography, timeline, industries, clients, clientStats, clientHighlights, serviceGallery, solutionTypes, whyGuarantee, fullServices, pricing, merchandise, technologies, quotation, cta)
-  title     String
-  order     Int      @default(0)
-  published Boolean  @default(true)
-  content   Json // section-specific payload (rich shape per key)
+  key       String   @unique // stable identifier used by useAboutPage buildAboutFromSections. 26 canonical keys: heroSlides, intro, numbersHeading, numberStories, geography, sustainability, collaboration, timelineHeading, timeline, industriesHeading, industries, clientsHeading, clients, clientStats, clientHighlights, testimonialsHeading, serviceMap, transparency, partnerships, solutionTypes, technologies, specializedCapabilities, whyGuarantee, pricing, pricingQuotation, cta
+  title     String // human label for the admin CMS
+  enabled   Boolean  @default(true) // drives the frontend's `enabled !== false` filter
+  sortOrder Int      @default(0) // drives the page composer ordering
+  content   Json? // section-specific payload (rich shape per key)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([order])
-  @@index([published])
+  @@index([sortOrder])
+  @@index([enabled])
 }
 
 model Testimonial {
@@ -890,21 +901,57 @@ model StaffBlog {
 }
 
 // ─── Job Postings / Careers ────────────────────────────────────────
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  FILLED
+  ON_HOLD
+  ARCHIVED
+}
+
+enum SalaryVisibility {
+  HIDDEN
+  RANGE
+  EXACT
+}
+
 model JobPosting {
-  id           String    @id @default(uuid())
-  title        String
-  slug         String    @unique
-  department   String?
-  location     String    @default("Nairobi, Kenya")
-  type         String    @default("full-time") // full-time, part-time, contract, internship
-  description  String
-  requirements String[]
-  benefits     String[]
-  salaryRange  String?
-  published    Boolean   @default(false)
-  expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                   String          @id @default(uuid())
+  title                String
+  slug                 String          @unique
+  status               JobStatus       @default(DRAFT)
+  department           String?
+  location             String          @default("Nairobi, Kenya")
+  employmentType       String?         // Full-Time, Part-Time, Contract, Internship
+  workplaceType        String?         // Remote, On-Site, Hybrid
+  experienceLevel      String?         // Entry, Mid, Senior, Lead
+  summary              String?
+  description          String
+  responsibilities      String[]        @default([])
+  requirements         String[]
+  preferredQualifications String[]     @default([])
+  technologies         String[]        @default([])
+  salaryMin            Int?
+  salaryMax            Int?
+  salaryCurrency       String          @default("KES")
+  salaryVisibility     SalaryVisibility @default(RANGE)
+  openings             Int?            @default(1)
+  featured             Boolean         @default(false)
+  applicationDeadline  DateTime?
+  publishedAt          DateTime?
+  // legacy (kept for admin CMS compat)
+  type                 String          @default("full-time") // full-time, part-time, contract, internship
+  benefits             String[]
+  salaryRange          String?
+  published            Boolean         @default(false)
+  expiresAt            DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([status])
+  @@index([department])
+  @@index([featured])
 }
 
 // ─── Company Stats (key facts section) ─────────────────────────────
@@ -913,6 +960,10 @@ model CompanyStat {
   label     String
   value     Int
   suffix      String   @default("")
+  // Semantic formatting type consumed by the frontend formatter.
+  valueType String   @default("plain")
+  prefix    String   @default("")
+  useGrouping Boolean? @map("use_grouping")
   icon        String?
   description String?
   order       Int      @default(0)

@@ -1,57 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
-import { 
-    FaCode, FaCog, FaMobile, FaCloud, FaDatabase, FaPaintBrush,
-    FaRocket, FaArrowRight, FaCheckCircle, FaQuoteLeft,
-    FaLaptopCode, FaHeadset, FaStar
-} from 'react-icons/fa';
-
-const iconMap = {
-    'code': FaCode,
-    'cog': FaCog,
-    'mobile': FaMobile,
-    'cloud': FaCloud,
-    'database': FaDatabase,
-    'paint': FaPaintBrush,
-    'laptop': FaLaptopCode,
-    'headset': FaHeadset,
-    'default': FaCog
-};
-
-const getIcon = (iconLink) => {
-    if (!iconLink) return iconMap['default'];
-    const iconName = iconLink.toLowerCase().split(' ').pop()?.replace('fa-', '');
-    return iconMap[iconName] || iconMap['default'];
-};
+import { useServices } from '../hooks/useServices';
+import { resolveIcon } from '../utils/iconRegistry';
+import { FaCheckCircle, FaStar, FaHeadset, FaRocket } from 'react-icons/fa';
 
 const ServicesList = () => {
     const navigate = useNavigate();
     const { colors, mode } = useTheme();
     const { copy: uiCopy } = useSiteCopy();
-    const [services, setServices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { services, loading, error } = useServices();
     const [hoveredCard, setHoveredCard] = useState(null);
     const pageCopy = uiCopy?.pages?.services || {};
-
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const data = await apiGet('/services');
-                const published = Array.isArray(data) ? data.filter(s => s.published !== false) : [];
-                setServices(published);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchServices();
-    }, []);
 
     const featureItems = Array.isArray(pageCopy.featureBadges) && pageCopy.featureBadges.length > 0
         ? pageCopy.featureBadges
@@ -68,7 +30,7 @@ const ServicesList = () => {
             <ParallaxSection
                 speed={0.25}
                 treatment="image"
-                backgroundImage="/images/Software-Development-Company.jpg"
+                backgroundImage="/uploads/public/images/Software-Development-Company.jpg"
                 backgroundPosition="center 42%"
                 className="relative py-32 overflow-hidden"
             >
@@ -161,7 +123,7 @@ const ServicesList = () => {
                             {services.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {services.map((service, idx) => {
-                                        const IconComponent = getIcon(service.iconLink);
+                                        const IconComponent = resolveIcon(service.icon);
                                         return (
                                             <ScrollReveal 
                                                 key={service.id || service._id} 
@@ -180,7 +142,7 @@ const ServicesList = () => {
                                                     }}
                                                     onMouseEnter={() => setHoveredCard(idx)}
                                                     onMouseLeave={() => setHoveredCard(null)}
-                                                    onClick={() => navigate(`/service/${service.slug}`)}
+                                                    onClick={() => navigate(service.to || `/services/${service.id}`)}
                                                 >
                                                     {/* Gradient top bar */}
                                                     <div 

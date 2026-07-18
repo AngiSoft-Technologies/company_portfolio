@@ -29,27 +29,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_INTRO = {
-  enabled: true,
-
-  headline:
-    'About AngiSoft Technologies –',
-
-  highlight:
-    'Your Partner for Digital Success',
-
-  paragraph:
-    'Founded in December 2024, AngiSoft Technologies provides software development, digital products, data solutions and practical technology services. Our clients value clear communication, responsible delivery and solutions shaped around real business and community needs.',
-
-  primaryCta: {
-    label:
-      'Schedule an Introductory Call',
-
-    to:
-      '/booking',
-  },
-};
-
 const normalizeSlide = (
   slide,
   index
@@ -112,11 +91,9 @@ const AboutHeroSlider = ({
 
   const content = useMemo(
     () => ({
-      ...DEFAULT_INTRO,
       ...(intro || {}),
 
       primaryCta: {
-        ...DEFAULT_INTRO.primaryCta,
         ...(intro?.primaryCta || {}),
       },
     }),

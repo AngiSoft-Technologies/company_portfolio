@@ -1,199 +1,263 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCalendarCheck, FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useUploads } from '../../hooks/useUploads';
+import { resolveAssetUrl } from '../../utils/constants';
+import '../../css/BrandCTA.css';
 
-const merchImages = [
-  { src: '/images/Branding/AngiSoft T-Shirts Design.png', alt: 'AngiSoft T-Shirts' },
-  { src: '/images/Branding/AngiSoft Hoodie Design.png', alt: 'AngiSoft Hoodie' },
-  { src: '/images/Branding/AngiSoft Muggs and cups Design.png', alt: 'AngiSoft Mugs & Cups' },
-  { src: '/images/Branding/AngiSoft NoteBooks Design.png', alt: 'AngiSoft Notebooks' },
-  { src: '/images/Branding/AngiSoft Car Branding.png', alt: 'AngiSoft Car Branding' },
-  { src: '/images/Branding/AngiSoft Capes Design.png', alt: 'AngiSoft Caps' },
-  { src: '/images/Branding/AngiSoft Pens Design.png', alt: 'AngiSoft Pens' },
-  { src: '/images/Branding/AngiSoft Stickers Design.png', alt: 'AngiSoft Stickers' },
-  { src: '/images/Branding/AngiSoft Envelop Design.png', alt: 'AngiSoft Envelope' },
-  { src: '/images/Business Cards/AngiSoft Business Card Front View.png', alt: 'Business Card' },
+// Static fallback kept outside the component so it is created once.
+// Spelling matches the physical files (Muggs, NoteBooks, Capes, Envelop).
+const FALLBACK_MERCH = [
+  { id: 'angisoft-tshirt', filename: 'AngiSoft T-Shirts Design.png', src: '/uploads/public/images/Branding/AngiSoft T-Shirts Design.png', alt: 'AngiSoft T-Shirts' },
+  { id: 'angisoft-hoodie', filename: 'AngiSoft Hoodie Design.png', src: '/uploads/public/images/Branding/AngiSoft Hoodie Design.png', alt: 'AngiSoft Hoodie' },
+  { id: 'angisoft-muggs', filename: 'AngiSoft Muggs and cups Design.png', src: '/uploads/public/images/Branding/AngiSoft Muggs and cups Design.png', alt: 'AngiSoft Mugs & Cups' },
+  { id: 'angisoft-notebooks', filename: 'AngiSoft NoteBooks Design.png', src: '/uploads/public/images/Branding/AngiSoft NoteBooks Design.png', alt: 'AngiSoft Notebooks' },
+  { id: 'angisoft-car', filename: 'AngiSoft Car Branding.png', src: '/uploads/public/images/Branding/AngiSoft Car Branding.png', alt: 'AngiSoft Car Branding' },
+  { id: 'angisoft-capes', filename: 'AngiSoft Capes Design.png', src: '/uploads/public/images/Branding/AngiSoft Capes Design.png', alt: 'AngiSoft Caps' },
+  { id: 'angisoft-pens', filename: 'AngiSoft Pens Design.png', src: '/uploads/public/images/Branding/AngiSoft Pens Design.png', alt: 'AngiSoft Pens' },
+  { id: 'angisoft-stickers', filename: 'AngiSoft Stickers Design.png', src: '/uploads/public/images/Branding/AngiSoft Stickers Design.png', alt: 'AngiSoft Stickers' },
+  { id: 'angisoft-envelop', filename: 'AngiSoft Envelop Design.png', src: '/uploads/public/images/Branding/AngiSoft Envelop Design.png', alt: 'AngiSoft Envelope' },
+  { id: 'angisoft-business-card', filename: 'AngiSoft Business Card Front View.png', src: '/uploads/public/images/Business Cards/AngiSoft Business Card Front View.png', alt: 'Business Card' },
 ];
 
+// Safe URL extraction across possible backend shapes.
+const canonicalUrl = (f) => f?.url || f?.publicUrl || f?.fileUrl || f?.path || null;
+
+// Keep only branding/business-card uploads using structured metadata when present.
+const isBrandFolder = (f) => {
+  if (!f) return false;
+  const folder = `${f.ownerType || ''} ${f.folder || ''} ${f.category || ''}`.toLowerCase();
+  if (/branding/.test(folder) || /business\s*cards?/.test(folder)) return true;
+  const raw = canonicalUrl(f) || f.filename || '';
+  return /branding|business\s*cards?/i.test(raw);
+};
+
+const AUTOPLAY_MS = 3500;
+
 const BrandCTA = () => {
+  const { files } = useUploads('general');
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
+  // Build the final slide list: backend-approved uploads first, then missing
+  // fallback items — deduped by canonical URL so they never compete.
+  const backendSlides = (files || [])
+    .filter(isBrandFolder)
+    .map((f) => ({
+      id: f.id || f.filename,
+      src: resolveAssetUrl(canonicalUrl(f)) || f.filename,
+      alt: f.altText || f.title || f.filename || 'AngiSoft Brand',
+    }));
+
+  const backendUrls = new Set(backendSlides.map((s) => s.src));
+  const fallbackSlides = FALLBACK_MERCH.filter((m) => !backendUrls.has(m.src)).map((m) => ({
+    id: m.id,
+    src: m.src,
+    alt: m.alt,
+  }));
+
+  const merch = [...backendSlides, ...fallbackSlides];
+  const hasSlides = merch.length > 0;
+
+  // Clamp current when the list shrinks.
   useEffect(() => {
-    if (paused) return;
-    timerRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % merchImages.length);
-    }, 3500);
-    return () => clearInterval(timerRef.current);
-  }, [paused]);
+    setCurrent((value) => (merch.length === 0 ? 0 : Math.min(value, merch.length - 1)));
+  }, [merch.length]);
 
-  const prev = () => { setCurrent((c) => (c - 1 + merchImages.length) % merchImages.length); setPaused(true); };
-  const next = () => { setCurrent((c) => (c + 1) % merchImages.length); setPaused(true); };
+  // Track reduced-motion preference.
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setPrefersReducedMotion(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Track tab visibility to pause autoplay when hidden.
+  useEffect(() => {
+    const onVisibility = () => setHidden(document.visibilityState === 'hidden');
+    onVisibility();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  const autoplayPaused =
+    hovered || focused || hidden || prefersReducedMotion || merch.length <= 1;
+
+  // Autoplay timer with all required dependencies.
+  useEffect(() => {
+    if (!hasSlides || autoplayPaused) return undefined;
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % merch.length);
+    }, AUTOPLAY_MS);
+    return () => clearInterval(timer);
+  }, [autoplayPaused, hasSlides, merch.length]);
+
+  const goTo = useCallback(
+    (index) => {
+      if (!hasSlides) return;
+      setCurrent(((index % merch.length) + merch.length) % merch.length);
+    },
+    [hasSlides, merch.length]
+  );
+  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+  const next = useCallback(() => goTo(current + 1), [current, goTo]);
+
+  // Keyboard support when focus is inside the carousel.
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setCurrent(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setCurrent(merch.length - 1);
+    }
+  };
+
+  const activeSlide = hasSlides ? merch[current] : null;
 
   return (
-    <section style={{
-      position: 'relative',
-      overflow: 'hidden',
-      padding: '6rem 0',
-      background: 'linear-gradient(135deg, #07142B 0%, #0B1E3D 40%, #102A55 70%, #07142B 100%)',
-    }}>
-      {/* Ambient glow orbs */}
-      <div style={{ position: 'absolute', top: '-10%', left: '10%', width: '500px', height: '500px', borderRadius: '50%', filter: 'blur(120px)', background: 'var(--primary)', opacity: 0.12, pointerEvents: 'none', animation: 'angi-glow-pulse 8s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', bottom: '-10%', right: '10%', width: '400px', height: '400px', borderRadius: '50%', filter: 'blur(120px)', background: 'var(--secondary)', opacity: 0.08, pointerEvents: 'none', animation: 'angi-glow-pulse 8s ease-in-out infinite 4s' }} />
+    <section className="angi-brand-cta">
+      <div className="angi-brand-cta-glow angi-brand-cta-glow--primary" aria-hidden="true" />
+      <div className="angi-brand-cta-glow angi-brand-cta-glow--secondary" aria-hidden="true" />
+      <div className="angi-brand-cta-grid" aria-hidden="true" />
 
-      {/* Grid pattern overlay */}
-      <div className="angi-grid-bg" />
-
-      <div style={{ position: 'relative', zIndex: 10, maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
-
-          {/* LEFT: Text content */}
-          <div>
-            {/* Promise badge */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.375rem 1rem', borderRadius: '9999px', fontSize: '0.8125rem',
-              fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase',
-              background: 'rgba(8, 117, 255, 0.12)', color: 'var(--primary)',
-              border: '1px solid rgba(8, 117, 255, 0.2)', marginBottom: '1.5rem',
-            }}>
+      <div className="angi-brand-cta-container">
+        <div className="angi-brand-cta-layout">
+          {/* LEFT: copy */}
+          <div className="angi-brand-cta-copy">
+            <div className="angi-brand-cta-badge">
               Innovate &middot; Build &middot; Empower
             </div>
 
-            {/* Heading */}
-            <h2 style={{
-              fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              fontWeight: 700, lineHeight: 1.15, letterSpacing: '-0.02em',
-              color: 'var(--text-primary)', marginBottom: '1.25rem',
-            }}>
+            <h2 className="angi-brand-cta-title">
               From planning to deployment,{' '}
-              <span style={{
-                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>
-                secure, scalable, and maintainable
+              <span className="angi-brand-cta-title-highlight">
+                practical, secure and maintainable
               </span>{' '}
-              software that helps businesses work smarter.
+              digital solutions.
             </h2>
 
-            {/* Description */}
-            <p style={{
-              fontSize: '1.0625rem', lineHeight: 1.8, color: 'rgba(245,247,250,0.6)',
-              marginBottom: '2.5rem', maxWidth: '28rem',
-            }}>
-              We combine technical excellence with deep business understanding to build digital products that drive real, measurable growth across East Africa.
+            <p className="angi-brand-cta-description">
+              We combine software engineering, data skills and practical digital
+              support to help clients move from ideas and manual workflows to
+              working solutions.
             </p>
 
-            {/* CTA */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              <Link to="/book" className="angi-btn-primary" style={{ fontSize: '1rem', padding: '0.875rem 2rem' }}>
-                <FaCalendarCheck /> Book Discovery Call
+            <div className="angi-brand-cta-actions">
+              <Link
+                to="/book"
+                className="angi-brand-cta-action angi-brand-cta-action--primary"
+              >
+                <FaCalendarCheck aria-hidden="true" />
+                <span>Book a Discovery Call</span>
               </Link>
-              <Link to="/services" className="angi-btn-secondary" style={{ fontSize: '1rem', padding: '0.875rem 2rem' }}>
-                Explore Services <FaArrowRight style={{ fontSize: '0.75rem' }} />
+
+              <Link
+                to="/services"
+                className="angi-brand-cta-action angi-brand-cta-action--secondary"
+              >
+                <span>Explore Services</span>
+                <FaArrowRight aria-hidden="true" />
               </Link>
             </div>
           </div>
 
-          {/* RIGHT: Merchandise slider */}
-          <div
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
-            {/* Slider frame */}
-            <div style={{
-              position: 'relative', borderRadius: '1.25rem', overflow: 'hidden',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(0,175,255,0.1)',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.4), 0 0 80px rgba(8,117,255,0.06)',
-            }}>
-              {/* Image container */}
-              <div style={{ position: 'relative', height: '420px', overflow: 'hidden' }}>
-                {merchImages.map((img, i) => (
-                  <img
-                    key={i}
-                    src={img.src}
-                    alt={img.alt}
-                    loading="lazy"
-                    decoding="async"
-                    style={{
-                      position: 'absolute', inset: 0, width: '100%', height: '100%',
-                      objectFit: 'contain', padding: '2rem',
-                      opacity: i === current ? 1 : 0,
-                      transform: i === current ? 'scale(1)' : 'scale(0.95)',
-                      transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  />
-                ))}
+          {/* RIGHT: merchandise carousel */}
+          {hasSlides ? (
+            <div
+              className="angi-brand-cta-carousel"
+              role="region"
+              aria-roledescription="carousel"
+              aria-label="AngiSoft brand merchandise"
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              onFocusCapture={() => setFocused(true)}
+              onBlurCapture={() => setFocused(false)}
+              onKeyDown={onKeyDown}
+            >
+              <div className={`angi-brand-cta-frame ${autoplayPaused ? 'is-paused' : ''}`}>
+                <div className="angi-brand-cta-viewport">
+                  {merch.map((slide, i) => {
+                    const isActive = i === current;
+                    return (
+                      <div
+                        key={slide.id || slide.src}
+                        className={`angi-brand-cta-slide ${isActive ? 'is-active' : ''}`}
+                        role="group"
+                        aria-roledescription="slide"
+                        aria-label={`${i + 1} of ${merch.length}`}
+                        aria-hidden={!isActive}
+                      >
+                        <img
+                          src={resolveAssetUrl(slide.src)}
+                          alt={slide.alt}
+                          loading={i === 0 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          className="angi-brand-cta-slide-image"
+                        />
+                      </div>
+                    );
+                  })}
 
-                {/* Overlay gradient at bottom */}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px',
-                  background: 'linear-gradient(transparent, rgba(7,20,43,0.8))',
-                  pointerEvents: 'none',
-                }} />
-              </div>
+                  <div className="angi-brand-cta-overlay" aria-hidden="true" />
+                </div>
 
-              {/* Navigation arrows */}
-              <button onClick={prev} style={{
-                position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)',
-                width: '2.5rem', height: '2.5rem', borderRadius: '50%', border: 'none',
-                background: 'rgba(7,20,43,0.7)', color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(10px)', transition: 'all 0.3s', zIndex: 5,
-              }}
-              onMouseEnter={(e) => e.target.style.background = 'var(--primary)'}
-              onMouseLeave={(e) => e.target.style.background = 'rgba(7,20,43,0.7)'}
-              >
-                <FaChevronLeft style={{ fontSize: '0.75rem' }} />
-              </button>
-              <button onClick={next} style={{
-                position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
-                width: '2.5rem', height: '2.5rem', borderRadius: '50%', border: 'none',
-                background: 'rgba(7,20,43,0.7)', color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backdropFilter: 'blur(10px)', transition: 'all 0.3s', zIndex: 5,
-              }}
-              onMouseEnter={(e) => e.target.style.background = 'var(--primary)'}
-              onMouseLeave={(e) => e.target.style.background = 'rgba(7,20,43,0.7)'}
-              >
-                <FaChevronRight style={{ fontSize: '0.75rem' }} />
-              </button>
-
-              {/* Label */}
-              <div style={{
-                padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                borderTop: '1px solid rgba(0,175,255,0.08)', background: 'rgba(7,20,43,0.5)',
-              }}>
-                <span style={{
-                  fontFamily: "'Sora', sans-serif", fontSize: '0.875rem', fontWeight: 600,
-                  color: 'var(--text-primary)',
-                }}>
-                  {merchImages[current].alt}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(245,247,250,0.4)' }}>
-                  AngiSoft Brand
-                </span>
-              </div>
-            </div>
-
-            {/* Dot indicators */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.25rem' }}>
-              {merchImages.map((_, i) => (
                 <button
-                  key={i}
-                  onClick={() => { setCurrent(i); setPaused(true); }}
-                  style={{
-                    width: i === current ? '2rem' : '0.5rem',
-                    height: '0.5rem', borderRadius: '9999px', border: 'none', cursor: 'pointer',
-                    background: i === current ? 'var(--primary)' : 'rgba(255,255,255,0.15)',
-                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-              ))}
+                  type="button"
+                  className="angi-brand-cta-arrow angi-brand-cta-arrow--previous"
+                  onClick={prev}
+                  aria-label="Show previous brand image"
+                >
+                  <FaChevronLeft aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="angi-brand-cta-arrow angi-brand-cta-arrow--next"
+                  onClick={next}
+                  aria-label="Show next brand image"
+                >
+                  <FaChevronRight aria-hidden="true" />
+                </button>
+
+                {activeSlide && (
+                  <div className="angi-brand-cta-caption">
+                    <span className="angi-brand-cta-caption-title">{activeSlide.alt}</span>
+                    <span className="angi-brand-cta-caption-label">AngiSoft Brand</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="angi-brand-cta-dots">
+                {merch.map((slide, i) => {
+                  const isActive = i === current;
+                  return (
+                    <button
+                      type="button"
+                      key={slide.id || slide.src}
+                      className={`angi-brand-cta-dot ${isActive ? 'is-active' : ''}`}
+                      onClick={() => goTo(i)}
+                      aria-label={`Show slide ${i + 1}: ${slide.alt}`}
+                      aria-current={isActive ? 'true' : undefined}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="angi-brand-cta-status">
+              AngiSoft brand merchandise coming soon.
+            </div>
+          )}
         </div>
       </div>
     </section>

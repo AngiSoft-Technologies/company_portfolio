@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { extractSectionContent } from '../hooks/useAboutPage';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { 
     FaArrowLeft, FaRocket, FaCheckCircle, FaClock, FaDollarSign,
@@ -21,26 +22,22 @@ const ServiceDetail = () => {
     useEffect(() => {
         const fetchService = async () => {
             try {
-                const services = await apiGet('/services');
-                const found = services.find(s => s.slug === slug);
+                // Canonical services live in the About "serviceMap" section;
+                // the URL param is the service id (e.g. /services/web-development).
+                const list = await apiGet('/about-sections');
+                const sm = extractSectionContent(list, 'serviceMap');
+                const services = (sm && Array.isArray(sm.services)) ? sm.services : [];
+                const found = services.find(s => s.id === slug || s.slug === slug);
                 if (found) {
-                    setService(found);
+                    setService({
+                        ...found,
+                        images: Array.isArray(found.images) && found.images.length
+                            ? found.images
+                            : (found.imageUrl ? [found.imageUrl] : []),
+                        description: found.description || '',
+                    });
                 } else {
-                    // Try matching by category slug as fallback
-                    const categories = await apiGet('/service-categories').catch(() => []);
-                    const cat = Array.isArray(categories) ? categories.find(c => c.slug === slug) : null;
-                    if (cat) {
-                        setService({
-                            title: cat.name,
-                            slug: cat.slug,
-                            description: cat.description,
-                            features: (Array.isArray(services) ? services : [])
-                              .filter(s => s.category === cat.name || s.categoryId === cat.id)
-                              .map(s => s.title),
-                        });
-                    } else {
-                        setError('Service not found');
-                    }
+                    setError('Service not found');
                 }
             } catch (err) {
                 setError(err.message);

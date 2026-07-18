@@ -1,0 +1,496 @@
+/* ==========================================================================
+   FaqSection — dedicated stylesheet
+   All FAQ-specific styling lives here (moved out of the global index.css).
+   Scoped class prefix: .angi-faq-
+   ========================================================================== */
+
+/* 1. Section root ---------------------------------------------------------- */
+.angi-faq-section {
+    position: relative;
+    overflow: hidden;
+    background: #070E1A;
+    padding: clamp(3rem, 5vw, 4.5rem) 1.5rem clamp(3rem, 5vw, 4.5rem);
+    isolation: isolate;
+}
+
+/* 2. Technical grid background (decorative, behind content) --------------- */
+.angi-faq-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: -2;
+}
+
+/* 3. Radial glow (decorative) --------------------------------------------- */
+.angi-faq-section::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(900px, 92vw);
+    height: min(600px, 72vw);
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(8, 117, 255, 0.18) 0%,
+        rgba(0, 175, 255, 0.10) 35%,
+        rgba(7, 14, 26, 0) 70%
+    );
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 4. Responsive container -------------------------------------------------- */
+.angi-faq-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* 5. Decorative sparkle --------------------------------------------------- */
+.angi-faq-sparkle {
+    position: absolute;
+    top: clamp(1rem, 3vw, 2rem);
+    right: clamp(1rem, 4vw, 3rem);
+    font-size: 2.25rem;
+    color: var(--faq-secondary, #00AFFF);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* 6. Header ---------------------------------------------------------------- */
+.angi-faq-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    max-width: 40rem;
+}
+
+/* 7. Badge ---------------------------------------------------------------- */
+.angi-faq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faq-primary, #0875FF);
+    background: rgba(8, 117, 255, 0.12);
+    border: 1px solid rgba(8, 117, 255, 0.25);
+}
+
+.angi-faq-badge-icon {
+    font-size: 0.85rem;
+}
+
+/* 8. Heading -------------------------------------------------------------- */
+.angi-faq-heading {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #F5F7FA;
+    margin: 0;
+}
+
+/* 9. Gradient heading span ------------------------------------------------ */
+.angi-faq-heading-gradient {
+    background: linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* 10. Subtitle ------------------------------------------------------------ */
+.angi-faq-subtitle {
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+    max-width: 34rem;
+}
+
+/* 11. Category scroll container ------------------------------------------- */
+/* Default (>=768px): wide, no scroll — categories wrap + center. */
+.angi-faq-category-scroll {
+    width: 100%;
+    max-width: 1080px;
+    overflow: visible;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.angi-faq-category-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* 12. Category pill row --------------------------------------------------- */
+/* Default (>=768px): wrap into centered rows, never cut off. */
+.angi-faq-categories {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    justify-content: center;
+    padding: 0.25rem;
+}
+
+/* 13. Category buttons ---------------------------------------------------- */
+.angi-faq-category {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(11, 30, 61, 0.55);
+    border: 1px solid rgba(215, 227, 255, 0.12);
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+/* 14. Active category state ----------------------------------------------- */
+.angi-faq-category.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--faq-primary, #0875FF) 0%, var(--faq-secondary, #00AFFF) 100%);
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(8, 117, 255, 0.3);
+}
+
+/* 15. FAQ list ------------------------------------------------------------ */
+.angi-faq-list {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+/* 16. FAQ item ------------------------------------------------------------ */
+.angi-faq-item {
+    position: relative;
+    border: 1px solid rgba(215, 227, 255, 0.12);
+    border-radius: 1rem;
+    background: rgba(11, 30, 61, 0.5);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+/* 17. Open item state ----------------------------------------------------- */
+.angi-faq-item.is-open {
+    border-color: rgba(8, 117, 255, 0.45);
+    background: rgba(11, 30, 61, 0.78);
+}
+
+/* 18. Question button ----------------------------------------------------- */
+.angi-faq-question {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    background: transparent;
+    border: none;
+    color: #F5F7FA;
+    padding: 1.05rem 1.35rem;
+    transition: color 0.25s ease;
+}
+
+/* 19. Number -------------------------------------------------------------- */
+.angi-faq-number {
+    flex-shrink: 0;
+    width: 2.25rem;
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    color: var(--faq-primary, #0875FF);
+    letter-spacing: -0.02em;
+}
+
+/* 20. Question text ------------------------------------------------------- */
+.angi-faq-question-text {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+/* 21. Chevron ------------------------------------------------------------- */
+.angi-faq-chevron {
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.3s ease, color 0.25s ease;
+}
+
+.angi-faq-item.is-open .angi-faq-chevron {
+    transform: rotate(180deg);
+    color: var(--faq-secondary, #00AFFF);
+}
+
+/* 22. Answer-region animation (content-driven grid-rows) ------------------ */
+.angi-faq-answer-region {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition: grid-template-rows 0.35s ease, opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.angi-faq-item.is-open .angi-faq-answer-region {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 23. Answer inner wrapper (enables 0fr collapse) ------------------------- */
+.angi-faq-answer-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 24. Answer typography --------------------------------------------------- */
+.angi-faq-answer {
+    padding: 0 1.5rem 1.4rem calc(1.5rem + 2.05rem);
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.72);
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* 22b. Show More button --------------------------------------------------- */
+.angi-faq-show-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    min-height: 44px;
+    padding: 0.6rem 1.5rem;
+    margin-top: 0.25rem;
+    border-radius: 9999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #F5F7FA;
+    background: rgba(11, 30, 61, 0.55);
+    border: 1px solid rgba(8, 117, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.angi-faq-show-more:hover {
+    background: rgba(8, 117, 255, 0.16);
+    border-color: rgba(8, 117, 255, 0.7);
+}
+
+.angi-faq-show-more:focus-visible {
+    outline: 2px solid var(--faq-secondary, #00AFFF);
+    outline-offset: 2px;
+}
+
+/* 25. CTA ----------------------------------------------------------------- */
+.angi-faq-cta {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.angi-faq-cta-text {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #F5F7FA;
+}
+
+/* 26. WhatsApp button ----------------------------------------------------- */
+.angi-faq-cta-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
+}
+
+.angi-faq-cta-whatsapp,
+.angi-faq-cta-email {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.angi-faq-cta-whatsapp {
+    color: #fff;
+    background: #25D366;
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.28);
+}
+
+.angi-faq-cta-whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(37, 211, 102, 0.4);
+}
+
+/* 27. Email button (uses FAQ theme variables) ----------------------------- */
+.angi-faq-cta-email {
+    color: #fff;
+    background: linear-gradient(135deg, var(--faq-primary, #0875FF) 0%, var(--faq-secondary, #00AFFF) 100%);
+    border: 1px solid rgba(8, 117, 255, 0.25);
+}
+
+.angi-faq-cta-email:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(8, 117, 255, 0.35);
+}
+
+/* 28. Tablet behavior (768px–1023px): keep categories wrapped + centered,
+   just reduce container gap slightly. No horizontal scroll at this width. */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .angi-faq-container {
+        gap: 1.25rem;
+    }
+}
+
+/* 29. Phone behavior (below 768px): categories become a single-row
+   horizontal scroller; the rest of the layout stays compact. */
+@media (max-width: 767px) {
+    .angi-faq-section {
+        padding-top: 2.5rem;
+        padding-bottom: 3rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .angi-faq-header {
+        gap: 0.7rem;
+    }
+
+    .angi-faq-heading {
+        font-size: clamp(1.7rem, 8vw, 2.15rem);
+    }
+
+    .angi-faq-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .angi-faq-category-scroll {
+        overflow-x: auto;
+        padding-inline: 0.25rem;
+    }
+
+    .angi-faq-categories {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+    }
+
+    .angi-faq-category {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.875rem;
+    }
+
+    .angi-faq-question {
+        padding: 0.9rem 1rem;
+        gap: 0.7rem;
+    }
+
+    .angi-faq-number {
+        font-size: 0.9rem;
+        width: 1.75rem;
+    }
+
+    .angi-faq-question-text {
+        font-size: 0.85rem;
+    }
+
+    .angi-faq-answer {
+        padding: 0 1rem 1rem calc(1rem + 1.75rem);
+        font-size: 0.82rem;
+    }
+
+    .angi-faq-cta-links {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .angi-faq-cta-whatsapp,
+    .angi-faq-cta-email {
+        width: 100%;
+    }
+}
+
+/* 30. Very small phones (below 380px) ------------------------------------- */
+@media (max-width: 379px) {
+    .angi-faq-number {
+        display: none;
+    }
+
+    .angi-faq-question {
+        gap: 0.6rem;
+    }
+
+    .angi-faq-answer {
+        padding-left: 1.1rem;
+        padding-right: 1.1rem;
+    }
+}
+
+/* 31. Focus-visible styling ----------------------------------------------- */
+.angi-faq-question:focus-visible,
+.angi-faq-category:focus-visible,
+.angi-faq-cta-whatsapp:focus-visible,
+.angi-faq-cta-email:focus-visible {
+    outline: 2px solid var(--faq-secondary, #00AFFF);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+/* 32. Reduced-motion support ---------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .angi-faq-category,
+    .angi-faq-item,
+    .angi-faq-answer-region,
+    .angi-faq-chevron,
+    .angi-faq-cta-whatsapp,
+    .angi-faq-cta-email {
+        transition: none !important;
+    }
+}

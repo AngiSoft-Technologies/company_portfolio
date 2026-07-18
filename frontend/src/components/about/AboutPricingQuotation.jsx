@@ -16,109 +16,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  quote:
-    'A software quotation should not represent coding time alone. It should account for understanding the problem, structuring the solution, protecting data, validating workflows, preparing deployment and supporting the system after release.',
-
-  person: {
-    name:
-      'Prof Angera Silas',
-
-    role:
-      'Founder and Lead Developer',
-
-    company:
-      'AngiSoft Technologies',
-
-    imageUrl:
-      '/uploads/public/images/about/leadership/prof-angera-silas.webp',
-
-    mobileImageUrl:
-      '/uploads/public/images/about/leadership/prof-angera-silas-mobile.webp',
-
-    imageAlt:
-      'Prof Angera Silas, Founder and Lead Developer at AngiSoft Technologies',
-
-    objectPosition:
-      'center top',
-  },
-
-  firstIntroduction:
-    'To improve productivity, control project costs and deliver maintainable systems, part of a client’s investment may cover:',
-
-  businessInvestments: [
-    {
-      id:
-        'quality-management',
-
-      text:
-        'Quality management and project coordination.',
-    },
-
-    {
-      id:
-        'technology-adoption',
-
-      text:
-        'Adoption of suitable technologies and development tools.',
-    },
-
-    {
-      id:
-        'training-documentation',
-
-      text:
-        'Documentation, knowledge transfer and user guidance.',
-    },
-  ],
-
-  secondIntroduction:
-    'To support dependable delivery, faster implementation and lower long-term ownership costs, we may also use the following technologies and methods:',
-
-  technicalInvestments: [
-    {
-      id:
-        'cloud-architecture',
-
-      text:
-        'Cloud-ready application architecture.',
-    },
-
-    {
-      id:
-        'devops',
-
-      text:
-        'DevOps and automated deployment workflows.',
-    },
-
-    {
-      id:
-        'testing',
-
-      text:
-        'Workflow, validation and regression testing.',
-    },
-
-    {
-      id:
-        'performance',
-
-      text:
-        'Application performance review and optimization.',
-    },
-  ],
-
-  cta: {
-    label:
-      'Request a Project Assessment',
-
-    to:
-      '/booking',
-  },
-};
 
 const normalizeListItem = (
   item,
@@ -161,16 +58,13 @@ const AboutPricingQuotation = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       person: {
-        ...DEFAULT_CONTENT.person,
         ...(content?.person || {}),
       },
 
       cta: {
-        ...DEFAULT_CONTENT.cta,
         ...(content?.cta || {}),
       },
     }),

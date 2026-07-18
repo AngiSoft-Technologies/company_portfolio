@@ -236,6 +236,39 @@ function publicUrlForKey(key: string) {
     return `${base.replace(/\/+$/g, '')}/${key.replace(/^\/+/, '')}`;
 }
 
+/**
+ * Public read access to synced marketing/CMS media.
+ * Only `File` rows marked public (metadata.public === true) are returned, so
+ * private uploads stay gated behind the authenticated download endpoint above.
+ */
+const isPublicFile = (file: { metadata?: any }) => {
+    const meta = file.metadata ?? {};
+    return meta.public === true || (Array.isArray(meta.path) && meta.path.includes('public'));
+};
+
+router.get('/', async (_req, res) => {
+    try {
+        const ownerType = typeof _req.query.ownerType === 'string' ? _req.query.ownerType : undefined;
+        const files = await prisma.file.findMany({
+            where: ownerType ? { ownerType } : undefined,
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(files.filter(isPublicFile));
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/:id', async (req, res) => {
+    try {
+        const file = await prisma.file.findUnique({ where: { id: req.params.id } });
+        if (!file || !isPublicFile(file)) return res.status(404).json({ error: 'File not found' });
+        res.json(file);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/sign', requireAuth, async (req: AuthRequest, res) => {
     const parsed = signSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });

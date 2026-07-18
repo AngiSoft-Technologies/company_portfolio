@@ -11,51 +11,6 @@ import {
   FaPlay,
 } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'Building Trust with Transparency',
-
-  paragraphs: [
-    'Outsourcing to another company, however reputable it is, always comes with a risk. The team we can do as a vendor is to lower that risk through clear communication and visible project progress.',
-
-    'At AngiSoft, we explain what is being built, how the work is progressing, which decisions have been made and where challenges or dependencies exist.',
-
-    'We aim to build long-term client relationships through honest communication, working demonstrations and evidence-based delivery.',
-  ],
-
-  video: {
-    youtubeId:
-      'mjTgFOs39zU',
-
-    title:
-      'How to Actually Choose the Right Development Partner',
-
-    overlayTitle:
-      'Choosing the Right Technology Partner',
-
-    overlaySubtitle:
-      'Trust, communication and transparency',
-
-    thumbnailUrl:
-      'https://i.ytimg.com/vi/mjTgFOs39zU/maxresdefault.jpg',
-  },
-
-  links: [
-    {
-      id: 'projects',
-      label: 'View Our Projects',
-      to: '/projects',
-    },
-
-    {
-      id: 'process',
-      label: 'How We Work',
-      to: '/how-we-work',
-    },
-  ],
-};
 
 const normalizeLink = (
   item,
@@ -97,11 +52,9 @@ const AboutTransparency = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       video: {
-        ...DEFAULT_CONTENT.video,
         ...(content?.video || {}),
       },
     }),
@@ -120,7 +73,7 @@ const AboutTransparency = ({
       return [data.description];
     }
 
-    return DEFAULT_CONTENT.paragraphs;
+    return [];
   }, [
     data.paragraphs,
     data.description,
@@ -130,7 +83,7 @@ const AboutTransparency = ({
     const source =
       Array.isArray(data.links)
         ? data.links
-        : DEFAULT_CONTENT.links;
+        : [];
 
     return source
       .map(normalizeLink)

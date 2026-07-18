@@ -2,18 +2,24 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { apiDelete, apiGet, apiPost, apiPut } from '../../js/httpClient';
 import Table from '../../components/Table';
 import CrudModal from '../../components/CrudModal';
+import NestedEditor from './NestedEditor';
+
+const isNestedType = (type) => type === 'object' || type === 'list';
 
 const fieldDefaults = (fields) => fields.reduce((acc, field) => {
-  acc[field.name] = field.defaultValue ?? (field.type === 'checkbox' ? false : '');
+  if (isNestedType(field.type)) acc[field.name] = field.defaultValue ?? (field.type === 'list' ? [] : {});
+  else acc[field.name] = field.defaultValue ?? (field.type === 'checkbox' ? false : '');
   return acc;
 }, {});
 
 const normalizeValue = (field, value) => {
   if (field.type === 'number') return value === '' ? null : Number(value);
   if (field.type === 'checkbox') return Boolean(value);
-  if (field.type === 'json') return value ? JSON.parse(value) : null;
+  if (field.type === 'json') return value ? JSON.parse(value) : undefined;
   if (field.type === 'array') return typeof value === 'string' ? value.split('\n').map((item) => item.trim()).filter(Boolean) : value;
   if (field.type === 'datetime-local') return value ? new Date(value).toISOString() : null;
+  // object/list are kept as live JS objects/arrays held in form state.
+  if (isNestedType(field.type)) return value;
   return value === '' && field.nullable ? null : value;
 };
 
@@ -21,6 +27,7 @@ const formatValue = (field, value) => {
   if (field.type === 'json') return value ? JSON.stringify(value, null, 2) : '';
   if (field.type === 'array') return Array.isArray(value) ? value.join('\n') : '';
   if (field.type === 'datetime-local') return value ? new Date(value).toISOString().slice(0, 16) : '';
+  if (isNestedType(field.type)) return value ?? field.defaultValue ?? (field.type === 'list' ? [] : {});
   return value ?? field.defaultValue ?? (field.type === 'checkbox' ? false : '');
 };
 
@@ -134,6 +141,12 @@ const AdminCrudPage = ({ title, description, endpoint, adminEndpoint, columns, f
                   />
                   {field.label}
                 </label>
+              ) : isNestedType(field.type) ? (
+                <NestedEditor
+                  schema={field.schema ? (typeof field.schema === 'function' ? field.schema(editing) : field.schema) : { type: 'object', fields: [] }}
+                  value={form[field.name]}
+                  onChange={(next) => setForm({ ...form, [field.name]: next })}
+                />
               ) : field.type === 'textarea' || field.type === 'json' || field.type === 'array' ? (
                 <>
                   <label className="block text-sm font-semibold mb-1">{field.label}</label>

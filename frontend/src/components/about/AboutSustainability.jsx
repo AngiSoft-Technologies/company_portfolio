@@ -14,27 +14,6 @@ import {
   resolveAssetUrl,
 } from '../../utils/constants';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'Our Sustainability and Social Responsibility Commitment',
-
-  description:
-    'AngiSoft believes that long-term business growth should create practical value for people and communities. We aim to build accessible digital solutions, support continuous learning, promote responsible technology use, and deliver projects with transparency, fairness, and respect for client needs.',
-
-  link: {
-    label:
-      'Read Our Commitment',
-
-    to:
-      '/about/digital-empowerment',
-
-    type:
-      'page',
-  },
-};
-
 const AboutSustainability = ({
   content = {},
 }) => {
@@ -46,12 +25,10 @@ const AboutSustainability = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       link: {
-        ...DEFAULT_CONTENT.link,
-        ...(content?.link || {}),
+        ...((content && content.link) || {}),
       },
     }),
     [content]

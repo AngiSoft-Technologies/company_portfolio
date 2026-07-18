@@ -13,138 +13,6 @@ import {
   FaRegComments,
 } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'How We Collaborate',
-
-  models: [
-    {
-      id:
-        'flexible-models',
-
-      title:
-        'Flexible Collaboration Models',
-
-      icon:
-        'flexible',
-
-      accent:
-        '#0A3DFF',
-
-      items: [
-        {
-          id:
-            'end-to-end',
-
-          label:
-            'End-to-end project delivery',
-        },
-
-        {
-          id:
-            'dedicated-development',
-
-          label:
-            'Dedicated development support',
-        },
-
-        {
-          id:
-            'staff-augmentation',
-
-          label:
-            'Technical team augmentation',
-
-          to:
-            '/services/software-development',
-        },
-      ],
-    },
-
-    {
-      id:
-        'seamless-integration',
-
-      title:
-        'Seamless Integration',
-
-      icon:
-        'integration',
-
-      accent:
-        '#00C2FF',
-
-      items: [
-        {
-          id:
-            'onboarding',
-
-          label:
-            'Fast onboarding into existing projects',
-        },
-
-        {
-          id:
-            'workflow-alignment',
-
-          label:
-            'Alignment with existing workflows',
-        },
-
-        {
-          id:
-            'timezone-collaboration',
-
-          label:
-            'Comfortable collaboration across locations',
-        },
-      ],
-    },
-
-    {
-      id:
-        'communication',
-
-      title:
-        'Strong Communication and Ownership',
-
-      icon:
-        'communication',
-
-      accent:
-        '#39FF6A',
-
-      items: [
-        {
-          id:
-            'project-coordination',
-
-          label:
-            'Proactive project coordination',
-        },
-
-        {
-          id:
-            'reporting',
-
-          label:
-            'Transparent progress reporting',
-        },
-
-        {
-          id:
-            'communication',
-
-          label:
-            'Clear communication throughout delivery',
-        },
-      ],
-    },
-  ],
-};
-
 const ICONS = {
   flexible:
     FaProjectDiagram,
@@ -269,7 +137,6 @@ const AboutCollaboration = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
     }),
     [content]
@@ -280,7 +147,7 @@ const AboutCollaboration = ({
       Array.isArray(data.models) &&
       data.models.length
         ? data.models
-        : DEFAULT_CONTENT.models;
+        : [];
 
     return source
       .map(normalizeModel)

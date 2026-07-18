@@ -18,7 +18,8 @@ const SITE_SECTIONS = [
     { slug: 'success-stories', key: 'site_success_stories', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
     { slug: 'pricing', key: 'site_pricing', roles: ['ADMIN', 'MARKETING'] },
     { slug: 'products-page', key: 'site_products_page', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'services-page', key: 'site_services_page', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] }
+    { slug: 'services-page', key: 'site_services_page', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'careers_content', key: 'careers_content', roles: ['ADMIN', 'HR', 'MARKETING'] }
 ] as const;
 
 /**

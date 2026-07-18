@@ -21,149 +21,6 @@ import {
   FaBoxOpen,
 } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  introTile: {
-    title: 'Our Service Map',
-    to: '/services',
-  },
-
-  services: [
-    {
-      id: 'web-development',
-      title: 'Web Development',
-      icon: 'web',
-      imageUrl:
-        '/uploads/public/images/about/service-map/web-development.webp',
-      imageAlt:
-        'Web development illustration',
-      to:
-        '/services/web-development',
-    },
-    {
-      id: 'mobile-development',
-      title: 'Mobile Development',
-      icon: 'mobile',
-      imageUrl:
-        '/uploads/public/images/about/service-map/mobile-development.webp',
-      imageAlt:
-        'Mobile application development illustration',
-      to:
-        '/services/mobile-development',
-    },
-    {
-      id: 'code-debugging',
-      title: 'Code Debugging',
-      icon: 'debugging',
-      imageUrl:
-        '/uploads/public/images/about/service-map/code-debugging.webp',
-      imageAlt:
-        'Code debugging illustration',
-      to:
-        '/services/code-debugging',
-    },
-    {
-      id: 'data-analysis',
-      title: 'Data Analysis',
-      icon: 'data',
-      imageUrl:
-        '/uploads/public/images/about/service-map/data-analysis.webp',
-      imageAlt:
-        'Data analysis illustration',
-      to:
-        '/services/data-analysis',
-    },
-    {
-      id: 'document-editing',
-      title: 'Document Editing',
-      icon: 'documents',
-      imageUrl:
-        '/uploads/public/images/about/service-map/document-editing.webp',
-      imageAlt:
-        'Document editing illustration',
-      to:
-        '/services/document-editing',
-    },
-    {
-      id: 'database-design',
-      title: 'System & Database Design',
-      icon: 'database',
-      imageUrl:
-        '/uploads/public/images/about/service-map/database-design.webp',
-      imageAlt:
-        'System and database design illustration',
-      to:
-        '/services/database-design',
-    },
-    {
-      id: 'custom-systems',
-      title: 'Custom Systems',
-      icon: 'systems',
-      imageUrl:
-        '/uploads/public/images/about/service-map/custom-systems.webp',
-      imageAlt:
-        'Custom business systems illustration',
-      to:
-        '/services/custom-systems',
-    },
-    {
-      id: 'software-installation',
-      title: 'Software Installation',
-      icon: 'installation',
-      imageUrl:
-        '/uploads/public/images/about/service-map/software-installation.webp',
-      imageAlt:
-        'Software installation illustration',
-      to:
-        '/services/software-installation',
-    },
-    {
-      id: 'system-upgrades',
-      title: 'System Upgrades',
-      icon: 'upgrades',
-      imageUrl:
-        '/uploads/public/images/about/service-map/system-upgrades.webp',
-      imageAlt:
-        'Software and system upgrades illustration',
-      to:
-        '/services/system-upgrades',
-    },
-    {
-      id: 'posters-graphics',
-      title: 'Design Posters & Graphics',
-      icon: 'graphics',
-      imageUrl:
-        '/uploads/public/images/about/service-map/posters-graphics.webp',
-      imageAlt:
-        'Poster and graphic design illustration',
-      to:
-        '/services/graphic-design',
-    },
-    {
-      id: 'online-applications',
-      title: 'Online Applications',
-      icon: 'applications',
-      imageUrl:
-        '/uploads/public/images/about/service-map/online-applications.webp',
-      imageAlt:
-        'Online application services illustration',
-      to:
-        '/services/online-applications',
-    },
-    {
-      id: 'in-house-products',
-      title: 'In-House Products',
-      icon: 'products',
-      imageUrl:
-        '/uploads/public/images/about/service-map/in-house-products.webp',
-      imageAlt:
-        'AngiSoft software products illustration',
-      to:
-        '/products',
-    },
-  ],
-};
 
 const ICONS = {
   applications: FaGlobe,
@@ -226,11 +83,9 @@ const AboutServiceMap = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       introTile: {
-        ...DEFAULT_CONTENT.introTile,
         ...(content?.introTile || {}),
       },
     }),
@@ -242,7 +97,7 @@ const AboutServiceMap = ({
       Array.isArray(data.services) &&
       data.services.length
         ? data.services
-        : DEFAULT_CONTENT.services;
+        : [];
 
     return source
       .map(normalizeService)

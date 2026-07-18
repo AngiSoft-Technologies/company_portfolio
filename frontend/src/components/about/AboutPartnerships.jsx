@@ -12,17 +12,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'Partnerships and Recognitions',
-
-  featuredItems: [],
-
-  supportingItems: [],
-};
-
 const normalizeItem = (
   item,
   index,
@@ -79,7 +68,6 @@ const AboutPartnerships = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
     }),
     [content]
@@ -296,7 +284,6 @@ const RecognitionWrapper = ({
 
 const FeaturedRecognition = ({
   item,
-  index,
 }) => (
   <RecognitionWrapper
     item={item}

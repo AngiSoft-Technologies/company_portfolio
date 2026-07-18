@@ -50,3 +50,16 @@ docker-compose.override.yml
 AGENTS.md
 About Company — ScienceSoft_files
 About Company — ScienceSoft.*
+.claude
+.devin
+.openclaude
+.remember
+backend/.vscodeignore
+backend/IMPLEMENTATION_PLAN.txt
+AGENTS.md
+.claude
+.devin
+.openclaude
+.remember
+firebase.json
+.firebaserc

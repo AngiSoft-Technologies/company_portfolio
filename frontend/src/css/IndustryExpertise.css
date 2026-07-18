@@ -1,0 +1,232 @@
+/* ==========================================================================
+   IndustryExpertise — dedicated stylesheet
+   Desktop layout is preserved: section header, horizontal industry tabs,
+   one active panel with background image + dark overlay, and a 3-column
+   service-card grid on desktop. Only responsive behaviour, the square-card
+   removal, and ARIA-correct tabs are improved.
+
+   Scoped classes that previously lived in index.css (or inline) and were
+   used only here:
+     - .angi-grid-industries  →  .angi-industry-grid
+     - .angi-tab-group/.angi-tab/.angi-tab-active  (scoped, now horizontal-scroll)
+     - .angi-panel-bleed/.angi-panel-content  (self-contained, replaces inline)
+   ========================================================================== */
+
+.angi-industry {
+  position: relative;
+  padding: clamp(3rem, 7vw, 5rem) 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+}
+
+/* ── Tab group (horizontal scroll, never wrap; replaces global .angi-tab-*) ── */
+.angi-industry-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 0.25rem;
+}
+.angi-industry-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.angi-industry-tabs::-webkit-scrollbar-thumb {
+  background: rgba(215, 227, 255, 0.2);
+  border-radius: 999px;
+}
+
+.angi-industry-tab {
+  flex: 0 0 auto;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid rgba(0, 175, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(245, 247, 250, 0.6);
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.angi-industry-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+.angi-industry-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.angi-industry-tab[aria-selected='true'] {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(8, 117, 255, 0.3);
+}
+
+/* ── Active panel (self-contained; replaces inline .angi-panel-bleed) ── */
+.angi-industry-panel {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(215, 227, 255, 0.12);
+  background: #0B1E3D;
+  min-height: 0;
+}
+.angi-industry-panel-background {
+  position: absolute;
+  inset: 0;
+  background-image: var(--industry-background);
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.3);
+}
+.angi-industry-panel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(7, 20, 43, 0.88) 0%, rgba(7, 20, 43, 0.7) 100%);
+}
+.angi-industry-panel-content {
+  position: relative;
+  z-index: 1;
+  padding: 2rem;
+}
+
+/* ── Panel heading (always rendered; replaces compact inline header) ── */
+.angi-industry-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.angi-industry-panel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--primary);
+  background: rgba(8, 117, 255, 0.1);
+}
+.angi-industry-panel-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* ── Service grid (replaces .angi-grid-industries; NO forced square) ──
+   Base (phone): 2 columns. Tablet 640+: 2 columns. Desktop 1024+: 3 columns.
+   Height is content-driven (no aspect-ratio) so longer service names wrap. */
+.angi-industry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 1024px) {
+  .angi-industry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+/* ── Service card (non-interactive) ── */
+.angi-industry-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  padding: 1.25rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(10px);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+.angi-industry-card:hover {
+  background: rgba(8, 117, 255, 0.12);
+  border-color: rgba(8, 117, 255, 0.3);
+  transform: translateY(-2px);
+}
+.angi-industry-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  margin: 0 auto 0.75rem;
+  font-size: 1rem;
+  color: var(--primary);
+  background: rgba(8, 117, 255, 0.1);
+}
+.angi-industry-card-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(245, 247, 250, 0.9);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ── States (loading / empty / error) ── */
+.angi-industry-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: rgba(245, 247, 250, 0.55);
+  font-size: 0.9375rem;
+}
+
+/* ── Phone (<640): tighter panels + slightly smaller tiles ── */
+@media (max-width: 639px) {
+  .angi-industry-panel {
+    border-radius: 0.875rem;
+  }
+  .angi-industry-panel-content {
+    padding: 1.25rem 1rem;
+  }
+  .angi-industry-card {
+    padding: 1rem 0.625rem;
+  }
+  .angi-industry-card-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+  }
+  .angi-industry-card-name {
+    font-size: 0.75rem;
+  }
+}
+
+/* ── Very small phones (<380): single column to stay readable ── */
+@media (max-width: 379px) {
+  .angi-industry-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .angi-industry-card,
+  .angi-industry-tab {
+    transition: none !important;
+  }
+  .angi-industry-card:hover {
+    transform: none !important;
+  }
+}

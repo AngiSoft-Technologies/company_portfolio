@@ -7,70 +7,6 @@ import React, {
 import { Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'Our Pricing Policy',
-
-  description:
-    'Depending on the project and the nature of the service, we use one of the following pricing models:',
-
-  models: [
-    {
-      id:
-        'fixed-price',
-
-      title:
-        'Fixed Price',
-
-      description:
-        'Recommended for projects where the scope, requirements and expected deliverables are clearly defined.',
-    },
-
-    {
-      id:
-        'time-and-material',
-
-      title:
-        'Time and Material',
-
-      description:
-        'Suitable for evolving projects, technical consulting and development work that requires flexibility.',
-    },
-
-    {
-      id:
-        'consumption-based',
-
-      title:
-        'Consumption-Based Pricing',
-
-      description:
-        'Used where charges depend on measurable service usage, completed tasks or consumed resources.',
-    },
-
-    {
-      id:
-        'monthly-subscription',
-
-      title:
-        'Monthly Subscription Fee',
-
-      description:
-        'Used for ongoing support, maintenance and other agreed recurring services.',
-    },
-  ],
-
-  cta: {
-    label:
-      'Estimate Your Project Cost',
-
-    to:
-      '/booking',
-  },
-};
-
 const normalizeModel = (
   model,
   index
@@ -122,11 +58,9 @@ const AboutPricing = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(pricing || {}),
 
       cta: {
-        ...DEFAULT_CONTENT.cta,
         ...(pricing?.cta || {}),
       },
     }),
@@ -138,7 +72,7 @@ const AboutPricing = ({
       Array.isArray(data.models) &&
       data.models.length
         ? data.models
-        : DEFAULT_CONTENT.models;
+        : [];
 
     return source
       .map(normalizeModel)

@@ -1,14 +1,14 @@
 export const BACKGROUND_ASSETS = {
-  heroStudio: '/images/programming-background-with-person-working-with-codes-computer.jpg',
-  developerPanel: '/images/developer-8829735_1280.jpg',
-  webDevelopment: '/images/web-development.jpg',
-  softwareCompany: '/images/Software-Development-Company.jpg',
-  desktopWallpaper: '/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png',
-  landingWallpaper: '/images/Wallpapers/AngiSoft%20Website%20Landing%20!sr%20Design.png',
-  campaignBanner: '/images/Posters%20%26%20Campaigns/AngiSoft%20Campaign%20Banner.png',
-  thankYouPoster: '/images/Posters%20%26%20Campaigns/AngiSoft%20Thank%20You.png',
-  watermark: '/images/Branding/AngiSoft%20Watermsrk.png',
-  carBranding: '/images/Branding/AngiSoft%20Car%20Branding.png',
+  heroStudio: '/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg',
+  developerPanel: '/uploads/public/images/developer-8829735_1280.jpg',
+  webDevelopment: '/uploads/public/images/web-development.jpg',
+  softwareCompany: '/uploads/public/images/Software-Development-Company.jpg',
+  desktopWallpaper: '/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png',
+  landingWallpaper: '/uploads/public/images/Wallpapers/AngiSoft%20Website%20Landing%20!sr%20Design.png',
+  campaignBanner: '/uploads/public/images/Posters%20%26%20Campaigns/AngiSoft%20Campaign%20Banner.png',
+  thankYouPoster: '/uploads/public/images/Posters%20%26%20Campaigns/AngiSoft%20Thank%20You.png',
+  watermark: '/uploads/public/images/Branding/AngiSoft%20Watermsrk.png',
+  carBranding: '/uploads/public/images/Branding/AngiSoft%20Car%20Branding.png',
 };
 
 export const BACKGROUND_VARIANTS = {

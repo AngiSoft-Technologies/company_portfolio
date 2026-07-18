@@ -9,6 +9,43 @@
 
 @import 'tailwindcss';
 
+/* Safety net: prevent any wide element from causing horizontal scroll on
+   phones/tablets. Mirrors the per-section overflow-x-clip used on the About
+   page. Clip (not hidden) so sticky headers keep working. */
+html, body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+/* Background videos must never surface native controls (play/cast/PiP glyphs).
+   Component <video> elements carry class angi-video-bg AND the explicit
+   attributes disablePictureInPicture/disableRemotePlayback/controlsList; this
+   rule is the defensive CSS layer so the glyphs stay hidden in every browser. */
+.angi-video-bg {
+  pointer-events: none;
+  -webkit-media-controls: none !important;
+  -webkit-media-controls-panel: none !important;
+  -webkit-media-controls-play-button: none !important;
+  -webkit-media-controls-start-playback-button: none !important;
+}
+.angi-video-bg::-webkit-media-controls {
+  display: none !important;
+}
+
+/* Shared utility: visually hidden but available to screen readers.
+   Used by counters/headers for accessible final values and dialog labels. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* About Page Specific Styles */
 .angi-section-badge {
   display: inline-block;
@@ -101,11 +138,166 @@
   margin: 0 auto;
 }
 
-.angi-grid-bg {
-  background-image: 
-    linear-gradient(rgba(8, 117, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(8, 117, 255, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* ==========================================================================
+   Responsive grid helpers — homepage sections reuse these so layout collapses
+   to a single column on phones/tablets and expands on large screens.
+   Inline `gridTemplateColumns` is intentionally removed from the components so
+   these class rules win (inline styles always beat class selectors).
+   ========================================================================== */
+
+/* Generic 2-up: hero/contact split, lists. 1 col mobile → 2 col ≥768. */
+.angi-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .angi-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Footer link columns: phone-stacked, 2-col tablet, full 5-col desktop. */
+.angi-grid-footer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 640px) {
+  .angi-grid-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .angi-grid-footer {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3rem;
+  }
+}
+
+/* Footer bottom row (newsletter + legal): stack on mobile, split ≥768. */
+.angi-grid-footer-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .angi-grid-footer-bottom {
+    grid-template-columns: 2fr 3fr;
+    gap: 2rem;
+  }
+}
+
+/* Testimonial card: single column on phone (company rail drops above text). */
+.angi-testimonial-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .angi-testimonial-card {
+    grid-template-columns: 180px 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* ==========================================================================
+   Full-bleed helpers (mobile-first)
+   `.angi-panel-bleed` lets a rounded, bordered panel break out of the container
+   and flatten its corners on phones so its background image runs edge-to-edge.
+   `.angi-img-bleed` makes an inner <img> run full device width on phones.
+   `.angi-rail` is a horizontal scroll-snap row for card lists.
+   These are deliberately outside any media query so the base (phone) look is
+   the responsive one; larger screens keep the panel contained via the section
+   container + the component's own padding.
+   ========================================================================== */
+.angi-img-bleed {
+  width: 100%;
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .angi-img-bleed {
+    width: 100%;
+  }
+}
+
+/* ── Contact section (mobile-first) ── */
+.angi-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Tight 2-up form field rows; collapse to 1 col on phones via .angi-grid-2. */
+.angi-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .angi-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Segmented control (preferred communication). */
+.angi-seg {
+  display: flex;
+  gap: 0.5rem;
+}
+.angi-seg > button {
+  flex: 1;
+  text-transform: capitalize;
+}
+
+.angi-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.angi-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+}
+
+.angi-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+.angi-rail::-webkit-scrollbar { display: none; }
+.angi-rail > * {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+/* Footer brand cell: full width on mobile (sits above stacked link columns),
+   then a normal single cell once the 5-col footer grid kicks in at 1024px. */
+.angi-footer-brand {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1024px) {
+  .angi-footer-brand {
+    grid-column: span 1;
+  }
 }
 
 .angi-btn-primary {
@@ -1652,80 +1844,12 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 0.5rem;
 }
 
-/* ---- Tabs ---- */
-.angi-tab-group {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 3rem;
-}
-
-.angi-tab {
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid rgba(0, 175, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(245, 247, 250, 0.6);
-  transition: all 0.3s ease;
-}
-
-.angi-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
-}
-
-.angi-tab-active {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 16px rgba(8, 117, 255, 0.3);
-}
-
 /* ---- Announcement Bar ---- */
 .angi-announcement {
   background: linear-gradient(135deg, #040d1d 0%, #061324 100%);
   border-bottom: 1px solid rgba(0, 175, 255, 0.1);
   position: relative;
   z-index: 60;
-}
-
-/* ---- Hero ---- */
-.angi-hero {
-  position: relative;
-  min-height: 90vh;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  background: radial-gradient(ellipse at 50% 0%, rgba(8, 117, 255, 0.08) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 100%, rgba(0, 175, 255, 0.05) 0%, transparent 50%),
-              var(--bg-primary);
-}
-
-.angi-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(8, 117, 255, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(0, 175, 255, 0.04) 0%, transparent 40%);
-  pointer-events: none;
-}
-
-/* ---- Grid background ---- */
-.angi-grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(8, 117, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(8, 117, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
 }
 
 /* ---- Animations ---- */
@@ -9151,3 +9275,73 @@ h1, h2, h3, h4, h5, h6 {
       none !important;
   }
 }
+
+/* ==========================================================================
+   Global Header icon + search visibility (scoped)
+   ========================================================================== */
+.angi-header-search-button,
+.angi-header-mobile-menu-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.angi-header-search-icon,
+.angi-header-mobile-menu-icon,
+.angi-header-sidebar-close-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+  min-height: 1rem;
+  flex: 0 0 1rem;
+  color: currentColor;
+  fill: currentColor;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.angi-header-search-overlay {
+  visibility: visible;
+  opacity: 1;
+}
+
+.angi-header-search-field {
+  position: relative;
+  width: min(100%, 640px);
+}
+
+.angi-header-search-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  font-size: 1rem;
+  color: #fff;
+  caret-color: #fff;
+  opacity: 1;
+  visibility: visible;
+}
+
+.angi-header-search-field-icon {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  color: rgba(255, 255, 255, 0.55);
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 480px) {
+  .angi-header-search-input {
+    font-size: 16px;
+  }
+}
+
+

@@ -18,176 +18,6 @@ import {
   FaUsersCog,
 } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'What We Do to Support Project Success',
-
-  introduction: [
-    'At AngiSoft, we apply practical engineering, project coordination and quality controls to support successful software delivery.',
-
-    'Our approach is adapted to the project’s size, requirements, technical risks and business priorities. We focus on keeping responsibilities clear, progress visible and important decisions properly communicated.',
-
-    'These practices help us build reliable solutions while reducing avoidable delays, uncontrolled changes and technical uncertainty.',
-  ],
-
-  practices: [
-    {
-      id:
-        'requirements-engineering',
-
-      title:
-        'Engaged Requirements Engineering',
-
-      description:
-        'We work closely with the client to understand the problem, users, workflows and expected results before major implementation begins.',
-
-      icon:
-        'requirements',
-
-      to:
-        '/services/requirements-analysis',
-    },
-
-    {
-      id:
-        'cost-estimation',
-
-      title:
-        'Accurate and Realistic Cost Estimation',
-
-      description:
-        'We assess the expected scope, technical complexity, integrations and delivery requirements before preparing a quotation.',
-
-      icon:
-        'estimate',
-
-      to:
-        '/booking',
-    },
-
-    {
-      id:
-        'project-scoping',
-
-      title:
-        'Dynamic Yet Controllable Project Scoping',
-
-      description:
-        'We allow requirements to evolve while reviewing how every approved change affects cost, effort and delivery time.',
-
-      icon:
-        'scope',
-
-      to:
-        '/services/project-planning',
-    },
-
-    {
-      id:
-        'project-team',
-
-      title:
-        'Competence-Based Project Team Selection',
-
-      description:
-        'Project responsibilities are assigned according to the skills, experience and technical knowledge required for the work.',
-
-      icon:
-        'team',
-
-      to:
-        '/about/company',
-    },
-
-    {
-      id:
-        'risk-management',
-
-      title:
-        'Comprehensive Risk Management',
-
-      description:
-        'We identify technical, operational and delivery risks early and plan practical actions to reduce their impact.',
-
-      icon:
-        'risk',
-
-      to:
-        '/services/project-planning',
-    },
-
-    {
-      id:
-        'agile-delivery',
-
-      title:
-        'Agile Delivery',
-
-      description:
-        'We divide larger projects into manageable stages so that progress can be reviewed, tested and improved continuously.',
-
-      icon:
-        'delivery',
-
-      to:
-        '/services/software-development',
-    },
-
-    {
-      id:
-        'scope-creep',
-
-      title:
-        'Prevention of Scope Creep',
-
-      description:
-        'New requests are assessed against the agreed scope before implementation to prevent uncontrolled expansion of the project.',
-
-      icon:
-        'control',
-
-      to:
-        '/services/project-planning',
-    },
-
-    {
-      id:
-        'budget-control',
-
-      title:
-        'Budget Control',
-
-      description:
-        'We track approved work against the agreed commercial model and communicate changes that may affect the project budget.',
-
-      icon:
-        'budget',
-
-      to:
-        '/booking',
-    },
-
-    {
-      id:
-        'deadlines',
-
-      title:
-        'Responsible Approach to Deadlines',
-
-      description:
-        'We plan delivery around realistic requirements, dependencies and available capacity instead of making unsupported promises.',
-
-      icon:
-        'deadline',
-
-      to:
-        '/services/software-development',
-    },
-  ],
-};
-
 const ICONS = {
   budget:
     FaSearchDollar,
@@ -283,7 +113,6 @@ const AboutWhyGuarantee = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
     }),
     [content]
@@ -308,7 +137,7 @@ const AboutWhyGuarantee = ({
       ) &&
       data.practices.length
         ? data.practices
-        : DEFAULT_CONTENT.practices;
+        : [];
 
     return source
       .map(normalizePractice)

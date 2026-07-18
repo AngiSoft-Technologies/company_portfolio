@@ -1,453 +1,1413 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
-import { apiGet } from '../js/httpClient';
-import { ScrollReveal, GlassmorphismCard } from '../components/modern';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
-    FaBriefcase, FaUsers, FaRocket, FaGraduationCap, FaHeart, FaGlobe,
-    FaCode, FaPaintBrush, FaChartLine, FaMapMarkerAlt, FaClock,
-    FaMoneyBillWave, FaArrowRight, FaCheckCircle, FaLaptop, FaCoffee,
-    FaHandshake, FaLightbulb, FaPlane, FaBook, FaShieldAlt, FaEnvelope,
-    FaChevronDown, FaChevronUp, FaRegClock, FaRegBuilding
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+import {
+  FaArrowRight,
+  FaBriefcase,
+  FaBuilding,
+  FaCheck,
+  FaChevronDown,
+  FaClock,
+  FaCode,
+  FaEnvelope,
+  FaGraduationCap,
+  FaLaptop,
+  FaLightbulb,
+  FaMapMarkerAlt,
+  FaMoneyBillWave,
+  FaPaintBrush,
+  FaRocket,
+  FaSearch,
+  FaShieldAlt,
+  FaUsers,
 } from 'react-icons/fa';
 
-const fallbackPositions = [
-    {
-        id: 1, title: 'Senior Full-Stack Developer', department: 'Engineering',
-        type: 'Full-Time', location: 'Nairobi, Kenya (Hybrid)',
-        description: 'Join our engineering team to build and scale our SaaS products. You will work with React, Node.js, and PostgreSQL to deliver high-quality features.',
-        requirements: ['4+ years full-stack experience', 'React & Node.js proficiency', 'PostgreSQL or similar RDBMS', 'REST API design & testing'],
-    },
-    {
-        id: 2, title: 'UI/UX Designer', department: 'Design',
-        type: 'Full-Time', location: 'Nairobi, Kenya (Remote OK)',
-        description: 'Create intuitive and visually compelling user experiences for our products and client projects.',
-        requirements: ['3+ years UI/UX experience', 'Figma proficiency', 'Portfolio of shipped products', 'User research & testing experience'],
-    },
-    {
-        id: 3, title: 'Mobile Developer (Flutter)', department: 'Engineering',
-        type: 'Full-Time', location: 'Nairobi, Kenya (Hybrid)',
-        description: 'Build cross-platform mobile applications using Flutter. Work on DukaFlow mobile, KejaLink tenant app, and new product initiatives.',
-        requirements: ['2+ years Flutter experience', 'Dart proficiency', 'REST API integration', 'App Store / Play Store publishing'],
-    },
-    {
-        id: 4, title: 'Data Analyst', department: 'Data & Analytics',
-        type: 'Full-Time', location: 'Nairobi, Kenya (On-site)',
-        description: 'Transform raw data into actionable insights for our clients and internal teams.',
-        requirements: ['2+ years data analysis experience', 'Python / Excel / SQL proficiency', 'Dashboard & visualization tools', 'Strong communication skills'],
-    }
-];
+import { apiGet } from '../js/httpClient';
 
-const benefits = [
-    { icon: FaMoneyBillWave, title: 'Competitive Salary', description: 'Market-competitive compensation reviewed regularly.' },
-    { icon: FaLaptop, title: 'Flexible Work', description: 'Hybrid and remote options. Results, not hours.' },
-    { icon: FaGraduationCap, title: 'Learning & Growth', description: 'Annual training budget and conference attendance.' },
-    { icon: FaShieldAlt, title: 'Health Coverage', description: 'Comprehensive health insurance for you and dependents.' },
-    { icon: FaPlane, title: 'Paid Time Off', description: 'Generous vacation, holidays, and personal days.' },
-    { icon: FaCoffee, title: 'Great Environment', description: 'Modern office with snacks, team events, and culture.' },
-    { icon: FaLightbulb, title: 'Innovation Time', description: 'Dedicated time for personal projects and experimentation.' },
-    { icon: FaHandshake, title: 'Team Culture', description: 'Inclusive, supportive, transparent, and diverse.' },
-];
+import '../css/careers.css';
 
-const culturePillars = [
-    { icon: FaRocket, title: 'Innovation-Driven', description: 'We encourage experimentation and creative problem-solving. Your ideas matter here.' },
-    { icon: FaUsers, title: 'Collaborative Spirit', description: 'Work alongside talented engineers, designers, and strategists who support each other.' },
-    { icon: FaGlobe, title: 'Impact-Focused', description: 'Build products that make a real difference for businesses and communities across Africa.' },
-    { icon: FaBook, title: 'Always Learning', description: 'We invest in your growth with mentorship, training, and new challenges.' },
-];
-
-const departmentIcons = {
-    'Engineering': FaCode,
-    'Design': FaPaintBrush,
-    'Data': FaChartLine,
-    'default': FaBriefcase,
+// Icons are presentation-only (the DB holds text). Map each content `id`
+// to its Fa icon so the culture/benefits sections stay visually consistent
+// no matter what rows come back from the `careers_content` Setting.
+const CULTURE_ICONS = {
+  'practical-innovation': FaLightbulb,
+  'shared-responsibility': FaUsers,
+  'continuous-growth': FaGraduationCap,
+  'meaningful-impact': FaRocket,
 };
 
-const getDeptIcon = (dept) => {
-    if (!dept) return departmentIcons.default;
-    for (const [key, icon] of Object.entries(departmentIcons)) {
-        if (dept.toLowerCase().includes(key.toLowerCase())) return icon;
-    }
-    return departmentIcons.default;
+const BENEFIT_ICONS = {
+  flexibility: FaLaptop,
+  learning: FaGraduationCap,
+  compensation: FaMoneyBillWave,
+  health: FaShieldAlt,
+  ownership: FaBriefcase,
+  innovation: FaLightbulb,
+};
+
+const ICON_FALLBACK = FaRocket;
+
+const cultureIcon = (id) =>
+  CULTURE_ICONS[id] || ICON_FALLBACK;
+
+const benefitIcon = (id) =>
+  BENEFIT_ICONS[id] || FaBriefcase;
+
+const DEPARTMENT_ICONS = {
+  engineering: FaCode,
+  design: FaPaintBrush,
+  product: FaRocket,
+  operations: FaBuilding,
+  default: FaBriefcase,
 };
 
 const Careers = () => {
-    const navigate = useNavigate();
-    const { colors } = useTheme();
-    const [positions, setPositions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [expandedJob, setExpandedJob] = useState(null);
-    const [activeDept, setActiveDept] = useState('All');
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        apiGet('/careers')
-            .then((data) => {
-                if (Array.isArray(data) && data.length > 0) {
-                    setPositions(data);
-                } else {
-                    setPositions(fallbackPositions);
+  const [
+    positions,
+    setPositions,
+  ] = useState([]);
+
+  const [
+    careersContent,
+    setCareersContent,
+  ] = useState({
+    cultureValues: [],
+    benefits: [],
+  });
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  const [searchTerm, setSearchTerm] =
+    useState('');
+
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState('all');
+
+  const [
+    selectedType,
+    setSelectedType,
+  ] = useState('all');
+
+  const [
+    selectedWorkplace,
+    setSelectedWorkplace,
+  ] = useState('all');
+
+  const [
+    expandedJob,
+    setExpandedJob,
+  ] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchCareers = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response =
+          await apiGet('/careers');
+
+        if (!mounted) {
+          return;
+        }
+
+        const records =
+          Array.isArray(response)
+            ? response
+            : response?.data ||
+              response?.careers ||
+              response?.positions ||
+              [];
+
+        setPositions(
+          records
+            .filter(Boolean)
+            .map(normalizePosition)
+            .filter(
+              (position) =>
+                position.status ===
+                  'PUBLISHED' &&
+                position.isOpen
+            )
+            .sort(sortPositions)
+        );
+      } catch (requestError) {
+        if (!mounted) {
+          return;
+        }
+
+        setError(
+          requestError?.message ||
+            'We could not load the current vacancies.'
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCareers();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchCareersContent = async () => {
+      try {
+        const content = await apiGet(
+          '/site/careers_content'
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        const cultureValues =
+          Array.isArray(
+            content?.cultureValues
+          )
+            ? content.cultureValues
+            : [];
+
+        const benefits =
+          Array.isArray(content?.benefits)
+            ? content.benefits
+            : [];
+
+        setCareersContent({
+          cultureValues,
+          benefits,
+        });
+      } catch {
+        // Culture/benefits content is optional; the sections
+        // simply stay empty if the Setting is missing.
+      }
+    };
+
+    fetchCareersContent();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const departments = useMemo(
+    () => [
+      'all',
+      ...Array.from(
+        new Set(
+          positions
+            .map(
+              (position) =>
+                position.department
+            )
+            .filter(Boolean)
+        )
+      ).sort((first, second) =>
+        first.localeCompare(second)
+      ),
+    ],
+    [positions]
+  );
+
+  const employmentTypes = useMemo(
+    () => [
+      'all',
+      ...Array.from(
+        new Set(
+          positions
+            .map(
+              (position) =>
+                position.employmentType
+            )
+            .filter(Boolean)
+        )
+      ).sort((first, second) =>
+        first.localeCompare(second)
+      ),
+    ],
+    [positions]
+  );
+
+  const workplaceTypes = useMemo(
+    () => [
+      'all',
+      ...Array.from(
+        new Set(
+          positions
+            .map(
+              (position) =>
+                position.workplaceType
+            )
+            .filter(Boolean)
+        )
+      ).sort((first, second) =>
+        first.localeCompare(second)
+      ),
+    ],
+    [positions]
+  );
+
+  const filteredPositions = useMemo(
+    () => {
+      const query =
+        searchTerm
+          .trim()
+          .toLowerCase();
+
+      return positions.filter(
+        (position) => {
+          const matchesDepartment =
+            selectedDepartment ===
+              'all' ||
+            position.department ===
+              selectedDepartment;
+
+          const matchesType =
+            selectedType === 'all' ||
+            position.employmentType ===
+              selectedType;
+
+          const matchesWorkplace =
+            selectedWorkplace ===
+              'all' ||
+            position.workplaceType ===
+              selectedWorkplace;
+
+          if (
+            !matchesDepartment ||
+            !matchesType ||
+            !matchesWorkplace
+          ) {
+            return false;
+          }
+
+          if (!query) {
+            return true;
+          }
+
+          const searchableText = [
+            position.title,
+            position.department,
+            position.location,
+            position.employmentType,
+            position.workplaceType,
+            position.summary,
+            position.description,
+            ...position.requirements,
+            ...position.technologies,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+          return searchableText.includes(
+            query
+          );
+        }
+      );
+    },
+    [
+      positions,
+      searchTerm,
+      selectedDepartment,
+      selectedType,
+      selectedWorkplace,
+    ]
+  );
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedDepartment('all');
+    setSelectedType('all');
+    setSelectedWorkplace('all');
+  };
+
+  return (
+    <main className="careers-page">
+      <section className="careers-hero">
+        <div className="container">
+          <div className="careers-hero-layout">
+            <div className="careers-hero-copy">
+              <p className="careers-eyebrow">
+                Careers at AngiSoft
+              </p>
+
+              <h1 className="careers-hero-title">
+                Build What Matters
+                With Us
+              </h1>
+
+              <p className="careers-hero-description">
+                Join a growing African
+                technology company
+                building practical
+                software, digital
+                products and systems for
+                businesses,
+                institutions and
+                communities.
+              </p>
+
+              <a
+                href="#open-positions"
+                className="careers-hero-action"
+              >
+                Explore Open Roles
+
+                <FaArrowRight />
+              </a>
+            </div>
+
+            <div className="careers-hero-summary">
+              <CareerStatistic
+                value={
+                  loading
+                    ? '—'
+                    : positions.length
                 }
-            })
-            .catch(() => setPositions(fallbackPositions))
-            .finally(() => setLoading(false));
-    }, []);
+                label="Open roles"
+              />
 
-    const displayPositions = positions.length > 0 ? positions : fallbackPositions;
-    const departments = ['All', ...new Set(displayPositions.map(p => p.department).filter(Boolean))];
-    const filteredPositions = activeDept === 'All'
-        ? displayPositions
-        : displayPositions.filter(p => p.department === activeDept);
+              <CareerStatistic
+                value={
+                  loading
+                    ? '—'
+                    : Math.max(
+                        departments.length -
+                          1,
+                        0
+                      )
+                }
+                label="Departments"
+              />
 
-    return (
-        <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
+              <CareerStatistic
+                value="Nairobi"
+                label="Head office"
+              />
 
-            {/* ── Cinematic Hero ── */}
-            <section className="relative py-32 md:py-40 overflow-hidden">
-                {/* Ambient glow orbs */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute w-[600px] h-[600px] rounded-full blur-[160px] opacity-[0.07]"
-                        style={{ background: colors.primary, top: '-20%', left: '-10%' }} />
-                    <div className="absolute w-[500px] h-[500px] rounded-full blur-[140px] opacity-[0.05]"
-                        style={{ background: colors.secondary, bottom: '-15%', right: '-5%' }} />
-                </div>
-                {/* Grid texture */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{
-                        backgroundImage: `linear-gradient(${colors.primary} 1px, transparent 1px), linear-gradient(90deg, ${colors.primary} 1px, transparent 1px)`,
-                        backgroundSize: '60px 60px',
-                    }} />
-
-                <div className="relative z-10 max-w-6xl mx-auto px-4">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-12 h-[2px]" style={{ background: `linear-gradient(90deg, ${colors.primary}, transparent)` }} />
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em]"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                Join the team
-                            </span>
-                        </div>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={100}>
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] mb-8"
-                            style={{ fontFamily: 'Sora, sans-serif' }}>
-                            <span style={{ color: '#fff' }}>Build What </span>
-                            <span style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
-                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                            }}>Matters</span>
-                            <br />
-                            <span style={{ color: 'rgba(255,255,255,0.6)' }}>With Us</span>
-                        </h1>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={200}>
-                        <p className="text-lg md:text-xl max-w-2xl mb-12"
-                            style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'DM Sans, sans-serif', lineHeight: 1.7 }}>
-                            Join a team of passionate technologists building innovative solutions that empower businesses across Africa. We're looking for talented people who share our vision.
-                        </p>
-                    </ScrollReveal>
-
-                    <ScrollReveal animation="fadeUp" delay={300}>
-                        <div className="flex flex-wrap gap-6">
-                            {[
-                                { value: displayPositions.length, label: 'Open Roles' },
-                                { value: departments.length - 1, label: 'Departments' },
-                                { value: 'Nairobi', label: 'HQ Location' },
-                                { value: '2024', label: 'Founded' },
-                            ].map((stat, idx) => (
-                                <div key={idx} className="px-6 py-4 rounded-2xl"
-                                    style={{
-                                        background: 'rgba(255,255,255,0.04)',
-                                        border: '1px solid rgba(255,255,255,0.06)',
-                                        backdropFilter: 'blur(12px)',
-                                    }}>
-                                    <div className="text-2xl md:text-3xl font-bold mb-1"
-                                        style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                        {stat.value}
-                                    </div>
-                                    <div className="text-xs uppercase tracking-wider"
-                                        style={{ color: 'rgba(255,255,255,0.4)' }}>
-                                        {stat.label}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollReveal>
-                </div>
-            </section>
-
-            {/* ── Culture Pillars ── */}
-            <section className="py-24 px-4 relative">
-                <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.primary}06, transparent)` }} />
-                <div className="relative z-10 max-w-6xl mx-auto">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="mb-16">
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                Our Culture
-                            </span>
-                            <h2 className="text-4xl md:text-5xl font-bold"
-                                style={{ fontFamily: 'Sora, sans-serif' }}>
-                                Why You'll Love{' '}
-                                <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                }}>It Here</span>
-                            </h2>
-                        </div>
-                    </ScrollReveal>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {culturePillars.map((item, idx) => (
-                            <ScrollReveal key={idx} animation="fadeUp" delay={idx * 100}>
-                                <div className="p-8 rounded-2xl h-full transition-all duration-500 hover:-translate-y-2 group"
-                                    style={{
-                                        background: 'rgba(255,255,255,0.03)',
-                                        border: '1px solid rgba(255,255,255,0.06)',
-                                    }}>
-                                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110"
-                                        style={{ background: `linear-gradient(135deg, ${colors.primary}15, ${colors.secondary}15)` }}>
-                                        <item.icon className="text-xl" style={{ color: colors.primary }} />
-                                    </div>
-                                    <h3 className="text-lg font-bold mb-3"
-                                        style={{ fontFamily: 'Sora, sans-serif' }}>{item.title}</h3>
-                                    <p className="text-sm leading-relaxed"
-                                        style={{ color: 'rgba(255,255,255,0.5)' }}>{item.description}</p>
-                                </div>
-                            </ScrollReveal>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── Open Positions ── */}
-            <section className="py-24 px-4">
-                <div className="max-w-5xl mx-auto">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="mb-12">
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                Open Roles
-                            </span>
-                            <h2 className="text-4xl md:text-5xl font-bold mb-8"
-                                style={{ fontFamily: 'Sora, sans-serif' }}>
-                                Current{' '}
-                                <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                }}>Openings</span>
-                            </h2>
-
-                            {/* Department filter tabs */}
-                            <div className="flex flex-wrap gap-2">
-                                {departments.map((dept) => (
-                                    <button key={dept}
-                                        onClick={() => setActiveDept(dept)}
-                                        className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300"
-                                        style={{
-                                            background: activeDept === dept
-                                                ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
-                                                : 'rgba(255,255,255,0.05)',
-                                            color: activeDept === dept ? '#fff' : 'rgba(255,255,255,0.5)',
-                                            border: `1px solid ${activeDept === dept ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
-                                        }}>
-                                        {dept}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </ScrollReveal>
-
-                    {loading ? (
-                        <div className="flex justify-center py-20">
-                            <div className="w-12 h-12 border-2 rounded-full animate-spin"
-                                style={{ borderColor: `${colors.primary}20`, borderTopColor: colors.primary }} />
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {filteredPositions.map((position, idx) => {
-                                const DeptIcon = getDeptIcon(position.department);
-                                const isExpanded = expandedJob === (position.id || idx);
-                                return (
-                                    <ScrollReveal key={position.id || idx} animation="fadeUp" delay={idx * 60}>
-                                        <div className="rounded-2xl overflow-hidden transition-all duration-500"
-                                            style={{
-                                                background: isExpanded ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
-                                                border: `1px solid ${isExpanded ? `${colors.primary}30` : 'rgba(255,255,255,0.06)'}`,
-                                            }}>
-                                            {/* Card header — always visible */}
-                                            <button
-                                                onClick={() => setExpandedJob(isExpanded ? null : (position.id || idx))}
-                                                className="w-full text-left p-6 md:p-8 flex items-center gap-6 group">
-                                                <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                                                    style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
-                                                    <DeptIcon className="text-lg text-white" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="text-lg md:text-xl font-bold mb-1 transition-colors duration-300 group-hover:text-[var(--primary)]"
-                                                        style={{ fontFamily: 'Sora, sans-serif' }}>
-                                                        {position.title}
-                                                    </h3>
-                                                    <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                                        <span className="flex items-center gap-1.5">
-                                                            <FaRegBuilding className="text-xs" style={{ color: colors.primary }} />
-                                                            {position.department}
-                                                        </span>
-                                                        <span className="flex items-center gap-1.5">
-                                                            <FaMapMarkerAlt className="text-xs" style={{ color: colors.primary }} />
-                                                            {position.location}
-                                                        </span>
-                                                        <span className="flex items-center gap-1.5">
-                                                            <FaRegClock className="text-xs" style={{ color: colors.primary }} />
-                                                            {position.type || 'Full-Time'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
-                                                    style={{ background: isExpanded ? `${colors.primary}15` : 'rgba(255,255,255,0.05)' }}>
-                                                    {isExpanded ? <FaChevronUp style={{ color: colors.primary }} /> : <FaChevronDown style={{ color: 'rgba(255,255,255,0.3)' }} />}
-                                                </div>
-                                            </button>
-
-                                            {/* Expandable detail */}
-                                            <div className="overflow-hidden transition-all duration-500"
-                                                style={{ maxHeight: isExpanded ? '600px' : '0', opacity: isExpanded ? 1 : 0 }}>
-                                                <div className="px-6 md:px-8 pb-8 pt-0">
-                                                    <div className="border-t pt-6" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                                                        <p className="mb-6 leading-relaxed"
-                                                            style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'DM Sans, sans-serif' }}>
-                                                            {position.description}
-                                                        </p>
-
-                                                        {position.requirements && position.requirements.length > 0 && (
-                                                            <div className="mb-6">
-                                                                <h4 className="text-sm font-semibold uppercase tracking-wider mb-3"
-                                                                    style={{ color: colors.primary }}>Requirements</h4>
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                                    {position.requirements.map((req, rIdx) => (
-                                                                        <div key={rIdx} className="flex items-start gap-2">
-                                                                            <FaCheckCircle className="text-xs mt-1 flex-shrink-0" style={{ color: colors.success }} />
-                                                                            <span className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{req}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {position.salaryRange && (
-                                                            <div className="mb-6 flex items-center gap-2">
-                                                                <FaMoneyBillWave style={{ color: colors.primary }} />
-                                                                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                                                                    {position.salaryRange}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        <a href={`mailto:careers@angisoft.co.ke?subject=Application: ${position.title}`}
-                                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                                                            style={{
-                                                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                                                color: '#fff',
-                                                            }}>
-                                                            Apply Now <FaArrowRight />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </ScrollReveal>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            {/* ── Benefits ── */}
-            <section className="py-24 px-4 relative">
-                <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `linear-gradient(180deg, transparent, ${colors.secondary}05, transparent)` }} />
-                <div className="relative z-10 max-w-6xl mx-auto">
-                    <ScrollReveal animation="fadeUp">
-                        <div className="mb-16">
-                            <span className="text-sm font-semibold uppercase tracking-[0.2em] mb-4 block"
-                                style={{ color: colors.primary, fontFamily: 'Sora, sans-serif' }}>
-                                Benefits & Perks
-                            </span>
-                            <h2 className="text-4xl md:text-5xl font-bold"
-                                style={{ fontFamily: 'Sora, sans-serif' }}>
-                                What We{' '}
-                                <span style={{
-                                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                }}>Offer</span>
-                            </h2>
-                        </div>
-                    </ScrollReveal>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {benefits.map((b, idx) => (
-                            <ScrollReveal key={idx} animation="fadeUp" delay={idx * 60}>
-                                <div className="p-6 rounded-2xl h-full transition-all duration-500 hover:-translate-y-1 group"
-                                    style={{
-                                        background: 'rgba(255,255,255,0.02)',
-                                        border: '1px solid rgba(255,255,255,0.05)',
-                                    }}>
-                                    <b.icon className="text-2xl mb-4 transition-transform duration-300 group-hover:scale-110"
-                                        style={{ color: colors.primary }} />
-                                    <h3 className="text-base font-bold mb-2"
-                                        style={{ fontFamily: 'Sora, sans-serif' }}>{b.title}</h3>
-                                    <p className="text-sm leading-relaxed"
-                                        style={{ color: 'rgba(255,255,255,0.45)' }}>{b.description}</p>
-                                </div>
-                            </ScrollReveal>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── CTA ── */}
-            <section className="py-24 px-4">
-                <div className="max-w-4xl mx-auto">
-                    <ScrollReveal animation="scaleUp">
-                        <div className="relative rounded-3xl overflow-hidden p-12 md:p-16 text-center"
-                            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})` }}>
-                            {/* Dot pattern */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                                style={{
-                                    backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                                    backgroundSize: '24px 24px',
-                                }} />
-                            <div className="relative z-10">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4"
-                                    style={{ fontFamily: 'Sora, sans-serif' }}>
-                                    Don't See Your Role?
-                                </h2>
-                                <p className="text-lg text-white/70 mb-8 max-w-xl mx-auto"
-                                    style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                                    We're always looking for talented individuals. Send your resume and tell us how you can contribute.
-                                </p>
-                                <div className="flex flex-wrap justify-center gap-4">
-                                    <a href="mailto:careers@angisoft.co.ke"
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
-                                        style={{ backgroundColor: '#fff', color: colors.primaryDark }}>
-                                        <FaEnvelope /> Send Your Resume
-                                    </a>
-                                    <button onClick={() => navigate('/#contact-me')}
-                                        className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all duration-300 hover:scale-105"
-                                        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)' }}>
-                                        <FaRocket /> Contact Us
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </ScrollReveal>
-                </div>
-            </section>
+              <CareerStatistic
+                value="2024"
+                label="Founded"
+              />
+            </div>
+          </div>
         </div>
+      </section>
+
+      <section className="careers-culture">
+        <div className="container">
+          <SectionHeading
+            eyebrow="How We Work"
+            title="A Culture Built Around Contribution"
+            description="AngiSoft is still growing. That means every team member has an opportunity to influence how products are designed, developed and delivered."
+          />
+
+          <div className="careers-culture-list">
+            {careersContent.cultureValues.map(
+              (item) => (
+                <CultureValue
+                  key={item.id}
+                  item={item}
+                />
+              )
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="open-positions"
+        className="careers-openings"
+      >
+        <div className="container">
+          <SectionHeading
+            eyebrow="Current Opportunities"
+            title="Open Positions"
+            description="Browse the currently published vacancies and open a role to review its responsibilities, requirements and application details."
+          />
+
+          <div className="careers-filter-panel">
+            <label className="careers-search">
+              <FaSearch />
+
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) =>
+                  setSearchTerm(
+                    event.target.value
+                  )
+                }
+                placeholder="Search roles, departments, technologies or locations"
+                aria-label="Search career opportunities"
+              />
+            </label>
+
+            <CareerSelect
+              label="Department"
+              value={
+                selectedDepartment
+              }
+              onChange={
+                setSelectedDepartment
+              }
+              options={departments}
+            />
+
+            <CareerSelect
+              label="Employment"
+              value={selectedType}
+              onChange={
+                setSelectedType
+              }
+              options={
+                employmentTypes
+              }
+            />
+
+            <CareerSelect
+              label="Workplace"
+              value={
+                selectedWorkplace
+              }
+              onChange={
+                setSelectedWorkplace
+              }
+              options={
+                workplaceTypes
+              }
+            />
+          </div>
+
+          <div className="careers-results-header">
+            <p>
+              {loading
+                ? 'Loading vacancies…'
+                : `${filteredPositions.length} ${
+                    filteredPositions.length ===
+                    1
+                      ? 'position'
+                      : 'positions'
+                  } found`}
+            </p>
+
+            {(searchTerm ||
+              selectedDepartment !==
+                'all' ||
+              selectedType !== 'all' ||
+              selectedWorkplace !==
+                'all') && (
+              <button
+                type="button"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {loading && (
+            <CareersLoading />
+          )}
+
+          {!loading && error && (
+            <CareersMessage
+              icon={FaBriefcase}
+              title="Vacancies Could Not Be Loaded"
+              description={error}
+            />
+          )}
+
+          {!loading &&
+            !error &&
+            positions.length ===
+              0 && (
+              <CareersMessage
+                icon={FaBriefcase}
+                title="No Published Vacancies"
+                description="AngiSoft does not currently have any publicly advertised positions. You may still submit a general application below."
+              />
+            )}
+
+          {!loading &&
+            !error &&
+            positions.length > 0 &&
+            filteredPositions.length ===
+              0 && (
+              <CareersMessage
+                icon={FaSearch}
+                title="No Matching Positions"
+                description="No vacancy matches the current search and filter settings."
+              />
+            )}
+
+          {!loading &&
+            !error &&
+            filteredPositions.length >
+              0 && (
+              <div className="careers-job-list">
+                {filteredPositions.map(
+                  (position) => (
+                    <JobAccordion
+                      key={position.id}
+                      position={
+                        position
+                      }
+                      expanded={
+                        expandedJob ===
+                        position.id
+                      }
+                      onToggle={() =>
+                        setExpandedJob(
+                          expandedJob ===
+                            position.id
+                            ? null
+                            : position.id
+                        )
+                      }
+                    />
+                  )
+                )}
+              </div>
+            )}
+        </div>
+      </section>
+
+      <section className="careers-benefits">
+        <div className="container careers-benefits-layout">
+          <div className="careers-benefits-intro">
+            <SectionHeading
+              eyebrow="Benefits and Support"
+              title="What Team Members Can Expect"
+              description="Our employee benefits will continue developing as AngiSoft grows. The focus is on creating a fair, productive and supportive working environment."
+            />
+          </div>
+
+          <div className="careers-benefit-list">
+            {careersContent.benefits.map(
+              (benefit) => (
+                <BenefitItem
+                  key={benefit.id}
+                  benefit={
+                    benefit
+                  }
+                />
+              )
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="careers-general-application">
+        <div className="container">
+          <div className="careers-general-shell">
+            <div>
+              <p className="careers-eyebrow">
+                General Application
+              </p>
+
+              <h2>
+                Do Not See the Right
+                Role?
+              </h2>
+
+              <p>
+                Send your resume and a
+                short explanation of
+                what you can contribute.
+                We will keep suitable
+                profiles for future
+                opportunities.
+              </p>
+            </div>
+
+            <div className="careers-general-actions">
+              <a
+                href="mailto:careers@angisoft.co.ke?subject=General Career Application"
+                className="careers-general-primary"
+              >
+                <FaEnvelope />
+
+                Send Your Resume
+              </a>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate('/contact')
+                }
+                className="careers-general-secondary"
+              >
+                Contact AngiSoft
+
+                <FaArrowRight />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+};
+
+const CareerStatistic = ({
+  value,
+  label,
+}) => (
+  <div className="careers-statistic">
+    <strong>
+      {value}
+    </strong>
+
+    <span>
+      {label}
+    </span>
+  </div>
+);
+
+const SectionHeading = ({
+  eyebrow,
+  title,
+  description,
+}) => (
+  <header className="careers-section-heading">
+    {eyebrow && (
+      <p className="careers-eyebrow">
+        {eyebrow}
+      </p>
+    )}
+
+    <h2>
+      {title}
+    </h2>
+
+    {description && (
+      <p className="careers-section-description">
+        {description}
+      </p>
+    )}
+  </header>
+);
+
+const CultureValue = ({
+  item,
+}) => {
+  const Icon = cultureIcon(item.id);
+
+  return (
+    <article className="careers-culture-item">
+      <span className="careers-culture-number">
+        {item.number}
+      </span>
+
+      <div className="careers-culture-icon">
+        <Icon />
+      </div>
+
+      <div>
+        <h3>
+          {item.title}
+        </h3>
+
+        <p>
+          {item.description}
+        </p>
+      </div>
+    </article>
+  );
+};
+
+const CareerSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+}) => (
+  <label className="careers-select">
+    <span>
+      {label}
+    </span>
+
+    <select
+      value={value}
+      onChange={(event) =>
+        onChange(event.target.value)
+      }
+    >
+      {options.map((option) => (
+        <option
+          key={option}
+          value={option}
+        >
+          {option === 'all'
+            ? `All ${label}s`
+            : option}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+
+const JobAccordion = ({
+  position,
+  expanded,
+  onToggle,
+}) => {
+  const DepartmentIcon =
+    getDepartmentIcon(
+      position.department
     );
+
+  const salary =
+    formatSalary(position);
+
+  return (
+    <article
+      className={`careers-job ${
+        expanded
+          ? 'is-expanded'
+          : ''
+      }`}
+    >
+      <button
+        type="button"
+        className="careers-job-trigger"
+        onClick={onToggle}
+        aria-expanded={expanded}
+      >
+        <div className="careers-job-icon">
+          <DepartmentIcon />
+        </div>
+
+        <div className="careers-job-heading">
+          <div className="careers-job-title-row">
+            <h3>
+              {position.title}
+            </h3>
+
+            {position.featured && (
+              <span className="careers-job-featured">
+                Featured
+              </span>
+            )}
+          </div>
+
+          <div className="careers-job-meta">
+            {position.department && (
+              <span>
+                <FaBuilding />
+
+                {
+                  position.department
+                }
+              </span>
+            )}
+
+            {position.location && (
+              <span>
+                <FaMapMarkerAlt />
+
+                {position.location}
+              </span>
+            )}
+
+            {position.employmentType && (
+              <span>
+                <FaClock />
+
+                {
+                  position.employmentType
+                }
+              </span>
+            )}
+
+            {position.workplaceType && (
+              <span>
+                <FaLaptop />
+
+                {
+                  position.workplaceType
+                }
+              </span>
+            )}
+          </div>
+        </div>
+
+        <span className="careers-job-toggle">
+          <FaChevronDown />
+        </span>
+      </button>
+
+      <div className="careers-job-panel">
+        <div className="careers-job-panel-inner">
+          {position.summary && (
+            <p className="careers-job-summary">
+              {position.summary}
+            </p>
+          )}
+
+          {position.description && (
+            <div className="careers-job-description">
+              {
+                position.description
+              }
+            </div>
+          )}
+
+          <div className="careers-job-detail-grid">
+            {position.responsibilities
+              .length > 0 && (
+              <JobList
+                title="Responsibilities"
+                items={
+                  position.responsibilities
+                }
+              />
+            )}
+
+            {position.requirements
+              .length > 0 && (
+              <JobList
+                title="Requirements"
+                items={
+                  position.requirements
+                }
+              />
+            )}
+
+            {position.preferredQualifications
+              .length > 0 && (
+              <JobList
+                title="Preferred Qualifications"
+                items={
+                  position.preferredQualifications
+                }
+              />
+            )}
+
+            {position.technologies
+              .length > 0 && (
+              <div className="careers-job-technologies">
+                <h4>
+                  Technologies and
+                  Tools
+                </h4>
+
+                <div>
+                  {position.technologies.map(
+                    (
+                      technology
+                    ) => (
+                      <span
+                        key={
+                          technology
+                        }
+                      >
+                        {
+                          technology
+                        }
+                      </span>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="careers-job-footer">
+            <div className="careers-job-facts">
+              {salary && (
+                <span>
+                  <FaMoneyBillWave />
+
+                  {salary}
+                </span>
+              )}
+
+              {position.experienceLevel && (
+                <span>
+                  <FaBriefcase />
+
+                  {
+                    position.experienceLevel
+                  }
+                </span>
+              )}
+
+              {position.applicationDeadline && (
+                <span>
+                  <FaClock />
+
+                  Apply by{' '}
+                  {formatDate(
+                    position.applicationDeadline
+                  )}
+                </span>
+              )}
+            </div>
+
+            <div className="careers-job-actions">
+              {position.slug && (
+                <Link
+                  to={`/careers/${position.slug}`}
+                  className="careers-job-secondary-action"
+                >
+                  View Full Details
+                </Link>
+              )}
+
+              <Link
+                to={
+                  position.slug
+                    ? `/careers/${position.slug}/apply`
+                    : `/careers/${position.id}/apply`
+                }
+                className="careers-job-primary-action"
+              >
+                Apply for This Role
+
+                <FaArrowRight />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const JobList = ({
+  title,
+  items,
+}) => (
+  <div className="careers-job-list-block">
+    <h4>
+      {title}
+    </h4>
+
+    <ul>
+      {items.map((item) => (
+        <li key={item}>
+          <FaCheck />
+
+          <span>
+            {item}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const BenefitItem = ({
+  benefit,
+}) => {
+  const Icon = benefitIcon(benefit.id);
+
+  return (
+    <article className="careers-benefit-item">
+      <div className="careers-benefit-icon">
+        <Icon />
+      </div>
+
+      <div>
+        <h3>
+          {benefit.title}
+        </h3>
+
+        <p>
+          {benefit.description}
+        </p>
+      </div>
+    </article>
+  );
+};
+
+const CareersLoading = () => (
+  <div className="careers-status">
+    <div className="careers-spinner" />
+
+    <p>
+      Loading published vacancies…
+    </p>
+  </div>
+);
+
+const CareersMessage = ({
+  icon: Icon,
+  title,
+  description,
+}) => (
+  <div className="careers-status">
+    <Icon />
+
+    <h3>
+      {title}
+    </h3>
+
+    <p>
+      {description}
+    </p>
+  </div>
+);
+
+const normalizePosition = (
+  position,
+  index
+) => {
+  const status =
+    String(
+      position?.status ||
+        'PUBLISHED'
+    ).toUpperCase();
+
+  const closedStatuses = [
+    'CLOSED',
+    'ARCHIVED',
+    'DRAFT',
+    'FILLED',
+    'CANCELLED',
+  ];
+
+  const deadline =
+    position?.applicationDeadline ||
+    position?.deadline ||
+    '';
+
+  const deadlinePassed =
+    deadline &&
+    !Number.isNaN(
+      new Date(deadline).getTime()
+    )
+      ? new Date(deadline) <
+        new Date()
+      : false;
+
+  return {
+    ...position,
+
+    id:
+      position?.id ||
+      position?.slug ||
+      `career-${index}`,
+
+    slug:
+      position?.slug ||
+      '',
+
+    title:
+      position?.title ||
+      position?.name ||
+      'Career Opportunity',
+
+    department:
+      position?.department ||
+      position?.team ||
+      'Other',
+
+    employmentType:
+      formatLabel(
+        position?.employmentType ||
+          position?.type ||
+          'Full-Time'
+      ),
+
+    workplaceType:
+      formatLabel(
+        position?.workplaceType ||
+          position?.workMode ||
+          position?.remoteType ||
+          ''
+      ),
+
+    location:
+      position?.location ||
+      '',
+
+    summary:
+      position?.summary ||
+      position?.shortDescription ||
+      '',
+
+    description:
+      position?.description ||
+      '',
+
+    responsibilities:
+      normalizeStringArray(
+        position?.responsibilities
+      ),
+
+    requirements:
+      normalizeStringArray(
+        position?.requirements
+      ),
+
+    preferredQualifications:
+      normalizeStringArray(
+        position?.preferredQualifications ||
+          position?.preferredRequirements
+      ),
+
+    technologies:
+      normalizeStringArray(
+        position?.technologies ||
+          position?.techStack
+      ),
+
+    salaryMin:
+      toNumber(
+        position?.salaryMin
+      ),
+
+    salaryMax:
+      toNumber(
+        position?.salaryMax
+      ),
+
+    salaryCurrency:
+      position?.salaryCurrency ||
+      'KES',
+
+    salaryVisibility:
+      position?.salaryVisibility !==
+        false,
+
+    experienceLevel:
+      position?.experienceLevel ||
+      '',
+
+    applicationDeadline:
+      deadline,
+
+    openings:
+      toNumber(
+        position?.openings
+      ),
+
+    featured:
+      position?.featured === true ||
+      position?.isFeatured ===
+        true,
+
+    publishedAt:
+      position?.publishedAt ||
+      position?.createdAt ||
+      '',
+
+    status,
+
+    isOpen:
+      !closedStatuses.includes(
+        status
+      ) &&
+      position?.isOpen !== false &&
+      !deadlinePassed,
+  };
+};
+
+const normalizeStringArray = (
+  value
+) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        typeof item === 'string'
+          ? item.trim()
+          : item?.name ||
+            item?.label ||
+            item?.title ||
+            ''
+      )
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) =>
+        item
+          .replace(/^[-•]\s*/, '')
+          .trim()
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const sortPositions = (
+  first,
+  second
+) => {
+  if (
+    first.featured !==
+    second.featured
+  ) {
+    return first.featured
+      ? -1
+      : 1;
+  }
+
+  const firstDate =
+    new Date(
+      first.publishedAt || 0
+    ).getTime();
+
+  const secondDate =
+    new Date(
+      second.publishedAt || 0
+    ).getTime();
+
+  return secondDate - firstDate;
+};
+
+const getDepartmentIcon = (
+  department
+) => {
+  const normalized =
+    String(
+      department || ''
+    ).toLowerCase();
+
+  const key =
+    Object.keys(
+      DEPARTMENT_ICONS
+    ).find(
+      (departmentKey) =>
+        departmentKey !==
+          'default' &&
+        normalized.includes(
+          departmentKey
+        )
+    );
+
+  return (
+    DEPARTMENT_ICONS[key] ||
+    DEPARTMENT_ICONS.default
+  );
+};
+
+const formatSalary = (
+  position
+) => {
+  if (
+    position.salaryVisibility ===
+      false ||
+    (
+      !position.salaryMin &&
+      !position.salaryMax
+    )
+  ) {
+    return '';
+  }
+
+  const formatter =
+    new Intl.NumberFormat(
+      'en-KE',
+      {
+        maximumFractionDigits: 0,
+      }
+    );
+
+  if (
+    position.salaryMin &&
+    position.salaryMax
+  ) {
+    return `${
+      position.salaryCurrency
+    } ${formatter.format(
+      position.salaryMin
+    )} – ${formatter.format(
+      position.salaryMax
+    )}`;
+  }
+
+  const value =
+    position.salaryMin ||
+    position.salaryMax;
+
+  return `${
+    position.salaryCurrency
+  } ${formatter.format(value)}`;
+};
+
+const formatDate = (
+  value
+) => {
+  if (!value) {
+    return '';
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString(
+    'en-KE',
+    {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }
+  );
+};
+
+const formatLabel = (
+  value
+) => {
+  if (!value) {
+    return '';
+  }
+
+  return String(value)
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase()
+    );
+};
+
+const toNumber = (
+  value
+) => {
+  const number =
+    Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
 };
 
 export default Careers;

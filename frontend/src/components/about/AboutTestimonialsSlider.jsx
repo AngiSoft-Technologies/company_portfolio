@@ -32,16 +32,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_HEADING = {
-  enabled: true,
-
-  title:
-    'What Our Clients Say',
-
-  description:
-    'Feedback from clients and collaborators who have worked with AngiSoft on software, technical and digital projects.',
-};
-
 const normalizeTestimonial = (
   testimonial,
   index
@@ -188,7 +178,6 @@ const AboutTestimonialsSlider = ({
 
   const headingData = useMemo(
     () => ({
-      ...DEFAULT_HEADING,
       ...(heading || {}),
     }),
     [heading]

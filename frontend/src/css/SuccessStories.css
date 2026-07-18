@@ -1,0 +1,247 @@
+/* ==========================================================================
+   SuccessStories — dedicated stylesheet
+   Reuses global shared utilities where appropriate. The former index.css
+   `.angi-grid-stories` (SuccessStories-only) is now `.angi-success-stories-grid`
+   here. Mobile uses a clean single column (no horizontal rail) per design.
+   Accent comes from --story-accent (set inline per card).
+   ========================================================================== */
+
+.angi-success-stories {
+  position: relative;
+  padding: clamp(3rem, 7vw, 5rem) 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+}
+
+.angi-success-stories-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ── Header ── */
+.angi-success-stories-header {
+  text-align: center;
+  margin-bottom: 2.75rem;
+}
+.angi-success-stories-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 1rem;
+}
+.angi-success-stories-title {
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+  color: #F5F7FA;
+}
+.angi-success-stories-title-highlight {
+  background: linear-gradient(135deg, var(--primary, #0875FF), var(--secondary, #00AFFF));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.angi-success-stories-subtitle {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Grid (moved from .angi-grid-stories) ── */
+.angi-success-stories-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 768px) {
+  .angi-success-stories-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* ── Card ── */
+.angi-success-story-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  text-decoration: none;
+  color: #F5F7FA;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 3px solid var(--story-accent, #0875FF);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+.angi-success-story-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--story-accent, #0875FF) 35%, transparent);
+  box-shadow: 0 12px 30px rgba(7, 20, 43, 0.45);
+}
+.angi-success-story-card:focus-visible {
+  outline: 2px solid var(--story-accent, #0875FF);
+  outline-offset: 3px;
+}
+
+/* Top row: brand + status */
+.angi-success-story-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.angi-success-story-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.angi-success-story-logo,
+.angi-success-story-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 0.75rem;
+  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+.angi-success-story-card:hover .angi-success-story-logo,
+.angi-success-story-card:hover .angi-success-story-mark {
+  transform: scale(1.04);
+}
+
+/* Status badge (color driven by modifier) */
+.angi-success-story-status {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--story-accent, #0875FF);
+  background: color-mix(in srgb, var(--story-accent, #0875FF) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--story-accent, #0875FF) 28%, transparent);
+}
+
+/* Text */
+.angi-success-story-headline {
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.5rem;
+  color: #F5F7FA;
+}
+.angi-success-story-tagline {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: 0 0 0.625rem;
+  color: var(--story-accent, #00AFFF);
+}
+.angi-success-story-excerpt {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+  color: rgba(255, 255, 255, 0.65);
+  overflow-wrap: anywhere;
+}
+
+/* Footer pinned to bottom */
+.angi-success-story-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.875rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.angi-success-story-year {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+.angi-success-story-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--story-accent, #00AFFF);
+}
+.angi-success-story-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+.angi-success-story-card:hover .angi-success-story-arrow {
+  transform: translateX(3px);
+}
+
+/* ── Phone tuning (<640) ── */
+@media (max-width: 639px) {
+  .angi-success-stories-container {
+    padding: 0 1rem;
+  }
+  .angi-success-story-card {
+    padding: 1.25rem;
+  }
+}
+
+/* ── Very small phones (<380) ── */
+@media (max-width: 379px) {
+  .angi-success-story-card {
+    padding: 1rem;
+  }
+  .angi-success-story-logo,
+  .angi-success-story-mark {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .angi-success-story-card,
+  .angi-success-story-logo,
+  .angi-success-story-mark,
+  .angi-success-story-arrow {
+    transition: none !important;
+  }
+  .angi-success-story-card:hover {
+    transform: none !important;
+  }
+  .angi-success-story-card:hover .angi-success-story-logo,
+  .angi-success-story-card:hover .angi-success-story-mark,
+  .angi-success-story-card:hover .angi-success-story-arrow {
+    transform: none !important;
+  }
+}

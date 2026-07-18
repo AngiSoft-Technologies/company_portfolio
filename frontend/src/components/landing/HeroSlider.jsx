@@ -10,7 +10,7 @@ const defaultSlides = [
     id: 0,
     type: 'video',
     video: '/videos/Matrix_rain_code.mp4',
-    poster: '/images/Software-Development-Company.jpg',
+    poster: '/uploads/public/images/Software-Development-Company.jpg',
     badge: 'AngiSoft Technologies',
     headline: 'Building Tomorrow\'s',
     headlineHighlight: 'Digital Solutions',
@@ -21,7 +21,7 @@ const defaultSlides = [
   {
     id: 1,
     type: 'image',
-    image: '/images/Software-Development-Company.jpg',
+    image: '/uploads/public/images/Software-Development-Company.jpg',
     badge: 'Our Products',
     headline: 'Purpose-Built',
     headlineHighlight: 'Software',
@@ -32,7 +32,7 @@ const defaultSlides = [
   {
     id: 2,
     type: 'image',
-    image: '/images/programming-background-with-person-working-with-codes-computer.jpg',
+    image: '/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg',
     badge: 'Innovate. Build. Empower.',
     headline: 'Technology That',
     headlineHighlight: 'Moves Businesses',
@@ -43,7 +43,7 @@ const defaultSlides = [
   {
     id: 3,
     type: 'image',
-    image: '/images/developer-8829735_1280.jpg',
+    image: '/uploads/public/images/developer-8829735_1280.jpg',
     badge: 'Our Team',
     headline: 'Expert Developers,',
     headlineHighlight: 'Real Results',
@@ -159,11 +159,15 @@ const HeroSlider = () => {
         {slide.type === 'video' && !reduceMotion ? (
           <video
             ref={videoRef}
-            className="hero-slider__video"
+            className="hero-slider__video angi-video-bg"
             autoPlay
             loop
             muted
             playsInline
+            controls={false}
+            disablePictureInPicture
+            disableRemotePlayback
+            controlsList="nodownload nofullscreen noremoteplayback"
             poster={resolveAssetUrl(slide.poster)}
             preload="metadata"
           >
@@ -179,7 +183,7 @@ const HeroSlider = () => {
             onError={(e) => {
               e.target.style.display = 'none';
               const fallback = e.target.parentElement;
-              if (fallback) fallback.style.backgroundImage = `url(${resolveAssetUrl(hero?.backgroundImage || '/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png')})`;
+              if (fallback) fallback.style.backgroundImage = `url(${resolveAssetUrl(hero?.backgroundImage || '/uploads/public/images/Wallpapers/AngiSoft%20Desktop%20Wallpaper.png')})`;
             }}
           />
         )}
@@ -203,7 +207,7 @@ const HeroSlider = () => {
         {/* Brand name */}
         <div className="hero-slider__brand">
           <img
-            src="/images/Logos/AngiSoft Logo Symbol Only.png"
+            src="/uploads/public/images/Logos/AngiSoft Logo Symbol Only.png"
             alt="AngiSoft"
             className="hero-slider__brand-logo"
             onError={(e) => { e.target.style.display = 'none'; }}

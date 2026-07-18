@@ -225,7 +225,11 @@ const About = () => {
                                             loop
                                             muted
                                             playsInline
-                                            className="w-full h-full object-cover"
+                                            controls={false}
+                                            disablePictureInPicture
+                                            disableRemotePlayback
+                                            controlsList="nodownload nofullscreen noremoteplayback"
+                                            className="w-full h-full object-cover angi-video-bg"
                                             poster={posterImage}
                                         >
                                             {hasVideo && (
@@ -290,7 +294,10 @@ const About = () => {
                                                     style={{ color: colors.primary }}
                                                 >
                                                     {highlightStat.prefix || ''}
-                                                    <AnimatedCounter end={Number(highlightStat.value) || 0} />
+                                                    <AnimatedCounter
+                                                        end={Number(highlightStat.value) || 0}
+                                                        valueType={highlightStat.valueType || highlightStat.type || 'plain'}
+                                                    />
                                                     {highlightStat.suffix || ''}
                                                 </p>
                                                 <p 
@@ -416,7 +423,7 @@ const About = () => {
                                                     backgroundClip: "text"
                                                 }}
                                             >
-                                                {stat.prefix}<AnimatedCounter end={stat.value} />{stat.suffix || ''}
+                                                {stat.prefix}<AnimatedCounter end={stat.value} valueType={stat.valueType || stat.type || 'plain'} />{stat.suffix || ''}
                                             </p>
                                             <p 
                                                 className=""

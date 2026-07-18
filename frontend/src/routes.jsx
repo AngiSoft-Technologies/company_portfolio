@@ -92,6 +92,7 @@ const RoutesComponent = () => {
           <Route index element={<Home />} />
           <Route path="projects" element={<ProjectLists />} />
           <Route path="services" element={<ServicesList />} />
+          <Route path="services/:id" element={<ServiceDetail />} />
           <Route path="service/:slug" element={<ServiceDetail />} />
           <Route path="project/:slug" element={<ProjectDetails />} />
           <Route path="staff" element={<StaffList />} />

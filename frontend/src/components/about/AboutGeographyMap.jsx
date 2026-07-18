@@ -19,211 +19,6 @@ const DEFAULT_COLORS = [
   '#39FF6A',
 ];
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  title:
-    'Our Geography',
-
-  intro:
-    'Headquartered in Nairobi and operating through direct and remote collaboration, AngiSoft serves clients and develops solutions for Kenyan, East African and wider African needs.',
-
-  /*
-   * Store this inside:
-   * frontend/public/images/about/geography/
-   *
-   * Do not route it through Railway uploads unless
-   * that static route has been fully fixed.
-   */
-  mapImageUrl:
-    '/images/about/geography/world-map-dots-light.svg',
-
-  mapAlt:
-    'Map showing AngiSoft Technologies delivery reach',
-
-  regions: [
-    {
-      id:
-        'kenya',
-
-      title:
-        'Kenya',
-
-      lineOne:
-        'Operating base: Nairobi',
-
-      lineTwo:
-        'Direct and remote delivery',
-
-      color:
-        '#0A3DFF',
-    },
-
-    {
-      id:
-        'east-africa',
-
-      title:
-        'East Africa',
-
-      lineOne:
-        'Primary regional market',
-
-      lineTwo:
-        'Product and project collaboration',
-
-      color:
-        '#FF9F1C',
-    },
-
-    {
-      id:
-        'africa',
-
-      title:
-        'Africa',
-
-      lineOne:
-        'Long-term product reach',
-
-      lineTwo:
-        'Remote digital delivery',
-
-      color:
-        '#39FF6A',
-    },
-  ],
-
-  locations: [
-    {
-      id:
-        'nairobi',
-
-      label:
-        'Nairobi, Kenya',
-
-      detail:
-        'AngiSoft headquarters',
-
-      x:
-        62,
-
-      y:
-        68,
-
-      regionIndex:
-        0,
-
-      labelPosition:
-        'right',
-    },
-
-    {
-      id:
-        'east-africa',
-
-      label:
-        'East Africa',
-
-      detail:
-        'Primary growth region',
-
-      x:
-        65,
-
-      y:
-        58,
-
-      regionIndex:
-        1,
-
-      labelPosition:
-        'right',
-    },
-
-    {
-      id:
-        'remote-delivery',
-
-      label:
-        'Remote Delivery',
-
-      detail:
-        'Digital collaboration',
-
-      x:
-        48,
-
-      y:
-        35,
-
-      regionIndex:
-        2,
-
-      labelPosition:
-        'above',
-    },
-  ],
-
-  delivery: {
-    enabled:
-      true,
-
-    introduction:
-      'From Nairobi, AngiSoft delivers software and digital services through direct and remote collaboration. Our clients benefit from practical technical support, flexible communication and solutions designed around real operational needs.',
-
-    benefits: [
-      {
-        id:
-          'cross-functional',
-
-        title:
-          'Cross-functional capability across software, data, systems and digital services',
-      },
-
-      {
-        id:
-          'remote-collaboration',
-
-        title:
-          'Flexible remote collaboration for clients beyond Nairobi',
-      },
-
-      {
-        id:
-          'project-coordination',
-
-        title:
-          'Structured project coordination, milestones and progress communication',
-      },
-
-      {
-        id:
-          'technology-flexibility',
-
-        title:
-          'Technology choices aligned with project requirements and available infrastructure',
-      },
-
-      {
-        id:
-          'security-awareness',
-
-        title:
-          'Security-conscious development, access control and responsible data handling',
-      },
-
-      {
-        id:
-          'continued-support',
-
-        title:
-          'Support for maintenance, upgrades, troubleshooting and continued improvement',
-      },
-    ],
-  },
-};
-
 const normalizeRegion = (
   region,
   index
@@ -391,11 +186,9 @@ const AboutGeographyMap = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
 
       delivery: {
-        ...DEFAULT_CONTENT.delivery,
         ...(content?.delivery || {}),
       },
     }),
@@ -409,7 +202,7 @@ const AboutGeographyMap = ({
       ) &&
       data.regions.length
         ? data.regions
-        : DEFAULT_CONTENT.regions;
+        : [];
 
     return source
       .slice(0, 3)
@@ -427,7 +220,7 @@ const AboutGeographyMap = ({
       ) &&
       data.locations.length
         ? data.locations
-        : DEFAULT_CONTENT.locations;
+        : [];
 
     return source
       .map(
@@ -459,9 +252,7 @@ const AboutGeographyMap = ({
         .benefits.length
         ? data.delivery
             .benefits
-        : DEFAULT_CONTENT
-            .delivery
-            .benefits;
+        : [];
 
     return source
       .map(
@@ -639,7 +430,7 @@ const AboutGeographyMap = ({
                 src={mapSrc}
                 alt={
                   data.mapAlt ||
-                  DEFAULT_CONTENT.mapAlt
+                  ''
                 }
                 loading="lazy"
                 className="about-geography-map-image"
@@ -702,8 +493,7 @@ const AboutGeographyMap = ({
                 <div className="mt-6 grid gap-x-10 gap-y-3 md:grid-cols-2">
                   {benefits.map(
                     (
-                      benefit,
-                      index
+                      benefit
                     ) => (
                       <article
                         key={

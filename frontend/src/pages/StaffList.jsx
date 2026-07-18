@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -8,27 +9,34 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import {
+  FaArrowLeft,
   FaArrowRight,
   FaBriefcase,
   FaEnvelope,
   FaGithub,
   FaGlobe,
-  FaLinkedin,
+  FaLinkedinIn,
   FaMapMarkerAlt,
+  FaSearch,
   FaTwitter,
   FaUsers,
 } from 'react-icons/fa';
 
 import { apiGet } from '../js/httpClient';
 import {
-  getStaffDetailPath,
-} from '../utils/detailPaths';
-import {
   resolveAssetUrl,
 } from '../utils/constants';
+import {
+  getStaffDetailPath,
+} from '../utils/detailPaths';
+
+import '../css/staff-list.css';
 
 const StaffList = () => {
   const navigate = useNavigate();
+
+  const spotlightViewportRef =
+    useRef(null);
 
   const [staff, setStaff] =
     useState([]);
@@ -38,6 +46,14 @@ const StaffList = () => {
 
   const [error, setError] =
     useState('');
+
+  const [searchTerm, setSearchTerm] =
+    useState('');
+
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState('all');
 
   useEffect(() => {
     let mounted = true;
@@ -54,10 +70,22 @@ const StaffList = () => {
           return;
         }
 
-        setStaff(
+        const records =
           Array.isArray(response)
             ? response
-            : response?.data || []
+            : response?.data ||
+              response?.staff ||
+              [];
+
+        setStaff(
+          records
+            .filter(Boolean)
+            .map(normalizeStaffMember)
+            .filter(
+              (member) =>
+                member.profileVisibility !==
+                'PRIVATE'
+            )
         );
       } catch (requestError) {
         if (!mounted) {
@@ -66,7 +94,7 @@ const StaffList = () => {
 
         setError(
           requestError?.message ||
-            'Unable to load team profiles.'
+            'We could not load the AngiSoft team profiles.'
         );
       } finally {
         if (mounted) {
@@ -82,66 +110,252 @@ const StaffList = () => {
     };
   }, []);
 
-  const roleCount = useMemo(
+  const departments = useMemo(() => {
+    const values = staff
+      .map(
+        (member) =>
+          member.department
+      )
+      .filter(Boolean);
+
+    return [
+      'all',
+      ...Array.from(
+        new Set(values)
+      ).sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    ];
+  }, [staff]);
+
+  const filteredStaff = useMemo(() => {
+    const query =
+      searchTerm
+        .trim()
+        .toLowerCase();
+
+    return staff.filter((member) => {
+      const matchesDepartment =
+        selectedDepartment === 'all' ||
+        member.department ===
+          selectedDepartment;
+
+      if (!matchesDepartment) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      const searchableText = [
+        member.fullName,
+        member.publicTitle,
+        member.department,
+        member.location,
+        member.publicSummary,
+        ...member.skills,
+        ...member.specialties,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return searchableText.includes(
+        query
+      );
+    });
+  }, [
+    searchTerm,
+    selectedDepartment,
+    staff,
+  ]);
+
+  const featuredMember = useMemo(() => {
+    const explicitlyFeatured =
+      filteredStaff
+        .filter(
+          (member) =>
+            member.isFeatured
+        )
+        .sort(
+          (
+            first,
+            second
+          ) =>
+            first.directoryPriority -
+            second.directoryPriority
+        )[0];
+
+    return (
+      explicitlyFeatured ||
+      filteredStaff[0] ||
+      null
+    );
+  }, [filteredStaff]);
+
+  const spotlightStaff = useMemo(
     () =>
-      new Set(
-        staff
-          .map(
-            (member) =>
-              member.publicTitle ||
-              member.role
-          )
-          .filter(Boolean)
-      ).size,
-    [staff]
+      filteredStaff
+        .filter(
+          (member) =>
+            member.id !==
+            featuredMember?.id
+        )
+        .sort(
+          (
+            first,
+            second
+          ) =>
+            first.directoryPriority -
+            second.directoryPriority
+        )
+        .slice(0, 10),
+    [
+      filteredStaff,
+      featuredMember,
+    ]
   );
 
+  const departmentGroups =
+    useMemo(() => {
+      const groups =
+        new Map();
+
+      filteredStaff.forEach(
+        (member) => {
+          const department =
+            member.department ||
+            'Other Team Members';
+
+          if (
+            !groups.has(
+              department
+            )
+          ) {
+            groups.set(
+              department,
+              []
+            );
+          }
+
+          groups
+            .get(department)
+            .push(member);
+        }
+      );
+
+      return Array.from(
+        groups.entries()
+      )
+        .map(
+          ([
+            department,
+            members,
+          ]) => ({
+            department,
+            members:
+              members.sort(
+                (
+                  first,
+                  second
+                ) =>
+                  first.directoryPriority -
+                    second.directoryPriority ||
+                  first.fullName.localeCompare(
+                    second.fullName
+                  ),
+              ),
+          })
+        )
+        .sort(
+          (
+            first,
+            second
+          ) =>
+            first.department.localeCompare(
+              second.department
+            ),
+        );
+    }, [filteredStaff]);
+
+  const scrollSpotlight = (
+    direction
+  ) => {
+    const viewport =
+      spotlightViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const distance =
+      Math.max(
+        viewport.clientWidth *
+          0.78,
+        280
+      );
+
+    viewport.scrollBy({
+      left:
+        direction === 'next'
+          ? distance
+          : -distance,
+      behavior: 'smooth',
+    });
+  };
+
+  const openMember = (
+    member
+  ) => {
+    navigate(
+      getStaffDetailPath(member)
+    );
+  };
+
   return (
-    <main className="min-h-screen bg-[#07142B] text-white">
-      <section className="border-b border-white/10 py-14 md:py-18 lg:py-20">
+    <main className="staff-directory">
+      <section className="staff-directory-hero">
         <div className="container">
-          <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto]">
-            <div className="max-w-4xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#00C2FF]">
+          <div className="staff-directory-hero-layout">
+            <div>
+              <p className="staff-directory-eyebrow">
                 Our People
               </p>
 
-              <h1
-                className="mt-4 text-4xl font-black leading-[1.04] tracking-[-0.045em] text-white md:text-5xl lg:text-6xl"
-                style={{
-                  fontFamily:
-                    'Sora, sans-serif',
-                }}
-              >
-                The People Building
-                AngiSoft
+              <h1 className="staff-directory-title">
+                Meet the People
+                Building AngiSoft
               </h1>
 
-              <p className="mt-6 max-w-3xl text-sm leading-7 text-white/62 md:text-base">
-                Meet the engineers,
-                developers, designers and
-                technology professionals
-                contributing to AngiSoft’s
-                products, projects and
-                practical digital services.
+              <p className="staff-directory-intro">
+                Discover the
+                developers, engineers,
+                designers, technology
+                professionals and
+                collaborators behind
+                AngiSoft’s products,
+                client projects and
+                digital services.
               </p>
             </div>
 
             {!loading &&
               staff.length > 0 && (
-                <div className="grid grid-cols-2 border border-white/12 bg-[#0A1B38]">
-                  <Stat
+                <div className="staff-directory-statistics">
+                  <DirectoryStatistic
                     value={
                       staff.length
                     }
-                    label="Team profiles"
+                    label="Public profiles"
                   />
 
-                  <Stat
+                  <DirectoryStatistic
                     value={
-                      roleCount
+                      departments.length -
+                      1
                     }
-                    label="Roles"
+                    label="Departments"
                     bordered
                   />
                 </div>
@@ -150,98 +364,245 @@ const StaffList = () => {
         </div>
       </section>
 
-      <section className="py-14 md:py-18 lg:py-20">
-        <div className="container">
-          {loading && (
-            <LoadingState />
-          )}
-
-          {!loading && error && (
-            <ErrorState
-              message={error}
+      <section className="staff-directory-toolbar">
+        <div className="container staff-directory-toolbar-inner">
+          <label className="staff-directory-search">
+            <FaSearch
+              aria-hidden="true"
             />
-          )}
 
-          {!loading &&
-            !error &&
-            staff.length === 0 && (
-              <EmptyState />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(
+                  event.target.value
+                )
+              }
+              placeholder="Search by name, skill, role or department"
+              aria-label="Search team profiles"
+            />
+          </label>
+
+          <div
+            className="staff-role-filters"
+            aria-label="Filter staff by department"
+          >
+            {departments.map(
+              (department) => (
+                <button
+                  key={
+                    department
+                  }
+                  type="button"
+                  onClick={() =>
+                    setSelectedDepartment(
+                      department
+                    )
+                  }
+                  className={`staff-role-filter ${
+                    selectedDepartment ===
+                    department
+                      ? 'is-active'
+                      : ''
+                  }`}
+                >
+                  {department ===
+                  'all'
+                    ? 'All Team'
+                    : department}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      </section>
+
+      {loading && (
+        <DirectoryLoading />
+      )}
+
+      {!loading && error && (
+        <DirectoryMessage
+          icon={FaUsers}
+          title="Unable to Load Team Profiles"
+          description={error}
+        />
+      )}
+
+      {!loading &&
+        !error &&
+        filteredStaff.length ===
+          0 && (
+          <DirectoryMessage
+            icon={FaSearch}
+            title="No Matching Profiles"
+            description="No public team profile matches the current search and department filter."
+          />
+        )}
+
+      {!loading &&
+        !error &&
+        featuredMember && (
+          <>
+            <FeaturedStaffProfile
+              member={
+                featuredMember
+              }
+              onOpen={() =>
+                openMember(
+                  featuredMember
+                )
+              }
+            />
+
+            {spotlightStaff.length >
+              0 && (
+              <section className="staff-spotlight">
+                <div className="container">
+                  <div className="staff-section-heading">
+                    <div>
+                      <p className="staff-section-eyebrow">
+                        Team Spotlight
+                      </p>
+
+                      <h2>
+                        Explore More
+                        Profiles
+                      </h2>
+                    </div>
+
+                    <div className="staff-spotlight-controls">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          scrollSpotlight(
+                            'previous'
+                          )
+                        }
+                        aria-label="Scroll to previous staff profiles"
+                      >
+                        <FaArrowLeft />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          scrollSpotlight(
+                            'next'
+                          )
+                        }
+                        aria-label="Scroll to next staff profiles"
+                      >
+                        <FaArrowRight />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    ref={
+                      spotlightViewportRef
+                    }
+                    className="staff-spotlight-viewport"
+                  >
+                    <div className="staff-spotlight-track">
+                      {spotlightStaff.map(
+                        (member) => (
+                          <SpotlightStaffCard
+                            key={
+                              member.id
+                            }
+                            member={
+                              member
+                            }
+                            onOpen={() =>
+                              openMember(
+                                member
+                              )
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
             )}
 
-          {!loading &&
-            !error &&
-            staff.length > 0 && (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {staff.map(
-                  (
-                    member,
-                    index
-                  ) => (
-                    <StaffCard
+            <section className="staff-departments">
+              <div className="container">
+                <div className="staff-section-heading">
+                  <div>
+                    <p className="staff-section-eyebrow">
+                      Team Directory
+                    </p>
+
+                    <h2>
+                      Browse by
+                      Department
+                    </h2>
+                  </div>
+                </div>
+
+                {departmentGroups.map(
+                  (group) => (
+                    <DepartmentGroup
                       key={
-                        member.id ||
-                        member.username ||
-                        index
+                        group.department
                       }
-                      member={
-                        member
-                      }
-                      onOpen={() =>
-                        navigate(
-                          getStaffDetailPath(
-                            member
-                          )
-                        )
-                      }
+                      group={group}
                     />
                   )
                 )}
               </div>
-            )}
-        </div>
-      </section>
+            </section>
+          </>
+        )}
 
-      <section className="border-t border-white/10 bg-[#0A1B38] py-12 md:py-14">
-        <div className="container">
-          <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00C2FF]">
-                Careers at AngiSoft
-              </p>
+      <section className="staff-careers">
+        <div className="container staff-careers-layout">
+          <div>
+            <p className="staff-section-eyebrow">
+              Careers at AngiSoft
+            </p>
 
-              <h2 className="mt-3 text-2xl font-black tracking-[-0.03em] text-white md:text-3xl">
-                Interested in Building
-                Technology With Us?
-              </h2>
+            <h2>
+              Interested in Building
+              Technology With Us?
+            </h2>
 
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/58">
-                Explore available roles
-                or contact AngiSoft when
-                you believe your skills
-                can contribute to our
-                products and projects.
-              </p>
-            </div>
+            <p>
+              Explore available
+              opportunities or contact
+              AngiSoft when you believe
+              your skills can contribute
+              to our products, projects
+              and long-term vision.
+            </p>
+          </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/careers"
-                className="inline-flex min-h-11 items-center gap-2 bg-[#0A3DFF] px-5 py-3 text-xs font-bold text-white no-underline transition hover:bg-[#3B6FFF]"
-              >
-                <FaBriefcase />
+          <div className="staff-careers-actions">
+            <Link
+              to="/careers"
+              className="staff-careers-primary"
+            >
+              <FaBriefcase />
 
+              <span>
                 View Open Roles
-              </Link>
+              </span>
+            </Link>
 
-              <a
-                href="mailto:careers@angisoft.co.ke"
-                className="inline-flex min-h-11 items-center gap-2 border border-white/20 px-5 py-3 text-xs font-bold text-white no-underline transition hover:border-[#00C2FF] hover:text-[#00C2FF]"
-              >
-                <FaEnvelope />
+            <a
+              href="mailto:careers@angisoft.co.ke"
+              className="staff-careers-secondary"
+            >
+              <FaEnvelope />
 
+              <span>
                 Contact Careers
-              </a>
-            </div>
+              </span>
+            </a>
           </div>
         </div>
       </section>
@@ -249,248 +610,490 @@ const StaffList = () => {
   );
 };
 
-const Stat = ({
+const FeaturedStaffProfile = ({
+  member,
+  onOpen,
+}) => (
+  <section className="staff-featured">
+    <div className="container">
+      <article className="staff-featured-card">
+        <ProfileImage
+          member={member}
+          className="staff-featured-media"
+          imageClassName=""
+        />
+
+        <div className="staff-featured-copy">
+          <p className="staff-featured-label">
+            Featured Profile
+          </p>
+
+          <h2 className="staff-featured-name">
+            {member.fullName}
+          </h2>
+
+          {member.publicTitle && (
+            <p className="staff-featured-role">
+              {
+                member.publicTitle
+              }
+            </p>
+          )}
+
+          {member.location && (
+            <p className="staff-featured-location">
+              <FaMapMarkerAlt />
+
+              {member.location}
+            </p>
+          )}
+
+          {member.publicSummary && (
+            <p className="staff-featured-summary">
+              {
+                member.publicSummary
+              }
+            </p>
+          )}
+
+          {member.skills.length >
+            0 && (
+            <div className="staff-featured-skills">
+              {member.skills
+                .slice(0, 6)
+                .map((skill) => (
+                  <span
+                    key={skill}
+                    className="staff-featured-skill"
+                  >
+                    {skill}
+                  </span>
+                ))}
+            </div>
+          )}
+
+          <div className="staff-featured-actions">
+            <button
+              type="button"
+              onClick={onOpen}
+              className="staff-profile-action"
+            >
+              View Full Portfolio
+
+              <FaArrowRight />
+            </button>
+
+            <SocialLinks
+              member={member}
+            />
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+);
+
+const SpotlightStaffCard = ({
+  member,
+  onOpen,
+}) => (
+  <article
+    className="staff-spotlight-card"
+    role="button"
+    tabIndex={0}
+    onClick={onOpen}
+    onKeyDown={(event) => {
+      if (
+        event.key === 'Enter' ||
+        event.key === ' '
+      ) {
+        event.preventDefault();
+        onOpen();
+      }
+    }}
+  >
+    <ProfileImage
+      member={member}
+      className="staff-spotlight-image"
+      imageClassName=""
+    />
+
+    <div
+      className="staff-spotlight-shade"
+      aria-hidden="true"
+    />
+
+    <div className="staff-spotlight-copy">
+      <h3>
+        {member.fullName}
+      </h3>
+
+      {member.publicTitle && (
+        <p>
+          {member.publicTitle}
+        </p>
+      )}
+
+      {member.department && (
+        <span>
+          {member.department}
+        </span>
+      )}
+
+      <div className="staff-spotlight-link">
+        View Portfolio
+
+        <FaArrowRight />
+      </div>
+    </div>
+  </article>
+);
+
+const DepartmentGroup = ({
+  group,
+}) => (
+  <section className="staff-department">
+    <div className="staff-department-title">
+      <h3>
+        {group.department}
+      </h3>
+
+      <span>
+        {group.members.length}{' '}
+        {group.members.length ===
+        1
+          ? 'profile'
+          : 'profiles'}
+      </span>
+    </div>
+
+    <div>
+      {group.members.map(
+        (member) => (
+          <Link
+            key={member.id}
+            to={getStaffDetailPath(
+              member
+            )}
+            className="staff-directory-row"
+          >
+            <ProfileImage
+              member={member}
+              className="staff-directory-row-image"
+              imageClassName=""
+            />
+
+            <div>
+              <p className="staff-directory-row-name">
+                {member.fullName}
+              </p>
+
+              {member.location && (
+                <p className="staff-directory-row-location">
+                  {member.location}
+                </p>
+              )}
+            </div>
+
+            <p className="staff-directory-row-role">
+              {member.publicTitle ||
+                'AngiSoft Team Member'}
+            </p>
+
+            <div className="staff-directory-row-skills">
+              {member.skills
+                .slice(0, 2)
+                .map((skill) => (
+                  <span
+                    key={skill}
+                  >
+                    {skill}
+                  </span>
+                ))}
+            </div>
+
+            <FaArrowRight className="staff-directory-row-arrow" />
+          </Link>
+        )
+      )}
+    </div>
+  </section>
+);
+
+const ProfileImage = ({
+  member,
+  className,
+  imageClassName,
+}) => {
+  if (member.avatarUrl) {
+    return (
+      <div className={className}>
+        <img
+          src={resolveAssetUrl(
+            member.avatarUrl
+          )}
+          alt={member.fullName}
+          loading="lazy"
+          decoding="async"
+          className={imageClassName}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${className} staff-profile-image-fallback`}
+      aria-label={`${member.fullName} profile image placeholder`}
+    >
+      <span>
+        {member.initials ||
+          'AT'}
+      </span>
+    </div>
+  );
+};
+
+const SocialLinks = ({
+  member,
+}) => {
+  const links = [
+    {
+      label: 'LinkedIn',
+      href: member.linkedinUrl,
+      icon: FaLinkedinIn,
+    },
+    {
+      label: 'GitHub',
+      href: member.githubUrl,
+      icon: FaGithub,
+    },
+    {
+      label: 'Twitter',
+      href: member.twitterUrl,
+      icon: FaTwitter,
+    },
+    {
+      label: 'Website',
+      href: member.websiteUrl,
+      icon: FaGlobe,
+    },
+  ].filter(
+    (item) => item.href
+  );
+
+  if (!links.length) {
+    return null;
+  }
+
+  return (
+    <div className="staff-social-links">
+      {links.map((item) => {
+        const Icon = item.icon;
+
+        return (
+          <a
+            key={item.label}
+            href={item.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${member.fullName} on ${item.label}`}
+          >
+            <Icon />
+          </a>
+        );
+      })}
+    </div>
+  );
+};
+
+const DirectoryStatistic = ({
   value,
   label,
   bordered = false,
 }) => (
   <div
-    className={`min-w-[130px] px-5 py-4 ${
+    className={`staff-directory-statistic ${
       bordered
-        ? 'border-l border-white/12'
+        ? 'is-bordered'
         : ''
     }`}
   >
-    <strong className="block text-2xl font-black text-[#00C2FF]">
+    <strong>
       {value}
     </strong>
 
-    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+    <span>
       {label}
     </span>
   </div>
 );
 
-const StaffCard = ({
-  member,
-  onOpen,
-}) => {
-  const fullName = [
-    member.firstName,
-    member.lastName,
-  ]
-    .filter(Boolean)
-    .join(' ');
+const DirectoryLoading = () => (
+  <section className="staff-directory-status">
+    <div className="staff-loading-spinner" />
 
-  const role =
-    member.publicTitle ||
-    member.role
-      ?.toLowerCase()
-      .replaceAll('_', ' ');
-
-  const summary =
-    member.publicSummary ||
-    member.bio ||
-    '';
-
-  const skills =
-    Array.isArray(member.skills)
-      ? member.skills.slice(0, 3)
-      : [];
-
-  const socials = [
-    {
-      label: 'LinkedIn',
-      url: member.linkedinUrl,
-      icon: FaLinkedin,
-    },
-    {
-      label: 'Twitter',
-      url: member.twitterUrl,
-      icon: FaTwitter,
-    },
-    {
-      label: 'GitHub',
-      url: member.githubUrl,
-      icon: FaGithub,
-    },
-    {
-      label: 'Website',
-      url: member.websiteUrl,
-      icon: FaGlobe,
-    },
-  ].filter(
-    (item) => item.url
-  );
-
-  const initials = [
-    member.firstName?.[0],
-    member.lastName?.[0],
-  ]
-    .filter(Boolean)
-    .join('')
-    .toUpperCase();
-
-  return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (
-          event.key === 'Enter' ||
-          event.key === ' '
-        ) {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      className="group flex cursor-pointer flex-col overflow-hidden border border-white/12 bg-[#0A1B38] outline-none transition duration-300 hover:-translate-y-1 hover:border-[#00C2FF]/50 focus-visible:ring-2 focus-visible:ring-[#00C2FF]"
-    >
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#07142B]">
-        {member.avatarUrl ? (
-          <img
-            src={resolveAssetUrl(
-              member.avatarUrl
-            )}
-            alt={
-              fullName ||
-              'AngiSoft team member'
-            }
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.045]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A3DFF]/55 to-[#07142B] text-5xl font-black text-white">
-            {initials || 'AT'}
-          </div>
-        )}
-
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-[#07142B]/95 via-[#07142B]/10 to-transparent"
-          aria-hidden="true"
-        />
-
-        {member.location && (
-          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 border border-white/15 bg-[#07142B]/75 px-2.5 py-1.5 text-[9px] font-semibold text-white/65 backdrop-blur-sm">
-            <FaMapMarkerAlt className="text-[#00C2FF]" />
-
-            {
-              member.location
-            }
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 bottom-0 p-5">
-          <h2 className="text-xl font-black leading-tight text-white">
-            {fullName}
-          </h2>
-
-          {role && (
-            <p className="mt-1 text-xs font-semibold capitalize text-[#00C2FF]">
-              {role}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        {summary && (
-          <p className="line-clamp-3 text-sm leading-6 text-white/55">
-            {summary}
-          </p>
-        )}
-
-        {skills.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {skills.map(
-              (skill) => (
-                <span
-                  key={skill}
-                  className="border border-[#0A3DFF]/25 bg-[#0A3DFF]/8 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#5DD8FF]"
-                >
-                  {skill}
-                </span>
-              )
-            )}
-          </div>
-        )}
-
-        <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4">
-          <div className="flex items-center gap-2">
-            {socials.map(
-              (social) => {
-                const Icon =
-                  social.icon;
-
-                return (
-                  <a
-                    key={
-                      social.label
-                    }
-                    href={
-                      social.url
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(
-                      event
-                    ) =>
-                      event.stopPropagation()
-                    }
-                    className="flex h-7 w-7 items-center justify-center border border-white/12 text-[11px] text-white/55 transition hover:border-[#00C2FF] hover:text-[#00C2FF]"
-                    aria-label={
-                      social.label
-                    }
-                  >
-                    <Icon />
-                  </a>
-                );
-              }
-            )}
-          </div>
-
-          <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[#00C2FF]">
-            View Profile
-
-            <FaArrowRight className="text-[8px] transition group-hover:translate-x-1" />
-          </span>
-        </div>
-      </div>
-    </article>
-  );
-};
-
-const LoadingState = () => (
-  <div className="flex min-h-[320px] items-center justify-center">
-    <div className="h-11 w-11 animate-spin rounded-full border-2 border-white/10 border-t-[#00C2FF]" />
-  </div>
-);
-
-const ErrorState = ({
-  message,
-}) => (
-  <div className="border border-red-400/25 bg-red-400/[0.04] px-6 py-12 text-center">
-    <p className="text-sm text-red-300">
-      {message}
+    <p>
+      Loading team profiles…
     </p>
-  </div>
+  </section>
 );
 
-const EmptyState = () => (
-  <div className="border border-white/10 bg-[#0A1B38] px-6 py-16 text-center">
-    <FaUsers className="mx-auto text-4xl text-[#00C2FF]/45" />
+const DirectoryMessage = ({
+  icon: Icon,
+  title,
+  description,
+}) => (
+  <section className="staff-directory-status">
+    <Icon />
 
-    <h2 className="mt-4 text-xl font-bold text-white">
-      Team Profiles Coming Soon
+    <h2>
+      {title}
     </h2>
 
-    <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-white/50">
-      Published AngiSoft staff
-      profiles will appear here.
+    <p>
+      {description}
     </p>
-  </div>
+  </section>
 );
+
+const normalizeStaffMember = (
+  member,
+  index
+) => {
+  const firstName =
+    member?.firstName ||
+    member?.first_name ||
+    '';
+
+  const lastName =
+    member?.lastName ||
+    member?.last_name ||
+    '';
+
+  const fullName =
+    member?.fullName ||
+    member?.displayName ||
+    [firstName, lastName]
+      .filter(Boolean)
+      .join(' ') ||
+    member?.username ||
+    `Team Member ${index + 1}`;
+
+  return {
+    ...member,
+
+    id:
+      member?.id ||
+      member?.username ||
+      `staff-${index}`,
+
+    firstName,
+    lastName,
+    fullName,
+
+    initials: fullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase(),
+
+    publicTitle:
+      member?.publicTitle ||
+      member?.title ||
+      formatRole(member?.role),
+
+    department:
+      member?.department ||
+      member?.team ||
+      member?.division ||
+      'Other Team Members',
+
+    publicSummary:
+      member?.publicSummary ||
+      member?.summary ||
+      member?.bio ||
+      '',
+
+    avatarUrl:
+      member?.avatarUrl ||
+      member?.profileImageUrl ||
+      member?.photoUrl ||
+      '',
+
+    skills: normalizeStringArray(
+      member?.skills
+    ),
+
+    specialties:
+      normalizeStringArray(
+        member?.specialties
+      ),
+
+    isFeatured:
+      member?.isFeatured ===
+        true,
+
+    directoryPriority:
+      Number.isFinite(
+        Number(
+          member?.directoryPriority
+        )
+      )
+        ? Number(
+            member.directoryPriority
+          )
+        : 999,
+
+    profileVisibility:
+      member?.profileVisibility ||
+      'PUBLIC',
+  };
+};
+
+const normalizeStringArray = (
+  value
+) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        typeof item === 'string'
+          ? item
+          : item?.name ||
+            item?.label ||
+            item?.title ||
+            ''
+      )
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) =>
+        item.trim()
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const formatRole = (
+  role
+) => {
+  if (!role) {
+    return '';
+  }
+
+  return String(role)
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase()
+    );
+};
 
 export default StaffList;

@@ -114,9 +114,9 @@ const Footer = () => {
 
     <div className="angi-container" style={{ position: 'relative', zIndex: 20 }}>
       {/* TOP: 5 columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '3rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(0,175,255,0.12)', borderTop: '2px solid rgba(0,175,255,0.12)', paddingTop: '3rem' }}>
+      <div className="angi-grid-footer" style={{ paddingBottom: '2.5rem', borderBottom: '1px solid rgba(0,175,255,0.12)', borderTop: '2px solid rgba(0,175,255,0.12)', paddingTop: '3rem' }}>
         {/* Brand */}
-        <div style={{ gridColumn: 'span 1' }}>
+        <div className="angi-footer-brand">
           <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
             <div style={{ width: '15rem', filter: 'drop-shadow(0 0 12px rgba(0,175,255,0.25))' }}>
               <AngiSoftLogo size="md" />
@@ -151,7 +151,7 @@ const Footer = () => {
       </div>
 
       {/* MIDDLE: Social Hndles + Newsletter */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '2rem', padding: '2rem 0', borderBottom: '1px solid rgba(0,175,255,0.12)' }}>
+      <div className="angi-grid-footer-bottom" style={{ padding: '2rem 0', borderBottom: '1px solid rgba(0,175,255,0.12)' }}>
         <div>
           <div className="angi-footer-heading">Social Handles</div>
           <p style={{ fontSize: '0.8125rem', color: 'rgba(245,247,250,0.55)', marginBottom: '1rem' }}>

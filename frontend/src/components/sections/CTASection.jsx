@@ -230,7 +230,11 @@ const CTASection = () => {
                     backgroundClip: 'text'
                   }}
                 >
-                  <AnimatedCounter end={badge.value} suffix={badge.suffix} />
+                  <AnimatedCounter
+                    end={badge.value}
+                    valueType={badge.valueType || badge.type}
+                    suffix={badge.suffix}
+                  />
                 </div>
                 <span
                   className="text-sm"

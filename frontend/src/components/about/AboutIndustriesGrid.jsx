@@ -10,146 +10,6 @@ import { FaArrowRight } from 'react-icons/fa';
 import { resolveAssetUrl } from '../../utils/constants';
 import SmartImage from './SmartImage';
 
-const DEFAULT_HEADING = {
-  eyebrow: 'Industry Experience',
-
-  title: 'Industries AngiSoft Serves',
-
-  description:
-    'Through our growing practice, we are developing practical knowledge of the business processes, users and operational challenges found across these sectors.',
-};
-
-const DEFAULT_INDUSTRIES = [
-  {
-    id: 'retail',
-    title: 'Retail',
-    imageUrl:
-      '/uploads/public/images/about/industries/retail.svg',
-    to: '/industries/retail',
-    accent: '#00C2FF',
-  },
-  {
-    id: 'education',
-    title: 'Education',
-    imageUrl:
-      '/uploads/public/images/about/industries/education.svg',
-    to: '/industries/education',
-    accent: '#0A3DFF',
-  },
-  {
-    id: 'real-estate',
-    title: 'Real Estate',
-    imageUrl:
-      '/uploads/public/images/about/industries/real-estate.svg',
-    to: '/industries/real-estate',
-    accent: '#39FF6A',
-  },
-  {
-    id: 'oil-gas',
-    title: 'Oil and Gas',
-    imageUrl:
-      '/uploads/public/images/about/industries/oil-gas.svg',
-    to: '/industries/oil-gas',
-    accent: '#FF9F1C',
-  },
-  {
-    id: 'creative-entertainment',
-    title: 'Creative and Entertainment',
-    imageUrl:
-      '/uploads/public/images/about/industries/creative-entertainment.svg',
-    to: '/industries/creative-entertainment',
-    accent: '#8A2BE2',
-  },
-  {
-    id: 'professional-services',
-    title: 'Professional Services',
-    imageUrl:
-      '/uploads/public/images/about/industries/professional-services.svg',
-    to: '/industries/professional-services',
-    accent: '#00C2FF',
-  },
-  {
-    id: 'hospitality',
-    title: 'Travel and Hospitality',
-    imageUrl:
-      '/uploads/public/images/about/industries/hospitality.svg',
-    to: '/industries/hospitality',
-    accent: '#0A3DFF',
-  },
-  {
-    id: 'transport-logistics',
-    title: 'Transport and Logistics',
-    imageUrl:
-      '/uploads/public/images/about/industries/transport-logistics.svg',
-    to: '/industries/transport-logistics',
-    accent: '#39FF6A',
-  },
-  {
-    id: 'financial-services',
-    title: 'Financial Services',
-    imageUrl:
-      '/uploads/public/images/about/industries/financial-services.svg',
-    to: '/industries/financial-services',
-    accent: '#FF9F1C',
-  },
-  {
-    id: 'manufacturing',
-    title: 'Manufacturing',
-    imageUrl:
-      '/uploads/public/images/about/industries/manufacturing.svg',
-    to: '/industries/manufacturing',
-    accent: '#8A2BE2',
-  },
-  {
-    id: 'construction',
-    title: 'Engineering and Construction',
-    imageUrl:
-      '/uploads/public/images/about/industries/construction.svg',
-    to: '/industries/construction',
-    accent: '#00C2FF',
-  },
-  {
-    id: 'telecommunications',
-    title: 'Telecommunications',
-    imageUrl:
-      '/uploads/public/images/about/industries/telecommunications.svg',
-    to: '/industries/telecommunications',
-    accent: '#0A3DFF',
-  },
-  {
-    id: 'health-services',
-    title: 'Health and Wellness',
-    imageUrl:
-      '/uploads/public/images/about/industries/health-services.svg',
-    to: '/industries/health-services',
-    accent: '#39FF6A',
-  },
-  {
-    id: 'energy-utilities',
-    title: 'Energy and Utilities',
-    imageUrl:
-      '/uploads/public/images/about/industries/energy-utilities.svg',
-    to: '/industries/energy-utilities',
-    accent: '#FF9F1C',
-  },
-  {
-    id: 'public-community',
-    title: 'Public and Community Services',
-    imageUrl:
-      '/uploads/public/images/about/industries/public-community.svg',
-    to: '/industries/public-community',
-    accent: '#8A2BE2',
-  },
-  {
-    id: 'technology-startups',
-    title: 'Technology Startups',
-    imageUrl:
-      '/uploads/public/images/about/industries/technology-startups.svg',
-    to: '/industries/technology-startups',
-    accent: '#00C2FF',
-  },
-];
-
 const normalizeIndustry = (industry, index) => ({
   id:
     industry?.id ||
@@ -194,7 +54,6 @@ const AboutIndustriesGrid = ({
 
   const headingData = useMemo(
     () => ({
-      ...DEFAULT_HEADING,
       ...(heading || {}),
     }),
     [heading]
@@ -205,7 +64,7 @@ const AboutIndustriesGrid = ({
       Array.isArray(industries) &&
         industries.length
         ? industries
-        : DEFAULT_INDUSTRIES;
+        : [];
 
     return source
       .map(normalizeIndustry)

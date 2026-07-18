@@ -27,30 +27,6 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_HEADING = {
-  enabled: true,
-
-  title:
-    'Our Clients',
-
-  description:
-    'AngiSoft works with businesses, institutions, professionals and growing ventures that need practical digital solutions and dependable technical support.',
-
-  targetMarketLabel:
-    'Our solutions are designed for:',
-
-  targetMarkets: [
-    'Small and Medium Businesses',
-    'Retail and Supermarkets',
-    'Schools and Training Institutions',
-    'Property and Rental Businesses',
-    'Fuel Stations',
-    'Creative Professionals',
-    'Startups and Growing Ventures',
-    'Individual Professionals',
-  ],
-};
-
 const normalizeClient = (
   client,
   index
@@ -128,7 +104,6 @@ const AboutClientsSlider = ({
 
   const headingData = useMemo(
     () => ({
-      ...DEFAULT_HEADING,
       ...(heading || {}),
     }),
     [heading]
@@ -159,7 +134,7 @@ const AboutClientsSlider = ({
           headingData.targetMarkets
         )
           ? headingData.targetMarkets
-          : DEFAULT_HEADING.targetMarkets
+          : []
       )
         .map(normalizeMarket)
         .filter(

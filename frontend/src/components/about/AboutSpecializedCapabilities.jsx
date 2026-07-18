@@ -17,64 +17,6 @@ import {
   FaRobot,
 } from 'react-icons/fa';
 
-const DEFAULT_CONTENT = {
-  enabled: true,
-
-  introduction:
-    'We eagerly put in use specialized technology capabilities',
-
-  capabilities: [
-    {
-      id: 'ai-assisted-engineering',
-      title: 'AI-Assisted Engineering',
-      icon: 'ai',
-      to: '/capabilities/ai-assisted-engineering',
-    },
-    {
-      id: 'data-analysis',
-      title: 'Data Analysis',
-      icon: 'data',
-      to: '/services/data-analysis',
-    },
-    {
-      id: 'legacy-modernization',
-      title: 'Legacy Modernization',
-      icon: 'modernization',
-      to: '/services/software-modernization',
-    },
-    {
-      id: 'multi-role-systems',
-      title: 'Multi-Role Systems',
-      icon: 'roles',
-      to: '/capabilities/role-based-systems',
-    },
-    {
-      id: 'api-integration',
-      title: 'API Integration',
-      icon: 'integration',
-      to: '/services/system-integration',
-    },
-    {
-      id: 'cross-platform-apps',
-      title: 'Cross-Platform Apps',
-      icon: 'mobile',
-      to: '/services/mobile-development',
-    },
-    {
-      id: 'workflow-automation',
-      title: 'Workflow Automation',
-      icon: 'automation',
-      to: '/solutions/workflow-automation',
-    },
-    {
-      id: 'cloud-deployment',
-      title: 'Cloud Deployment',
-      icon: 'cloud',
-      to: '/services/cloud-deployment',
-    },
-  ],
-};
-
 const ICONS = {
   ai: FaBrain,
   automation: FaRobot,
@@ -134,7 +76,6 @@ const AboutSpecializedCapabilities = ({
 
   const data = useMemo(
     () => ({
-      ...DEFAULT_CONTENT,
       ...(content || {}),
     }),
     [content]
@@ -145,7 +86,7 @@ const AboutSpecializedCapabilities = ({
       Array.isArray(data.capabilities) &&
       data.capabilities.length
         ? data.capabilities
-        : DEFAULT_CONTENT.capabilities;
+        : [];
 
     return source
       .map(normalizeCapability)

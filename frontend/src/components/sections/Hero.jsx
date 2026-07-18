@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useTheme } from "../../contexts/ThemeContext";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Link } from 'react-router-dom';
 import { apiGet } from '../../js/httpClient';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 import { APP_NAME } from '../../utils/constants';
@@ -12,15 +12,60 @@ import {
   FaProjectDiagram,
   FaAward,
   FaHeadset,
-  FaPlay,
   FaChevronDown
-} from "react-icons/fa";
-import { AnimatedCounter, ScrollReveal } from "../modern";
+} from 'react-icons/fa';
+import { AnimatedCounter, ScrollReveal } from '../modern';
+import '../../css/Hero.css';
 
-// Icon mapping for dynamic icons from database
+// Icon mapping for dynamic icons from the database.
 const iconMap = {
-  FaUsers, FaProjectDiagram, FaAward, FaHeadset, FaRocket, FaCalendarCheck
+  FaUsers,
+  FaProjectDiagram,
+  FaAward,
+  FaHeadset,
+  FaRocket,
+  FaCalendarCheck
 };
+
+// Stable slug so stat keys never shift on re-render.
+const slugify = (value = '') =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || `stat-${Math.random().toString(36).slice(2, 8)}`;
+
+// Accept a raw object OR a wrapper { data | hero }.
+const extractHero = (response) => {
+  if (!response || typeof response !== 'object') return {};
+  return response.data || response.hero || response;
+};
+const extractBranding = (response) => {
+  if (!response || typeof response !== 'object') return null;
+  return response.data || response.branding || response;
+};
+
+// Truthful fallback used when the API fails or returns no usable content.
+// No fabricated metrics — only verifiable facts about AngiSoft.
+const getDefaultHeroData = () => ({
+  badge: 'Innovate • Build • Empower',
+  welcomeLabel: 'Welcome to',
+  headline: "Building Tomorrow's",
+  headlineHighlight: "Digital Solutions",
+  subheadline: 'Today',
+  tagline:
+    'We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.',
+  ctaPrimary: { text: 'Start Your Project', link: '/book' },
+  ctaSecondary: { text: 'View Our Work', link: '/products' },
+  stats: [
+    { id: 'founded', value: 2024, suffix: '', label: 'Officially Founded', icon: 'FaRocket', type: 'year' },
+    { id: 'service-areas', value: 6, suffix: '+', label: 'Core Service Areas', icon: 'FaProjectDiagram', type: 'count' },
+    { id: 'products', value: 4, suffix: '', label: 'Product Ecosystems', icon: 'FaAward', type: 'count' },
+    { id: 'principles', value: 3, suffix: '', label: 'Brand Principles', icon: 'FaHeadset', type: 'count' }
+  ],
+  backgroundVideo: '/videos/Matrix_rain_code.mp4',
+  backgroundImage: '/uploads/public/images/Software-Development-Company.jpg'
+});
 
 const Hero = () => {
   const { colors } = useTheme();
@@ -31,82 +76,55 @@ const Hero = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [heroData, setHeroData] = useState(null);
+  const [heroData, setHeroData] = useState(getDefaultHeroData());
   const [branding, setBranding] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const getResponsiveValue = (values) => {
-    const w = window.innerWidth;
-    if (w < 360) return values[360];
-    if (w < 420) return values[420];
-    if (w < 475) return values[475];
-    if (w < 575) return values[575];
-    if (w < 768) return values[768];
-    if (w < 900) return values[900];
-    if (w < 1024) return values[1024];
-    if (w < 1366) return values[1366];
-    if (w < 1440) return values[1440];
-    if (w < 1920) return values[1920];
-    return values[1920];
-  };
-
+  // Load hero + branding content (truthful fallback renders immediately).
   useEffect(() => {
+    let active = true;
+
     const fetchHero = async () => {
       try {
         const [hero, brand] = await Promise.all([
           apiGet('/site/hero'),
           apiGet('/site/branding')
         ]);
-        setHeroData(hero || getDefaultHeroData());
-        setBranding(brand || null);
-      } catch {
+        if (!active) return;
+        setHeroData(extractHero(hero) || getDefaultHeroData());
+        setBranding(extractBranding(brand) || null);
+      } catch (error) {
+        if (!active) return;
+        console.error('Failed to load hero content:', error);
         setHeroData(getDefaultHeroData());
-      } finally {
-        setLoading(false);
       }
     };
+
     fetchHero();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Fallback hero data when API is unavailable
-  const getDefaultHeroData = () => ({
-    headline: "Building Tomorrow's",
-    headlineHighlight: "Digital Solutions",
-    subheadline: "Today",
-    tagline: "We transform ideas into powerful software products that drive business growth and innovation across Africa and beyond.",
-    ctaPrimary: { text: "Start Your Project", link: "/book" },
-    ctaSecondary: { text: "View Our Work", link: "/#projects" },
-    stats: [
-      { value: 50, suffix: "+", label: "Happy Clients", icon: "FaUsers" },
-      { value: 100, suffix: "+", label: "Projects Delivered", icon: "FaProjectDiagram" },
-      { value: 5, suffix: "+", label: "Years Experience", icon: "FaAward" },
-      { value: 24, suffix: "/7", label: "Support Available", icon: "FaHeadset" }
-    ],
-    backgroundVideo: "/videos/Matrix_rain_code.mp4",
-    backgroundImage: "/images/Software-Development-Company.jpg"
-  });
-
+  // Track reduced-motion preference.
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotionPreference = () => setReduceMotion(mediaQuery.matches);
-
     updateMotionPreference();
     mediaQuery.addEventListener('change', updateMotionPreference);
-
     return () => mediaQuery.removeEventListener('change', updateMotionPreference);
   }, []);
 
+  // Mouse parallax — only on devices that truly hover with a fine pointer.
   useEffect(() => {
     if (reduceMotion) return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
     const handleMouseMove = (e) => {
       pendingMousePositionRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 20,
         y: (e.clientY / window.innerHeight - 0.5) * 20
       };
-
       if (mouseMoveFrameRef.current) return;
-
       mouseMoveFrameRef.current = requestAnimationFrame(() => {
         setMousePosition(pendingMousePositionRef.current);
         mouseMoveFrameRef.current = null;
@@ -116,205 +134,185 @@ const Hero = () => {
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      if (mouseMoveFrameRef.current) {
-        cancelAnimationFrame(mouseMoveFrameRef.current);
-      }
+      if (mouseMoveFrameRef.current) cancelAnimationFrame(mouseMoveFrameRef.current);
     };
   }, [reduceMotion]);
 
   const content = heroData;
-  const stats = (content?.stats || []).map(s => ({
-    ...s,
-    icon: iconMap[s.icon] || FaUsers
-  }));
-  const headlineText = [content?.headline, content?.headlineHighlight].filter(Boolean).join(' ');
-  const subheadline = content?.subheadline;
-  const primaryCta = content?.ctaPrimary;
-  const secondaryCta = content?.ctaSecondary;
-  const normalizeCtaLink = (link) => (link === '/booking' ? '/book' : link);
-  const backgroundImage = content?.backgroundImage;
-  const backgroundVideo = content?.backgroundVideo;
   const heroCopy = uiCopy?.home?.hero || {};
   const brandName = branding?.siteName || APP_NAME;
+  const backgroundImage = content?.backgroundImage;
+  const backgroundVideo = content?.backgroundVideo;
+  const hasVideo = Boolean(backgroundVideo);
 
-  // Handle video autoplay with fallback
+  const stats = (content?.stats || []).map((s) => ({
+    ...s,
+    id: s.id || s.slug || slugify(s.label),
+    icon: iconMap[s.icon] || FaRocket
+  }));
+
+  // Cap parallax travel a touch and keep it subtle.
+  const radialX = 50 + mousePosition.x;
+  const radialY = 50 + mousePosition.y;
+
+  // ── Video autoplay handling (no JS-driven layout) ──
+  const handleVideoReady = useCallback(() => setVideoLoaded(true), []);
+  const handleVideoError = useCallback(() => setVideoLoaded(false), []);
+
   useEffect(() => {
     if (!backgroundVideo || reduceMotion) {
       setVideoLoaded(false);
       return;
     }
-
     const video = videoRef.current;
     if (!video) return;
-
     video.setAttribute('autoplay', '');
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
-
     const playVideo = async () => {
       try {
         await video.play();
+        setVideoLoaded(true);
       } catch {
         setVideoLoaded(false);
       }
     };
-
     const playTimeout = setTimeout(playVideo, 500);
     return () => clearTimeout(playTimeout);
   }, [backgroundVideo, reduceMotion]);
 
-  if (loading) {
-    return (
-      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Show default gradient while loading */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%)`
-          }}
+  /* ── HeroBackground ── */
+  const HeroBackground = (
+    <div className="angi-hero-background" aria-hidden="true">
+      {backgroundImage && (
+        <img
+          className="angi-hero-poster"
+          src={backgroundImage}
+          alt=""
         />
-        <div className="relative z-10 text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-lg">Loading...</p>
-        </div>
-      </section>
-    );
-  }
+      )}
+      {hasVideo && !reduceMotion && (
+        <video
+          ref={videoRef}
+          className="angi-hero-video angi-video-bg"
+          autoPlay
+          loop
+          muted
+          playsInline
+          controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
+          controlsList="nodownload nofullscreen noremoteplayback"
+          preload="metadata"
+          tabIndex={-1}
+          onLoadedData={handleVideoReady}
+          onPlaying={handleVideoReady}
+          onError={handleVideoError}
+        >
+          <source src={backgroundVideo} type="video/mp4" />
+        </video>
+      )}
+    </div>
+  );
 
-  if (!content) {
-    return (
-      <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%)`
-          }}
-        />
-        <div className="relative z-10 text-center text-white">
-          <p className="text-lg">Unable to load content</p>
-        </div>
-      </section>
-    );
-  }
+  /* ── HeroBadge ── */
+  const HeroBadge = content?.badge || heroCopy?.badge ? (
+    <ScrollReveal animation="fadeDown" delay={0}>
+      <div className="angi-hero-badge">
+        <span className="angi-hero-badge-dot" aria-hidden="true" />
+        {content?.badge || heroCopy?.badge}
+      </div>
+    </ScrollReveal>
+  ) : null;
+
+  /* ── HeroActions ── */
+  const primaryCta = content?.ctaPrimary;
+  const secondaryCta = content?.ctaSecondary;
+  const HeroActions = (
+    <ScrollReveal animation="fadeUp" delay={500}>
+      <div className="angi-hero-actions">
+        {primaryCta?.text && primaryCta?.link && (
+          <Link to={primaryCta.link} className="angi-hero-action angi-hero-action--primary">
+            <FaRocket className="angi-hero-action-icon" />
+            {primaryCta.text}
+            <FaArrowRight className="angi-hero-action-arrow" />
+          </Link>
+        )}
+        {secondaryCta?.text && secondaryCta?.link && (
+          <Link to={secondaryCta.link} className="angi-hero-action angi-hero-action--secondary">
+            <FaCalendarCheck className="angi-hero-action-icon" />
+            {secondaryCta.text}
+          </Link>
+        )}
+      </div>
+    </ScrollReveal>
+  );
+
+  /* ── HeroStats ── */
+  const HeroStats = stats.length > 0 && (
+    <ScrollReveal animation="fadeUp" delay={700}>
+      <div className="angi-hero-stats">
+        {stats.map((stat) => (
+          <article key={stat.id} className="angi-hero-stat">
+            <div className="angi-hero-stat-icon" aria-hidden="true">
+              <stat.icon />
+            </div>
+            <p className="angi-hero-stat-value">
+              <AnimatedCounter
+                end={stat.value}
+                valueType={stat.valueType || stat.type}
+                suffix={stat.suffix}
+                label={stat.label}
+              />
+            </p>
+            <p className="angi-hero-stat-label">{stat.label}</p>
+          </article>
+        ))}
+      </div>
+    </ScrollReveal>
+  );
+
+  /* ── HeroScrollIndicator ── */
+  const HeroScrollIndicator = (
+    <a className="angi-hero-scroll" href="#key-facts" aria-label="Scroll to key facts">
+      <span className="angi-hero-scroll-label">Scroll</span>
+      <FaChevronDown aria-hidden="true" />
+    </a>
+  );
 
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className={`angi-hero ${hasVideo ? 'has-video' : ''} ${videoLoaded ? 'is-video-loaded' : ''}`}
       style={{
-        marginTop: getResponsiveValue({ 360: '3.5rem', 420: '3.75rem', 475: '4rem', 575: '4.25rem', 768: '4.5rem', 900: '4.75rem', 1024: '5rem', 1366: '5.25rem', 1440: '5.5rem', 1920: '5.75rem' })
+        // Only dynamic theme tokens stay inline.
+        '--hero-primary': colors.primary,
+        '--hero-secondary': colors.secondary,
+        '--hero-primary-dark': colors.primaryDark || colors.primary
       }}
     >
-      {/* Video Background */}
-      <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
-        {/* Base gradient - always visible */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%)`
-          }}
-        />
+      {HeroBackground}
 
-        {/* Image Poster - Primary fallback */}
-        {backgroundImage && (
-          <img
-            src={backgroundImage}
-            alt="Hero Background"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              opacity: videoLoaded ? 0 : 0.48,
-              transition: 'opacity 0.8s ease-in-out',
-              filter: 'saturate(0.85) contrast(1.08)'
-            }}
-          />
-        )}
-
-        {/* Video Element */}
-        {backgroundVideo && !reduceMotion && (
-          <video
-            ref={videoRef}
-            autoPlay={true}
-            loop={true}
-            muted={true}
-            playsInline={true}
-            controls={false}
-            disablePictureInPicture={true}
-            preload="metadata"
-            onLoadedData={() => setVideoLoaded(true)}
-            onError={() => setVideoLoaded(false)}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              opacity: videoLoaded ? 0.4 : 0,
-              transition: 'opacity 0.8s ease-in-out',
-              display: 'block',
-              width: '100%',
-              height: '100%',
-              zIndex: 1,
-              pointerEvents: 'none'
-            }}
-          >
-            <source src={backgroundVideo} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        )}
+      {/* Radial mouse-glow overlay (decorative) */}
+      <div
+        className="angi-hero-orbs"
+        aria-hidden="true"
+        style={{
+          background: `radial-gradient(ellipse at ${radialX}% ${radialY}%, color-mix(in srgb, ${colors.primary} 18%, transparent) 0%, transparent 46%)`
+        }}
+      >
+        <span className="angi-hero-orb angi-hero-orb--primary" />
+        <span className="angi-hero-orb angi-hero-orb--secondary" />
+        <span className="angi-hero-orb angi-hero-orb--tertiary" />
       </div>
 
-      {/* Refined Ambient Overlay */}
-      <div
-        className="absolute inset-0 z-1"
-        style={{
-          background: `radial-gradient(ellipse at ${50 + mousePosition.x}% ${50 + mousePosition.y}%,
-            ${colors.primary}18 0%,
-            transparent 46%)`,
-          pointerEvents: 'none'
-        }}
-      />
+      {/* Grid pattern (decorative) */}
+      <div className="angi-hero-grid" aria-hidden="true" />
 
-      {/* Floating Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-1">
-        <div
-          className="absolute w-96 h-96 rounded-full blur-3xl animate-pulse"
-          style={{
-            top: '10%',
-            left: '5%',
-            backgroundColor: `${colors.primary}20`,
-            animationDuration: '4s'
-          }}
-        />
-        <div
-          className="absolute w-80 h-80 rounded-full blur-3xl animate-pulse"
-          style={{
-            bottom: '15%',
-            right: '10%',
-            backgroundColor: `${colors.secondary}15`,
-            animationDuration: '6s',
-            animationDelay: '2s'
-          }}
-        />
-        <div
-          className="absolute w-64 h-64 rounded-full blur-3xl animate-pulse"
-          style={{
-            top: '40%',
-            right: '30%',
-            backgroundColor: `${colors.primary}10`,
-            animationDuration: '8s',
-            animationDelay: '1s'
-          }}
-        />
-      </div>
-
-      {/* Grid Pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.03] z-1"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}
-      />
-
-      {/* Animated Lines */}
-      <svg className="absolute inset-0 w-full h-full opacity-5 z-1" xmlns="http://www.w3.org/2000/svg">
+      {/* Animated lines (decorative, focusable=false) */}
+      <svg className="angi-hero-lines" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
         <defs>
-          <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="heroLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={colors.primary} />
             <stop offset="100%" stopColor={colors.secondary} />
           </linearGradient>
@@ -326,263 +324,47 @@ const Hero = () => {
             y1="100%"
             x2="100%"
             y2={`${i * 20}%`}
-            stroke="url(#lineGrad)"
+            stroke="url(#heroLineGrad)"
             strokeWidth="1"
-            className="animate-pulse"
-            style={{ animationDelay: `${i * 0.3}s` }}
           />
         ))}
       </svg>
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 text-center" style={{
-        paddingTop: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-        paddingBottom: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' })
-      }}>
-        {/* Status Badge */}
-        <ScrollReveal animation="fadeDown" delay={0}>
-          <div
-            className="inline-flex items-center gap-3 rounded-full text-sm font-medium"
-            style={{
-              padding: getResponsiveValue({ 360: '0.4rem 0.75rem', 420: '0.425rem 0.875rem', 475: '0.45rem 1rem', 575: '0.475rem 1.125rem', 768: '0.5rem 1.25rem', 900: '0.5rem 1.375rem', 1024: '0.525rem 1.5rem', 1366: '0.55rem 1.625rem', 1440: '0.6rem 1.75rem', 1920: '0.625rem 2rem' }),
-              marginBottom: getResponsiveValue({ 360: '1rem', 420: '1.125rem', 475: '1.25rem', 575: '1.375rem', 768: '1.5rem', 900: '1.5rem', 1024: '1.625rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'rgba(255,255,255,0.9)'
-            }}
-          >
-            <span className="relative flex h-2.5 w-2.5">
-              <span
-                className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                style={{ backgroundColor: colors.primary }}
-              />
-              <span
-                className="relative inline-flex rounded-full h-2.5 w-2.5"
-                style={{ backgroundColor: colors.primary }}
-              />
-            </span>
-            Trusted by 50+ Clients Worldwide
-          </div>
-        </ScrollReveal>
+      <div className="angi-hero-container">
+        {HeroBadge}
 
-        {/* Heading */}
-        {heroCopy.welcomeLabel && (
+        {heroCopy.welcomeLabel && (content?.welcomeLabel !== false) && (
           <ScrollReveal animation="fadeUp" delay={100}>
-            <h2 className="font-medium text-white/70" style={{
-              fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.05rem', 768: '1.1rem', 900: '1.15rem', 1024: '1.2rem', 1366: '1.3rem', 1440: '1.4rem', 1920: '1.5rem' }),
-              marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1.125rem', 1440: '1.25rem', 1920: '1.375rem' })
-            }}>
+            <p className="angi-hero-welcome">
               {heroCopy.welcomeLabel} {brandName}
-            </h2>
+            </p>
           </ScrollReveal>
         )}
 
         <ScrollReveal animation="scaleUp" delay={200}>
-          <h1
-            className="font-black tracking-tight"
-            style={{
-              fontSize: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3.5rem', 1024: '4rem', 1366: '4.5rem', 1440: '5rem', 1920: '5.5rem' }),
-              marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-              background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, #a78bfa 100%)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              textShadow: '0 0 80px rgba(20, 184, 166, 0.3)'
-            }}
-          >
-            {headlineText}
+          <h1 className="angi-hero-title">
+            {content?.headline}
+            {content?.headlineHighlight && (
+              <span className="angi-hero-title-highlight">{content.headlineHighlight}</span>
+            )}
           </h1>
         </ScrollReveal>
 
-        {subheadline && (
-          <ScrollReveal animation="slideUp" delay={300}>
-            <h3
-              className="font-semibold tracking-wide text-white/90"
-              style={{
-                fontSize: getResponsiveValue({ 360: '0.9rem', 420: '0.95rem', 475: '1rem', 575: '1.1rem', 768: '1.2rem', 900: '1.35rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-                marginBottom: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1.125rem', 1024: '1.25rem', 1366: '1.375rem', 1440: '1.5rem', 1920: '1.75rem' })
-              }}
-            >
-              {subheadline}
-            </h3>
+        {content?.subheadline && (
+          <ScrollReveal animation="fadeUp" delay={300}>
+            <p className="angi-hero-subheadline">{content.subheadline}</p>
           </ScrollReveal>
         )}
 
         <ScrollReveal animation="fadeUp" delay={400}>
-          <div className="flex flex-col sm:flex-row flex-wrap justify-center">
-            <p
-              className="text-white/60 max-w-3xl mx-auto leading-relaxed text-center"
-              style={{
-                fontSize: getResponsiveValue({ 360: '0.875rem', 420: '0.9rem', 475: '0.95rem', 575: '1rem', 768: '1.05rem', 900: '1.1rem', 1024: '1.15rem', 1366: '1.2rem', 1440: '1.25rem', 1920: '1.375rem' }),
-                marginBottom: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' })
-              }}
-            >
-              {content.tagline}
-            </p>
-          </div>
+          <p className="angi-hero-tagline">{content?.tagline}</p>
         </ScrollReveal>
 
-        {/* CTA Buttons */}
-        <ScrollReveal animation="fadeUp" delay={500}>
-          <div
-            className="flex flex-col sm:flex-row flex-wrap justify-center"
-            style={{
-              gap: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.25rem', 1024: '1.375rem', 1366: '1.5rem', 1440: '1.625rem', 1920: '1.75rem' })
-            }}
-          >
-            {primaryCta?.text && primaryCta?.link && (
-              <Link
-                to={normalizeCtaLink(primaryCta.link)}
-                className="group inline-flex items-center justify-center text-white shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
-                style={{
-                  padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
-                  fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
-                  gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || colors.primary} 100%)`,
-                  boxShadow: `0 20px 40px ${colors.primary}40`
-                }}
-              >
-                <FaRocket className="group-hover:rotate-12 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-                {primaryCta.text}
-                <FaArrowRight className="opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" style={{ fontSize: getResponsiveValue({ 360: '0.5rem', 420: '0.55rem', 475: '0.6rem', 575: '0.6rem', 768: '0.65rem', 900: '0.7rem', 1024: '0.7rem', 1366: '0.8rem', 1440: '0.85rem', 1920: '0.95rem' }) }} />
-              </Link>
-            )}
-            {secondaryCta?.text && secondaryCta?.link && (
-              <Link
-                to={normalizeCtaLink(secondaryCta.link)}
-                className="group inline-flex items-center justify-center text-white border-2 hover:-translate-y-1 transition-all duration-300 rounded-xl font-semibold"
-                style={{
-                  padding: getResponsiveValue({ 360: '0.4rem 1rem', 420: '0.425rem 1.125rem', 475: '0.45rem 1.25rem', 575: '0.475rem 1.375rem', 768: '0.5rem 1.5rem', 900: '0.5rem 1.5rem', 1024: '0.525rem 1.625rem', 1366: '0.55rem 1.75rem', 1440: '0.6rem 1.875rem', 1920: '0.625rem 2rem' }),
-                  fontSize: getResponsiveValue({ 360: '0.75rem', 420: '0.8rem', 475: '0.85rem', 575: '0.9rem', 768: '0.95rem', 900: '1rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.2rem' }),
-                  gap: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.5rem', 575: '0.6rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.75rem', 1366: '1rem', 1440: '1rem', 1920: '1rem' }),
-                  background: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(10px)',
-                  borderColor: 'rgba(255,255,255,0.2)'
-                }}
-              >
-                <FaCalendarCheck className="group-hover:scale-110 transition-transform" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-                {secondaryCta.text}
-              </Link>
-            )}
-          </div>
-        </ScrollReveal>
+        {HeroActions}
 
-        {/* Video Showreel Button */}
-        {heroCopy.showreelLabel && (
-          <ScrollReveal animation="fadeUp" delay={600}>
-            <button
-              className="inline-flex items-center text-white/70 hover:text-white transition-colors group"
-              style={{
-                marginTop: getResponsiveValue({ 360: '1.5rem', 420: '1.75rem', 475: '2rem', 575: '2.25rem', 768: '2.5rem', 900: '2.5rem', 1024: '2.75rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-                gap: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.75rem', 768: '0.875rem', 900: '0.875rem', 1024: '1rem', 1366: '1rem', 1440: '1.125rem', 1920: '1.25rem' })
-              }}
-            >
-              <div
-                className="rounded-full flex items-center justify-center transition-all group-hover:scale-110"
-                style={{
-                  width: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-                  height: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.5rem', 768: '2.75rem', 900: '2.75rem', 1024: '3rem', 1366: '3rem', 1440: '3.25rem', 1920: '3.5rem' }),
-                  background: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)'
-                }}
-              >
-                <FaPlay size={14} className="ml-0.5" style={{ fontSize: getResponsiveValue({ 360: '0.6rem', 420: '0.65rem', 475: '0.7rem', 575: '0.75rem', 768: '0.8rem', 900: '0.85rem', 1024: '0.9rem', 1366: '1rem', 1440: '1.05rem', 1920: '1.15rem' }) }} />
-              </div>
-              <span className="font-medium" style={{ fontSize: getResponsiveValue({ 360: '0.65rem', 420: '0.7rem', 475: '0.75rem', 575: '0.8rem', 768: '0.85rem', 900: '0.9rem', 1024: '0.95rem', 1366: '1rem', 1440: '1rem', 1920: '1.05rem' }) }}>{heroCopy.showreelLabel}</span>
-            </button>
-          </ScrollReveal>
-        )}
+        {HeroStats}
 
-        {/* Stats Section */}
-        <ScrollReveal animation="fadeUp" delay={700}>
-          <div
-            className="grid grid-cols-2 md:grid-cols-4"
-            style={{
-              gap: getResponsiveValue({ 360: '0.5rem', 420: '0.625rem', 475: '0.75rem', 575: '0.875rem', 768: '1rem', 900: '1rem', 1024: '1.125rem', 1366: '1.25rem', 1440: '1.375rem', 1920: '1.5rem' }),
-              marginTop: getResponsiveValue({ 360: '2rem', 420: '2.5rem', 475: '2.75rem', 575: '3rem', 768: '3.5rem', 900: '3.5rem', 1024: '3.75rem', 1366: '4rem', 1440: '4.25rem', 1920: '4.5rem' }),
-              paddingTop: getResponsiveValue({ 360: '1rem', 420: '1.125rem', 475: '1.25rem', 575: '1.375rem', 768: '1.5rem', 900: '1.5rem', 1024: '1.625rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-              borderTop: '1px solid rgba(255,255,255,0.1)'
-            }}
-          >
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="group text-center rounded-xl transition-all duration-300 hover:-translate-y-2 flex flex-col items-center justify-center"
-                style={{
-                  padding: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.25rem', 1024: '1.375rem', 1366: '1.5rem', 1440: '1.625rem', 1920: '1.75rem' }),
-                  background: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
-              >
-                <div
-                  className="mx-auto rounded-lg group-hover:scale-110 transition-transform"
-                  style={{
-                    width: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3rem', 1024: '3.25rem', 1366: '3.5rem', 1440: '3.75rem', 1920: '4rem' }),
-                    height: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3rem', 1024: '3.25rem', 1366: '3.5rem', 1440: '3.75rem', 1920: '4rem' }),
-                    marginBottom: getResponsiveValue({ 360: '0.4rem', 420: '0.5rem', 475: '0.625rem', 575: '0.625rem', 768: '0.75rem', 900: '0.75rem', 1024: '0.875rem', 1366: '0.875rem', 1440: '1rem', 1920: '1.125rem' }),
-                    background: `linear-gradient(135deg, ${colors.primary}30 0%, ${colors.secondary}20 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    lineHeight: 1
-                  }}
-                >
-                  <stat.icon style={{ color: colors.primary, fontSize: getResponsiveValue({ 360: '1rem', 420: '1.1rem', 475: '1.2rem', 575: '1.25rem', 768: '1.4rem', 900: '1.4rem', 1024: '1.5rem', 1366: '1.6rem', 1440: '1.7rem', 1920: '1.875rem' }), lineHeight: 1 }}  />
-                </div>
-                <p
-                  className="font-bold"
-                  style={{
-                    fontSize: getResponsiveValue({ 360: '1.25rem', 420: '1.375rem', 475: '1.5rem', 575: '1.75rem', 768: '1.875rem', 900: '2rem', 1024: '2.25rem', 1366: '2.5rem', 1440: '2.75rem', 1920: '3rem' }),
-                    marginBottom: getResponsiveValue({ 360: '0.2rem', 420: '0.25rem', 475: '0.25rem', 575: '0.375rem', 768: '0.375rem', 900: '0.375rem', 1024: '0.5rem', 1366: '0.5rem', 1440: '0.625rem', 1920: '0.75rem' }),
-                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text"
-                  }}
-                >
-                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                </p>
-                <p
-                  className="text-white/50"
-                  style={{
-                    fontSize: getResponsiveValue({ 360: '0.7rem', 420: '0.75rem', 475: '0.8rem', 575: '0.85rem', 768: '0.9rem', 900: '0.95rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.15rem' })
-                  }}
-                >
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </ScrollReveal>
-
-        {/* Scroll Indicator */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 animate-bounce"
-          style={{
-            bottom: getResponsiveValue({ 360: '1rem', 420: '1.125rem', 475: '1.25rem', 575: '1.375rem', 768: '1.5rem', 900: '1.5rem', 1024: '1.75rem', 1366: '1.875rem', 1440: '2rem', 1920: '2rem' })
-          }}
-        >
-          <a
-            href="#about"
-            className="flex flex-col items-center text-white/40 hover:text-white/70 transition-colors"
-            style={{
-              gap: getResponsiveValue({ 360: '0.3rem', 420: '0.375rem', 475: '0.4rem', 575: '0.5rem', 768: '0.5rem', 900: '0.5rem', 1024: '0.5rem', 1366: '0.625rem', 1440: '0.625rem', 1920: '0.75rem' })
-            }}
-          >
-            <span
-              className="uppercase tracking-widest font-medium"
-              style={{
-                fontSize: getResponsiveValue({ 360: '0.55rem', 420: '0.6rem', 475: '0.65rem', 575: '0.7rem', 768: '0.75rem', 900: '0.8rem', 1024: '0.8rem', 1366: '0.85rem', 1440: '0.9rem', 1920: '0.95rem' })
-              }}
-            >
-              Scroll
-            </span>
-            <FaChevronDown style={{ fontSize: getResponsiveValue({ 360: '0.7rem', 420: '0.75rem', 475: '0.8rem', 575: '0.85rem', 768: '0.9rem', 900: '0.95rem', 1024: '1rem', 1366: '1.05rem', 1440: '1.1rem', 1920: '1.25rem' }) }} />
-          </a>
-        </div>
+        {HeroScrollIndicator}
       </div>
     </section>
   );
