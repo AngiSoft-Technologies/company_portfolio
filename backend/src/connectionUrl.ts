@@ -10,20 +10,37 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Strip wrapping quotes/whitespace that some platforms (e.g. Railway) inject
+ * into a variable's *value* when it was entered with surrounding quotes.
+ * `new URL('"postgresql://…"')` throws, which Prisma surfaces misleadingly as
+ * "datasource.url property is required" — stripping here avoids that.
+ */
+function sanitizeUrl(value: string): string {
+  const trimmed = value.trim();
+  return trimmed
+    .replace(/^"([\s\S]*)"$/, '$1')
+    .replace(/^'([\s\S]*)'$/, '$1')
+    .trim();
+}
+
 /** Resolve the raw DATABASE_URL (Neon fallback supported). */
 export function getRawDatabaseUrl(): string {
-  const url = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
-  if (!url) {
-    // `prisma generate` reads the URL but never opens a connection, so a
-    // placeholder lets the client build in environments (e.g. the Dockerfile's
-    // generate step) where the real DATABASE_URL is only injected later at
-    // migrate/seed/runtime. Actual DB calls will fail loudly with a clear error.
-    console.warn(
-      '[connectionUrl] DATABASE_URL not set; using placeholder for client generation only.'
-    );
-    return 'postgresql://user:password@localhost:5432/app';
+  const candidates = [process.env.DATABASE_URL, process.env.NEON_DATABASE_URL];
+  for (const url of candidates) {
+    if (url && url.trim()) {
+      return sanitizeUrl(url);
+    }
   }
-  return url;
+  // `prisma generate` reads the URL but never opens a connection, so a
+  // placeholder lets the client build in environments (e.g. the Dockerfile's
+  // generate step) where the real DATABASE_URL is only injected later at
+  // migrate/seed/runtime. Actual DB calls will then fail loudly with a clear
+  // connection error rather than a config-load crash.
+  console.warn(
+    '[connectionUrl] DATABASE_URL not set (or empty); using placeholder for client generation only.'
+  );
+  return 'postgresql://user:password@localhost:5432/app';
 }
 
 /**
