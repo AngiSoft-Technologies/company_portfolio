@@ -149,7 +149,7 @@ export default function clientPortalRouter(prisma: PrismaClient) {
             });
             await prisma.projectActivity.create({
                 data: {
-                    projectId: project.id,
+                    clientProjectId: project.id,
                     type: 'COMMENT_ADDED',
                     message: 'Client added a comment',
                     visibleToClient: true

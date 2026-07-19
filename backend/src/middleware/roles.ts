@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
-import { hasPermission } from '../services/permissions';
+import { has as hasEffectivePermission } from '../services/effectivePermissions';
 
 export function requireRoles(...roles: string[]) {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -21,7 +21,7 @@ export function isRole(req: AuthRequest, roles: string[]) {
 export function requirePermission(permission: string) {
     return async (req: AuthRequest, res: Response, next: NextFunction) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
-        if (await hasPermission(req.user.sub, permission, req.user.role)) return next();
+        if (await hasEffectivePermission({ employeeId: req.user.sub, systemRole: req.user.role }, permission)) return next();
         return res.status(403).json({ error: 'Not authorized' });
     };
 }

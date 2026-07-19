@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import { gContactLimiter } from '../middleware/rateLimiter';
 import prisma from '../db';
 
@@ -225,6 +225,26 @@ export default function contactEnquiriesRouter() {
         res.json(enquiry);
     });
 
+    // Public-scoped admin list: ADMIN + SUPER_ADMIN only (raw ContactEnquiry rows, no
+    // service/product includes). Used by the enquiry admin dashboard's raw view.
+    router.get('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (_req: AuthRequest, res) => {
+        const enquiries = await prisma.contactEnquiry.findMany({
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                subject: true,
+                message: true,
+                enquiryType: true,
+                status: true,
+                assigneeId: true,
+                createdAt: true,
+            },
+        });
+        res.json(enquiries);
+    });
+
     const adminUpdateSchema = z.object({
         status: z.string().optional(),
         priority: z.string().optional(),
@@ -232,10 +252,16 @@ export default function contactEnquiriesRouter() {
         respondedAt: z.string().nullable().optional(),
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('enquiries.respond'), async (req: AuthRequest, res) => {
         const parsed = adminUpdateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
+            const existing = await prisma.contactEnquiry.findUnique({ where: { id: req.params.id } });
+            if (!existing) return res.status(404).json({ error: 'Not found' });
+            const isPrivileged = ['ADMIN', 'MARKETING', 'SALES', 'SUPER_ADMIN'].includes(req.user?.role ?? '');
+            if (!isPrivileged && existing.assignedStaffId !== req.user?.sub) {
+                return res.status(403).json({ error: 'Not assigned to this enquiry' });
+            }
             const enquiry = await prisma.contactEnquiry.update({
                 where: { id: req.params.id },
                 data: {

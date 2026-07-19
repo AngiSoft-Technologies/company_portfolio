@@ -74,6 +74,18 @@ model Employee {
   roleAssignments     EmployeeRoleAssignment[]
   portfolioItems      EmployeePortfolioItem[]
   profileStats        EmployeeProfileStat[]
+
+  // ─── Admin/Staff Portal reconstruction (Phase 0) ───
+  departmentId        String?   // relation "EmployeeDepartment" (Department), onDelete SetNull
+  departmentRef       Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId          String?   // relation "EmployeePosition" (Position), onDelete SetNull
+  positionRef         Position?  @relation("EmployeePosition", fields: [positionId], references: [id], onDelete: SetNull)
+  employeePermissions EmployeePermission[]
+  productTeamMembers  ProductTeamMember[]
+  assignedEnquiries   ContactEnquiry[] @relation("ContactEnquiryAssignee")
+
+  @@index([departmentId])
+  @@index([positionId])
 }
 
 enum Role {
@@ -335,6 +347,7 @@ model Service {
   categoryRef      ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   priceFrom        Float?
   currency         String   @default("KES")
+  pricing          Json?     // Pricing tiers/packages (object or array). Phase 5 admin pricing endpoint.
   targetAudience   String?  // Comma-separated or JSON; e.g., "Startups, Businesses, Enterprises"
   scope            String?  // Project duration/scope; e.g., "2-12 weeks"
   features         String[] @default([])
@@ -383,6 +396,7 @@ model Project {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   employees   ProjectEmployee[]
+  projectActivities ProjectActivity[] @relation("portfolioProjectActivities")
 }
 
 model ClientProject {
@@ -404,7 +418,7 @@ model ClientProject {
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
   milestones   ProjectMilestone[]
-  activities   ProjectActivity[]
+  activities   ProjectActivity[] @relation("clientProjectActivities")
   comments     ProjectComment[]
   deliverables ProjectDeliverable[]
   files        File[]
@@ -450,8 +464,17 @@ enum MilestoneStatus {
 
 model ProjectActivity {
   id              String              @id @default(uuid())
-  projectId       String
-  project         ClientProject       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Optional ClientProject linkage (was previously required). Made optional to
+  // allow activities bound to the public portfolio `Project` model instead.
+  clientProjectId String?
+  clientProject   ClientProject?      @relation("clientProjectActivities", fields: [clientProjectId], references: [id], onDelete: SetNull)
+
+  // Optional public portfolio Project linkage (FK-free at DB level was previously
+  // the only target; now reconciled via this explicit optional relation).
+  portfolioProjectId String?
+  portfolioProject   Project?         @relation("portfolioProjectActivities", fields: [portfolioProjectId], references: [id], onDelete: SetNull)
+
   actorId         String?
   actor           Employee?           @relation(fields: [actorId], references: [id], onDelete: SetNull)
   type            ProjectActivityType
@@ -460,7 +483,8 @@ model ProjectActivity {
   visibleToClient Boolean             @default(true)
   createdAt       DateTime            @default(now())
 
-  @@index([projectId])
+  @@index([clientProjectId])
+  @@index([portfolioProjectId])
   @@index([createdAt])
 }
 
@@ -797,6 +821,10 @@ model ContactEnquiry {
   priority  String   @default("normal")
   assignedStaffId String?
 
+  // ─── Admin/Staff Portal reconstruction (Phase 0) ───
+  assigneeId String? // relation "ContactEnquiryAssignee" (Employee), onDelete SetNull
+  assignee   Employee? @relation("ContactEnquiryAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   respondedAt DateTime?
@@ -805,6 +833,7 @@ model ContactEnquiry {
   @@index([enquiryType])
   @@index([status])
   @@index([bookingReference])
+  @@index([assigneeId])
 }
 
 model SupportTicket {
@@ -854,6 +883,7 @@ model Product {
   inquiries   ProductInquiry[]
   faqs        ProductFaq[]
   contactEnquiries ContactEnquiry[] @relation("ProductContactEnquiries")
+  productTeamMembers ProductTeamMember[]
 }
 
 enum ProductStatus {
@@ -1146,4 +1176,112 @@ model SubscriberPreference {
   tag          String
   createdAt    DateTime @default(now())
   @@unique([subscriberId, tag])
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// ─── Admin/Staff Portal reconstruction (Phase 0) ──────────────────────
+// ──────────────────────────────────────────────────────────────────────
+
+// Organizational departments (engineering, design, marketing, etc.)
+model Department {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  positions          Position[]
+  employees          Employee[] @relation("EmployeeDepartment")
+}
+
+// A role/title within a department, with default permission + seniority keys.
+model Position {
+  id                      String   @id @default(uuid())
+  departmentId            String
+  department              Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  title                   String
+  displayTitleTemplate    String?
+  defaultPermissionKeys   String[] @default([])
+  seniorityLevels         String[] @default([])
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  employees Employee[] @relation("EmployeePosition")
+
+  @@unique([departmentId, title])
+  @@index([departmentId])
+}
+
+// Per-employee explicit permission grants / denials (overrides role presets).
+model EmployeePermission {
+  id            String   @id @default(uuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  permissionKey String
+  effect        String   // "GRANT" | "DENY"
+  grantedById   String?
+  grantedAt     DateTime @default(now())
+  expiresAt     DateTime?
+
+  @@unique([employeeId, permissionKey])
+  @@index([employeeId])
+  @@index([permissionKey])
+}
+
+// Reusable bundles of permission keys that can be assigned to a position/employee.
+model PermissionPreset {
+  id             String   @id @default(uuid())
+  key            String   @unique
+  name           String
+  description    String?
+  permissionKeys String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Links employees to products as team members (many-to-many join).
+model ProductTeamMember {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  roleInProduct String?
+  createdAt    DateTime @default(now())
+
+  @@unique([productId, employeeId])
+  @@index([productId])
+  @@index([employeeId])
+}
+
+// ─── Industries & Solutions (Phase 5 admin CRUD; replaces static home config) ───
+model Industry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([sortOrder])
+}
+
+model Solution {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([sortOrder])
 }

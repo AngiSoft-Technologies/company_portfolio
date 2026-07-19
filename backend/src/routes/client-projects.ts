@@ -148,7 +148,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
                 const activityType = body.status ? 'STATUS_CHANGED' : 'PROGRESS_UPDATED';
                 await tx.projectActivity.create({
                     data: {
-                        projectId: updated.id,
+                        clientProjectId: updated.id,
                         actorId: req.user?.sub || null,
                         type: activityType,
                         message: body.status ? `Project status changed to ${body.status}` : `Project progress updated to ${progress}%`,
@@ -183,7 +183,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
                     sortOrder: body.sortOrder || 0
                 }
             });
-            await prisma.projectActivity.create({ data: { projectId: req.params.id, actorId: req.user?.sub || null, type: 'MILESTONE_CREATED', message: `Milestone created: ${milestone.title}`, visibleToClient: true } });
+            await prisma.projectActivity.create({ data: { clientProjectId: req.params.id, actorId: req.user?.sub || null, type: 'MILESTONE_CREATED', message: `Milestone created: ${milestone.title}`, visibleToClient: true } });
             res.status(201).json({ milestone });
         } catch (err: any) {
             res.status(400).json({ error: err.message });
@@ -208,7 +208,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
                     ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {})
                 }
             });
-            await prisma.projectActivity.create({ data: { projectId: req.params.id, actorId: req.user?.sub || null, type: 'MILESTONE_UPDATED', message: `Milestone updated: ${milestone.title}`, visibleToClient: true, meta: body } });
+            await prisma.projectActivity.create({ data: { clientProjectId: req.params.id, actorId: req.user?.sub || null, type: 'MILESTONE_UPDATED', message: `Milestone updated: ${milestone.title}`, visibleToClient: true, meta: body } });
             res.json({ milestone });
         } catch (err: any) {
             res.status(400).json({ error: err.message });
@@ -222,7 +222,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
             if (access === false) return res.status(403).json({ error: 'Not allowed' });
             const body = commentSchema.parse(req.body);
             const comment = await prisma.projectComment.create({ data: { projectId: req.params.id, authorId: req.user?.sub || null, body: body.body, visibility: body.visibility } });
-            await prisma.projectActivity.create({ data: { projectId: req.params.id, actorId: req.user?.sub || null, type: 'COMMENT_ADDED', message: body.visibility === 'CLIENT' ? 'New client-visible update added' : 'Internal project comment added', visibleToClient: body.visibility === 'CLIENT' } });
+            await prisma.projectActivity.create({ data: { clientProjectId: req.params.id, actorId: req.user?.sub || null, type: 'COMMENT_ADDED', message: body.visibility === 'CLIENT' ? 'New client-visible update added' : 'Internal project comment added', visibleToClient: body.visibility === 'CLIENT' } });
             res.status(201).json({ comment });
         } catch (err: any) {
             res.status(400).json({ error: err.message });
@@ -236,7 +236,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
             if (access === false) return res.status(403).json({ error: 'Not allowed' });
             const body = createDeliverableSchema.parse(req.body);
             const deliverable = await prisma.projectDeliverable.create({ data: { projectId: req.params.id, title: body.title, description: body.description, status: body.status || 'DRAFT', sharedAt: body.status === 'SHARED' ? new Date() : null } });
-            await prisma.projectActivity.create({ data: { projectId: req.params.id, actorId: req.user?.sub || null, type: 'DELIVERABLE_ADDED', message: `Deliverable added: ${deliverable.title}`, visibleToClient: deliverable.status !== 'DRAFT' } });
+            await prisma.projectActivity.create({ data: { clientProjectId: req.params.id, actorId: req.user?.sub || null, type: 'DELIVERABLE_ADDED', message: `Deliverable added: ${deliverable.title}`, visibleToClient: deliverable.status !== 'DRAFT' } });
             res.status(201).json({ deliverable });
         } catch (err: any) {
             res.status(400).json({ error: err.message });
@@ -259,7 +259,7 @@ export default function clientProjectsRouter(prisma: PrismaClient) {
                     ...(body.status ? { status: body.status, sharedAt: body.status === 'SHARED' ? new Date() : undefined, acceptedAt: body.status === 'ACCEPTED' ? new Date() : undefined } : {})
                 }
             });
-            await prisma.projectActivity.create({ data: { projectId: req.params.id, actorId: req.user?.sub || null, type: body.status === 'ACCEPTED' ? 'DELIVERABLE_ACCEPTED' : 'DELIVERABLE_ADDED', message: `Deliverable updated: ${deliverable.title}`, visibleToClient: deliverable.status !== 'DRAFT', meta: body } });
+            await prisma.projectActivity.create({ data: { clientProjectId: req.params.id, actorId: req.user?.sub || null, type: body.status === 'ACCEPTED' ? 'DELIVERABLE_ACCEPTED' : 'DELIVERABLE_ADDED', message: `Deliverable updated: ${deliverable.title}`, visibleToClient: deliverable.status !== 'DRAFT', meta: body } });
             res.json({ deliverable });
         } catch (err: any) {
             res.status(400).json({ error: err.message });

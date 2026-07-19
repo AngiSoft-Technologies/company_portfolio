@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../db';
 import { optionalAuth, requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles, isRole } from '../middleware/roles';
+import { requirePermission, requireRoles, isRole } from '../middleware/roles';
 import { servicesController } from '../controllers/servicesController';
 
 const createSchema = z.object({
@@ -60,7 +60,7 @@ export default function servicesRouter() {
         }
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING', 'DEVELOPER'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requirePermission('services.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -82,7 +82,7 @@ export default function servicesRouter() {
         }
     });
 
-    router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('services.update'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -109,7 +109,7 @@ export default function servicesRouter() {
         }
     });
 
-    router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requirePermission('services.archive'), async (req: AuthRequest, res) => {
         try {
             const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
             if (!canManageAll) {
@@ -120,6 +120,40 @@ export default function servicesRouter() {
             }
             await servicesController.delete(req.params.id, req.user);
             res.json({ ok: true });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ── Pricing admin (Service.pricing JSON) ──
+    // Least-invasive gap fix: no dedicated PricingPackage table. Expose the
+    // existing Service.pricing JSON for admin viewing/editing.
+    router.get('/admin/pricing', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (_req: AuthRequest, res) => {
+        try {
+            const services = await prisma.service.findMany({
+                select: { id: true, title: true, slug: true, category: true, priceFrom: true, pricing: true },
+                orderBy: { title: 'asc' }
+            });
+            res.json(services);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Update only the pricing JSON field. Body must be a non-null object or array.
+    router.put('/:id/pricing', requireAuth, requirePermission('services.manage_pricing'), async (req: AuthRequest, res) => {
+        const value = req.body?.pricing;
+        if (value === null || value === undefined || typeof value !== 'object') {
+            return res.status(400).json({ error: 'pricing must be a JSON object or array' });
+        }
+        try {
+            const existing = await prisma.service.findUnique({ where: { id: req.params.id } });
+            if (!existing) return res.status(404).json({ error: 'Not found' });
+            const updated = await prisma.service.update({
+                where: { id: req.params.id },
+                data: { pricing: value }
+            });
+            res.json({ id: updated.id, pricing: updated.pricing });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }

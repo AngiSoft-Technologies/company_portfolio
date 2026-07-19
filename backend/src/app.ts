@@ -49,8 +49,11 @@ import aboutSectionsRouter from './routes/about-sections';
 import staffBlogsRouter from './routes/staff-blogs';
 import certificationsRouter from './routes/certifications';
 import productInquiriesRouter from './routes/product-inquiries';
+import staffAccessRouter from './routes/staff-access';
 import productFaqsRouter from './routes/product-faqs';
 import contactEnquiriesRouter from './routes/contact-enquiries';
+import industriesRouter from './routes/industries';
+import solutionsRouter from './routes/solutions';
 import rolesRouter from './routes/roles';
 import employeeProfilesRouter from './routes/employee-profiles';
 
@@ -259,6 +262,7 @@ app.use('/api/leads', leadsRouter());
 app.use('/api/support-tickets', supportTicketsRouter());
 app.use('/api/products', productsRouter());
 app.use('/api/roles', rolesRouter());
+app.use('/api/admin/staff', staffAccessRouter());
 app.use('/api/employee-profiles', employeeProfilesRouter());
 app.use('/api/careers', careersRouter());
 app.use('/api/company-stats', companyStatsRouter());
@@ -269,6 +273,8 @@ app.use('/api/certifications', certificationsRouter());
 app.use('/api/product-inquiries', productInquiriesRouter());
 app.use('/api/product-faqs', productFaqsRouter());
 app.use('/api/contact-enquiries', contactEnquiriesRouter());
+app.use('/api/industries', industriesRouter());
+app.use('/api/solutions', solutionsRouter());
 app.use('/health', healthRouter(prisma));
 
 // Analytics middleware

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiGet, apiPut, apiPost, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { API_BASE_URL, resolveAssetUrl } from '../utils/constants';
-import { 
+import {
     FaUser, FaEnvelope, FaPhone, FaEdit, FaSave, FaTimes,
     FaCamera, FaPlus, FaSearch, FaTrash, FaUserPlus,
-    FaCheck, FaBriefcase, FaChevronDown
+    FaCheck, FaBriefcase, FaChevronDown, FaKey
 } from 'react-icons/fa';
 
 const ROLES = ['ADMIN', 'MARKETING', 'DEVELOPER'];
@@ -346,6 +347,17 @@ const StaffManagement = () => {
                                 >
                                     <FaEdit /> Edit
                                 </button>
+                                <Link
+                                    to={`/admin/staff/${employee.id}/access`}
+                                    className="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all"
+                                    style={{
+                                        backgroundColor: 'rgba(0, 175, 255, 0.12)',
+                                        color: colors.brandCyan || colors.secondary,
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <FaKey /> Manage Access
+                                </Link>
                                 <button
                                     onClick={() => {
                                         setPendingDelete(employee.id);

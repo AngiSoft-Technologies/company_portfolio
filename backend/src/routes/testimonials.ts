@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { optionalAuth, requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles, isRole } from '../middleware/roles';
+import { requirePermission, requireRoles, isRole } from '../middleware/roles';
 import { testimonialsController } from '../controllers/testimonialsController';
 import prisma from '../db';
 
@@ -81,7 +81,7 @@ export default function testimonialsRouter() {
         }
     });
 
-    router.patch('/:id/feature', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/feature', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
         const testimonial = await prisma.testimonial.findUnique({ where: { id: req.params.id } });
         if (!testimonial) return res.status(404).json({ error: 'Not found' });
         const updated = await prisma.testimonial.update({
@@ -91,7 +91,7 @@ export default function testimonialsRouter() {
         res.json(updated);
     });
 
-    router.patch('/:id/approve', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/approve', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
         const updated = await prisma.testimonial.update({
             where: { id: req.params.id },
             data: { confirmed: true, rejected: false, rejectionReason: null }
@@ -99,7 +99,7 @@ export default function testimonialsRouter() {
         res.json(updated);
     });
 
-    router.patch('/:id/reject', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/reject', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
         const { reason } = req.body;
         const updated = await prisma.testimonial.update({
             where: { id: req.params.id },
@@ -108,7 +108,7 @@ export default function testimonialsRouter() {
         res.json(updated);
     });
 
-    router.patch('/:id/reply', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/reply', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
         const { reply } = req.body;
         if (!reply) return res.status(400).json({ error: 'Reply required' });
         const updated = await prisma.testimonial.update({

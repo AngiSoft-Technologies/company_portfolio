@@ -43,6 +43,7 @@ import BookingsManagement from './admin/BookingsManagement';
 import StaffManagement from './admin/StaffManagement';
 import FileUploadManager from './admin/FileUploadManager';
 import StaffDashboard from './admin/StaffDashboard';
+import StaffAccess from './admin/StaffAccess';
 import NotFoundAdmin from './admin/NotFoundAdmin';
 import ClientProjectsManagement from './admin/ClientProjectsManagement';
 import SystemPanel from './admin/SystemPanel';
@@ -66,6 +67,9 @@ const ChatConversationsAdmin = lazy(() => import('./admin/crud/ChatConversations
 const ProductsAdmin = lazy(() => import('./admin/crud/ProductsAdmin'));
 const FaqsAdmin = lazy(() => import('./admin/crud/FaqsAdmin'));
 const CareersAdmin = lazy(() => import('./admin/crud/CareersAdmin'));
+const IndustriesAdmin = lazy(() => import('./admin/IndustriesAdmin'));
+const SolutionsAdmin = lazy(() => import('./admin/SolutionsAdmin'));
+const PricingAdmin = lazy(() => import('./admin/PricingAdmin'));
 const CompanyStatsAdmin = lazy(() => import('./admin/crud/CompanyStatsAdmin'));
 const HomeSectionsAdmin = lazy(() => import('./admin/crud/HomeSectionsAdmin'));
 const AnnouncementsAdmin = lazy(() => import('./admin/crud/AnnouncementsAdmin'));
@@ -146,6 +150,7 @@ const RoutesComponent = () => {
           <Route path="bookings/:id" element={<BookingsManagement />} />
           <Route path="client-projects" element={<ClientProjectsManagement />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="staff/:id/access" element={<StaffAccess />} />
           <Route path="staff-dashboard" element={<StaffDashboard />} />
           <Route path="upload-manager" element={<FileUploadManager />} />
           <Route path="about" element={<AboutAdmin />} />
@@ -173,6 +178,9 @@ const RoutesComponent = () => {
           <Route path="home-sections" element={<HomeSectionsAdmin />} />
           <Route path="announcements" element={<AnnouncementsAdmin />} />
           <Route path="certifications" element={<CertificationsAdmin />} />
+          <Route path="industries" element={<IndustriesAdmin />} />
+          <Route path="solutions" element={<SolutionsAdmin />} />
+          <Route path="pricing" element={<PricingAdmin />} />
           <Route path="system" element={<SystemPanel />} />
           <Route path="*" element={<NotFoundAdmin />} />
         </Route>

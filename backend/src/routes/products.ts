@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ProductStatus, Role } from '@prisma/client';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import prisma from '../db';
 
 const createSchema = z.object({
@@ -57,6 +57,40 @@ export default function productsRouter() {
         res.json(products);
     });
 
+    // ── Staff-scoped product routes (assigned team members) ──
+    router.get('/staff', requireAuth, requirePermission('products.update_assigned'), async (req: AuthRequest, res) => {
+        const products = await prisma.product.findMany({
+            where: { productTeamMembers: { some: { employeeId: req.user!.sub } } },
+            orderBy: { sortOrder: 'asc' }
+        });
+        res.json(products);
+    });
+
+    router.get('/staff/:id', requireAuth, requirePermission('products.update_assigned'), async (req: AuthRequest, res) => {
+        const member = await prisma.productTeamMember.findUnique({
+            where: { productId_employeeId: { productId: req.params.id, employeeId: req.user!.sub } }
+        });
+        if (!member) return res.status(403).json({ error: 'Not assigned to this product' });
+        const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+        if (!product) return res.status(404).json({ error: 'Not found' });
+        res.json(product);
+    });
+
+    router.put('/staff/:id', requireAuth, requirePermission('products.update_assigned'), async (req: AuthRequest, res) => {
+        const member = await prisma.productTeamMember.findUnique({
+            where: { productId_employeeId: { productId: req.params.id, employeeId: req.user!.sub } }
+        });
+        if (!member) return res.status(403).json({ error: 'Not assigned to this product' });
+        const parsed = updateSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        const product = await prisma.product.update({
+            where: { id: req.params.id },
+            data: parsed.data
+        });
+        await auditProduct(req, 'product.update_assigned', product.id);
+        res.json(product);
+    });
+
     router.get('/:slug', async (req, res) => {
         const product = await prisma.product.findUnique({
             where: { slug: req.params.slug },
@@ -71,7 +105,7 @@ export default function productsRouter() {
         res.json(product);
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requirePermission('products.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const product = await prisma.product.create({ data: parsed.data });
@@ -79,7 +113,7 @@ export default function productsRouter() {
         res.status(201).json(product);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('products.update'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const product = await prisma.product.update({
@@ -90,7 +124,7 @@ export default function productsRouter() {
         res.json(product);
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requirePermission('products.archive'), requireRoles('ADMIN'), async (req: AuthRequest, res) => {
         await prisma.product.delete({ where: { id: req.params.id } });
         await auditProduct(req, 'product.delete', req.params.id);
         res.json({ ok: true });

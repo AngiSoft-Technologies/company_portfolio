@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import prisma from '../db';
 
 const createSchema = z.object({
@@ -39,7 +39,7 @@ export default function staffBlogsRouter() {
         res.json(blogs);
     });
 
-    router.post('/', requireAuth, async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requirePermission('publications.create'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
@@ -49,7 +49,7 @@ export default function staffBlogsRouter() {
         res.status(201).json(blog);
     });
 
-    router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('publications.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.staffBlog.findUnique({ where: { id: req.params.id } });
         if (!blog) return res.status(404).json({ error: 'Not found' });
@@ -65,7 +65,7 @@ export default function staffBlogsRouter() {
         res.json(updated);
     });
 
-    router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requirePermission('publications.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.staffBlog.findUnique({ where: { id: req.params.id } });
         if (!blog) return res.status(404).json({ error: 'Not found' });

@@ -4,6 +4,8 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 import multer from 'multer';
 import bcrypt from 'bcrypt';
 import { checkPasswordStrength } from '../utils/passwordPolicy';
+import { getEffectivePermissions } from '../services/effectivePermissions';
+import { PERMISSION_CATALOGUE } from './staff-access';
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -76,6 +78,28 @@ export default function staffDashboardRouter(prisma: PrismaClient) {
     const router = Router();
 
     router.use(requireAuth);
+
+    // Effective permissions projection for the staff dashboard widget matrix.
+    router.get('/permissions', async (req: AuthRequest, res) => {
+        try {
+            const employeeId = req.user?.sub;
+            if (!employeeId) return res.status(401).json({ error: 'Not authenticated' });
+            const result = await getEffectivePermissions({ employeeId, systemRole: req.user?.role });
+            // A key is "granted" only if its highest-precedence effect is GRANT
+            // (DENY entries also live in the map but must be excluded).
+            const granted: string[] = [];
+            for (const [key, perm] of result.entries()) {
+                if (perm.effect === 'GRANT') granted.push(key);
+            }
+            const isSuperAdmin = req.user?.role === 'SUPER_ADMIN' || granted.includes('*');
+            const permissions = isSuperAdmin
+                ? PERMISSION_CATALOGUE.map((entry) => entry.key)
+                : granted.filter((key) => key !== '*');
+            res.json({ permissions, isSuperAdmin });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
 
     router.get('/profile', async (req: AuthRequest, res) => {
         try {

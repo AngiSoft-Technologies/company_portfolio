@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { PrismaClient, BookingStatus } from '@prisma/client';
 import multer from 'multer';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requirePermission } from '../middleware/roles';
 import { createClientProjectFromBooking } from '../services/clientProjects';
 import { logAudit } from '../services/audit';
 import { generatePublicReference, generateTrackingToken } from '../services/bookingReference';
@@ -156,6 +157,17 @@ async function fetchBookingForCustomer(
 
 export default function bookingsRouter(prisma: PrismaClient) {
     const router = Router();
+
+    // Helper: verify the caller may mutate an assigned booking.
+    // Allowed if the caller is an admin/manager (bookings.view_all) OR is the
+    // assigned staff member AND holds bookings.update_assigned.
+    const canMutateBooking = (req: any, booking: any): boolean => {
+        const role: string | undefined = req.user?.role;
+        const isAdminView = ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER', 'HR'].includes(role ?? '')
+            || (role ?? '') === 'ADMIN';
+        if (isAdminView) return true;
+        return Boolean(booking.assignedToId && booking.assignedToId === req.user?.sub);
+    };
 
     // POST /api/bookings - create booking (workflow-seeded) with optional files
     // and optionally create a Stripe PaymentIntent for deposit.
@@ -489,6 +501,23 @@ export default function bookingsRouter(prisma: PrismaClient) {
         }
     });
 
+    // GET /api/bookings/staff - bookings assigned to the current staff member
+    router.get('/staff', requireAuth, async (req: AuthRequest, res) => {
+        try {
+            const bookings = await prisma.booking.findMany({
+                where: { assignedToId: req.user?.sub },
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    client: { select: { id: true, name: true, email: true } },
+                    events: { orderBy: { createdAt: 'asc' } },
+                },
+            });
+            res.json(bookings);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // GET /api/bookings/:id - legacy public lookup by internal id + email (kept for backward compatibility)
     router.get('/:id', async (req, res) => {
         try {
@@ -521,7 +550,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
     });
 
     // POST /api/bookings/:id/review - Admin review booking (accept/reject)
-    router.post('/:id/review', requireAuth, async (req, res) => {
+    router.post('/:id/review', requireAuth, requirePermission('bookings.update_assigned'), async (req, res) => {
         try {
             if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
                 return res.status(403).json({ error: 'Not authorized' });
@@ -529,6 +558,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
             const { action, priceEstimate, assignedToId, notes } = req.body;
             const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
+            if (!canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
 
             let status = booking.status as BookingStatus;
             if (action === 'accept') status = 'ACCEPTED';
@@ -606,7 +636,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
     });
 
     // PATCH /api/bookings/admin/:id/stage - safe stage transition (admin)
-    router.patch('/admin/:id/stage', requireAuth, async (req, res) => {
+    router.patch('/admin/:id/stage', requireAuth, requirePermission('bookings.update_assigned'), async (req, res) => {
         try {
             if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
                 return res.status(403).json({ error: 'Not authorized' });
@@ -614,6 +644,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
             const { stage } = req.body;
             const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
+            if (!canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
             if (!STAGE_ORDER.includes(stage as (typeof STAGE_ORDER)[number]) && !['rejected', 'cancelled'].includes(stage)) {
                 return res.status(400).json({ error: 'Unknown stage', allowed: STAGE_ORDER });
             }
@@ -646,7 +677,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
     });
 
     // PATCH /api/bookings/admin/:id/status - status change (admin) with stage sync
-    router.patch('/admin/:id/status', requireAuth, async (req, res) => {
+    router.patch('/admin/:id/status', requireAuth, requirePermission('bookings.update_assigned'), async (req, res) => {
         try {
             if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
                 return res.status(403).json({ error: 'Not authorized' });
@@ -655,6 +686,9 @@ export default function bookingsRouter(prisma: PrismaClient) {
             if (!Object.values(BookingStatus).includes(status)) {
                 return res.status(400).json({ error: 'Unknown status', allowed: Object.values(BookingStatus) });
             }
+            const booking0 = await prisma.booking.findUnique({ where: { id: req.params.id } });
+            if (!booking0) return res.status(404).json({ error: 'Booking not found' });
+            if (!canMutateBooking(req, booking0)) return res.status(403).json({ error: 'Not assigned to this booking' });
             const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             const mappedStage = STATUS_TO_STAGE[status] ?? booking.currentStage;
@@ -682,7 +716,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
     });
 
     // POST /api/bookings/admin/:id/events - admin adds an event
-    router.post('/admin/:id/events', requireAuth, async (req, res) => {
+    router.post('/admin/:id/events', requireAuth, requirePermission('bookings.update_assigned'), async (req, res) => {
         try {
             if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
                 return res.status(403).json({ error: 'Not authorized' });
@@ -691,6 +725,7 @@ export default function bookingsRouter(prisma: PrismaClient) {
             if (!type || !title) return res.status(400).json({ error: 'type and title required' });
             const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
+            if (!canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
             await logBookingEvent(prisma, {
                 bookingId: booking.id,
                 type,
