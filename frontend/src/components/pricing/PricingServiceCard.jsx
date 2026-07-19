@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
 import { getServiceBookingPath, getServiceRoute } from '../../utils/pricing/pricingRoutes';
+import { getPricingContactPath } from '../../utils/contact/contactRoutes';
 
 // A single service priced from real data (priceFrom only — never invented).
 export default function PricingServiceCard({ service, isHighlight, cardRef }) {
@@ -42,6 +43,10 @@ export default function PricingServiceCard({ service, isHighlight, cardRef }) {
                 <span aria-hidden="true"> · </span>
                 <Link to={detailUrl} aria-label={`View details for ${displayName}`}>
                     Details
+                </Link>
+                <span aria-hidden="true"> · </span>
+                <Link to={getPricingContactPath({ slug })} aria-label={`Contact us about pricing for ${displayName}`}>
+                    Contact
                 </Link>
             </div>
         </article>

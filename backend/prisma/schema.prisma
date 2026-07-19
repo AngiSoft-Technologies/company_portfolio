@@ -207,6 +207,43 @@ model Booking {
   payments        Payment[]
   notes           Note[]
   clientProject   ClientProject?
+  events          BookingEvent[]
+
+  // --- Workflow / progress extension (additive; BookingStatus enum unchanged) ---
+  publicReference String   @unique
+  currentStage    String   @default("submitted")
+  trackingToken   String   @unique
+
+  // Origin / source metadata (validated against an allow-list in the backend).
+  source          String?  // direct|services-list|service-detail|pricing|product-detail|contact|custom-cta|repeat-booking
+  sourcePath      String?  // full referrer URL for source analytics
+  referrerEntityType String? // service|package|product
+  referrerEntityId String?
+
+  // Canonical entity linkage (verified against backend by slug; Product has no FK today).
+  requestEntityType String? // service|product
+  requestEntityId   String?
+  requestEntitySlug String?
+  serviceSlug       String?
+  serviceTitle      String?
+  packageSlug       String?
+  packageTitle      String?
+  productSlug       String?
+  productTitle      String?
+
+  requestType      String?  // maps to ProjectType or a custom value
+  desiredOutcome   String?
+  preferredTimeline String?
+  preferredDate    DateTime?
+  budgetAmount     Float?
+  currency         String   @default("KES")
+
+  quotedAmount     Float?
+  quotedCurrency   String?
+  pricingType      String?  // fixed|hourly|quote
+
+  submittedAt      DateTime?
+  contactEnquiries ContactEnquiry[] @relation("BookingContactEnquiries")
 }
 
 enum ProjectType {
@@ -233,6 +270,30 @@ enum BookingStatus {
   DELIVERED
   COMPLETED
   CANCELLED
+}
+
+// Workflow event history. `type` values are defined in the backend
+// (BOOKING_EVENT_TYPES) rather than a Prisma enum so the catalog can grow
+// without a migration. Visibility controls customer-facing exposure.
+model BookingEvent {
+  id        String   @id @default(uuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  type        String // booking_submitted|stage_changed|information_requested|customer_replied|file_uploaded|quotation_created|quotation_sent|quotation_accepted|quotation_rejected|payment_requested|payment_received|work_started|progress_updated|customer_review_requested|changes_requested|booking_completed|booking_cancelled
+  title       String
+  description String?
+  stage       String?   // machine stage value at event time
+  status      BookingStatus?
+  visibility  String   @default("customer") // customer|staff|internal
+  actorType   String   @default("system") // client|staff|system
+  actorId     String?
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([bookingId, createdAt])
 }
 
 model Payment {
@@ -286,6 +347,7 @@ model Service {
   featured         Boolean   @default(false)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  contactEnquiries ContactEnquiry[] @relation("ServiceContactEnquiries")
 }
 
 model ServiceCategory {
@@ -480,7 +542,11 @@ model BlogPost {
   id             String        @id @default(uuid())
   title          String
   slug           String        @unique
+  subtitle       String?
   content        String
+  contentType    String        @default("article")
+  mediaUrl       String?
+  transcript     String?
   coverImage     String?
   excerpt        String?
   readingTime    Int?
@@ -497,6 +563,9 @@ model BlogPost {
   tags           String[]
   published      Boolean       @default(false)
   publishedAt    DateTime?
+  visibilityType String        @default("permanent")
+  visibleUntil   DateTime?
+  resourceLinks  Json?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   comments       BlogComment[]
@@ -699,6 +768,45 @@ model Lead {
   updatedAt    DateTime @updatedAt
 }
 
+model ContactEnquiry {
+  id          String   @id @default(uuid())
+  publicReference String @unique
+
+  name    String
+  email   String
+  phone   String?
+  preferredResponseMethod String @default("email") // email | phone | whatsapp
+
+  enquiryType String // service | product | pricing | support | partnership | careers | general
+  subject     String
+  message     String
+
+  serviceId   String?
+  service     Service? @relation("ServiceContactEnquiries", fields: [serviceId], references: [id])
+  productId   String?
+  product     Product? @relation("ProductContactEnquiries", fields: [productId], references: [id])
+  bookingId   String?
+  booking     Booking? @relation("BookingContactEnquiries", fields: [bookingId], references: [id])
+  bookingReference String?
+  organisation String?
+
+  source    String?
+  sourcePath String?
+
+  status    String   @default("new") // new | acknowledged | in_review | awaiting_customer | responded | converted_to_booking | closed | spam
+  priority  String   @default("normal")
+  assignedStaffId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  respondedAt DateTime?
+  closedAt DateTime?
+
+  @@index([enquiryType])
+  @@index([status])
+  @@index([bookingReference])
+}
+
 model SupportTicket {
   id           String   @id @default(uuid())
   clientId     String?
@@ -745,6 +853,7 @@ model Product {
   updatedAt   DateTime @updatedAt
   inquiries   ProductInquiry[]
   faqs        ProductFaq[]
+  contactEnquiries ContactEnquiry[] @relation("ProductContactEnquiries")
 }
 
 enum ProductStatus {

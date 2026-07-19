@@ -3,6 +3,7 @@ import { FaRegArrowAltCircleRight, FaTag, FaRegQuestionCircle } from 'react-icon
 import { resolveAssetUrl } from '../../utils/constants';
 import { resolveIcon } from '../../utils/iconRegistry';
 import { getServiceBookingPath, getServicePricingPath } from '../../utils/services/serviceRoutes';
+import { getServiceContactPath } from '../../utils/contact/contactRoutes';
 import { getServicePriceLabel } from '../../utils/services/servicePricing';
 
 /**
@@ -52,7 +53,7 @@ export default function ServiceDetailHero({ service }) {
                             <FaRegArrowAltCircleRight aria-hidden="true" />
                         </Link>
                         <Link to={pricingPath} className="btn btn--ghost service-hero__cta">View Pricing</Link>
-                        <Link to={{ pathname: '/contact', search: `?service=${encodeURIComponent(service.slug)}` }} className="btn btn--link service-hero__cta">
+                        <Link to={getServiceContactPath(service)} className="btn btn--link service-hero__cta">
                             <FaRegQuestionCircle aria-hidden="true" />
                             Ask a Question
                         </Link>

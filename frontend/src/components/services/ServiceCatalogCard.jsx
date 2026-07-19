@@ -8,6 +8,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
 import { getServiceRoute, getServiceBookingPath } from '../../utils/services/serviceRoutes';
+import { getServiceContactPath } from '../../utils/contact/contactRoutes';
 
 const DEFAULT_DESC =
     'Professional AngiSoft service built around practical workflows and clear delivery.';
@@ -53,6 +54,13 @@ const ServiceCatalogCard = ({ service }) => {
                     aria-label={`View details for ${title}`}
                 >
                     View Details
+                </Link>
+                <Link
+                    to={getServiceContactPath(service)}
+                    className="service-catalog-card__ask"
+                    aria-label={`Ask about ${title}`}
+                >
+                    Ask
                 </Link>
                 <Link
                     to={getServiceBookingPath(service)}

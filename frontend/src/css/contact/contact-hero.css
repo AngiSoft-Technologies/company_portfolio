@@ -1,0 +1,41 @@
+.contact-hero {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--contact-primary) 12%, var(--contact-background)), var(--contact-background));
+    padding-top: 4.5rem;
+    padding-bottom: 4.5rem;
+}
+.contact-hero__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+.contact-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: color-mix(in srgb, var(--contact-primary) 14%, transparent);
+    color: var(--contact-primary);
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.contact-hero__title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 1rem 0 0.75rem;
+    line-height: 1.1;
+}
+.contact-hero__hl {
+    color: var(--contact-primary);
+}
+.contact-hero__subtitle {
+    max-width: 620px;
+    color: var(--contact-muted);
+    font-size: 1.05rem;
+    margin: 0 0 1.5rem;
+}
+.contact-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.contact-hero__cta { min-height: 48px; }

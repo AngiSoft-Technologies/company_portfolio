@@ -1,0 +1,13 @@
+.contact-map__heading { font-size: 1.5rem; margin: 0 0 1rem; }
+.contact-map__frame {
+    border: 1px solid var(--contact-border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.contact-map__iframe {
+    width: 100%;
+    height: 380px;
+    border: 0;
+    display: block;
+    filter: none; /* never invert the map */
+}

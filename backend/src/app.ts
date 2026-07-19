@@ -50,6 +50,7 @@ import staffBlogsRouter from './routes/staff-blogs';
 import certificationsRouter from './routes/certifications';
 import productInquiriesRouter from './routes/product-inquiries';
 import productFaqsRouter from './routes/product-faqs';
+import contactEnquiriesRouter from './routes/contact-enquiries';
 import rolesRouter from './routes/roles';
 import employeeProfilesRouter from './routes/employee-profiles';
 
@@ -267,6 +268,7 @@ app.use('/api/staff-blogs', staffBlogsRouter());
 app.use('/api/certifications', certificationsRouter());
 app.use('/api/product-inquiries', productInquiriesRouter());
 app.use('/api/product-faqs', productFaqsRouter());
+app.use('/api/contact-enquiries', contactEnquiriesRouter());
 app.use('/health', healthRouter(prisma));
 
 // Analytics middleware

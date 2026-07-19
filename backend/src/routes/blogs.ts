@@ -9,8 +9,19 @@ const createSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   content: z.string().min(1),
+  subtitle: z.string().optional(),
+  contentType: z.string().optional(),
+  mediaUrl: z.string().optional(),
+  transcript: z.string().optional(),
+  coverImage: z.string().optional(),
+  excerpt: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  published: z.boolean().optional()
+  published: z.boolean().optional(),
+  categoryId: z.string().optional(),
+  featured: z.boolean().optional(),
+  visibilityType: z.string().optional(),
+  visibleUntil: z.string().datetime().optional().nullable(),
+  resourceLinks: z.any().optional()
 });
 
 const updateSchema = createSchema.partial();

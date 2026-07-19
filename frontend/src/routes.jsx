@@ -8,6 +8,9 @@ import ServicesList from "./pages/services/ServicesList";
 import TestimonialsList from "./pages/TestimonialsList";
 import Booking from "./pages/Booking";
 import BookingStatus from "./pages/BookingStatus";
+import BookingProgress from "./pages/bookings/BookingProgress";
+import BookingHistory from "./pages/bookings/BookingHistory";
+import BookingLookup from "./pages/bookings/BookingLookup";
 import ClientPortalRequest from "./pages/ClientPortalRequest";
 import ClientPortalAccess from "./pages/ClientPortalAccess";
 import ClientDashboard from "./pages/ClientDashboard";
@@ -15,8 +18,8 @@ import ClientProjectTracking from "./pages/ClientProjectTracking";
 import StaffList from "./pages/StaffList";
 import StaffDetail from "./pages/StaffDetail";
 import ServiceDetail from "./pages/services/ServiceDetail";
-import BlogList from "./pages/BlogList";
-import BlogDetail from "./pages/BlogDetail";
+import BlogList from "./pages/blog/BlogList";
+import BlogDetail from "./pages/blog/BlogDetail";
 import About from "./pages/About";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -106,6 +109,9 @@ const RoutesComponent = () => {
           <Route path="book" element={<Booking />} />
           <Route path="booking" element={<Booking />} />
           <Route path="booking/:id" element={<BookingStatus />} />
+          <Route path="bookings" element={<BookingHistory />} />
+          <Route path="bookings/:reference" element={<BookingProgress />} />
+          <Route path="track-booking" element={<BookingLookup />} />
           <Route path="portal/request" element={<ClientPortalRequest />} />
           <Route path="portal/access" element={<ClientPortalAccess />} />
           <Route path="portal" element={<ClientProtectedRoute />}>

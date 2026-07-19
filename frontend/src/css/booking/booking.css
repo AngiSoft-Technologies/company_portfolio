@@ -1,0 +1,99 @@
+/* ============================================================
+   AngiSoft booking request form styles (BookingExperience.jsx)
+   Dark-first, token-driven. BookingExperience applies most
+   layout inline; this sheet covers the few custom hook classes
+   and shared form affordances. Slice files under css/booking/
+   re-import this consolidated sheet so they can be imported
+   individually if a page only needs one section.
+   ============================================================ */
+
+.booking-success {
+    background: rgba(39, 217, 75, 0.08);
+    border: 1px solid rgba(39, 217, 75, 0.3);
+    border-radius: 18px;
+    padding: 40px;
+    text-align: center;
+}
+
+.booking-success-eyebrow {
+    color: #27d94b;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+    margin: 0 0 10px;
+}
+
+.booking-success-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.booking-success-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    background: #00afff;
+    color: #05070d;
+    transition: filter 0.2s, transform 0.2s;
+}
+.booking-success-cta:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+.booking-success-cta.is-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e7ecf3;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Form field groups reused by the stepper steps */
+.booking-field {
+    margin-bottom: 18px;
+}
+.booking-field label {
+    display: block;
+    font-size: 13px;
+    color: #aeb7c6;
+    margin-bottom: 6px;
+}
+.booking-field input,
+.booking-field textarea,
+.booking-field select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e7ecf3;
+    font-size: 14px;
+    font-family: inherit;
+}
+.booking-field input:focus,
+.booking-field textarea:focus,
+.booking-field select:focus {
+    outline: none;
+    border-color: rgba(0, 175, 255, 0.5);
+}
+
+.booking-context-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 175, 255, 0.25);
+    background: rgba(0, 175, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 560px) {
+    .booking-success { padding: 28px 18px; }
+    .booking-success-actions { flex-direction: column; }
+}
