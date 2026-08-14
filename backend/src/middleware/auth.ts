@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/token';
+import { issueCsrfCookie } from './csrf';
 
 export interface AuthRequest extends Request {
     user?: { sub: string; role?: string };
@@ -37,5 +38,10 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
 
 export function setRefreshCookie(res: Response, token: string) {
     const secure = process.env.NODE_ENV === 'production';
-    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'lax', path: '/api/auth', maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'strict', path: '/api/auth', maxAge: 30 * 24 * 60 * 60 * 1000 });
+    // Double-submit CSRF token: readable by JS, echoed back as x-csrf-token.
+    // (Fully enforced once the frontend migrates to cookie-based sessions;
+    // today the app authenticates via the Authorization header, which is
+    // already immune to CSRF.)
+    issueCsrfCookie(res);
 }
