@@ -1,7 +1,14 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+
+// LEGACY file (kept for Dockerfile compat). Not imported by any route —
+// all routes use src/middleware/auth.ts. No fallback secret: if JWT_SECRET
+// is unset, verification fails closed instead of using a known-insecure key.
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function requireAdminAuth(req, res, next) {
+  if (!JWT_SECRET) {
+    return res.status(500).json({ error: 'JWT_SECRET not configured' });
+  }
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });

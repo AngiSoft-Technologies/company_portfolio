@@ -19,7 +19,38 @@ async function fetchKeysFromKmsIfNeeded() {
 
 // attempt synchronous fetch placeholder (no-op) — real implementation should be async during startup
 void fetchKeysFromKmsIfNeeded();
-const HS_SECRET = process.env.JWT_SECRET || 'dev_secret';
+
+// ─── JWT secret hardening ──────────────────────────────────────────────────
+// Refuse to run in production with a missing or known-insecure HS256 secret.
+// A fallback secret means anyone who reads the source can forge admin tokens.
+const KNOWN_WEAK_SECRETS = new Set([
+  'dev_secret',
+  'supersecretkey',
+  'your-super-secret-jwt-key-min-32-characters',
+  '',
+]);
+
+function resolveHsSecret(): string {
+  const raw = process.env.JWT_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (!raw || KNOWN_WEAK_SECRETS.has(raw)) {
+    // In dev we allow a throwaway secret so the app can be run locally, but we
+    // never want that to silently reach production.
+    if (isProduction) {
+      throw new Error(
+        'JWT_SECRET is missing or set to a known-insecure placeholder. ' +
+        'Set a strong, random JWT_SECRET (>= 32 chars) before running in production.'
+      );
+    }
+    return 'dev_insecure_only_secret_do_not_use_in_prod_0123456789';
+  }
+  if (isProduction && raw.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters in production.');
+  }
+  return raw;
+}
+
+const HS_SECRET: string = resolveHsSecret();
 
 export function signAccessToken(payload: object) {
     if (PRIVATE_KEY) {
