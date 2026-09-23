@@ -70,8 +70,8 @@
     "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.1.11",
-    "vite": "^7.3.6",
-    "vitest": "^3.2.4"
+    "vite": "^7.3.3",
+    "vitest": "^4.1.0"
   },
   "description": "Frontend for AngiSoft Technologies website",
   "browserslist": {
