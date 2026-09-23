@@ -1,0 +1,80 @@
+/* =========================================================================
+   Pricing — page shell + design tokens.
+   Mirrors the data-driven Solutions/Industries dark theme. All sections read
+   these --pricing-* tokens; the page wrapper paints the dark gradient.
+   ========================================================================= */
+
+.pricing-page {
+    --pricing-bg: #07142B;
+    --pricing-surface: rgba(11, 30, 61, 0.55);
+    --pricing-surface-2: rgba(7, 20, 43, 0.7);
+    --pricing-border: rgba(0, 175, 255, 0.16);
+    --pricing-border-strong: rgba(0, 175, 255, 0.4);
+    --pricing-text: #F5F7FA;
+    --pricing-muted: #94A3B8;
+    --pricing-accent: #00AFFF;
+    --pricing-accent-2: #27D94B;
+    --pricing-radius: 1.1rem;
+    --pricing-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+
+    position: relative;
+    min-height: 100vh;
+    padding-bottom: 5rem;
+    color: var(--pricing-text);
+    background: linear-gradient(180deg, #08152E 0%, #07142B 100%);
+}
+
+.pricing-container {
+    width: min(1240px, 100%);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.pricing-section { padding: clamp(2.5rem, 6vw, 4rem) 0; }
+
+.pricing-section-head { margin-bottom: 1.75rem; }
+.pricing-section-title {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.35rem, 3vw, 1.95rem);
+    color: var(--pricing-text);
+}
+.pricing-section-sub {
+    margin: 0.55rem 0 0;
+    color: var(--pricing-muted);
+    line-height: 1.6;
+    max-width: 68ch;
+}
+
+.pricing-card {
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    padding: clamp(1.3rem, 3vw, 2rem);
+}
+
+/* Reusable accent pill (badge). */
+.pricing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--pricing-border);
+    background: var(--pricing-surface);
+    color: var(--pricing-accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Focus-visible consistency for interactive cards/links. */
+.pricing-page a:focus-visible,
+.pricing-page button:focus-visible {
+    outline: 2px solid var(--pricing-accent);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pricing-page * { transition: none !important; }
+}

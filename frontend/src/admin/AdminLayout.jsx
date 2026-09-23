@@ -6,7 +6,8 @@ import {
     FaSignOutAlt, FaBars, FaTimes, FaCommentDots, FaHeart, FaStar,
     FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck,
     FaTrash, FaChevronDown, FaSearch, FaGlobe, FaBlog,
-    FaRobot, FaBox, FaQuestionCircle, FaBullhorn, FaChartBar, FaSitemap, FaAward
+    FaRobot, FaBox, FaQuestionCircle, FaBullhorn, FaChartBar, FaSitemap, FaAward,
+    FaIndustry, FaLightbulb, FaTags
 } from 'react-icons/fa';
 import AngiSoftLogo from '../components/brand/AngiSoftLogo';
 import { apiGet, apiPatch } from '../js/httpClient';
@@ -43,6 +44,9 @@ const navSections = [
             { to: '/admin/announcements', label: 'Announcements', icon: FaBullhorn },
             { to: '/admin/careers', label: 'Careers', icon: FaBriefcase },
             { to: '/admin/certifications', label: 'Certifications', icon: FaAward },
+            { to: '/admin/industries', label: 'Industries', icon: FaIndustry },
+            { to: '/admin/solutions', label: 'Solutions', icon: FaLightbulb },
+            { to: '/admin/pricing', label: 'Service Pricing', icon: FaTags },
         ]
     },
     {

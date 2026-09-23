@@ -20,6 +20,11 @@ const publicProfileSelect = {
     specialties: true,
     publicEmail: true,
     publicPhone: true,
+    profileVisibility: true,
+    department: true,
+    seniorityLevel: true,
+    joinYear: true,
+    featured: true,
     profileOrder: true,
     createdAt: true,
 };
@@ -33,7 +38,7 @@ export default function staffRouter(prisma: PrismaClient) {
                 where: {
                     acceptedAt: { not: null },
                     passwordHash: { not: null },
-                    profilePublished: true,
+                    profileVisibility: 'PUBLIC',
                 },
                 select: publicProfileSelect,
                 orderBy: [{ profileOrder: 'asc' }, { createdAt: 'desc' }],
@@ -52,7 +57,7 @@ export default function staffRouter(prisma: PrismaClient) {
                     OR: [{ username: usernameOrId }, { id: usernameOrId }],
                     acceptedAt: { not: null },
                     passwordHash: { not: null },
-                    profilePublished: true,
+                    profileVisibility: 'PUBLIC',
                 },
                 select: {
                     ...publicProfileSelect,

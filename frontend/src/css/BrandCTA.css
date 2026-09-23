@@ -1,0 +1,395 @@
+/* ==========================================================================
+   BrandCTA — dedicated stylesheet
+   Component-owned background grid + two-column layout + carousel.
+   The old shared `.angi-grid-brand` / `.angi-grid-bg` rules (BrandCTA-only)
+   have been moved here and scoped as `.angi-brand-cta-grid`.
+   ========================================================================== */
+
+.angi-brand-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(3.5rem, 8vw, 6rem) 0;
+  background: linear-gradient(135deg, #07142B 0%, #0B1E3D 40%, #102A55 70%, #07142B 100%);
+}
+
+/* ── Ambient glow orbs (scoped pseudo-elements) ── */
+.angi-brand-cta-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  animation: angi-glow-pulse 8s ease-in-out infinite;
+}
+.angi-brand-cta-glow--primary {
+  top: -10%;
+  left: 10%;
+  width: min(500px, 70vw);
+  height: min(500px, 70vw);
+  background: var(--primary, #0875FF);
+  opacity: 0.12;
+}
+.angi-brand-cta-glow--secondary {
+  bottom: -10%;
+  right: 10%;
+  width: min(400px, 60vw);
+  height: min(400px, 60vw);
+  background: var(--secondary, #00AFFF);
+  opacity: 0.08;
+  animation-delay: 4s;
+}
+
+/* ── Technical grid overlay (moved from .angi-grid-bg) ── */
+.angi-brand-cta-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(8, 117, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 117, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+/* ── Container + layout ── */
+.angi-brand-cta-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.angi-brand-cta-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .angi-brand-cta-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+/* ── Copy column ── */
+.angi-brand-cta-copy {
+  min-width: 0;
+}
+.angi-brand-cta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary, #0875FF);
+  background: rgba(8, 117, 255, 0.12);
+  border: 1px solid rgba(8, 117, 255, 0.2);
+  margin-bottom: 1.5rem;
+}
+.angi-brand-cta-title {
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #F5F7FA;
+  margin: 0 0 1.25rem;
+}
+.angi-brand-cta-title-highlight {
+  background: linear-gradient(135deg, var(--primary, #0875FF), var(--secondary, #00AFFF));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.angi-brand-cta-description {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: rgba(245, 247, 250, 0.6);
+  margin: 0 0 2.5rem;
+  max-width: 28rem;
+}
+
+/* ── CTA actions ── */
+.angi-brand-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.angi-brand-cta-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.875rem 1.75rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
+}
+.angi-brand-cta-action--primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary, #0875FF), var(--secondary, #00AFFF));
+  box-shadow: 0 4px 16px rgba(8, 117, 255, 0.25);
+}
+.angi-brand-cta-action--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(8, 117, 255, 0.35);
+}
+.angi-brand-cta-action--secondary {
+  color: #F5F7FA;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(215, 227, 255, 0.18);
+}
+.angi-brand-cta-action--secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+.angi-brand-cta-action:focus-visible {
+  outline: 2px solid var(--secondary, #00AFFF);
+  outline-offset: 2px;
+}
+
+/* ── Carousel wrapper ── */
+.angi-brand-cta-carousel {
+  position: relative;
+  min-width: 0;
+}
+.angi-brand-cta-frame {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 175, 255, 0.1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 80px rgba(8, 117, 255, 0.06);
+}
+
+/* ── Viewport (responsive height) ── */
+.angi-brand-cta-viewport {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  min-height: 280px;
+  overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .angi-brand-cta-viewport {
+    aspect-ratio: 5 / 4;
+    max-height: 420px;
+  }
+}
+
+/* ── Slides ── */
+.angi-brand-cta-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.angi-brand-cta-slide.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+.angi-brand-cta-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+/* ── Bottom overlay ── */
+.angi-brand-cta-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80px;
+  background: linear-gradient(transparent, rgba(7, 20, 43, 0.8));
+  pointer-events: none;
+}
+
+/* ── Arrow controls ── */
+.angi-brand-cta-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(7, 20, 43, 0.7);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+  transition: background 0.3s ease;
+}
+.angi-brand-cta-arrow:hover {
+  background: var(--primary, #0875FF);
+}
+.angi-brand-cta-arrow:focus-visible {
+  outline: 2px solid var(--secondary, #00AFFF);
+  outline-offset: 2px;
+}
+.angi-brand-cta-arrow--previous {
+  left: 0.75rem;
+}
+.angi-brand-cta-arrow--next {
+  right: 0.75rem;
+}
+
+/* ── Caption ── */
+.angi-brand-cta-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(0, 175, 255, 0.08);
+  background: rgba(7, 20, 43, 0.5);
+}
+.angi-brand-cta-caption-title {
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #F5F7FA;
+  overflow-wrap: anywhere;
+}
+.angi-brand-cta-caption-label {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: rgba(245, 247, 250, 0.4);
+}
+
+/* ── Dot indicators ── */
+.angi-brand-cta-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+.angi-brand-cta-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  min-width: 0.5rem;
+  min-height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease;
+}
+.angi-brand-cta-dot.is-active {
+  width: 2rem;
+  background: var(--primary, #0875FF);
+}
+.angi-brand-cta-dot:focus-visible {
+  outline: 2px solid var(--secondary, #00AFFF);
+  outline-offset: 2px;
+}
+
+/* ── Empty state ── */
+.angi-brand-cta-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 2rem;
+  border-radius: 1.25rem;
+  text-align: center;
+  color: rgba(245, 247, 250, 0.55);
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(215, 227, 255, 0.12);
+}
+
+/* ── Tablet tuning ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .angi-brand-cta-layout {
+    gap: 3rem;
+  }
+  .angi-brand-cta-carousel {
+    max-width: 460px;
+    margin: 0 auto;
+  }
+}
+
+/* ── Phone tuning (<640) ── */
+@media (max-width: 639px) {
+  .angi-brand-cta-container {
+    padding: 0 1rem;
+  }
+  .angi-brand-cta-actions {
+    flex-direction: column;
+  }
+  .angi-brand-cta-action {
+    width: 100%;
+    justify-content: center;
+  }
+  .angi-brand-cta-caption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* ── Very small phones (<380) ── */
+@media (max-width: 379px) {
+  .angi-brand-cta-viewport {
+    min-height: 260px;
+  }
+  .angi-brand-cta-slide-image {
+    padding: 0.75rem;
+  }
+  .angi-brand-cta-caption {
+    padding: 0.75rem 1rem;
+  }
+  .angi-brand-cta-glow--primary {
+    opacity: 0.08;
+  }
+  .angi-brand-cta-glow--secondary {
+    opacity: 0.05;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .angi-brand-cta-glow {
+    animation: none !important;
+  }
+  .angi-brand-cta-slide {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+  .angi-brand-cta-action,
+  .angi-brand-cta-arrow,
+  .angi-brand-cta-dot {
+    transition: none !important;
+  }
+  .angi-brand-cta-action:hover,
+  .angi-brand-cta-action--primary:hover,
+  .angi-brand-cta-action--secondary:hover {
+    transform: none !important;
+  }
+}

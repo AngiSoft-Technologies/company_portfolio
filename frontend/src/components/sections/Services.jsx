@@ -41,9 +41,10 @@ const Services = () => {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const data = await apiGet('/services');
-                const published = Array.isArray(data) ? data.filter(s => s.published !== false) : [];
-                setServices(published);
+                // Canonical services live in the About "serviceMap" section.
+                const data = await apiGet('/about-sections/serviceMap');
+                const list = Array.isArray(data?.services) ? data.services : [];
+                setServices(list);
             } catch {
                 setError('Failed to load services.');
             } finally {
@@ -172,7 +173,7 @@ const Services = () => {
                                     service.priceFrom ? `From ${service.currency || 'KES'} ${service.priceFrom}` : null
                                 ].filter(Boolean);
 
-                                const detailPath = getServiceDetailPath(service);
+                                const detailPath = service.to || getServiceDetailPath(service);
 
                                 return (
                                     <ScrollReveal key={service.id || idx} animation="fadeUp" delay={idx * 100}>

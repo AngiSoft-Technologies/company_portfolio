@@ -1,0 +1,323 @@
+/* ==========================================================================
+   ContactSection — dedicated stylesheet
+   Reuses shared .angi-container, .angi-section-*, .angi-input, .angi-btn-primary.
+   Layout + two-column + status + communication + methods are scoped here.
+   ========================================================================== */
+
+.angi-contact-section {
+    position: relative;
+    padding: clamp(3rem, 7vw, 5rem) 0;
+    background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+    overflow: hidden;
+}
+
+/* Two-column: form (wider) + info. Stacks on phones. */
+.angi-contact-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    margin-top: 2.25rem;
+}
+@media (min-width: 768px) {
+    .angi-contact-layout {
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 2.5rem;
+        align-items: start;
+    }
+}
+
+.angi-contact-form-card {
+    background: rgba(11, 30, 61, 0.6);
+    border: 1px solid rgba(215, 227, 255, 0.12);
+    border-radius: 1.25rem;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+    backdrop-filter: blur(10px);
+}
+.angi-contact-form-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #F5F7FA;
+    margin: 0 0 1.5rem;
+}
+
+.angi-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+.angi-contact-form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+}
+@media (min-width: 640px) {
+    .angi-contact-form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.angi-contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.angi-contact-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.82);
+}
+.angi-contact-textarea {
+    resize: vertical;
+    min-height: 6.5rem;
+}
+
+/* Use 16px font on inputs to avoid mobile Safari zoom. */
+.angi-input {
+    font-size: 16px;
+}
+
+.angi-contact-error {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #ff8a8a;
+}
+.angi-contact-form-error {
+    background: rgba(255, 90, 90, 0.12);
+    border: 1px solid rgba(255, 90, 90, 0.3);
+    border-radius: 0.6rem;
+    padding: 0.7rem 0.9rem;
+}
+
+/* Preferred communication radio group. */
+.angi-contact-communication {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+.angi-contact-communication legend {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.82);
+    padding: 0;
+    margin-bottom: 0.5rem;
+}
+.angi-contact-communication-options {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.angi-contact-communication-button {
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0.5rem 1.1rem;
+    border-radius: 0.6rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.78);
+    background: rgba(11, 30, 61, 0.55);
+    border: 1px solid rgba(215, 227, 255, 0.16);
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.angi-contact-communication-button.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary, #0875FF), var(--accent, #00AFFF));
+    border-color: transparent;
+}
+.angi-contact-communication-button:focus-visible {
+    outline: 2px solid var(--accent, #00AFFF);
+    outline-offset: 2px;
+}
+
+.angi-contact-nda {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.78);
+    cursor: pointer;
+}
+.angi-contact-nda input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--primary, #0875FF);
+}
+
+.angi-contact-submit {
+    align-self: flex-start;
+    min-height: 48px;
+    padding: 0.75rem 1.75rem;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.angi-contact-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(8, 117, 255, 0.35);
+}
+.angi-contact-submit:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+.angi-contact-reset {
+    align-self: center;
+    margin-top: 0.5rem;
+}
+
+/* Success state. */
+.angi-contact-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.6rem;
+    padding: 1.5rem 0.5rem;
+}
+.angi-contact-success-icon {
+    font-size: 2.75rem;
+    color: #25D366;
+}
+.angi-contact-success-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #F5F7FA;
+    margin: 0;
+}
+.angi-contact-success-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0;
+    max-width: 30rem;
+}
+
+/* Info column. */
+.angi-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+.angi-contact-info-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #F5F7FA;
+    margin: 0;
+}
+.angi-contact-info-lead {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.angi-contact-methods {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.angi-contact-method {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    background: rgba(11, 30, 61, 0.5);
+    border: 1px solid rgba(215, 227, 255, 0.12);
+}
+.angi-contact-method-icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary, #0875FF), var(--accent, #00AFFF));
+}
+.angi-contact-method-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.angi-contact-method-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.5);
+}
+.angi-contact-method-copy {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #F5F7FA;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+.angi-contact-method-copy:hover {
+    color: var(--accent, #00AFFF);
+}
+
+.angi-contact-help {
+    padding: 1.1rem 1.15rem;
+    border-radius: 0.85rem;
+    background: rgba(8, 117, 255, 0.1);
+    border: 1px solid rgba(8, 117, 255, 0.22);
+}
+.angi-contact-help-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #F5F7FA;
+    margin: 0 0 0.35rem;
+}
+.angi-contact-help-text {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 0.85rem;
+}
+.angi-contact-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.7rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+    text-decoration: none;
+    background: #25D366;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.angi-contact-whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(37, 211, 102, 0.4);
+}
+
+@media (max-width: 639px) {
+    .angi-contact-section {
+        padding: clamp(2.5rem, 9vw, 3.25rem) 0;
+    }
+    .angi-contact-submit,
+    .angi-contact-whatsapp {
+        width: 100%;
+        justify-content: center;
+    }
+    .angi-contact-communication-options {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .angi-contact-submit,
+    .angi-contact-whatsapp,
+    .angi-contact-communication-button,
+    .angi-contact-method-copy {
+        transition: none !important;
+    }
+}

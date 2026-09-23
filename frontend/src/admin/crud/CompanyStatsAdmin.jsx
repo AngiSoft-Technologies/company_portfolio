@@ -19,6 +19,20 @@ const CompanyStatsAdmin = () => (
     fields={[
       { name: 'label', label: 'Label', required: true },
       { name: 'value', label: 'Value', type: 'number', defaultValue: 0, required: true },
+      { name: 'valueType', label: 'Value Type', type: 'select', defaultValue: 'plain',
+        options: [
+          { value: 'plain', label: 'Plain Number' },
+          { value: 'count', label: 'Count' },
+          { value: 'year', label: 'Year' },
+          { value: 'percentage', label: 'Percentage' },
+          { value: 'currency', label: 'Currency' },
+          { value: 'decimal', label: 'Decimal' },
+          { value: 'duration', label: 'Duration' },
+          { value: 'date', label: 'Date' },
+          { value: 'identifier', label: 'Identifier' }
+        ]
+      },
+      { name: 'prefix', label: 'Prefix', defaultValue: '' },
       { name: 'suffix', label: 'Suffix', defaultValue: '' },
       { name: 'icon', label: 'Icon Key', nullable: true },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true },

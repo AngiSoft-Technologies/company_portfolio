@@ -3,7 +3,7 @@ import SkillCard from '../cards/SkillCard';
 import { apiGet } from '../../js/httpClient';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
 
-const placeholderSkillIcon = '/images/skill-placeholder.svg';
+const placeholderSkillIcon = '/uploads/public/images/skill-placeholder.svg';
 
 const Skills = ({ theme }) => {
     const { copy: uiCopy } = useSiteCopy();

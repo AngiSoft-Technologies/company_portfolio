@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kotlin">
+  <circle cx="32" cy="32" r="30" fill="#0B1E3D"/>
+  <path d="M32 14 L48 14 L32 30 L32 14 Z" fill="#7F52FF"/>
+  <path d="M32 30 L48 46 L48 30 L32 30 Z" fill="#7F52FF"/>
+  <path d="M16 14 L32 30 L16 46 L16 14 Z" fill="#C9B6FF"/>
+  <path d="M16 46 L32 30 L32 46 L16 46 Z" fill="#7F52FF"/>
+</svg>

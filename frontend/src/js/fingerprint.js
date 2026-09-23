@@ -16,4 +16,4 @@ export async function getFingerprint() {
     cachedFingerprint = fallback;
     return fallback;
   }
-}
+} 

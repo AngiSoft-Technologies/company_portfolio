@@ -14,12 +14,19 @@ RUN npm ci --include=dev
 # Copy prisma schema
 COPY prisma ./prisma
 
+# Copy Prisma 7 CLI config (supplies the datasource URL for generate/migrate/seed)
+COPY prisma.config.ts ./
+
 # Generate Prisma client
 RUN npx prisma generate
 
 # Copy source code
 COPY tsconfig.json ./
+COPY logger.js ./
 COPY src ./src
+COPY uploads ./uploads
+COPY middleware ./middleware
+
 
 # Build TypeScript and verify output
 RUN npm run build && echo "=== BUILD OUTPUT ===" && ls -la dist/ && cat dist/index.js | head -20

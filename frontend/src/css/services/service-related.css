@@ -1,0 +1,84 @@
+/* =========================================================================
+   Service Detail — related services.
+   Driven by --sd-* tokens defined in service-detail.css.
+   ========================================================================= */
+
+.service-related__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.service-related__card {
+    border: 1px solid var(--sd-border);
+    border-radius: var(--sd-radius);
+    background: var(--sd-surface);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.service-related__card:hover {
+    border-color: var(--sd-border-strong);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+}
+.service-related__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
+    padding: 1.2rem 1.3rem;
+    text-decoration: none;
+    color: var(--sd-text);
+}
+.service-related__body { flex: 1; }
+.service-related__title {
+    margin: 0 0 0.4rem;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--sd-text);
+}
+.service-related__desc {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--sd-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.service-related__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--sd-border);
+}
+.service-related__price {
+    font-size: 0.85rem;
+    color: var(--sd-text);
+    font-weight: 600;
+}
+.service-related__more {
+    color: var(--sd-accent);
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+@media (max-width: 1023px) {
+    .service-related__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 519px) {
+    .service-related__grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .service-related__card { transition: none; }
+    .service-related__card:hover { transform: none; }
+}

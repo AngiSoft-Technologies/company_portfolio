@@ -1,0 +1,107 @@
+/* ==========================================================================
+   TechPlatforms — dedicated stylesheet
+   Desktop preserved: section header, one block per category (h3 heading),
+   responsive icon grid (2-col phone → 4-col ≥1024). Inline styles + JS hover
+   mutations moved here into scoped classes. The former index.css
+   `.angi-grid-tech` (TechPlatforms-only) is now `.angi-tech-grid`.
+   ========================================================================== */
+
+.angi-tech {
+  position: relative;
+  padding: clamp(3rem, 7vw, 5rem) 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+}
+
+.angi-tech-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.angi-tech-category-heading {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #F5F7FA);
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+/* Replaces .angi-grid-tech (dynamic 2→4 columns). Inline gap/maxWidth folded in. */
+.angi-tech-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 960px;
+}
+@media (min-width: 1024px) {
+  .angi-tech-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Tech tile (replaces inline flex + JS hover mutation) */
+.angi-tech-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  border-radius: 0.75rem;
+  min-width: 0;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+.angi-tech-tile:hover,
+.angi-tech-tile:focus-within {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--tech-tile-border, rgba(255, 255, 255, 0.06));
+  transform: translateY(-2px);
+}
+
+.angi-tech-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.angi-tech-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(245, 247, 250, 0.75);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Small phones (<380): tighter tiles */
+@media (max-width: 379px) {
+  .angi-tech-tile {
+    padding: 0.85rem 0.4rem;
+  }
+  .angi-tech-name {
+    font-size: 0.625rem;
+  }
+}
+
+/* States */
+.angi-tech-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: rgba(245, 247, 250, 0.55);
+  font-size: 0.9375rem;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .angi-tech-tile {
+    transition: none !important;
+  }
+  .angi-tech-tile:hover,
+  .angi-tech-tile:focus-within {
+    transform: none !important;
+  }
+}

@@ -64,7 +64,7 @@ const ProjectLists = () => {
             <ParallaxSection
                 speed={0.25}
                 treatment="technical"
-                backgroundImage="/images/programming-background-with-person-working-with-codes-computer.jpg"
+                backgroundImage="/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg"
                 className="relative py-32 overflow-hidden"
             >
                 <div className="angi-grain" />
@@ -200,7 +200,7 @@ const ProjectLists = () => {
                                     {filteredProjects.map((project, idx) => {
                                         const mainImage = project.images && project.images.length > 0 
                                             ? project.images[0] 
-                                            : (project.image || '/images/project-placeholder.png');
+                                            : (project.image || '/uploads/public/images/project-placeholder.png');
                                         
                                         const detailPath = getProjectDetailPath(project);
 

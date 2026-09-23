@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { Role } from '@prisma/client';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import prisma from '../db';
 import { clearPermissionCache } from '../services/permissions';
+import { clearEffectiveCache } from '../services/effectivePermissions';
 
 const roleSchema = z.object({
     key: z.string().min(2),
@@ -21,6 +22,8 @@ const assignmentSchema = z.object({
 export default function rolesRouter() {
     const router = Router();
     const requireRoleAdmin = [requireAuth, requireRoles('ADMIN')];
+    const requireRoleManage = [requireAuth, requireRoles('ADMIN'), requirePermission('roles.manage')];
+    const requireStaffAssign = [requireAuth, requireRoles('ADMIN'), requirePermission('staff.assign_permissions')];
 
     const audit = async (req: AuthRequest, action: string, entity: string, entityId?: string) => {
         await prisma.auditLog.create({
@@ -50,7 +53,7 @@ export default function rolesRouter() {
         })));
     });
 
-    router.post('/', ...requireRoleAdmin, async (req: AuthRequest, res) => {
+    router.post('/', ...requireRoleManage, async (req: AuthRequest, res) => {
         const parsed = roleSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const { permissionKeys, ...data } = parsed.data;
@@ -64,7 +67,7 @@ export default function rolesRouter() {
         res.status(201).json(role);
     });
 
-    router.put('/:id', ...requireRoleAdmin, async (req: AuthRequest, res) => {
+    router.put('/:id', ...requireRoleManage, async (req: AuthRequest, res) => {
         const parsed = roleSchema.partial({ key: true }).safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const { permissionKeys, ...data } = parsed.data;
@@ -77,12 +80,13 @@ export default function rolesRouter() {
                 skipDuplicates: true
             });
             clearPermissionCache();
+            clearEffectiveCache();
         }
         await audit(req, 'role.update', 'AppRole', role.id);
         res.json(role);
     });
 
-    router.post('/assignments', ...requireRoleAdmin, async (req: AuthRequest, res) => {
+    router.post('/assignments', ...requireStaffAssign, async (req: AuthRequest, res) => {
         const parsed = assignmentSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const assignment = await prisma.employeeRoleAssignment.upsert({
@@ -91,13 +95,15 @@ export default function rolesRouter() {
             create: parsed.data
         });
         clearPermissionCache(parsed.data.employeeId);
+        clearEffectiveCache(parsed.data.employeeId);
         await audit(req, 'role.assign', 'EmployeeRoleAssignment', assignment.id);
         res.status(201).json(assignment);
     });
 
-    router.delete('/assignments/:id', ...requireRoleAdmin, async (req: AuthRequest, res) => {
+    router.delete('/assignments/:id', ...requireStaffAssign, async (req: AuthRequest, res) => {
         const assignment = await prisma.employeeRoleAssignment.delete({ where: { id: req.params.id } });
         clearPermissionCache(assignment.employeeId);
+        clearEffectiveCache(assignment.employeeId);
         await audit(req, 'role.unassign', 'EmployeeRoleAssignment', assignment.id);
         res.json({ ok: true });
     });

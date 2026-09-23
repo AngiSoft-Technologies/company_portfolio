@@ -1,0 +1,211 @@
+/* Services List — shared layout, hero, and section scaffolding.
+   Visual system is dark/branded: navy bg, cyan/green accents, glass cards. */
+
+.services-page {
+    --svc-gap: 1.5rem;
+    min-height: 100vh;
+    background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(0, 175, 255, 0.12), transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, rgba(39, 217, 75, 0.08), transparent 60%),
+        #07142B;
+    color: #F5F7FA;
+    padding-bottom: 4rem;
+}
+
+/* ---------- Hero (compact interior hero) ---------- */
+.services-hero {
+    position: relative;
+    padding: clamp(2.5rem, 6vw, 4rem) 1.25rem clamp(2rem, 4vw, 3rem);
+    text-align: center;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+}
+
+.services-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(7, 20, 43, 0.55), rgba(7, 20, 43, 0.92));
+}
+
+.services-hero__inner {
+    position: relative;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.services-hero__eyebrow {
+    display: inline-block;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #18D8FF;
+    border: 1px solid rgba(0, 175, 255, 0.4);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    margin-bottom: 1.1rem;
+}
+
+.services-hero__title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin: 0 0 1rem;
+    background: linear-gradient(120deg, #FFFFFF 30%, #18D8FF 75%, #27D94B);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.services-hero__subtitle {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: #CBD5E1;
+    max-width: 640px;
+    margin: 0 auto 1.4rem;
+}
+
+.services-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1rem;
+}
+
+.services-hero__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.services-hero__btn--primary {
+    background: linear-gradient(120deg, #0875FF, #00AFFF);
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.28);
+}
+
+.services-hero__btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(0, 175, 255, 0.4);
+}
+
+.services-hero__btn--ghost {
+    border: 1px solid rgba(0, 175, 255, 0.45);
+    color: #F5F7FA;
+}
+
+.services-hero__btn--ghost:hover {
+    border-color: rgba(0, 175, 255, 0.8);
+    background: rgba(0, 175, 255, 0.1);
+}
+
+.services-hero__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #94A3B8;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.services-hero__link:hover { color: #18D8FF; }
+
+/* ---------- Container ---------- */
+.services-container {
+    width: min(1320px, 100%);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+/* Toolbar wrap spacing: hero -> toolbar 1.5-2.5rem */
+.services-toolbar-wrap {
+    margin-top: 2rem;
+}
+
+.services-section {
+    margin-top: 2.5rem;
+}
+
+.services-section__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.services-section__head--catalogue {
+    margin-top: 1.5rem;
+}
+
+.services-section__title {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    margin: 0;
+    color: #F5F7FA;
+}
+
+.services-section__count {
+    color: #94A3B8;
+    font-size: 0.95rem;
+}
+
+.services-section__clear {
+    border: 1px solid rgba(0, 175, 255, 0.4);
+    background: transparent;
+    color: #18D8FF;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.services-section__clear:hover { background: rgba(0, 175, 255, 0.12); }
+
+/* ---------- "Why AngiSoft" Why strip ---------- */
+.services-why {
+    margin-top: 4rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.services-why__item {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+}
+
+.services-why__icon {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(0, 175, 255, 0.12);
+    color: #18D8FF;
+    font-size: 1.1rem;
+}
+
+.services-why__text h4 {
+    margin: 0 0 0.2rem;
+    font-size: 1rem;
+    color: #F5F7FA;
+}
+
+.services-why__text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #94A3B8;
+}

@@ -1,163 +1,195 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../js/httpClient';
-import Table from '../../components/Table';
-import CrudModal from '../../components/CrudModal';
-import NotificationPopup from '../../modals/NotificationPopup';
-import ConfirmDialog from '../../components/ConfirmDialog';
+import React, { useMemo, useState } from 'react';
+import AdminCrudPage from './AdminCrudPage';
 
-const API_URL = '/about';
+// CMS editor for the About page. Each row is one composed section, keyed by a
+// stable `key` the public page looks up. The `content` of each section is a
+// rich nested object whose SHAPE the React component that renders it dictates
+// (e.g. AboutServiceMap reads content.services[], AboutTechnologies reads
+// content.columns[].sections[].groups[].technologies[]).
+//
+// To keep those shapes editable safely by an admin, each section key gets a
+// declarative sub-schema below (schemaFor). The structured editor (NestedEditor)
+// renders typed, repeatable form rows instead of one raw JSON textarea, so an
+// admin can't accidentally break the strict shape contract the public page
+// relies on. A "Edit as JSON" toggle is kept as an expert escape hatch.
 
-const columns = [
-  { key: 'title', title: 'Title' },
-  { key: 'description', title: 'Description', render: (val) => (Array.isArray(val) ? val.join('\n') : val) },
-];
+// ---- Reusable leaf definitions -------------------------------------------
+const str = (name, label, placeholder) => ({ name, label, type: 'text', placeholder });
+const txt = (name, label, rows = 3) => ({ name, label, type: 'textarea', rows });
+const bool = (name, label) => ({ name, label, type: 'checkbox', checkboxLabel: label });
+const strList = (name, label, placeholder) => ({ name, label, type: 'array', placeholder: placeholder || 'One item per line' });
 
-const AboutAdmin = ({ theme }) => {
-  const [aboutList, setAboutList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '' });
-  const [notif, setNotif] = useState({ message: '', type: 'info' });
-  const [confirm, setConfirm] = useState({ open: false, id: null });
+// ---- Per-section sub-schemas (component = source of truth) ----------------
+const schemaFor = (key) => {
+  switch (key) {
+    case 'geography':
+      return {
+        type: 'object',
+        title: 'Geography',
+        fields: [
+          txt('intro', 'Intro', 3),
+          str('mapImageUrl', 'Map image URL', '/uploads/public/images/about/geography/...'),
+          str('mapAlt', 'Map alt text'),
+          { type: 'list', name: 'regions', title: 'Regions', itemLabel: 'Region', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('title', 'Title'),
+              str('lineOne', 'Line one'), str('lineTwo', 'Line two'),
+              str('color', 'Color (hex)'),
+            ],
+          } },
+          { type: 'list', name: 'locations', title: 'Map locations', itemLabel: 'Location', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('x', 'X %'), str('y', 'Y %'),
+              str('regionIndex', 'Region index'), str('align', 'Align'),
+            ],
+          } },
+          { type: 'object', name: 'delivery', title: 'Delivery', fields: [
+            bool('enabled', 'Enabled'),
+            txt('introduction', 'Introduction', 3),
+            { type: 'list', name: 'benefits', title: 'Benefits', itemLabel: 'Benefit', item: {
+              type: 'object', fields: [str('id', 'Id'), str('title', 'Title'), txt('description', 'Description', 2)],
+            } },
+          ] },
+        ],
+      };
 
-  useEffect(() => {
-    fetchAbout();
-  }, []);
+    case 'serviceMap':
+      return {
+        type: 'object', title: 'Service Map', fields: [
+          { type: 'object', name: 'introTile', title: 'Intro tile', fields: [str('title', 'Title'), str('to', 'Link to')] },
+          { type: 'list', name: 'services', title: 'Services', itemLabel: 'Service', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('title', 'Title'), str('icon', 'Icon'),
+              str('imageUrl', 'Image URL', '/uploads/public/images/about/service-map/...'),
+              str('imageAlt', 'Image alt'), str('to', 'Link to'),
+            ],
+          } },
+        ],
+      };
 
-  const fetchAbout = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await apiGet(API_URL);
-      setAboutList(res || []);
-    } catch (err) {
-      setError('Failed to fetch about data');
-    }
-    setLoading(false);
-  };
+    case 'solutionTypes':
+      return {
+        type: 'object', title: 'Solution Types', fields: [
+          str('title', 'Title'), txt('description', 'Description', 3),
+          { type: 'list', name: 'solutions', title: 'Solutions', itemLabel: 'Solution', item: {
+            type: 'object', fields: [str('id', 'Id'), str('title', 'Title'), str('to', 'Link to')],
+          } },
+        ],
+      };
 
-  const openAddModal = () => {
-    setEditing(null);
-    setForm({ title: '', description: '' });
-    setModalOpen(true);
-  };
+    case 'technologies':
+      return {
+        type: 'object', title: 'Technologies', fields: [
+          { type: 'list', name: 'columns', title: 'Columns', itemLabel: 'Column', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('title', 'Title'), bool('enabled', 'Enabled'),
+              { type: 'list', name: 'sections', title: 'Sections', itemLabel: 'Section', item: {
+                type: 'object', fields: [
+                  str('id', 'Id'), str('title', 'Title'), bool('enabled', 'Enabled'),
+                  { type: 'list', name: 'groups', title: 'Groups', itemLabel: 'Group', item: {
+                    type: 'object', fields: [
+                      str('id', 'Id'), str('title', 'Title'), bool('enabled', 'Enabled'),
+                      strList('technologies', 'Technologies (one per line)'),
+                    ],
+                  } },
+                ],
+              } },
+            ],
+          } },
+        ],
+      };
 
-  const openEditModal = (row) => {
-    setEditing(row._id);
-    setForm({ title: row.title, description: Array.isArray(row.description) ? row.description.join('\n') : row.description });
-    setModalOpen(true);
-  };
+    case 'specializedCapabilities':
+      return {
+        type: 'object', title: 'Specialized Capabilities', fields: [
+          txt('introduction', 'Introduction', 3),
+          { type: 'list', name: 'capabilities', title: 'Capabilities', itemLabel: 'Capability', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('title', 'Title'), str('icon', 'Icon'), str('to', 'Link to'),
+            ],
+          } },
+        ],
+      };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setForm({ title: '', description: '' });
-    setEditing(null);
-  };
+    case 'collaboration':
+      return {
+        type: 'object', title: 'Collaboration', fields: [
+          { type: 'list', name: 'models', title: 'Models', itemLabel: 'Model', item: {
+            type: 'object', fields: [
+              str('id', 'Id'), str('title', 'Title'),
+              str('imageUrl', 'Image URL', '/uploads/public/images/about/collaboration/...'),
+              str('imageAlt', 'Image alt'),
+              strList('items', 'Items (one per line)'),
+            ],
+          } },
+        ],
+      };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    case 'sustainability':
+      return {
+        type: 'object', title: 'Sustainability', fields: [
+          { type: 'object', name: 'link', title: 'Link', fields: [
+            str('label', 'Label'), str('to', 'Link to'),
+            { name: 'type', label: 'Type', type: 'select', options: [
+              { value: 'internal', label: 'internal' },
+              { value: 'external', label: 'external' },
+            ] },
+          ] },
+        ],
+      };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setNotif({ message: '', type: 'info' });
-    setError('');
-    try {
-      if (editing) {
-        await apiPut(`${API_URL}/${editing}`, { ...form, description: form.description.split('\n') });
-        setNotif({ message: 'Updated successfully', type: 'success' });
-      } else {
-        await apiPost(API_URL, { ...form, description: form.description.split('\n') });
-        setNotif({ message: 'Added successfully', type: 'success' });
-      }
-      fetchAbout();
-      closeModal();
-    } catch (err) {
-      setNotif({ message: 'Failed to save', type: 'error' });
-    }
-  };
+    case 'clientsHeading':
+      return {
+        type: 'object', title: 'Clients', fields: [
+          str('title', 'Title'), txt('description', 'Description', 3),
+          str('targetMarketLabel', 'Target market label'),
+          strList('targetMarkets', 'Target markets (one per line)'),
+        ],
+      };
 
-  const handleDelete = async (id) => {
-    setConfirm({ open: true, id });
-  };
+    // Default: no structured schema for this key — fall back to raw JSON.
+    default:
+      return null;
+  }
+};
 
-  const confirmDelete = async () => {
-    const id = confirm.id;
-    setConfirm({ open: false, id: null });
-    try {
-      await apiDelete(`${API_URL}/${id}`);
-      setNotif({ message: 'Deleted successfully', type: 'success' });
-      fetchAbout();
-    } catch (err) {
-      setNotif({ message: 'Failed to delete', type: 'error' });
-    }
-  };
+const AboutAdmin = () => {
+  const [rawJson, setRawJson] = useState(false);
+
+  const fields = useMemo(() => [
+    { name: 'key', label: 'Key (stable id)', required: true, placeholder: 'geography | serviceMap | solutionTypes | technologies | specializedCapabilities | collaboration | sustainability | clientsHeading | ...' },
+    { name: 'title', label: 'Title', required: true },
+    { name: 'order', label: 'Order', type: 'number', defaultValue: 0 },
+    { name: 'published', label: 'Published', type: 'checkbox', defaultValue: true },
+    rawJson
+      ? { name: 'content', label: 'Content JSON', type: 'json', rows: 14, placeholder: '{\n  "title": "...",\n  "imageUrl": "/uploads/public/images/about/..."\n}' }
+      : { name: 'content', label: 'Content', type: 'object', schema: (row) => schemaFor(row?.key), defaultValue: {} },
+  ], [rawJson]);
 
   return (
-    <div className={`about-admin-page ${theme}`}>
-      <NotificationPopup
-        type={notif.type}
-        message={notif.message}
-        onClose={() => setNotif({ message: '', type: 'info' })}
-      />
-      <ConfirmDialog
-        isOpen={confirm.open}
-        type="danger"
-        title="Delete About Item"
-        message="Are you sure you want to delete this about item? This action cannot be undone."
-        onConfirm={confirmDelete}
-        onClose={() => setConfirm({ open: false, id: null })}
-        confirmText="Delete"
-        cancelText="Cancel"
-        theme={theme}
-      />
-      <div className="admin-section-title-bar admin-section-title">
-        <span>Manage About Section</span>
-        <button className="admin-btn-primary" onClick={openAddModal}>Add</button>
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+        <label className="flex items-center gap-2 text-sm font-semibold" style={{ cursor: 'pointer' }}>
+          <input type="checkbox" checked={rawJson} onChange={(e) => setRawJson(e.target.checked)} />
+          Edit as JSON
+        </label>
       </div>
-      <Table
-        columns={columns}
-        data={aboutList}
-        loading={loading}
-        error={error}
-        actions={(row) => (
-          <>
-            <button className="admin-btn-secondary" onClick={() => openEditModal(row)}>Edit</button>
-            <button className="admin-btn-danger" onClick={() => handleDelete(row._id)}>Delete</button>
-          </>
-        )}
+      <AdminCrudPage
+        title="About Page Sections"
+        description="Edit the composed About page. Each section is a row. Rich sections use structured editors that match the public page's exact data shape; toggle 'Edit as JSON' for the raw blob."
+        endpoint="/about-sections"
+        adminEndpoint="/about-sections/admin"
+        createLabel="Add Section"
+        columns={[
+          { key: 'key', title: 'Key' },
+          { key: 'title', title: 'Title' },
+          { key: 'order', title: 'Order' },
+          { key: 'published', title: 'Published', render: (value) => (value ? '✓' : '✗') }
+        ]}
+        fields={fields}
       />
-      <CrudModal open={modalOpen} onClose={closeModal} width={700} title={editing ? 'Edit About' : 'Add About'}>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Title"
-            className="admin-section-card"
-            required
-          />
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description (one per line)"
-            className="admin-section-card"
-            rows={10}
-            required
-          />
-          <div style={{display:'flex',gap:'1rem',justifyContent:'flex-end'}}>
-            <button type="button" className="admin-btn-secondary" onClick={closeModal}>Cancel</button>
-            <button type="submit" className="admin-btn-primary">{editing ? 'Update' : 'Add'}</button>
-          </div>
-        </form>
-      </CrudModal>
     </div>
   );
 };
 
-export default AboutAdmin; 
+export default AboutAdmin;

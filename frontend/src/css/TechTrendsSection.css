@@ -1,0 +1,210 @@
+/* ==========================================================================
+   TechTrendsSection — dedicated stylesheet
+   Background image is supplied via the --trend-background-image custom property
+   (set inline from active data). All static layout/overlay/responsive lives here.
+   ========================================================================== */
+
+.angi-trends-section {
+    position: relative;
+    padding: clamp(3rem, 7vw, 5rem) 0;
+    background: #070E1A;
+    overflow: hidden;
+}
+
+.angi-trends-tabs-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 2.25rem;
+}
+.angi-trends-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.angi-trends-tabs {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+    justify-content: center;
+    padding: 0.25rem;
+}
+@media (max-width: 639px) {
+    .angi-trends-tabs {
+        justify-content: flex-start;
+    }
+}
+
+.angi-trends-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72);
+    background: rgba(11, 30, 61, 0.55);
+    border: 1px solid rgba(215, 227, 255, 0.12);
+    border-radius: 9999px;
+    padding: 0.5rem 1.1rem;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+.angi-trends-tab-icon {
+    font-size: 0.95rem;
+}
+.angi-trends-tab.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary, #0875FF), var(--accent, #00AFFF));
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(8, 117, 255, 0.3);
+}
+.angi-trends-tab:focus-visible {
+    outline: 2px solid var(--accent, #00AFFF);
+    outline-offset: 2px;
+}
+
+/* Panel: rounded, contained on desktop; flattened to edge on phones. */
+.angi-trends-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(0, 175, 255, 0.12);
+    margin-top: 2rem;
+    display: flex;
+    isolation: isolate;
+}
+@media (max-width: 639px) {
+    .angi-trends-panel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        margin-left: calc(var(--container-padding, 1.25rem) * -1);
+        margin-right: calc(var(--container-padding, 1.25rem) * -1);
+    }
+}
+
+.angi-trends-background {
+    position: absolute;
+    inset: 0;
+    background-image: var(--trend-background-image);
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+    transition: background-image 0.3s ease;
+}
+.angi-trends-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5, 12, 26, 0.86) 0%, rgba(5, 12, 26, 0.92) 100%);
+    z-index: -1;
+}
+
+.angi-trends-content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.75rem);
+}
+@media (min-width: 900px) {
+    .angi-trends-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: center;
+    }
+}
+
+.angi-trends-introduction {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.angi-trends-icon {
+    width: clamp(2.75rem, 9vw, 3.5rem);
+    height: clamp(2.75rem, 9vw, 3.5rem);
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary, #0875FF), var(--accent, #00AFFF));
+}
+.angi-trends-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #F5F7FA;
+    margin: 0;
+}
+.angi-trends-description {
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.78);
+    margin: 0;
+}
+
+.angi-trends-capabilities-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 0.85rem;
+}
+.angi-trends-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.angi-trends-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.96rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+.angi-trends-item-dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: 0.45rem;
+    border-radius: 9999px;
+    background: var(--accent, #00AFFF);
+}
+
+.angi-trends-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+@media (max-width: 379px) {
+    .angi-trends-title {
+        font-size: 1.35rem;
+    }
+    .angi-trends-description {
+        font-size: 0.9rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .angi-trends-tab,
+    .angi-trends-background,
+    .angi-trends-footer .angi-btn-primary {
+        transition: none !important;
+    }
+}

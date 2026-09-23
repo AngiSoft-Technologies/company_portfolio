@@ -45,10 +45,15 @@ import prisma from './db';
 import careersRouter from './routes/careers';
 import companyStatsRouter from './routes/company-stats';
 import homeSectionsRouter from './routes/home-sections';
+import aboutSectionsRouter from './routes/about-sections';
 import staffBlogsRouter from './routes/staff-blogs';
 import certificationsRouter from './routes/certifications';
 import productInquiriesRouter from './routes/product-inquiries';
+import staffAccessRouter from './routes/staff-access';
 import productFaqsRouter from './routes/product-faqs';
+import contactEnquiriesRouter from './routes/contact-enquiries';
+import industriesRouter from './routes/industries';
+import solutionsRouter from './routes/solutions';
 import rolesRouter from './routes/roles';
 import employeeProfilesRouter from './routes/employee-profiles';
 
@@ -67,28 +72,42 @@ app.use(helmet({
             imgSrc: ["'self'", "data:", "https:"],
         },
     },
+    crossOriginResourcePolicy: {
+        policy: "cross-origin"
+    },
 }));
 // Production CORS: allow frontend domains (set CORS_ORIGIN in env or use defaults)
-const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke'];
+const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke', 'https://admin.angisoft.co.ke', 'https://www.admin.angisoft.co.ke', 'https://client.angisoft.co.ke', 'https://www.client.angisoft.co.ke', 'https://www.angisoft.co.ke/'];
 const allowed = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-  : defaultOrigins;
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+    : defaultOrigins;
 app.use(cors({ origin: allowed, credentials: true } as any));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.use('/uploads/public', express.static(path.resolve(process.cwd(), 'uploads/public'), {
-    immutable: true,
-    maxAge: '30d',
-    setHeaders: (res) => {
-        res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
-    }
-}));
+app.use(
+    "/uploads/public",
+    (req, res, next) => {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        next();
+    },
+    express.static(path.resolve(process.cwd(), "uploads/public"), {
+        immutable: true,
+        maxAge: "30d",
+        setHeaders: (res) => {
+            res.setHeader(
+                "Cache-Control",
+                "public, max-age=2592000, immutable"
+            );
+        },
+    })
+);
 app.use(sanitizeMiddleware);
 
 app.get('/', (req, res) => {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.status(200).send(`
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(`
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -243,20 +262,25 @@ app.use('/api/leads', leadsRouter());
 app.use('/api/support-tickets', supportTicketsRouter());
 app.use('/api/products', productsRouter());
 app.use('/api/roles', rolesRouter());
+app.use('/api/admin/staff', staffAccessRouter());
 app.use('/api/employee-profiles', employeeProfilesRouter());
 app.use('/api/careers', careersRouter());
 app.use('/api/company-stats', companyStatsRouter());
 app.use('/api/home-sections', homeSectionsRouter());
+app.use('/api/about-sections', aboutSectionsRouter());
 app.use('/api/staff-blogs', staffBlogsRouter());
 app.use('/api/certifications', certificationsRouter());
 app.use('/api/product-inquiries', productInquiriesRouter());
 app.use('/api/product-faqs', productFaqsRouter());
+app.use('/api/contact-enquiries', contactEnquiriesRouter());
+app.use('/api/industries', industriesRouter());
+app.use('/api/solutions', solutionsRouter());
 app.use('/health', healthRouter(prisma));
 
 // Analytics middleware
 app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/health')) {
-        trackPageView(req.path, req).catch(() => {});
+        trackPageView(req.path, req).catch(() => { });
     }
     next();
 });

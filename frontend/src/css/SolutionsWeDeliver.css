@@ -1,0 +1,188 @@
+/* ==========================================================================
+   SolutionsWeDeliver — dedicated stylesheet
+   Desktop design preserved: full-width rounded category panels with
+   background image + dark overlay, h3 category heading, 6 item cards as
+   two rows of three on desktop. Only responsive behaviour is improved.
+   The legacy global .angi-panel-bleed / .angi-panel-content had no rule of
+   their own (styled inline). They are now real scoped classes here.
+   ========================================================================== */
+
+.angi-solutions {
+  position: relative;
+  padding: clamp(3rem, 7vw, 5rem) 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+}
+
+.angi-solutions-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Category panel (self-contained, replaces inline .angi-panel-bleed) ── */
+.angi-solutions-panel {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(215, 227, 255, 0.12);
+  background: #0B1E3D;
+  min-height: 0;
+}
+
+.angi-solutions-panel-background {
+  position: absolute;
+  inset: 0;
+  background-image: var(--solutions-panel-image);
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.35);
+}
+
+.angi-solutions-panel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(7, 20, 43, 0.85) 0%, rgba(7, 20, 43, 0.6) 100%);
+}
+
+.angi-solutions-panel-content {
+  position: relative;
+  z-index: 1;
+  padding: 2rem;
+}
+
+/* ── Category heading (replaces inline flex + marker + h3) ── */
+.angi-solutions-category-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.angi-solutions-category-marker {
+  width: 4px;
+  height: 1.5rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--primary), var(--secondary));
+}
+.angi-solutions-category-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* ── Solution grid (replaces .angi-grid-solutions) ──
+   Base (phone): 2 columns. Tablet 640+: 2 columns.
+   Desktop 1024+: 3 columns. Very small <=360: 1 column. */
+.angi-solutions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+@media (min-width: 1024px) {
+  .angi-solutions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* ── Solution item (non-interactive) ── */
+.angi-solutions-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  padding: 1rem 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(10px);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+.angi-solutions-item:hover {
+  background: rgba(8, 117, 255, 0.12);
+  border-color: rgba(8, 117, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.angi-solutions-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  margin: 0 auto 0.5rem;
+  font-size: 1rem;
+  color: var(--primary);
+  background: rgba(8, 117, 255, 0.1);
+}
+.angi-solutions-item-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(245, 247, 250, 0.9);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ── Tablet (640-1023): keep 2 cols, relax padding a touch ── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .angi-solutions-panel-content {
+    padding: 1.75rem;
+  }
+  .angi-solutions-grid {
+    gap: 0.875rem;
+  }
+}
+
+/* ── Phone (<640): tighter panels + smaller tiles ── */
+@media (max-width: 639px) {
+  .angi-solutions-panel {
+    border-radius: 0.875rem;
+  }
+  .angi-solutions-panel-content {
+    padding: 1.25rem 1rem;
+  }
+  .angi-solutions-category-heading {
+    margin-bottom: 1rem;
+  }
+  .angi-solutions-item {
+    padding: 0.85rem 0.5rem;
+  }
+  .angi-solutions-item-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+  .angi-solutions-item-name {
+    font-size: 0.72rem;
+  }
+}
+
+/* ── Very small phones (<380): single column to stay readable ── */
+@media (max-width: 379px) {
+  .angi-solutions-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .angi-solutions-panel-content {
+    padding: 1.1rem 0.9rem;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .angi-solutions-item {
+    transition: none !important;
+  }
+  .angi-solutions-item:hover {
+    transform: none !important;
+  }
+}

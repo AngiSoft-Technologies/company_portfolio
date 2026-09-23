@@ -4,6 +4,36 @@ import { apiGet } from '../../js/httpClient';
 import { Link } from 'react-router-dom';
 import { FaStar, FaArrowRight, FaExternalLinkAlt } from 'react-icons/fa';
 import { resolveAssetUrl } from '../../utils/constants';
+import '../../css/TestimonialSlider.css';
+
+// Avatar with React-driven fallback (no DOM mutation / nextSibling hacks).
+const TestimonialAvatar = ({ src, name, primaryColor }) => {
+  const [failed, setFailed] = useState(false);
+  const initial = (name || 'C').charAt(0).toUpperCase();
+
+  if (!src || failed) {
+    return (
+      <div
+        className="angi-testimonial-avatar angi-testimonial-avatar--fallback"
+        style={{ background: `linear-gradient(135deg, var(--testimonial-primary, ${primaryColor}), var(--testimonial-secondary, #00AFFF))` }}
+        aria-hidden="true"
+      >
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="angi-testimonial-avatar"
+      src={src}
+      alt={name}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+};
 
 const TestimonialSlider = () => {
   const { colors, mode } = useTheme();
@@ -12,273 +42,139 @@ const TestimonialSlider = () => {
   const isDark = mode === 'dark';
 
   useEffect(() => {
+    let active = true;
     apiGet('/api/testimonials')
-      .then((data) => setTestimonials(Array.isArray(data) ? data : []))
+      .then((response) => {
+        const records = Array.isArray(response)
+          ? response
+          : response?.data || response?.testimonials || response?.items || [];
+        if (active) setTestimonials(Array.isArray(records) ? records.filter(Boolean) : []);
+      })
       .catch((err) => console.error('Failed to load testimonials:', err))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const renderStars = (rating = 5) =>
-    Array.from({ length: 5 }, (_, i) => (
-      <FaStar key={i} style={{ color: i < rating ? '#FBBF24' : 'rgba(255,255,255,0.15)', fontSize: '0.75rem' }} />
-    ));
+  // Render a 0–5 star row ONLY when a finite rating exists; otherwise nothing.
+  const renderStars = (rating) => {
+    const value = Number.isFinite(Number(rating)) ? Math.max(0, Math.min(5, Number(rating))) : null;
+    if (value === null) return null;
+    return (
+      <div className="angi-testimonial-stars" aria-label={`${value} out of 5 stars`}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <FaStar
+            key={i}
+            className={i < value ? 'angi-testimonial-star is-filled' : 'angi-testimonial-star'}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+    );
+  };
 
   if (loading || testimonials.length === 0) return null;
 
-  const top = testimonials.slice(0, 5);
+  // Filter out disabled / draft / archived / unapproved / empty-quote records.
+  const visible = testimonials
+    .filter((t) => {
+      if (t.disabled || t.draft || t.archived || t.rejected) return false;
+      if (t.confirmed === false) return false;
+      const quote = (t.text || t.message || t.quote || t.review || t.content || '').toString().trim();
+      return quote.length > 0;
+    })
+    // Prefer featured, then explicit sortOrder, then recency.
+    .sort((a, b) => {
+      const f = (x) => (x.featured ? 1 : 0) - (Number(x.sortOrder) || 0);
+      const diff = f(b) - f(a);
+      if (diff !== 0) return diff;
+      const da = new Date(a.publishedAt || a.createdAt || 0).getTime() || 0;
+      const db = new Date(b.publishedAt || b.createdAt || 0).getTime() || 0;
+      return db - da;
+    })
+    .slice(0, 5);
+
+  if (visible.length === 0) return null;
 
   return (
-    <section style={{
-      position: 'relative',
-      padding: '5rem 0 4rem',
-      overflow: 'hidden',
-      background: isDark
-        ? 'linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%)'
-        : 'linear-gradient(180deg, #F8FAFF 0%, #EFF5FF 50%, #F8FAFF 100%)',
-      color: isDark ? '#fff' : '#07142B',
-    }}>
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto', padding: '0 1.5rem' }}>
-
+    <section
+      className={`angi-testimonial-section ${isDark ? 'is-dark' : 'is-light'}`}
+      style={{
+        '--testimonial-primary': colors.primary,
+        '--testimonial-secondary': colors.secondary || '#00AFFF',
+      }}
+    >
+      <div className="angi-testimonial-inner">
         {/* ── Header ── */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.5rem 1.25rem', borderRadius: '999px',
-            fontSize: '0.8125rem', fontWeight: 600,
-            background: `${colors.primary}15`,
-            color: colors.primary,
-            marginBottom: '1.25rem',
-          }}>
-            <FaStar style={{ fontSize: '0.7rem' }} />
+        <div className="angi-testimonial-header">
+          <div className="angi-testimonial-badge">
+            <FaStar className="angi-testimonial-badge-icon" aria-hidden="true" />
             What Our Clients Say
           </div>
 
-          <h2 style={{
-            fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-            fontWeight: 800,
-            lineHeight: 1.2,
-            marginBottom: '0.75rem',
-          }}>
+          <h2 className="angi-testimonial-title">
             Trusted by{' '}
-            <span style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>Businesses</span>{' '}
-            Across Africa
+            <span className="angi-testimonial-title-gradient">Businesses</span>
           </h2>
 
-          <p style={{
-            fontSize: '1rem',
-            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-            maxWidth: '520px',
-            margin: '0 auto',
-            lineHeight: 1.6,
-          }}>
+          <p className="angi-testimonial-subtitle">
             Hear from the businesses and teams we've helped build, scale, and innovate.
           </p>
         </div>
 
-        {/* ── Vertical Stack ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {top.map((t, i) => {
-            const name = t.name || 'Client';
-            const role = t.role || '';
-            const company = t.company || '';
-            const message = t.text || t.message || '';
+        {/* ── Card stack ── */}
+        <div className="angi-testimonial-list">
+          {visible.map((t, i) => {
+            const name = (t.name || t.clientName || 'Client').toString().trim();
+            const role = (t.role || t.clientRole || '').toString().trim();
+            const company = (t.company || t.organization || '').toString().trim();
+            const message = (t.text || t.message || t.quote || t.review || t.content || '').toString().trim();
             const avatar = resolveAssetUrl(t.imageUrl || null);
-            const projectId = t.productId || null;
-            const testimonialId = t.id || null;
+
+            const ratingNode = renderStars(t.rating);
 
             return (
-              <div key={t.id || i} style={{
-                background: isDark ? 'rgba(255,255,255,0.04)' : '#fff',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
-                borderRadius: '1rem',
-                padding: '1.75rem 2rem',
-                display: 'grid',
-                gridTemplateColumns: '180px 1fr',
-                gap: '1.5rem',
-                transition: 'border-color 0.3s, box-shadow 0.3s',
-              }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = `${colors.primary}30`;
-                  e.currentTarget.style.boxShadow = `0 4px 24px ${colors.primary}08`;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+              <article
+                key={t.id || i}
+                className="angi-testimonial-card"
               >
-                {/* ── Column 1: Company name ── */}
-                <div style={{
-                  fontFamily: "'Sora', sans-serif",
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  lineHeight: 1.4,
-                  paddingTop: '0.25rem',
-                }}>
+                {/* Column 1: company rail */}
+                <div className="angi-testimonial-rail">
                   {company || 'Client'}
                 </div>
 
-                {/* ── Column 2 ── */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {/* Row 1: avatar + name + title (left) | stars (right) */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                      {avatar ? (
-                        <img
-                          src={avatar}
-                          alt={name}
-                          loading="lazy"
-                          decoding="async"
-                          style={{
-                            width: '44px', height: '44px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: `2px solid ${colors.primary}30`,
-                          }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div style={{
-                        width: '44px', height: '44px',
-                        borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-                        display: avatar ? 'none' : 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.9rem', fontWeight: 700, color: '#fff',
-                        flexShrink: 0,
-                      }}>
-                        {name.charAt(0)}
-                      </div>
-                      <div>
-                        <div style={{
-                          fontFamily: "'Sora', sans-serif",
-                          fontWeight: 700,
-                          fontSize: '0.9375rem',
-                          color: isDark ? '#fff' : '#1e293b',
-                          lineHeight: 1.3,
-                        }}>
-                          {name}
-                        </div>
-                        {role && (
-                          <div style={{
-                            fontSize: '0.8125rem',
-                            color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
-                            marginTop: '0.125rem',
-                          }}>
-                            {role}
-                          </div>
-                        )}
+                {/* Column 2: content */}
+                <div className="angi-testimonial-content">
+                  {/* Row 1: avatar + name/title | stars */}
+                  <div className="angi-testimonial-head">
+                    <div className="angi-testimonial-person">
+                      <TestimonialAvatar src={avatar} name={name} primaryColor={colors.primary} />
+                      <div className="angi-testimonial-identity">
+                        <div className="angi-testimonial-name">{name}</div>
+                        {role && <div className="angi-testimonial-role">{role}</div>}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.2rem' }}>
-                      {renderStars(t.rating || 5)}
-                    </div>
+                    {ratingNode}
                   </div>
 
-                  {/* Row 2: Testimonial text */}
-                  <p style={{
-                    fontSize: '0.9375rem',
-                    fontWeight: 400,
-                    lineHeight: 1.7,
-                    color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
-                  }}>
+                  {/* Row 2: quote */}
+                  <blockquote className="angi-testimonial-quote">
                     {message}
-                  </p>
-
-                  {/* Row 3: Optional action buttons */}
-                  {(projectId || testimonialId) && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                      {projectId && (
-                        <Link
-                          to={`/projects/${projectId}`}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '0.5rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: colors.primary,
-                            textDecoration: 'none',
-                            border: `1px solid ${colors.primary}30`,
-                            background: 'transparent',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = `${colors.primary}10`;
-                            e.currentTarget.style.borderColor = `${colors.primary}50`;
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.borderColor = `${colors.primary}30`;
-                          }}
-                        >
-                          View Project <FaExternalLinkAlt style={{ fontSize: '0.6rem' }} />
-                        </Link>
-                      )}
-                      {testimonialId && (
-                        <Link
-                          to={`/testimonials/${testimonialId}`}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '0.5rem',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: '#fff',
-                            textDecoration: 'none',
-                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
-                          onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-                        >
-                          View Testimonial <FaArrowRight style={{ fontSize: '0.6rem' }} />
-                        </Link>
-                      )}
-                    </div>
-                  )}
+                  </blockquote>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
 
-        {/* ── View All Button ── */}
-        <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-          <Link
-            to="/testimonials"
-            style={{
-              display: 'inline-block',
-              padding: '0.875rem 2rem',
-              borderRadius: '0.75rem',
-              fontSize: '0.9375rem',
-              fontWeight: 600,
-              color: '#fff',
-              textDecoration: 'none',
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-              boxShadow: `0 4px 16px ${colors.primary}25`,
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 6px 20px ${colors.primary}35`;
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}25`;
-            }}
-          >
+        {/* ── View All ── */}
+        <div className="angi-testimonial-cta">
+          <Link to="/testimonials" className="angi-testimonial-view-all">
             View All Testimonials
+            <FaArrowRight aria-hidden="true" />
           </Link>
         </div>
       </div>

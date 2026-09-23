@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Role } from '@prisma/client';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import prisma from '../db';
 
 const portfolioSchema = z.object({
@@ -65,7 +65,7 @@ export default function employeeProfilesRouter() {
         res.json(items);
     });
 
-    router.post('/portfolio', requireAuth, async (req: AuthRequest, res) => {
+    router.post('/portfolio', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const parsed = portfolioSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const employeeId = parsed.data.employeeId || req.user?.sub;
@@ -75,7 +75,7 @@ export default function employeeProfilesRouter() {
         res.status(201).json(item);
     });
 
-    router.put('/portfolio/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/portfolio/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const item = await prisma.employeePortfolioItem.findUnique({ where: { id: req.params.id } });
         if (!item) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, item.employeeId)) return res.status(403).json({ error: 'Not authorized' });
@@ -86,7 +86,7 @@ export default function employeeProfilesRouter() {
         res.json(updated);
     });
 
-    router.delete('/portfolio/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/portfolio/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const item = await prisma.employeePortfolioItem.findUnique({ where: { id: req.params.id } });
         if (!item) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, item.employeeId)) return res.status(403).json({ error: 'Not authorized' });
@@ -103,7 +103,7 @@ export default function employeeProfilesRouter() {
         res.json(stats);
     });
 
-    router.post('/stats', requireAuth, async (req: AuthRequest, res) => {
+    router.post('/stats', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const parsed = statSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const employeeId = parsed.data.employeeId || req.user?.sub;
@@ -113,7 +113,7 @@ export default function employeeProfilesRouter() {
         res.status(201).json(stat);
     });
 
-    router.put('/stats/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/stats/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const stat = await prisma.employeeProfileStat.findUnique({ where: { id: req.params.id } });
         if (!stat) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, stat.employeeId)) return res.status(403).json({ error: 'Not authorized' });
@@ -124,7 +124,7 @@ export default function employeeProfilesRouter() {
         res.json(updated);
     });
 
-    router.delete('/stats/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/stats/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const stat = await prisma.employeeProfileStat.findUnique({ where: { id: req.params.id } });
         if (!stat) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, stat.employeeId)) return res.status(403).json({ error: 'Not authorized' });

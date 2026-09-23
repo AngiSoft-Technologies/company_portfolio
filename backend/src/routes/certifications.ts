@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Role } from '@prisma/client';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles } from '../middleware/roles';
+import { requirePermission, requireRoles } from '../middleware/roles';
 import prisma from '../db';
 
 const createSchema = z.object({
@@ -55,7 +55,7 @@ export default function certificationsRouter() {
         res.json(certs);
     });
 
-    router.post('/', requireAuth, async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
@@ -69,7 +69,7 @@ export default function certificationsRouter() {
         res.status(201).json(cert);
     });
 
-    router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const cert = await prisma.certification.findUnique({ where: { id: req.params.id } });
         if (!cert) return res.status(404).json({ error: 'Not found' });
@@ -86,7 +86,7 @@ export default function certificationsRouter() {
         res.json(updated);
     });
 
-    router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const cert = await prisma.certification.findUnique({ where: { id: req.params.id } });
         if (!cert) return res.status(404).json({ error: 'Not found' });

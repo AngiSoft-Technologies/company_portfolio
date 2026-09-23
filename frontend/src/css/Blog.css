@@ -1,0 +1,463 @@
+/* ==========================================================================
+   BlogSection — dedicated stylesheet
+   All Blog-specific styling lives here (moved out of the global index.css).
+   Scoped class prefix: .angi-blog-
+   ========================================================================== */
+
+/* 1. Section root --------------------------------------------------------- */
+.angi-blog-section {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+    isolation: isolate;
+}
+
+/* 2. Dark theme ----------------------------------------------------------- */
+.angi-blog-section.is-dark {
+    background: linear-gradient(180deg, #07142B 0%, #0B1E3D 50%, #07142B 100%);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+/* 3. Light theme ---------------------------------------------------------- */
+.angi-blog-section.is-light {
+    background: linear-gradient(180deg, #F8FAFF 0%, #EFF5FF 50%, #F8FAFF 100%);
+    color: var(--blog-primary, #07142B);
+}
+
+/* 4. Decorative sparkle --------------------------------------------------- */
+.angi-blog-sparkle {
+    position: absolute;
+    top: clamp(1rem, 3vw, 2rem);
+    right: clamp(1rem, 4vw, 3rem);
+    font-size: 2.25rem;
+    color: var(--blog-secondary, #00AFFF);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* 5. Responsive container ------------------------------------------------- */
+.angi-blog-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+/* 6. Header --------------------------------------------------------------- */
+.angi-blog-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    max-width: 40rem;
+}
+
+/* 7. Badge ---------------------------------------------------------------- */
+.angi-blog-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--blog-primary, #0875FF);
+    background: rgba(8, 117, 255, 0.12);
+    border: 1px solid rgba(8, 117, 255, 0.25);
+}
+
+/* 8. Title ---------------------------------------------------------------- */
+.angi-blog-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+/* 9. Gradient title span -------------------------------------------------- */
+.angi-blog-title-highlight {
+    background: linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* 10. Subtitle ------------------------------------------------------------ */
+.angi-blog-subtitle {
+    font-size: 1.02rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 34rem;
+}
+
+.angi-blog-section.is-dark .angi-blog-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.angi-blog-section.is-light .angi-blog-subtitle {
+    color: #475569;
+}
+
+/* 11. Blog grid ----------------------------------------------------------- */
+.angi-blog-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .angi-blog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.75rem;
+    }
+}
+
+/* 12. Card ---------------------------------------------------------------- */
+.angi-blog-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 1rem;
+    border: 1px solid transparent;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* 13. Hover and focus state ----------------------------------------------- */
+.angi-blog-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(8, 117, 255, 0.45);
+    box-shadow: 0 14px 34px rgba(8, 117, 255, 0.2);
+}
+
+.angi-blog-card:focus-visible {
+    outline: 2px solid var(--blog-secondary, #00AFFF);
+    outline-offset: 3px;
+}
+
+.angi-blog-section.is-dark .angi-blog-card {
+    background: rgba(11, 30, 61, 0.6);
+    border-color: rgba(215, 227, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.angi-blog-section.is-dark .angi-blog-card:hover {
+    background: rgba(11, 30, 61, 0.85);
+}
+
+.angi-blog-section.is-light .angi-blog-card {
+    background: #ffffff;
+    border-color: rgba(8, 117, 255, 0.12);
+    box-shadow: 0 6px 18px rgba(7, 20, 43, 0.06);
+}
+
+.angi-blog-section.is-light .angi-blog-card:hover {
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(7, 20, 43, 0.12);
+}
+
+/* 14. Thumbnail ----------------------------------------------------------- */
+.angi-blog-thumbnail {
+    flex: 0 0 108px;
+    width: 108px;
+    align-self: stretch;
+    background: linear-gradient(135deg, var(--blog-primary, #0875FF), var(--blog-secondary, #00AFFF));
+    overflow: hidden;
+}
+
+/* 15. Thumbnail image ----------------------------------------------------- */
+.angi-blog-thumbnail img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.angi-blog-card:hover .angi-blog-thumbnail img {
+    transform: scale(1.05);
+}
+
+/* 16. Fallback thumbnail -------------------------------------------------- */
+.angi-blog-thumbnail-fallback {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--blog-primary, #0875FF), var(--blog-secondary, #00AFFF));
+    color: #fff;
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+/* 17. Card content -------------------------------------------------------- */
+.angi-blog-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.9rem 1rem 0.9rem 1rem;
+}
+
+/* 18. Date ---------------------------------------------------------------- */
+.angi-blog-date {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.angi-blog-section.is-dark .angi-blog-date {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.angi-blog-section.is-light .angi-blog-date {
+    color: #64748b;
+}
+
+/* 19. Post title ---------------------------------------------------------- */
+.angi-blog-post-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.angi-blog-section.is-dark .angi-blog-post-title {
+    color: #F5F7FA;
+}
+
+.angi-blog-section.is-light .angi-blog-post-title {
+    color: #0f172a;
+}
+
+/* 20. Author row ---------------------------------------------------------- */
+.angi-blog-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.1rem;
+}
+
+/* 21. Author avatar ------------------------------------------------------- */
+.angi-blog-author-avatar {
+    flex-shrink: 0;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--blog-primary, #0875FF), var(--blog-secondary, #00AFFF));
+}
+
+/* 22. Author name --------------------------------------------------------- */
+.angi-blog-author-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.angi-blog-section.is-dark .angi-blog-author-name {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.angi-blog-section.is-light .angi-blog-author-name {
+    color: #334155;
+}
+
+/* 23. Tags ---------------------------------------------------------------- */
+.angi-blog-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+}
+
+/* 24. Tag ----------------------------------------------------------------- */
+.angi-blog-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.5rem;
+    overflow-wrap: anywhere;
+}
+
+.angi-blog-section.is-dark .angi-blog-tag {
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(8, 117, 255, 0.22);
+    border: 1px solid rgba(8, 117, 255, 0.3);
+}
+
+.angi-blog-section.is-light .angi-blog-tag {
+    color: #1746b3;
+    background: rgba(8, 117, 255, 0.1);
+    border: 1px solid rgba(8, 117, 255, 0.18);
+}
+
+/* 25. Section footer ------------------------------------------------------ */
+.angi-blog-footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 26. View All CTA -------------------------------------------------------- */
+.angi-blog-view-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.7rem 1.6rem;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: #fff;
+    background: linear-gradient(135deg, var(--blog-primary, #0875FF), var(--blog-secondary, #00AFFF));
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.angi-blog-view-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(8, 117, 255, 0.35);
+}
+
+/* 27. Tablet breakpoint --------------------------------------------------- */
+@media (min-width: 640px) {
+    .angi-blog-card {
+        flex-direction: column;
+    }
+
+    .angi-blog-thumbnail {
+        flex: none;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+
+    .angi-blog-content {
+        padding: 1.25rem 1.5rem 1.4rem;
+        gap: 0.6rem;
+    }
+
+    .angi-blog-post-title {
+        font-size: 1.12rem;
+    }
+}
+
+/* 28. Phone breakpoint ---------------------------------------------------- */
+@media (max-width: 639px) {
+    .angi-blog-section {
+        padding: clamp(2.5rem, 9vw, 3.25rem) 1.1rem;
+    }
+
+    .angi-blog-grid {
+        gap: 1rem;
+    }
+
+    .angi-blog-thumbnail {
+        flex-basis: 100px;
+        width: 100px;
+    }
+
+    .angi-blog-sparkle {
+        font-size: 1.6rem;
+        opacity: 0.4;
+    }
+
+    .angi-blog-post-title {
+        font-size: 0.98rem;
+    }
+
+    .angi-blog-footer {
+        width: 100%;
+    }
+
+    .angi-blog-view-all {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+/* 29. Very small phone breakpoint ----------------------------------------- */
+@media (max-width: 379px) {
+    .angi-blog-section {
+        padding: 2.25rem 0.85rem 2.75rem;
+    }
+
+    .angi-blog-sparkle {
+        display: none;
+    }
+
+    .angi-blog-thumbnail {
+        flex-basis: 90px;
+        width: 90px;
+    }
+
+    .angi-blog-author-avatar {
+        width: 1.6rem;
+        height: 1.6rem;
+        font-size: 0.72rem;
+    }
+
+    .angi-blog-content {
+        padding: 0.7rem 0.85rem 0.7rem 0.95rem;
+        gap: 0.45rem;
+    }
+
+    .angi-blog-tag {
+        font-size: 0.68rem;
+    }
+}
+
+/* 30. Focus-visible behavior ---------------------------------------------- */
+.angi-blog-view-all:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* 31. Reduced-motion support ---------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .angi-blog-card,
+    .angi-blog-thumbnail img,
+    .angi-blog-view-all {
+        transition: none !important;
+    }
+
+    .angi-blog-card:hover {
+        transform: none;
+    }
+
+    .angi-blog-card:hover .angi-blog-thumbnail img {
+        transform: none;
+    }
+
+    .angi-blog-view-all:hover {
+        transform: none;
+    }
+}

@@ -5,49 +5,53 @@ import {
   FaShieldAlt, FaBrain, FaMusic, FaMoneyBillWave, FaFileAlt,
   FaSchool,
 } from 'react-icons/fa';
+import '../../css/SolutionsWeDeliver.css';
 
 const solutionCategories = [
   {
+    id: 'enterprise',
     name: 'Enterprise Solutions',
-    bgImage: '/images/services/enterprise.jpg',
+    bgImage: '/uploads/public/images/services/enterprise.jpg',
     items: [
-      { icon: FaBuilding, name: 'Enterprise Applications' },
-      { icon: FaCogs, name: 'ERP Systems' },
-      { icon: FaUsers, name: 'CRM Platforms' },
-      { icon: FaUsers, name: 'HR Management Systems' },
-      { icon: FaFileAlt, name: 'Document Management' },
-      { icon: FaMoneyBillWave, name: 'Invoicing & Billing' },
+      { id: 'enterprise-applications', icon: FaBuilding, name: 'Enterprise Applications' },
+      { id: 'erp-systems', icon: FaCogs, name: 'ERP Systems' },
+      { id: 'crm-platforms', icon: FaUsers, name: 'CRM Platforms' },
+      { id: 'hr-management', icon: FaUsers, name: 'HR Management Systems' },
+      { id: 'document-management', icon: FaFileAlt, name: 'Document Management' },
+      { id: 'invoicing-billing', icon: FaMoneyBillWave, name: 'Invoicing & Billing' },
     ],
   },
   {
+    id: 'web-mobile',
     name: 'Web & Mobile',
-    bgImage: '/images/services/web-mobile.jpg',
+    bgImage: '/uploads/public/images/services/web-mobile.jpg',
     items: [
-      { icon: FaGlobe, name: 'Web Portals' },
-      { icon: FaMobileAlt, name: 'Mobile Applications' },
-      { icon: FaLaptopCode, name: 'SaaS Platforms' },
-      { icon: FaChartBar, name: 'Progressive Web Apps' },
-      { icon: FaDatabase, name: 'API & Microservices' },
-      { icon: FaBrain, name: 'AI-Powered Interfaces' },
+      { id: 'web-portals', icon: FaGlobe, name: 'Web Portals' },
+      { id: 'mobile-applications', icon: FaMobileAlt, name: 'Mobile Applications' },
+      { id: 'saas-platforms', icon: FaLaptopCode, name: 'SaaS Platforms' },
+      { id: 'progressive-web-apps', icon: FaChartBar, name: 'Progressive Web Apps' },
+      { id: 'api-microservices', icon: FaDatabase, name: 'API & Microservices' },
+      { id: 'ai-powered-interfaces', icon: FaBrain, name: 'AI-Powered Interfaces' },
     ],
   },
   {
+    id: 'industry',
     name: 'Industry Solutions',
-    bgImage: '/images/services/industry.jpg',
+    bgImage: '/uploads/public/images/services/industry.jpg',
     items: [
-      { icon: FaNetworkWired, name: 'ISP Billing & Portals' },
-      { icon: FaSchool, name: 'School Management Systems' },
-      { icon: FaChartBar, name: 'Analytics Dashboards' },
-      { icon: FaMusic, name: 'AngiMusic Platform' },
-      { icon: FaBuilding, name: 'Property Management' },
-      { icon: FaShieldAlt, name: 'Security Platforms' },
+      { id: 'isp-billing', icon: FaNetworkWired, name: 'ISP Billing & Portals' },
+      { id: 'school-management', icon: FaSchool, name: 'School Management Systems' },
+      { id: 'analytics-dashboards', icon: FaChartBar, name: 'Analytics Dashboards' },
+      { id: 'angitunes-platform', icon: FaMusic, name: 'AngiTunes Platform' },
+      { id: 'property-management', icon: FaBuilding, name: 'Property Management' },
+      { id: 'security-platforms', icon: FaShieldAlt, name: 'Security Platforms' },
     ],
   },
 ];
 
 const SolutionsWeDeliver = () => {
   return (
-    <section className="angi-section angi-section-gradient" id="solutions">
+    <section className="angi-solutions" id="solutions">
       <div className="angi-container">
         <div className="angi-section-header">
           <div className="angi-section-badge">Solutions</div>
@@ -59,95 +63,37 @@ const SolutionsWeDeliver = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="angi-solutions-categories">
           {solutionCategories.map((cat) => (
-            <div
-              key={cat.name}
-              style={{
-                position: 'relative', borderRadius: '1.25rem', overflow: 'hidden',
-                border: '1px solid rgba(0,175,255,0.1)',
-              }}
+            <article
+              key={cat.id}
+              className="angi-solutions-panel"
+              style={{ '--solutions-panel-image': `url(${cat.bgImage})` }}
             >
-              {/* Background image */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                backgroundImage: `url(${cat.bgImage})`,
-                backgroundSize: 'cover', backgroundPosition: 'center',
-                filter: 'brightness(0.35)',
-              }} />
+              <div className="angi-solutions-panel-background" aria-hidden="true" />
+              <div className="angi-solutions-panel-overlay" aria-hidden="true" />
 
-              {/* Dark overlay gradient */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(135deg, rgba(7,20,43,0.85) 0%, rgba(7,20,43,0.6) 100%)',
-              }} />
-
-              {/* Content */}
-              <div style={{ position: 'relative', zIndex: 2, padding: '2rem 2rem 1.5rem' }}>
-                {/* Category heading */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem',
-                }}>
-                  <div style={{
-                    width: '4px', height: '1.5rem', borderRadius: '2px',
-                    background: 'linear-gradient(180deg, var(--primary), var(--secondary))',
-                  }} />
-                  <h3 style={{
-                    fontFamily: "'Sora', sans-serif", fontSize: '1.25rem', fontWeight: 700,
-                    color: '#fff', letterSpacing: '-0.01em',
-                  }}>
-                    {cat.name}
-                  </h3>
+              <div className="angi-solutions-panel-content">
+                <div className="angi-solutions-category-heading">
+                  <span className="angi-solutions-category-marker" aria-hidden="true" />
+                  <h3 className="angi-solutions-category-title">{cat.name}</h3>
                 </div>
 
-                {/* Solution cards grid */}
-                <div style={{
-                  display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem',
-                }}>
-                  {cat.items.map((item, i) => {
+                <ul className="angi-solutions-grid">
+                  {cat.items.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <div
-                        key={i}
-                        style={{
-                          textAlign: 'center', padding: '1.25rem 0.5rem', cursor: 'default',
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '0.75rem',
-                          transition: 'all 0.3s ease',
-                          backdropFilter: 'blur(10px)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(8,117,255,0.12)';
-                          e.currentTarget.style.borderColor = 'rgba(8,117,255,0.3)';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                      >
-                        <div style={{
-                          width: '2.5rem', height: '2.5rem', borderRadius: '0.625rem',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          margin: '0 auto 0.5rem', fontSize: '1rem', color: 'var(--primary)',
-                          background: 'rgba(8,117,255,0.1)',
-                        }}>
+                      <li key={item.id} className="angi-solutions-item">
+                        <span className="angi-solutions-item-icon" aria-hidden="true">
                           <Icon />
-                        </div>
-                        <div style={{
-                          fontSize: '0.75rem', fontWeight: 600, color: 'rgba(245,247,250,0.9)',
-                          lineHeight: 1.4,
-                        }}>
-                          {item.name}
-                        </div>
-                      </div>
+                        </span>
+                        <span className="angi-solutions-item-name">{item.name}</span>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

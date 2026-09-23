@@ -84,6 +84,22 @@ export const apiRequest = async (method, endpoint, data = null, token = null) =>
 };
 
 export const apiGet = (endpoint, token = null) => apiRequest('GET', endpoint, null, token);
+
+// Non-throwing GET: returns { ok, status, data, error } instead of throwing,
+// so hooks can branch on res.ok without try/catch. Used by data-driven
+// public list/detail hooks (blog, etc.) that render dedicated error states.
+export const safeGet = async (endpoint, token = null) => {
+  try {
+    const result = await apiRequest('GET', endpoint, null, token);
+    return { ok: true, status: 200, data: result, error: null };
+  } catch (error) {
+    const message = error?.message || 'Failed to load data';
+    // apiRequest throws a plain Error without .status; surface it if present.
+    const status = typeof error?.status === 'number' ? error.status : 0;
+    return { ok: false, status, data: null, error: message };
+  }
+};
+
 export const apiPost = (endpoint, data, token = null) => apiRequest('POST', endpoint, data, token);
 export const apiPut = (endpoint, data, token = null) => apiRequest('PUT', endpoint, data, token);
 export const apiDelete = (endpoint, token = null) => apiRequest('DELETE', endpoint, null, token);

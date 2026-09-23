@@ -1,0 +1,34 @@
+/* Pricing — intro (editorial blurb under the hero) */
+.pricing-intro { padding-top: 0.5rem; }
+.pricing-intro__card {
+    display: grid;
+    gap: 1rem;
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background:
+        radial-gradient(520px 280px at 88% -10%, rgba(0, 175, 255, 0.1), transparent 60%),
+        var(--pricing-surface);
+    padding: clamp(1.4rem, 3vw, 2.2rem);
+}
+.pricing-intro__title {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+    color: var(--pricing-text);
+}
+.pricing-intro__text {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.7;
+    max-width: 74ch;
+}
+.pricing-intro__note {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 0;
+    color: var(--pricing-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+.pricing-intro__note svg { color: var(--pricing-accent); margin-top: 0.2rem; flex: none; }

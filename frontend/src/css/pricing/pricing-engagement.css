@@ -1,0 +1,28 @@
+/* Pricing — engagement models */
+.pricing-engagement__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.1rem;
+}
+.pricing-engagement {
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background:
+        radial-gradient(420px 240px at 90% -10%, rgba(0, 175, 255, 0.08), transparent 60%),
+        var(--pricing-surface);
+    padding: 1.6rem;
+    transition: border-color 0.2s ease;
+}
+.pricing-engagement:hover { border-color: var(--pricing-border-strong); }
+.pricing-engagement__title {
+    margin: 0 0 0.5rem;
+    font-family: 'Sora', system-ui, sans-serif;
+    color: var(--pricing-text);
+    font-size: 1.15rem;
+}
+.pricing-engagement__desc {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}

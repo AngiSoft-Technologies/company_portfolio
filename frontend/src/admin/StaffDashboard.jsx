@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPut, apiPost, apiDelete } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,7 +7,8 @@ import {
     FaUser, FaEdit, FaSave, FaTimes, FaCamera, FaBriefcase,
     FaProjectDiagram, FaCalendarCheck, FaLock, FaKey, FaEye,
     FaEyeSlash, FaStar, FaNewspaper, FaGlobe, FaFileUpload,
-    FaTrash, FaExternalLinkAlt
+    FaTrash, FaExternalLinkAlt, FaBox, FaCommentDots, FaImage,
+    FaClipboardList, FaPenNib, FaCheckCircle, FaChartBar
 } from 'react-icons/fa';
 
 const emptyForm = {
@@ -45,21 +46,65 @@ const StaffDashboard = () => {
     const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
-    const [myServices, setMyServices] = useState([]);
+    const [permissions, setPermissions] = useState([]);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+    const [myProducts, setMyProducts] = useState([]);
     const [myProjects, setMyProjects] = useState([]);
     const [myPosts, setMyPosts] = useState([]);
     const [myBookings, setMyBookings] = useState([]);
-    const [myClientProjects, setMyClientProjects] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [documentForm, setDocumentForm] = useState({ label: '', documentType: 'cv', isPublic: true });
     const [message, setMessage] = useState({ type: '', text: '' });
 
+    const allowed = (key) => isSuperAdmin || permissions.includes(key);
+
     useEffect(() => {
         fetchProfile();
-        fetchMyContent();
+        fetchPermissions();
         fetchDocuments();
     }, []);
+
+    const fetchPermissions = async () => {
+        try {
+            const data = await apiGet('/staff-dashboard/permissions');
+            setPermissions(data.permissions || []);
+            setIsSuperAdmin(!!data.isSuperAdmin);
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Could not load permissions: ' + err.message });
+        }
+    };
+
+    // Parallel fetch of assigned-record counts from staff-scoped endpoints.
+    // Failures (e.g. 403 because permission not actually held) are tolerated:
+    // the widget falls back to an empty state rather than crashing.
+    const fetchAssignedRecords = useCallback(async () => {
+        const safe = async (path) => {
+            try {
+                const data = await apiGet(path);
+                return Array.isArray(data) ? data : [];
+            } catch {
+                return [];
+            }
+        };
+        const allowedNow = (key) => isSuperAdmin || permissions.includes(key);
+        const [products, projects, posts, bookings] = await Promise.all([
+            allowedNow('products.view_assigned') ? safe('/products/staff') : Promise.resolve([]),
+            allowedNow('projects.view_assigned') ? safe('/projects/staff') : Promise.resolve([]),
+            allowedNow('publications.create') ? safe('/staff-blogs/my') : Promise.resolve([]),
+            allowedNow('bookings.view_assigned') ? safe('/staff-dashboard/bookings') : Promise.resolve([]),
+        ]);
+        setMyProducts(products);
+        setMyProjects(projects);
+        setMyPosts(posts);
+        setMyBookings(bookings);
+    }, [permissions, isSuperAdmin]);
+
+    // Recompute widgets whenever permissions or assigned-record data change.
+    useEffect(() => {
+        if (permissions.length === 0 && !isSuperAdmin) return;
+        fetchAssignedRecords();
+    }, [permissions, isSuperAdmin, fetchAssignedRecords]);
 
     const fetchProfile = async () => {
         try {
@@ -92,19 +137,152 @@ const StaffDashboard = () => {
         }
     };
 
-    const fetchMyContent = async () => {
-        const [services, projects, posts, bookings, clientProjects] = await Promise.all([
-            apiGet('/staff-dashboard/services').catch(() => []),
-            apiGet('/staff-dashboard/projects').catch(() => []),
-            apiGet('/staff-dashboard/posts').catch(() => []),
-            apiGet('/staff-dashboard/bookings').catch(() => []),
-            apiGet('/client-projects?assignedToMe=true').catch(() => ({ projects: [] })),
-        ]);
-        setMyServices(services || []);
-        setMyProjects(projects || []);
-        setMyPosts(posts || []);
-        setMyBookings(bookings || []);
-        setMyClientProjects(clientProjects.projects || []);
+    // Build the dashboard widget projection from effective permissions AND
+    // assigned-record counts. Every widget is derived from `allowed(key)` plus
+    // the actual data returned by the staff-scoped endpoints above — never from
+    // `if role === 'STAFF'`. Empty-state rule: if a permission is present but no
+    // assigned records exist, we still render a card with a "No X assigned yet"
+    // message. We never fabricate a global list.
+    const buildWidgets = () => {
+        const list = [];
+        const draftPosts = myPosts.filter((p) => !p.published);
+        const publishedPosts = myPosts.filter((p) => p.published);
+
+        // Profile — always available to STAFF (profile.update_own).
+        if (allowed('profile.update_own')) {
+            const completed = profile ? [
+                profile.firstName, profile.lastName, profile.phone, profile.bio,
+                profile.publicTitle, profile.avatarUrl,
+            ].filter(Boolean).length : 0;
+            list.push({
+                key: 'profile',
+                title: 'Profile Completion',
+                icon: <FaUser />,
+                accent: colors.primary,
+                summary: `${completed}/6 core fields complete`,
+                empty: completed < 6,
+                emptyText: 'Complete your public profile',
+                link: `/admin/staff/${profile?.id}`,
+                cta: 'Edit Profile',
+            });
+        }
+
+        // Assigned products — products.view_assigned.
+        if (allowed('products.view_assigned')) {
+            list.push({
+                key: 'products',
+                title: 'My Products',
+                icon: <FaBox />,
+                accent: colors.primary,
+                summary: myProducts.length
+                    ? `${myProducts.length} product${myProducts.length > 1 ? 's' : ''} assigned`
+                    : 'No products assigned yet',
+                items: myProducts,
+                empty: myProducts.length === 0,
+                emptyText: 'No products assigned yet',
+                link: '/admin/products',
+                cta: 'View Products',
+            });
+        }
+
+        // Assigned projects — projects.view_assigned.
+        if (allowed('projects.view_assigned')) {
+            list.push({
+                key: 'projects',
+                title: 'My Projects',
+                icon: <FaProjectDiagram />,
+                accent: colors.primary,
+                summary: myProjects.length
+                    ? `${myProjects.length} project${myProjects.length > 1 ? 's' : ''} assigned`
+                    : 'No projects assigned yet',
+                items: myProjects,
+                empty: myProjects.length === 0,
+                emptyText: 'No projects assigned yet',
+                link: '/admin/projects',
+                cta: 'View Projects',
+            });
+        }
+
+        // Publications — publications.create (own drafts + create link).
+        if (allowed('publications.create')) {
+            list.push({
+                key: 'publications',
+                title: 'My Drafts',
+                icon: <FaNewspaper />,
+                accent: colors.primary,
+                summary: draftPosts.length
+                    ? `${draftPosts.length} draft${draftPosts.length > 1 ? 's' : ''}, ${publishedPosts.length} published`
+                    : 'No drafts yet',
+                items: draftPosts,
+                empty: draftPosts.length === 0,
+                emptyText: 'No drafts yet — create your first publication',
+                link: '/admin/staff-blogs',
+                cta: 'Create Publication',
+            });
+        }
+
+        // Assigned bookings — bookings.view_assigned.
+        if (allowed('bookings.view_assigned')) {
+            list.push({
+                key: 'bookings',
+                title: 'Assigned Bookings',
+                icon: <FaCalendarCheck />,
+                accent: colors.primary,
+                summary: myBookings.length
+                    ? `${myBookings.length} booking${myBookings.length > 1 ? 's' : ''} assigned`
+                    : 'No bookings assigned yet',
+                items: myBookings,
+                empty: myBookings.length === 0,
+                emptyText: 'No bookings assigned yet',
+                link: '/admin/bookings',
+                cta: 'View Bookings',
+            });
+        }
+
+        // Customer messages — bookings.message_customer (only with assigned bookings).
+        if (allowed('bookings.message_customer') && myBookings.length) {
+            const unread = myBookings.filter((b) => (b.messages || []).some((m) => !m.read && m.sender !== 'STAFF')).length;
+            list.push({
+                key: 'messages',
+                title: 'Customer Messages',
+                icon: <FaCommentDots />,
+                accent: colors.primary,
+                summary: unread ? `${unread} unread message${unread > 1 ? 's' : ''}` : 'No new messages',
+                items: myBookings.filter((b) => (b.messages || []).length),
+                empty: unread === 0,
+                emptyText: 'No customer messages yet',
+                link: '/admin/bookings',
+                cta: 'Open Messages',
+            });
+        }
+
+        // Media library — media.upload.
+        if (allowed('media.upload')) {
+            list.push({
+                key: 'media',
+                title: 'Media Library',
+                icon: <FaImage />,
+                accent: colors.primary,
+                summary: 'Upload and manage media',
+                link: '/admin/media',
+                cta: 'Open Media',
+            });
+        }
+
+        // Admin summary — analytics.view_dashboard (ADMIN only).
+        if (allowed('analytics.view_dashboard') && (isSuperAdmin || profile?.systemRole === 'ADMIN' || profile?.role === 'ADMIN')) {
+            list.push({
+                key: 'admin',
+                title: 'Admin Summary',
+                icon: <FaChartBar />,
+                accent: colors.primary,
+                summary: 'Platform-wide analytics',
+                link: '/admin/analytics',
+                cta: 'View Dashboard',
+            });
+        }
+
+        return list;
     };
 
     const fetchDocuments = async () => {
@@ -211,11 +389,11 @@ const StaffDashboard = () => {
 
     const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
     const publicPath = `/staff/${profile?.username || profile?.id}`;
-
-    const stats = [
-        { label: 'Services', value: myServices.length, icon: FaBriefcase, color: colors.primary },
+    const widgets = buildWidgets();
+    const summaryStats = [
+        { label: 'Products', value: myProducts.length, icon: FaBox, color: colors.primary },
         { label: 'Projects', value: myProjects.length, icon: FaProjectDiagram, color: '#8B5CF6' },
-        { label: 'Blog Posts', value: myPosts.length, icon: FaNewspaper, color: '#F59E0B' },
+        { label: 'Drafts', value: myPosts.filter((p) => !p.published).length, icon: FaNewspaper, color: '#F59E0B' },
         { label: 'Bookings', value: myBookings.length, icon: FaCalendarCheck, color: '#10B981' },
     ];
 
@@ -243,7 +421,7 @@ const StaffDashboard = () => {
             )}
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {stats.map((stat) => <StatCard key={stat.label} stat={stat} colors={colors} />)}
+                {summaryStats.map((stat) => <StatCard key={stat.label} stat={stat} colors={colors} />)}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -312,11 +490,14 @@ const StaffDashboard = () => {
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
-                <ContentList title="My Active Client Projects" icon={FaProjectDiagram} items={myClientProjects} colors={colors} empty="No client projects assigned yet." renderMeta={(item) => `${item.status} · ${item.progress || 0}%`} />
-                <ContentList title="My Services" icon={FaBriefcase} items={myServices} colors={colors} empty="No services assigned yet." renderMeta={(item) => item.published ? 'Published' : 'Draft'} />
-                <ContentList title="My Projects" icon={FaProjectDiagram} items={myProjects} colors={colors} empty="No projects assigned yet." renderMeta={(item) => item.published ? 'Published' : 'Draft'} />
-                <ContentList title="My Blog Posts" icon={FaNewspaper} items={myPosts} colors={colors} empty="No posts yet." renderMeta={(item) => item.published ? 'Published' : 'Draft'} />
-                <ContentList title="My Bookings" icon={FaCalendarCheck} items={myBookings} colors={colors} empty="No bookings assigned yet." renderMeta={(item) => item.status || new Date(item.createdAt).toLocaleDateString()} />
+                {widgets.map((w) => (
+                    <WidgetCard key={w.key} widget={w} colors={colors} />
+                ))}
+                {widgets.length === 0 && (
+                    <div className="lg:col-span-4 p-6 rounded-2xl" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
+                        <p style={{ color: colors.textSecondary }}>No dashboard widgets are available for your current access level.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -363,11 +544,34 @@ const PasswordField = ({ value, onChange, placeholder, visible, setVisible, colo
     </div>
 );
 
-const ContentList = ({ title, icon: Icon, items, colors, empty, renderMeta }) => (
-    <section className="rounded-2xl p-6" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
-        <h3 className="text-lg font-bold flex items-center gap-2 mb-4"><Icon style={{ color: colors.primary }} /> {title}</h3>
-        {items.length === 0 ? <p style={{ color: colors.textSecondary }}>{empty}</p> : <div className="space-y-3">{items.slice(0, 5).map((item) => <div key={item.id} className="p-3 rounded-xl" style={{ backgroundColor: colors.backgroundSecondary }}><p className="font-medium">{item.title}</p><p className="text-sm" style={{ color: colors.textSecondary }}>{renderMeta(item)}</p></div>)}</div>}
-    </section>
-);
+const WidgetCard = ({ widget, colors }) => {
+    const items = widget.items || [];
+    return (
+        <section className="rounded-2xl p-6 flex flex-col" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold flex items-center gap-2"><span style={{ color: colors.primary }}>{widget.icon}</span> {widget.title}</h3>
+                {widget.link && (
+                    <button onClick={() => window.location.assign(widget.link)} className="text-sm font-medium flex items-center gap-1" style={{ color: colors.primary }}>
+                        {widget.cta} <FaExternalLinkAlt size={12} />
+                    </button>
+                )}
+            </div>
+            <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>{widget.summary}</p>
+            {/* Empty-state rule: permission present but zero assigned records. */}
+            {widget.empty ? (
+                <p className="text-sm py-3 px-3 rounded-xl mt-1" style={{ backgroundColor: colors.backgroundSecondary, color: colors.textSecondary }}>{widget.emptyText}</p>
+            ) : items.length ? (
+                <div className="space-y-2 mt-1">
+                    {items.slice(0, 5).map((item) => (
+                        <div key={item.id} className="p-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: colors.backgroundSecondary }}>
+                            <span className="font-medium truncate">{item.name || item.title || item.slug}</span>
+                            {item.status && <span className="text-sm" style={{ color: colors.textSecondary }}>{item.status}</span>}
+                        </div>
+                    ))}
+                </div>
+            ) : null}
+        </section>
+    );
+};
 
 export default StaffDashboard;

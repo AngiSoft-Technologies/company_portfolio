@@ -1,146 +1,103 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { apiGet } from '../js/httpClient';
+import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
-import { useSiteCopy } from '../hooks/useSiteCopy';
-import { FaArrowLeft, FaCalendarAlt, FaUser, FaTags } from 'react-icons/fa';
+import { useBlogDetail } from '../hooks/useBlogDetail';
+import { resolveBlogImage, BlogImageFallback } from '../components/blog/blogAssets';
+import BlogBreadcrumbs from '../components/blog/BlogBreadcrumbs';
+import BlogArticleHero from '../components/blog/BlogArticleHero';
+import BlogArticleMeta from '../components/blog/BlogArticleMeta';
+import BlogArticleContent from '../components/blog/BlogArticleContent';
+import BlogTableOfContents from '../components/blog/BlogTableOfContents';
+import BlogShareActions from '../components/blog/BlogShareActions';
+import BlogAuthorCard from '../components/blog/BlogAuthorCard';
+import BlogArticleCTA from '../components/blog/BlogArticleCTA';
+import BlogRelatedPosts from '../components/blog/BlogRelatedPosts';
+import BlogPostNavigation from '../components/blog/BlogPostNavigation';
+import BlogDetailSkeleton from '../components/blog/BlogDetailSkeleton';
+import BlogNotFound from '../components/blog/BlogNotFound';
+import BlogErrorState from '../components/blog/BlogErrorState';
+import '../css/blog/blog-detail.css';
 
-const formatDate = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
-const splitParagraphs = (text) => {
-  if (!text) return [];
-  return text.split(/\n\n+/).map((line) => line.trim()).filter(Boolean);
+// Best-effort service/product link derived ONLY from tags/category.
+const deriveCta = (post) => {
+  if (!post) return null;
+  const cat = post.category?.name?.toLowerCase() || '';
+  if (cat.includes('service') || post.tags?.some((t) => /service|app|web|mobile/.test(t))) {
+    return { link: '/services', title: 'Need this built?', text: 'See how AngiSoft can deliver it for you.', linkLabel: 'Explore Services' };
+  }
+  if (cat.includes('product') || post.tags?.some((t) => /product|tool/.test(t))) {
+    return { link: '/products', title: 'Discover our products', text: 'Explore the AngiSoft product lineup.', linkLabel: 'Browse Products' };
+  }
+  return null;
 };
 
 const BlogDetail = () => {
-  const { slug } = useParams();
-  const navigate = useNavigate();
-  const { colors } = useTheme();
-  const { copy: uiCopy } = useSiteCopy();
-  const pageCopy = uiCopy?.pages?.blog || {};
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { mode } = useTheme();
+  const { post, relatedPosts, previousPost, nextPost, loading, error, notFound, refetch } = useBlogDetail();
+  const contentRef = useRef(null);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const data = await apiGet(`/blogs/${slug}`);
-        setPost(data || null);
-      } catch (err) {
-        setError(err.message || 'Failed to load post');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPost();
-  }, [slug]);
+    if (post?.title) document.title = post.seoTitle || `${post.title} — AngiSoft Journal`;
+  }, [post]);
 
-  const paragraphs = useMemo(() => splitParagraphs(post?.content || ''), [post]);
+  const themeClass = mode === 'light' ? 'blog-detail-page is-light' : 'blog-detail-page is-dark';
+
+  if (loading) return <main className={themeClass}><BlogDetailSkeleton /></main>;
+  if (notFound) return <main className={themeClass}><BlogNotFound /></main>;
+  if (error) return <main className={themeClass}><BlogErrorState onRetry={refetch} /></main>;
+  if (!post) return <main className={themeClass}><BlogNotFound /></main>;
+
+  const image = resolveBlogImage(post.coverImage);
+  const cta = deriveCta(post);
 
   return (
-    <div style={{ backgroundColor: colors.background, color: colors.text }} className="min-h-screen">
-      <ParallaxSection speed={0.15} treatment="plain" className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 angi-technical-grid-soft opacity-15" />
-        <div className="relative z-10 max-w-4xl mx-auto px-4">
-          <ScrollReveal animation="fadeUp">
-            {pageCopy.badge && (
-              <span
-                className="inline-block px-6 py-2 rounded-full text-sm font-semibold mb-6"
-                style={{
-                  backgroundColor: `${colors.primary}20`,
-                  color: colors.primary,
-                  border: `1px solid ${colors.primary}40`
-                }}
-              >
-                {pageCopy.badge}
-              </span>
-            )}
-          </ScrollReveal>
-          <ScrollReveal animation="fadeUp" delay={100}>
-            <h1 className="text-3xl md:text-5xl font-bold mb-4" style={{ color: colors.text }}>
-              {post?.title || 'Blog Post'}
-            </h1>
-          </ScrollReveal>
-          <ScrollReveal animation="fadeUp" delay={200}>
-            <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: colors.textSecondary }}>
-              <span className="inline-flex items-center gap-2">
-                <FaUser />
-                {post?.author
-                  ? `${post.author.firstName || ''} ${post.author.lastName || ''}`.trim()
-                  : 'Team'}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <FaCalendarAlt />
-                {formatDate(post?.publishedAt || post?.createdAt)}
-              </span>
-              {Array.isArray(post?.tags) && post.tags.length > 0 && (
-                <span className="inline-flex items-center gap-2">
-                  <FaTags />
-                  {post.tags.join(', ')}
-                </span>
-              )}
-            </div>
-          </ScrollReveal>
-        </div>
-      </ParallaxSection>
+    <main className={themeClass} aria-label="Article">
+      <div className="blog-page-wrap">
+        <BlogBreadcrumbs post={post} />
 
-      <section className="py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <button
-              type="button"
-              onClick={() => navigate('/blog')}
-              className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{ color: colors.primary }}
-            >
-              <FaArrowLeft />
-              {pageCopy.ctaLabel || 'View All Articles'}
-            </button>
+        <BlogArticleHero post={post} />
+        <BlogArticleMeta post={post} />
+
+        {image ? (
+          <figure className="blog-article-cover">
+            <img src={image} alt={post.title} loading="eager" decoding="async" />
+          </figure>
+        ) : (
+          <div className="blog-article-cover"><BlogImageFallback categoryName={post.category?.name} /></div>
+        )}
+
+        <div className="blog-reading-layout">
+          <div className="blog-reading-main">
+            <BlogArticleContent ref={contentRef} post={post} />
+
+            <BlogAuthorCard post={post} />
+
+            <BlogArticleCTA
+              title={cta?.title}
+              text={cta?.text}
+              link={cta?.link}
+              linkLabel={cta?.linkLabel}
+            />
+
+            <BlogRelatedPosts posts={relatedPosts} />
+
+            <BlogPostNavigation previousPost={previousPost} nextPost={nextPost} />
+
+            <section className="blog-section blog-section--cta" aria-label="Final call to action">
+              <div className="blog-cta">
+                <h2 className="blog-cta__title">Have a project in mind?</h2>
+                <p className="blog-cta__text">Let's talk about how AngiSoft can help you build, analyze and grow.</p>
+                <a className="blog-btn blog-btn--primary" href="/contact">Contact us</a>
+              </div>
+            </section>
           </div>
 
-          {loading && (
-            <div className="flex justify-center items-center py-16">
-              <div
-                className="w-14 h-14 border-4 rounded-full animate-spin"
-                style={{ borderColor: `${colors.primary}30`, borderTopColor: colors.primary }}
-              />
-            </div>
-          )}
-
-          {error && (
-            <div
-              className="text-center p-6 rounded-2xl"
-              style={{ backgroundColor: `${colors.danger || '#ef4444'}20`, color: colors.danger || '#ef4444' }}
-            >
-              {error}
-            </div>
-          )}
-
-          {!loading && !error && post && (
-            <GlassmorphismCard className="p-8 md:p-10">
-              <div className="space-y-6" style={{ color: colors.text }}>
-                {paragraphs.length > 0 ? (
-                  paragraphs.map((paragraph, idx) => (
-                    <p key={idx} className="leading-relaxed" style={{ color: colors.textSecondary }}>
-                      {paragraph}
-                    </p>
-                  ))
-                ) : (
-                  <p style={{ color: colors.textSecondary }}>No content available for this post.</p>
-                )}
-              </div>
-            </GlassmorphismCard>
-          )}
+          <aside className="blog-side" aria-label="Article tools">
+            <BlogTableOfContents content={post.content} />
+            <BlogShareActions post={post} />
+          </aside>
         </div>
-      </section>
-    </div>
+      </div>
+    </main>
   );
 };
 

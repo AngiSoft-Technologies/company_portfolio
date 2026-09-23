@@ -8,7 +8,7 @@ import {
     FaCode, FaCalendarAlt, FaRocket, FaArrowRight, FaEye
 } from 'react-icons/fa';
 
-const placeholderImg = '/images/project-placeholder.png';
+const placeholderImg = '/uploads/public/images/project-placeholder.png';
 
 const ProjectDetails = () => {
     const { slug } = useParams();

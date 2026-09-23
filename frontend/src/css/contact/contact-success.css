@@ -1,0 +1,25 @@
+.contact-success {
+    background: var(--contact-surface);
+    border: 1px solid var(--contact-success);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+.contact-success__icon {
+    font-size: 3rem; color: var(--contact-success);
+}
+.contact-success__title { font-size: 1.6rem; margin: 0.5rem 0; }
+.contact-success__text { color: var(--contact-muted); max-width: 520px; margin: 0 auto 1.25rem; }
+.contact-success__reference {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    background: color-mix(in srgb, var(--contact-success) 12%, transparent);
+    border: 1px dashed var(--contact-success);
+    border-radius: 10px; padding: 0.6rem 1rem; margin-bottom: 1.25rem;
+}
+.contact-success__reference-label { font-size: 0.8rem; color: var(--contact-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.contact-success__reference-value { font-weight: 700; font-family: ui-monospace, monospace; }
+.contact-success__steps {
+    text-align: left; max-width: 520px; margin: 0 auto 1.5rem; padding-left: 1.2rem;
+    color: var(--contact-muted); display: flex; flex-direction: column; gap: 0.4rem;
+}
+.contact-success__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }

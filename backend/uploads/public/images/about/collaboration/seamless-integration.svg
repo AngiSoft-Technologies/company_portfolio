@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" role="img" aria-label="Smooth integration">
+  <rect x="0" y="0" width="200" height="160" rx="16" fill="#0B1E3D"/>
+  <rect x="34" y="40" width="50" height="34" rx="8" stroke="#00C2FF" stroke-width="2"/>
+  <rect x="116" y="40" width="50" height="34" rx="8" stroke="#0A3DFF" stroke-width="2"/>
+  <rect x="75" y="96" width="50" height="34" rx="8" stroke="#39FF6A" stroke-width="2"/>
+  <path d="M84 74 H116 V96" stroke="#F5F7FA" stroke-width="2" opacity="0.6"/>
+  <path d="M116 74 H84 V96" stroke="#8A2BE2" stroke-width="2" opacity="0.6"/>
+  <g fill="#00C2FF">
+    <circle cx="59" cy="57" r="4"/>
+    <circle cx="141" cy="57" r="4" fill="#0A3DFF"/>
+    <circle cx="100" cy="113" r="4" fill="#39FF6A"/>
+  </g>
+</svg>

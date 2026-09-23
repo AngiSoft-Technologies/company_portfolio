@@ -2,15 +2,26 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../db';
 import { optionalAuth, requireAuth, AuthRequest } from '../middleware/auth';
-import { requireRoles, isRole } from '../middleware/roles';
+import { requirePermission, requireRoles, isRole } from '../middleware/roles';
 import { blogController } from '../controllers/blogController';
 
 const createSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   content: z.string().min(1),
+  subtitle: z.string().optional(),
+  contentType: z.string().optional(),
+  mediaUrl: z.string().optional(),
+  transcript: z.string().optional(),
+  coverImage: z.string().optional(),
+  excerpt: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  published: z.boolean().optional()
+  published: z.boolean().optional(),
+  categoryId: z.string().optional(),
+  featured: z.boolean().optional(),
+  visibilityType: z.string().optional(),
+  visibleUntil: z.string().datetime().optional().nullable(),
+  resourceLinks: z.any().optional()
 });
 
 const updateSchema = createSchema.partial();
@@ -57,7 +68,7 @@ export default function blogsRouter() {
         }
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING', 'DEVELOPER'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requirePermission('publications.create'), requireRoles('ADMIN', 'MARKETING', 'DEVELOPER'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -73,7 +84,7 @@ export default function blogsRouter() {
         }
     });
 
-    router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requirePermission('publications.update_own'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -97,7 +108,7 @@ export default function blogsRouter() {
         }
     });
 
-    router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requirePermission('publications.update_own'), async (req: AuthRequest, res) => {
         try {
             const existing = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
             if (!existing) return res.status(404).json({ error: 'Not found' });

@@ -1,0 +1,34 @@
+.contact-methods__heading {
+    font-size: 1.5rem;
+    margin: 0 0 1.25rem;
+}
+.contact-methods__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+.contact-method {
+    background: var(--contact-surface);
+    border: 1px solid var(--contact-border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    gap: 0.9rem;
+}
+.contact-method__icon {
+    color: var(--contact-primary);
+    font-size: 1.25rem;
+    margin-top: 0.15rem;
+}
+.contact-method__body { display: flex; flex-direction: column; gap: 0.2rem; }
+.contact-method__name { font-weight: 700; font-size: 0.95rem; }
+.contact-method__value { color: var(--contact-text); font-size: 0.9rem; word-break: break-word; }
+.contact-method__guidance { color: var(--contact-muted); font-size: 0.82rem; }
+.contact-method__action {
+    margin-top: 0.5rem;
+    color: var(--contact-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.contact-method__action:hover { text-decoration: underline; }

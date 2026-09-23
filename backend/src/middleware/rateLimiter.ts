@@ -7,3 +7,14 @@ export const authRateLimiter = rateLimit({
     standardHeaders: false, // Don't send RateLimit-* headers
     legacyHeaders: false, // Disable the X-RateLimit-* headers
 });
+
+export const contactLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 8, // public contact submissions per IP
+    message: 'Too many messages sent. Please wait a few minutes before trying again.',
+    standardHeaders: false,
+    legacyHeaders: false,
+});
+
+// Alias to satisfy the contact-enquiries route import shape.
+export const gContactLimiter = contactLimiter;

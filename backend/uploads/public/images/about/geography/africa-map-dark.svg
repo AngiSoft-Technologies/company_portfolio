@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Map of Africa">
+  <defs>
+    <linearGradient id="africaFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1E3D"/>
+      <stop offset="1" stop-color="#07142B"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#africaFill)" stroke="#00C2FF" stroke-width="0.6" stroke-opacity="0.55"
+    d="M48 6
+       C50 5 53 6 54 9
+       C55 12 53 15 54 18
+       C55 21 59 22 61 25
+       C64 29 66 33 69 36
+       C72 39 73 43 72 47
+       C71 51 74 53 75 57
+       C76 61 73 63 72 67
+       C71 71 73 74 70 77
+       C67 80 62 79 58 81
+       C54 83 51 88 47 88
+       C43 88 41 83 38 80
+       C34 76 31 77 29 73
+       C27 69 30 65 28 61
+       C26 57 22 56 21 51
+       C20 46 24 43 24 38
+       C24 33 20 31 21 26
+       C22 21 27 21 30 18
+       C33 15 32 10 36 9
+       C40 8 43 8 44 7
+       C45 6 46 6 48 6 Z"/>
+  <path fill="none" stroke="#3B6FFF" stroke-width="0.4" stroke-opacity="0.4"
+    d="M48 6 L54 18 L69 36 L72 47 L75 57 L70 77 L47 88 L29 73 L21 51 L21 26 L36 9 Z"/>
+</svg>

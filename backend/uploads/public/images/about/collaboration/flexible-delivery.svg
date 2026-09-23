@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" role="img" aria-label="Flexible engagement models">
+  <rect x="0" y="0" width="200" height="160" rx="16" fill="#0B1E3D"/>
+  <g stroke="#00C2FF" stroke-width="2" opacity="0.9">
+    <circle cx="66" cy="56" r="22"/>
+    <circle cx="134" cy="56" r="22" stroke="#0A3DFF"/>
+    <circle cx="66" cy="116" r="22" stroke="#39FF6A"/>
+    <circle cx="134" cy="116" r="22" stroke="#8A2BE2"/>
+  </g>
+  <g stroke="#F5F7FA" stroke-width="1.5" opacity="0.5">
+    <line x1="66" y1="56" x2="134" y2="56"/>
+    <line x1="66" y1="56" x2="66" y2="116"/>
+    <line x1="134" y1="56" x2="134" y2="116"/>
+    <line x1="66" y1="116" x2="134" y2="116"/>
+  </g>
+  <g fill="#00C2FF">
+    <circle cx="66" cy="56" r="5"/>
+    <circle cx="134" cy="56" r="5" fill="#0A3DFF"/>
+    <circle cx="66" cy="116" r="5" fill="#39FF6A"/>
+    <circle cx="134" cy="116" r="5" fill="#8A2BE2"/>
+  </g>
+</svg>
