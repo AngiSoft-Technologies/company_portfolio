@@ -64,3 +64,5 @@ CLAUDE.md
 .remember
 firebase.json
 .firebaserc
+backend/package-lock.json
+frontend/package-lock.json
