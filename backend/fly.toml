@@ -1,12 +1,14 @@
-# fly.toml app configuration file generated for company-portfolio on 2026-09-23T05:44:12+03:00
+# fly.toml app configuration file generated for company-portfolio on 2026-09-23T03:45:22Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'company-portfolio'
 primary_region = 'lhr'
+swap_size_mb = 512
 
 [build]
+
 [deploy]
   release_command = 'npx prisma migrate deploy'
   seed_command = 'ts-node prisma/seed.ts'
@@ -14,7 +16,7 @@ primary_region = 'lhr'
 [http_service]
   internal_port = 5000
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
