@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validation';
 import { sendMail } from '../services/email';
+import { loadAIConfig, aiComplete } from '../services/aiProvider';
 
 async function sendChatbotNotification(opts: {
   type: 'escalation' | 'high_intent';
@@ -623,7 +624,10 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
     }
   };
 
-  // Get AI response from OpenAI or Hugging Face
+  // Get the AI reply from the configured model provider (NVIDIA NIM, OpenAI,
+  // Anthropic, Google Gemini, Moonshot, Groq, … see services/aiProvider.ts).
+  // An admin can pick the provider/model/API key from /admin/ai-config; the
+  // env AI_* / OPENAI_API_KEY values are used until one is saved.
   const getAIResponse = async (
     userMessage: string,
     conversationHistory: Array<{ role: string; content: string }>,
@@ -631,64 +635,33 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
     internalContext: InternalContext
   ): Promise<string> => {
     try {
-      const apiKey = process.env.OPENAI_API_KEY || process.env.HUGGINGFACE_API_KEY;
-      
-      if (!apiKey) {
+      const { config, source } = await loadAIConfig(prisma);
+
+      // Legacy fallback: a Hugging Face key set in env still works when no
+      // generic provider is configured.
+      if (source === 'env' && !config.apiKey && process.env.HUGGINGFACE_API_KEY) {
+        return await getHuggingFaceResponse(userMessage, conversationHistory, contextText);
+      }
+
+      if (!config.enabled || !config.apiKey) {
         console.warn('AI API key not configured, using fallback responses');
         return getFallbackResponse(userMessage, internalContext);
       }
 
-      // Use OpenAI if available
-      if (process.env.OPENAI_API_KEY) {
-        return await getOpenAIResponse(userMessage, conversationHistory, contextText);
-      }
-
-      // Fall back to Hugging Face
-      if (process.env.HUGGINGFACE_API_KEY) {
-        return await getHuggingFaceResponse(userMessage, conversationHistory, contextText);
-      }
-
-      return getFallbackResponse(userMessage, internalContext);
+      const systemPrompt = buildSystemPrompt(contextText);
+      return await aiComplete(
+        config,
+        [
+          { role: 'system', content: systemPrompt },
+          ...conversationHistory,
+          { role: 'user', content: userMessage },
+        ],
+        { maxTokens: config.maxTokens, temperature: config.temperature }
+      );
     } catch (error) {
       console.error('AI API error:', error);
       return getFallbackResponse(userMessage, internalContext);
     }
-  };
-
-  const getOpenAIResponse = async (
-    userMessage: string,
-    conversationHistory: Array<{ role: string; content: string }>,
-    contextText: string
-  ): Promise<string> => {
-    const systemPrompt = buildSystemPrompt(contextText);
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          ...conversationHistory,
-          { role: 'user', content: userMessage },
-        ],
-        temperature: 0.3,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`OpenAI API error: ${error.error?.message}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || 'Unable to generate response';
   };
 
   const getHuggingFaceResponse = async (

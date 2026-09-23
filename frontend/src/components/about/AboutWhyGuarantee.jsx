@@ -211,7 +211,7 @@ const AboutWhyGuarantee = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 
@@ -275,7 +275,7 @@ const ProjectSuccessCard = ({
   const content = (
     <article className="about-project-success-card flex h-full min-h-[285px] flex-col border border-white/15 bg-[#0A1B38] px-6 py-7">
       <div className="flex justify-center">
-        <span className="flex h-14 w-14 items-center justify-center text-[#00C2FF]">
+        <span className="flex h-14 w-14 items-center justify-center text-[#00AFFF]">
           <Icon
             className="text-[34px]"
             aria-hidden="true"
@@ -295,7 +295,7 @@ const ProjectSuccessCard = ({
 
       {practice.to && (
         <span className="mt-auto flex justify-end pt-6">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF]">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#00AFFF]">
             Details
 
             <FaArrowRight className="text-[9px] transition-transform duration-300 group-hover:translate-x-1" />
@@ -310,7 +310,7 @@ const ProjectSuccessCard = ({
     transition duration-700
     focus-visible:outline-none
     focus-visible:ring-2
-    focus-visible:ring-[#00C2FF]
+    focus-visible:ring-[#00AFFF]
     ${
       visible
         ? 'translate-y-0 opacity-100'

@@ -52,6 +52,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.15.1",
     "rippleui": "^1.12.1",
+    "socket.io-client": "^4.8.3",
     "swiper": "^14.0.5",
     "web-vitals": "^5.0.3",
     "yup": "^1.6.1"

@@ -15,10 +15,10 @@ import {
 import SmartImage from './SmartImage';
 
 const DEFAULT_ACCENTS = [
-  '#0A3DFF',
+  '#0875FF',
   '#8A2BE2',
   '#FF9F1C',
-  '#00C2FF',
+  '#00AFFF',
 ];
 
 const normalizeStory = (

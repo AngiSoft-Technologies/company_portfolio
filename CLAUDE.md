@@ -15,12 +15,44 @@ Public pages are intended to be data-driven through `/api/*`; the admin CMS is t
 
 ## Current continuation priorities
 
+> The master plan lives in `docs/ROADMAP.md` (phases: 1 object storage, 2 payments,
+> 3 platform architecture/realtime/scale, 4 UI revamp). Execution is env-gated
+> (missing keys → fail closed, never break existing flows) and idempotent.
+
+- **Phase 1 (code complete; needs Tigris keys)** - Tigris/S3 object storage for uploads: `backend/src/services/storage/s3.ts`
+  is the single S3 client (`isS3Enabled`, `uploadObject`, `getObject`, `toPublicUrl`); `routes/uploads.ts`
+  writes to bucket when S3 is configured, else local disk. See ROADMAP Phase 1 for env vars.
+- **Phase 2 (code complete; needs provider keys)** - Payment gateway: Paystack + PayHero (M-Pesa & Kenyan banks via STK) + Stripe,
+  unified in `backend/src/services/payments/` with signature/reference-verified webhooks. Add live keys + verify E2E on Fly.io (live keys needed in `.env`).
+- **Phase 3 (realtime + replicas + queue + cache + MCP done)** - Realtime:
+  `services/realtime/index.ts` (Socket.IO on the same server; JWT handshake auth; rooms `user:<id>`,
+  `staff`, `booking:<id>`; secure anonymous `booking:join` via publicReference + trackingToken). Fan-out
+  originates in `services/bookingEvents.ts` (`booking:event`), `services/notifications.ts`
+  (`notification:new`), and `services/payments/index.ts` (`payment:status`). Read replicas: `db.ts` uses
+  `@prisma/extension-read-replicas` when `DATABASE_URL_REPLICA` is set (prod-only; reads→replica,
+  writes→primary). `/health/readyz` = deep probe (DB + optional Redis ping + workers). Redis-gated
+  queue: `queue/index.ts` = BullMQ when `REDIS_URL`, draining in-memory fallback otherwise (processor
+  lookup by queue name — the old `'send'` job-name bug is fixed); add/worker/`getWorkers`/`closeWorkers`
+  (wired into graceful shutdown). Redis-gated public JSON cache: `middleware/cache.ts` +
+  `services/cache.ts` (allow-listed public GET routes, `s-maxage` headers for CDN, `purgeCache`,
+  env `CACHE_ENABLED`/`PUBLIC_CACHE_TTL`). MCP read-only: `mcp/tools.ts` + `mcp/index.ts` (stdio via
+  `npm run mcp:stdio`, HTTP on `/mcp` behind `MCP_HTTP_ENABLED`). gRPC deliberately doc-only. Remaining:
+  CDN rollout (needs S3 layer live — Phase 1 keys), admin-write cache purge wiring if TTL too slow.
+- **Phase 4 (asset + palette sweep done)** - all runtime assets route through `resolveAssetUrl`
+  (frontend `/uploads/public` literals converted so `ASSET_BASE_URL` CDN is drop-in). Brand palette
+  aligned: `constants.js` `BRAND_COLORS`, `ThemeContext`, `index.css` @theme, and 24 components swept to
+  official hexes (`#0875FF`/`#00AFFF`/`#27D94B`/`#07142B`); per-product gradient identity hues kept.
+  Realtime in UI: `hooks/useRealtime.js` + `BookingProgress.jsx` auto-refresh. Remaining: skeletons,
+  admin notification badges via `notification:new`, favicon/logo surfaces (see below).
 - Branding first - update the site to use the new favicon/logo assets before redesigning colors or layouts.
 - New public assets - use `frontend/public/favicon*.png`, `frontend/public/favicon.ico`, `frontend/public/site.webmanifest`, and `frontend/public/images/Logos/`.
 - Legacy asset paths - current git status shows deleted old assets: `/favicon.svg`, `/images/angisoft_logo.png`, and `/images/Logo - AngiSoft Technologies.*`; avoid depending on them.
 - HTML metadata - `frontend/index.html` still references `/favicon.svg` and `/images/angisoft_logo.png`; update favicon, manifest, theme-color, and OG image with the new brand assets.
 - Frontend logo surfaces - check `frontend/src/components/sections/Header.jsx`, `Hero.jsx`, and `Footer.jsx` for hardcoded initials/old image paths before page redesign work.
-- Brand color sources - align `frontend/src/contexts/ThemeContext.jsx`, `frontend/src/index.css`, and `frontend/src/utils/constants.js` with the new logo palette to avoid mismatched UI colors.
+- Brand color sources - `frontend/src/contexts/ThemeContext.jsx`, `frontend/src/index.css`, and
+  `frontend/src/utils/constants.js` are now aligned to the new logo palette (blue `#0875FF`, cyan
+  `#00AFFF`, green `#27D94B`, navy `#07142B`); use those exact hexes in any new UI, don't reintroduce
+  the old `#0A3DFF`/`#00C2FF`/`#39FF6A` values.
 - CMS branding flow - admin branding settings live in `frontend/src/admin/crud/SiteSettingsAdmin.jsx` and persist through `/api/site/branding` (`site_branding` Setting key).
 
 ## Common commands

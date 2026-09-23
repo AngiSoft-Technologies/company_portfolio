@@ -47,7 +47,7 @@ const AboutPageSkeleton = () => (
           <div className="mt-3 h-14 max-w-md animate-pulse bg-white/10" />
           <div className="mt-8 h-5 max-w-xl animate-pulse bg-white/5" />
           <div className="mt-3 h-5 max-w-lg animate-pulse bg-white/5" />
-          <div className="mt-8 h-12 w-52 animate-pulse bg-[#0A3DFF]/30" />
+          <div className="mt-8 h-12 w-52 animate-pulse bg-[#0875FF]/30" />
         </div>
 
         <div className="h-[440px] animate-pulse bg-white/5" />
@@ -76,7 +76,7 @@ const AboutPageSkeleton = () => (
 const AboutPageError = ({ message, onRetry }) => (
   <main className="flex min-h-[70vh] items-center bg-[#07142B] px-6 text-white">
     <div className="container text-center">
-      <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#00C2FF]">
+      <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#00AFFF]">
         AngiSoft Technologies
       </p>
 
@@ -92,7 +92,7 @@ const AboutPageError = ({ message, onRetry }) => (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-8 bg-[#0A3DFF] px-7 py-3.5 font-bold text-white transition hover:bg-[#3B6FFF]"
+          className="mt-8 bg-[#0875FF] px-7 py-3.5 font-bold text-white transition hover:bg-[#3B9AFF]"
         >
           Try Again
         </button>

@@ -37,9 +37,9 @@ const normalizeIndustry = (industry, index) => ({
   accent:
     industry?.accent ||
     [
-      '#00C2FF',
-      '#0A3DFF',
-      '#39FF6A',
+      '#00AFFF',
+      '#0875FF',
+      '#27D94B',
       '#FF9F1C',
       '#8A2BE2',
     ][index % 5],
@@ -121,7 +121,7 @@ const AboutIndustriesGrid = ({
         className="pointer-events-none absolute inset-0"
         aria-hidden="true"
       >
-        <div className="absolute left-1/2 top-[45%] h-[560px] w-[1000px] -translate-x-1/2 rounded-full bg-[#0A3DFF]/[0.04] blur-[170px]" />
+        <div className="absolute left-1/2 top-[45%] h-[560px] w-[1000px] -translate-x-1/2 rounded-full bg-[#0875FF]/[0.04] blur-[170px]" />
 
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
@@ -135,7 +135,7 @@ const AboutIndustriesGrid = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 

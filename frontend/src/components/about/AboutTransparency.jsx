@@ -256,7 +256,7 @@ const AboutTransparency = ({
                 href={youtubeWatchUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#00AFFF] no-underline"
               >
                 Watch on YouTube
 
@@ -310,7 +310,7 @@ const AboutTransparency = ({
                       href={link.to}
                       target="_blank"
                       rel="noreferrer"
-                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00AFFF] no-underline"
                     >
                       {link.label}
 
@@ -320,7 +320,7 @@ const AboutTransparency = ({
                     <Link
                       key={link.id}
                       to={link.to}
-                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00AFFF] no-underline"
                     >
                       {link.label}
 

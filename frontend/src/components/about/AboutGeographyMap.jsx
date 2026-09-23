@@ -14,9 +14,9 @@ import {
 } from '../../utils/constants';
 
 const DEFAULT_COLORS = [
-  '#0A3DFF',
+  '#0875FF',
   '#FF9F1C',
-  '#39FF6A',
+  '#27D94B',
 ];
 
 const normalizeRegion = (
@@ -502,7 +502,7 @@ const AboutGeographyMap = ({
                         className="about-geography-benefit flex items-start gap-3"
                       >
                         <span
-                          className="mt-[7px] flex h-4 w-4 shrink-0 items-center justify-center border border-[#00C2FF]/55 text-[7px] text-[#00C2FF]"
+                          className="mt-[7px] flex h-4 w-4 shrink-0 items-center justify-center border border-[#00AFFF]/55 text-[7px] text-[#00AFFF]"
                           aria-hidden="true"
                         >
                           <FaCheck />

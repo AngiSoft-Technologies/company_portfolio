@@ -213,7 +213,7 @@ const AboutClientsSlider = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 
@@ -251,7 +251,7 @@ const AboutClientsSlider = ({
             {hasMultipleClients && (
               <button
                 type="button"
-                className="about-client-prev absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00C2FF] hover:text-[#00C2FF] max-md:left-2 max-md:translate-x-0"
+                className="about-client-prev absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00AFFF] hover:text-[#00AFFF] max-md:left-2 max-md:translate-x-0"
                 aria-label="Previous clients"
               >
                 <FaArrowLeft className="text-[10px]" />
@@ -328,7 +328,7 @@ const AboutClientsSlider = ({
             {hasMultipleClients && (
               <button
                 type="button"
-                className="about-client-next absolute right-0 top-1/2 z-10 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00C2FF] hover:text-[#00C2FF] max-md:right-2 max-md:translate-x-0"
+                className="about-client-next absolute right-0 top-1/2 z-10 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00AFFF] hover:text-[#00AFFF] max-md:right-2 max-md:translate-x-0"
                 aria-label="Next clients"
               >
                 <FaArrowRight className="text-[10px]" />

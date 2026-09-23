@@ -3,7 +3,7 @@ import {
   FaReact, FaNodeJs, FaPython, FaJava, FaPhp,
   FaDocker, FaAws, FaLinux, FaHtml5, FaJs,
   FaGitAlt, FaAndroid, FaApple, FaMicrosoft, FaDatabase,
-  FaChartBar,
+  FaChartBar, FaBrain,
 } from 'react-icons/fa';
 
 import {
@@ -12,7 +12,7 @@ import {
   SiPostgresql, SiMongodb, SiFirebase, SiRedis,
   SiKubernetes, SiTerraform, SiMysql, SiNginx,
   SiVuedotjs, SiGraphql, SiTensorflow,
-  SiStripe, SiOpenai, SiAngular,
+  SiStripe, SiAngular,
 } from 'react-icons/si';
 import { apiGet } from '../../js/httpClient';
 import '../../css/TechPlatforms.css';
@@ -54,11 +54,16 @@ const iconRegistry = {
   SiGraphql,
   SiTensorflow,
   SiStripe,
-  SiOpenai,
   SiAngular,
 };
 
-const resolveIcon = (iconName) => iconRegistry[iconName] || FaDatabase;
+// react-icons 5.x removed some Simple Icons brand marks; keep old CMS icon
+// names working by mapping them to a close visual substitute.
+const legacyIconAliases = {
+  SiOpenai: FaBrain,
+};
+
+const resolveIcon = (iconName) => iconRegistry[iconName] || legacyIconAliases[iconName] || FaDatabase;
 
 const slugify = (value = '') =>
   String(value)

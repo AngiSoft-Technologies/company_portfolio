@@ -132,7 +132,7 @@ const AboutSolutionTypes = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 
@@ -185,7 +185,7 @@ const SolutionCard = ({
 
       {solution.to && (
         <span
-          className="absolute bottom-3 right-3 flex h-4 w-4 items-center justify-center text-[#00C2FF]"
+          className="absolute bottom-3 right-3 flex h-4 w-4 items-center justify-center text-[#00AFFF]"
           aria-hidden="true"
         >
           <FaArrowDown className="-rotate-45 text-[9px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
@@ -198,9 +198,9 @@ const SolutionCard = ({
     group relative flex min-h-[100px] items-center justify-center
     overflow-hidden border border-white/15 bg-white/[0.025]
     px-5 py-5 no-underline transition duration-300
-    hover:border-[#00C2FF]/65 hover:bg-white/[0.045]
+    hover:border-[#00AFFF]/65 hover:bg-white/[0.045]
     focus-visible:outline-none focus-visible:ring-2
-    focus-visible:ring-[#00C2FF]
+    focus-visible:ring-[#00AFFF]
     ${visible
       ? 'translate-y-0 opacity-100'
       : 'translate-y-5 opacity-0'}

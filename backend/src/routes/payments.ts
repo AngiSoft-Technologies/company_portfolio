@@ -1,6 +1,10 @@
 import express, { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { createPaymentIntent, getPaymentIntent } from '../services/payments/stripeService';
+import { applyPaymentOutcome, initializePayment, isProviderConfigured, generateReference, withScopeLock, PaymentProviderError, ProviderId } from '../services/payments';
+import * as paystack from '../services/payments/paystackService';
+import * as mpesa from '../services/payments/mpesaService';
+import * as payhero from '../services/payments/payheroService';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { isRole } from '../middleware/roles';
 
@@ -164,6 +168,240 @@ export default function paymentsRouter(prisma: PrismaClient) {
         } catch (err: any) {
             console.error('Error creating payment intent', err);
             res.status(500).json({ error: 'Payment provider error' });
+        }
+    });
+
+    // ─── Provider-agnostic charge initiation ─────────────────────────────────
+    // Same auth/ownership rules as create-intent, but dispatches to any enabled
+    // provider (Stripe card, Paystack redirect, M-Pesa STK, PayHero STK).
+    router.post('/initiate', requireAuth, async (req: AuthRequest, res) => {
+        const { provider, amount, currency = 'KES', email, phone, bookingId, clientId, description, reference, channelId } = req.body;
+        if (!provider || !amount) return res.status(400).json({ error: 'Missing provider or amount' });
+
+        const providerId = String(provider).toUpperCase();
+        if (!['STRIPE', 'PAYSTACK', 'MPESA', 'PAYHERO'].includes(providerId)) {
+            return res.status(400).json({ error: 'Unsupported provider' });
+        }
+        if (!isProviderConfigured(providerId as ProviderId)) {
+            return res.status(503).json({ error: `${providerId} is not configured for this deployment` });
+        }
+
+        try {
+            if (!isStaffOrAdmin(req.user?.role)) {
+                return res.status(403).json({ error: 'Not authorized to initiate payments' });
+            }
+
+            let booking: any = null;
+            if (bookingId) {
+                booking = await prisma.booking.findUnique({
+                    where: { id: bookingId },
+                    select: { id: true, assignedToId: true }
+                });
+                if (!booking) return res.status(404).json({ error: 'Booking not found' });
+                const canManageAll = ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER'].includes(req.user?.role ?? '');
+                if (!canManageAll && booking.assignedToId !== req.user?.sub) {
+                    return res.status(403).json({ error: 'Not authorized for this booking' });
+                }
+            }
+
+            // Idempotency + concurrency: an advisory lock per (booking, provider)
+            // serializes concurrent initiates, so "find pending → push → insert"
+            // cannot double-fire an STK push or mint two intents. A caller-
+            // supplied `reference` acts as a full idempotency key (unique).
+            const paymentReference = reference || generateReference();
+            const outcome = await withScopeLock(prisma, `initiate:${bookingId || 'anon'}:${providerId}`, async (tx: any) => {
+                if (reference) {
+                    const byRef = await tx.payment.findUnique({ where: { reference } });
+                    if (byRef) return { existing: byRef };
+                }
+                if (bookingId) {
+                    const existing = await tx.payment.findFirst({
+                        where: { bookingId, provider: providerId, status: 'PENDING' },
+                        orderBy: { createdAt: 'desc' }
+                    });
+                    if (existing) return { existing };
+                }
+
+                const result = await initializePayment({
+                    provider: providerId as ProviderId,
+                    amount: Number(amount),
+                    currency,
+                    email,
+                    phone,
+                    reference: paymentReference,
+                    channelId: Number(channelId) || undefined,
+                    description,
+                    metadata: { bookingId: bookingId || '', actor: req.user?.sub || '', reference: paymentReference }
+                });
+
+                let row: any = null;
+                try {
+                    row = await tx.payment.create({
+                        data: {
+                            bookingId: bookingId || undefined,
+                            clientId: clientId || undefined,
+                            amount: Number(amount),
+                            currency,
+                            provider: result.provider as any,
+                            providerId: result.providerId,
+                            reference: paymentReference,
+                            channelId: channelId || undefined,
+                            status: 'PENDING',
+                            metadata: JSON.parse(JSON.stringify(result.details || result)),
+                        },
+                    });
+                } catch (err: any) {
+                    // Unique race on reference/providerId → this exact charge was
+                    // already initiated; surface the existing row instead.
+                    if (err?.code === 'P2002') {
+                        row = (await tx.payment.findUnique({ where: { reference: paymentReference } }))
+                            || (await tx.payment.findUnique({ where: { providerId: result.providerId } }));
+                        return { existing: row, result };
+                    }
+                    throw err;
+                }
+                return { row, result };
+            });
+
+            if (outcome.existing) {
+                return res.json({
+                    paymentId: outcome.existing.id,
+                    provider: providerId,
+                    providerIdRef: outcome.existing.providerId,
+                    kind: outcome.result?.kind,
+                    clientSecret: outcome.result?.clientSecret,
+                    checkoutUrl: outcome.result?.checkoutUrl,
+                    reused: true
+                });
+            }
+
+            res.json({
+                paymentId: outcome.row?.id,
+                provider: (outcome.result as any).provider,
+                providerId: (outcome.result as any).providerId,
+                kind: (outcome.result as any).kind,
+                clientSecret: (outcome.result as any).clientSecret,
+                checkoutUrl: (outcome.result as any).checkoutUrl,
+                reference: paymentReference,
+            });
+        } catch (err: any) {
+            const message = err instanceof PaymentProviderError ? err.message : 'Payment provider error';
+            console.error('Error initiating payment', err);
+            res.status(err instanceof PaymentProviderError ? 400 : 500).json({ error: message });
+        }
+    });
+
+    // ─── Paystack webhook (HMAC-SHA512 of the raw body, x-paystack-signature) ──
+    router.post('/paystack/webhook', express.raw({ type: '*/*' }) as any, async (req: any, res: any) => {
+        const secret = process.env.PAYSTACK_SECRET_KEY || '';
+        if (!secret) {
+            console.error('Paystack webhook rejected: PAYSTACK_SECRET_KEY not configured.');
+            return res.status(500).send('Paystack webhook not configured');
+        }
+        const signature = req.headers['x-paystack-signature'];
+        if (!paystack.verifyWebhookSignature(req.body, signature, secret)) {
+            return res.status(400).send('Invalid signature');
+        }
+        res.json({ received: true });
+
+        try {
+            const event = paystack.parseRawBody(req.body);
+            if (event?.event === 'charge.success') {
+                const txn = event.data || {};
+                await applyPaymentOutcome(prisma, {
+                    provider: 'PAYSTACK',
+                    providerId: String(txn.reference || ''),
+                    reference: String(txn.reference || ''),
+                    amount: Number(txn.amount || 0) / 100,
+                    currency: String(txn.currency || 'KES').toUpperCase(),
+                    status: 'SUCCEEDED',
+                    metadata: txn
+                });
+            }
+        } catch (err) {
+            console.error('Error handling Paystack webhook', err);
+        }
+    });
+
+    // ─── PayHero callback (unsigned; authenticated by reference match) ────────
+    router.post('/payhero/callback', async (req: any, res: any) => {
+        res.json({ status: true });
+        try {
+            const cb = payhero.decodeCallback(req.body);
+            if (!cb.checkoutRequestId && !cb.externalReference) return;
+            const payment = await prisma.payment.findFirst({
+                where: {
+                    provider: 'PAYHERO' as any,
+                    OR: [{ providerId: cb.checkoutRequestId }, { metadata: { path: ['external_reference'], equals: cb.externalReference } }]
+                }
+            });
+            if (!payment) {
+                console.warn('PayHero callback for unknown payment ignored', { checkoutRequestId: cb.checkoutRequestId, externalReference: cb.externalReference });
+                return;
+            }
+            if (cb.resultCode === 0 || cb.success) {
+                await applyPaymentOutcome(prisma, {
+                    provider: 'PAYHERO' as any,
+                    providerId: payment.providerId,
+                    reference: cb.externalReference || payment.reference || undefined,
+                    channelId: payment.channelId || undefined,
+                    amount: cb.amount || payment.amount,
+                    currency: payment.currency,
+                    status: 'SUCCEEDED',
+                    metadata: { ...(payment.metadata as object || {}), callback: cb.raw },
+                    bookingId: payment.bookingId || undefined,
+                    clientId: payment.clientId || undefined
+                });
+            } else {
+                await applyPaymentOutcome(prisma, {
+                    provider: 'PAYHERO' as any,
+                    providerId: payment.providerId,
+                    status: 'FAILED',
+                    metadata: { ...(payment.metadata as object || {}), callback: cb.raw }
+                });
+            }
+        } catch (err) {
+            console.error('Error handling PayHero callback', err);
+        }
+    });
+
+    // ─── M-Pesa Daraja callback (unsigned; authenticated by reference match) ──
+    router.post('/mpesa/callback', async (req: any, res: any) => {
+        const cb = mpesa.decodeStkCallback(req.body);
+        if (!cb) return res.status(400).json({ ResultCode: 1, ResultDesc: 'Invalid callback payload' });
+
+        // Acknowledge immediately; process async (Daraja retries otherwise).
+        res.json({ ResultCode: 0, ResultDesc: 'Success' });
+
+        try {
+            const payment = await prisma.payment.findUnique({ where: { providerId: cb.checkoutRequestId } });
+            if (!payment && cb.resultCode) {
+                // No row for this CheckoutRequestID yet — retry path (e.g. push
+                // happened, DB row failed). Keep the transaction pending.
+                console.warn('M-Pesa callback for unknown CheckoutRequestID ignored', cb.checkoutRequestId);
+                return;
+            }
+            if (cb.resultCode === '0') {
+                await applyPaymentOutcome(prisma, {
+                    provider: 'MPESA',
+                    providerId: cb.checkoutRequestId,
+                    amount: cb.amount || payment?.amount || 0,
+                    currency: payment?.currency || 'KES',
+                    status: 'SUCCEEDED',
+                    metadata: { ...(payment?.metadata as object || {}), receipt: cb.mpesaReceipt, callback: cb.raw },
+                    bookingId: payment?.bookingId || undefined,
+                    clientId: payment?.clientId || undefined
+                });
+            } else if (payment) {
+                await applyPaymentOutcome(prisma, {
+                    provider: 'MPESA',
+                    providerId: cb.checkoutRequestId,
+                    status: 'FAILED',
+                    metadata: { ...(payment.metadata as object || {}), resultDesc: cb.resultDesc, callback: cb.raw }
+                });
+            }
+        } catch (err) {
+            console.error('Error handling M-Pesa callback', err);
         }
     });
 

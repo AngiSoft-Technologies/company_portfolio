@@ -15,9 +15,9 @@ import {
 import SmartImage from './SmartImage';
 
 const YEAR_ACCENTS = [
-  '#0A3DFF',
-  '#00C2FF',
-  '#39FF6A',
+  '#0875FF',
+  '#00AFFF',
+  '#27D94B',
   '#8A2BE2',
 ];
 

@@ -3,13 +3,15 @@
 // success stories. Content is grounded in real AngiSoft product state
 // (see AGENTS.md / project history). Do not present as shipped client work.
 
+import { resolveAssetUrl } from '../utils/constants';
+
 const homeProductStories = [
   {
     id: 'petroflow',
     slug: 'petroflow',
     name: 'PetroFlow',
-    logo: '/uploads/public/images/Logos/petroflow-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/petroflow-mobile-icon.png',
+    logo: resolveAssetUrl('/uploads/public/images/Logos/petroflow-logo.png'),
+    mobileIcon: resolveAssetUrl('/uploads/public/images/Logos/petroflow-mobile-icon.png'),
     tagline: 'Fuel Station Operations and Data Automation',
     headline: 'Improving How Fuel Stations Track Daily Operations',
     excerpt:
@@ -23,8 +25,8 @@ const homeProductStories = [
     id: 'dukaflow',
     slug: 'dukaflow',
     name: 'DukaFlow',
-    logo: '/uploads/public/images/Logos/duka-flow-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/duka-flow-mobile-icon.png',
+    logo: resolveAssetUrl('/uploads/public/images/Logos/duka-flow-logo.png'),
+    mobileIcon: resolveAssetUrl('/uploads/public/images/Logos/duka-flow-mobile-icon.png'),
     tagline: 'POS and Business Management for Retail',
     headline: 'Building a Practical Digital Backbone for Growing Businesses',
     excerpt:
@@ -38,8 +40,8 @@ const homeProductStories = [
     id: 'angitunes',
     slug: 'angitunes',
     name: 'AngiTunes',
-    logo: '/uploads/public/images/Logos/angitunes-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/angitunes-mobile-icon.png',
+    logo: resolveAssetUrl('/uploads/public/images/Logos/angitunes-logo.png'),
+    mobileIcon: resolveAssetUrl('/uploads/public/images/Logos/angitunes-mobile-icon.png'),
     tagline: 'Music and Creator Platform',
     headline: 'Creating a Digital Space for Kenyan Artists and DJs',
     excerpt:
@@ -53,8 +55,8 @@ const homeProductStories = [
     id: 'kejalink',
     slug: 'kejalink',
     name: 'KejaLink',
-    logo: '/uploads/public/images/Logos/keja-link-logo.png',
-    mobileIcon: '/uploads/public/images/Logos/kejalink-mobile-icon.png',
+    logo: resolveAssetUrl('/uploads/public/images/Logos/keja-link-logo.png'),
+    mobileIcon: resolveAssetUrl('/uploads/public/images/Logos/kejalink-mobile-icon.png'),
     tagline: 'Property, Rental and Housing Platform',
     headline: 'Making Property Discovery and Rental Management More Trustworthy',
     excerpt:

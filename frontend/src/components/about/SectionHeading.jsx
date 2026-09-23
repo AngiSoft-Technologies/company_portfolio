@@ -15,7 +15,7 @@ const SectionHeading = ({
   return (
     <header className={`max-w-3xl ${alignment} ${className}`}>
       {eyebrow && (
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#00C2FF]">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#00AFFF]">
           {eyebrow}
         </p>
       )}

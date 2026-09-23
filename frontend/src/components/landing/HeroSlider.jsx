@@ -229,7 +229,7 @@ const HeroSlider = () => {
         <h1 className="hero-slider__headline">
           <span>{slide.headline}</span>{' '}
           <span style={{
-            background: `linear-gradient(135deg, ${colors.primary}, #39FF6A)`,
+            background: `linear-gradient(135deg, ${colors.primary}, #27D94B)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -246,7 +246,7 @@ const HeroSlider = () => {
             to={slide.primaryCta.to}
             className="hero-slider__cta hero-slider__cta--primary"
             style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#39FF6A'})`,
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#27D94B'})`,
             }}
           >
             {slide.primaryCta.label}

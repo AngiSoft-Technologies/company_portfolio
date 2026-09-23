@@ -160,7 +160,7 @@ const CTASection = () => {
               to="/book"
               className="group inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-white font-semibold transition-all duration-300 hover:-translate-y-1"
               style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || '#0029CC'} 100%)`,
+                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || '#003BCE'} 100%)`,
                 boxShadow: `0 20px 40px ${colors.primary}40, 0 0 0 1px rgba(255,255,255,0.1) inset`,
                 fontSize: '1.05rem'
               }}

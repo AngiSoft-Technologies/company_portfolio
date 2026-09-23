@@ -1,4 +1,5 @@
 import type { PrismaClient, Prisma, BookingStatus } from '@prisma/client';
+import { emitToBooking, emitToStaff } from './realtime';
 
 /**
  * Booking workflow event catalog + persistence helper.
@@ -75,5 +76,21 @@ export async function logBookingEvent(
       args.metadata === undefined || args.metadata === null
         ? undefined
         : (args.metadata as Prisma.InputJsonValue),    },
+  });
+
+  // Realtime fan-out (fire-and-forget): anyone watching this booking (via the
+  // tracking-token room join) or the staff room learns a new event happened and
+  // refetches. Never awaited — persist succeeded regardless of socket state.
+  const payload = {
+    bookingId: args.bookingId,
+    type: args.type,
+    title: args.title,
+    description: args.description ?? null,
+    stage: args.stage ?? null,
+    status: args.status ?? null,
+  };
+  setImmediate(() => {
+    emitToBooking(args.bookingId, 'booking:event', payload);
+    emitToStaff('booking:event', payload);
   });
 }

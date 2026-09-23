@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
+import { readReplicas } from '@prisma/extension-read-replicas';
 import { resolveDatabaseUrl } from './connectionUrl';
 
 dotenv.config();
@@ -29,10 +30,36 @@ const logConfig: Prisma.LogLevel[] = isProduction
 // PrismaNeon builds its own Neon pool from the config object.
 const adapter = new PrismaNeon({ connectionString: resolvedDatabaseUrl });
 
-const prisma = new PrismaClient({
+const basePrisma = new PrismaClient({
   adapter,
   log: logConfig,
 });
+
+// ─── Neon read replicas (optional, env-gated) ──────────────────
+// When DATABASE_URL_REPLICA is set (comma-separated list), create one replica
+// Prisma client per URL; @prisma/extension-read-replicas routes all reads to
+// replicas while writes + $transaction stay on the primary. When unset (the
+// default) behavior is byte-for-byte the old single-endpoint client.
+function buildReplicas() {
+  const replicaUrls = (process.env.DATABASE_URL_REPLICA || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!replicaUrls.length) return [];
+  if (isProduction) {
+    console.log(`🔄 Read replicas enabled (${replicaUrls.length} replica${replicaUrls.length > 1 ? 's' : ''})`);
+    return replicaUrls.map((url) => new PrismaClient({ adapter: new PrismaNeon({ connectionString: url }) }));
+  }
+  // In dev we have no replica to point at and silently routing reads to a fake
+  // URL would break every page — fall back to the pool with a warning.
+  console.warn('⚠️ DATABASE_URL_REPLICA set but NODE_ENV is not production — ignoring replicas.');
+  return [];
+}
+
+const replicas = buildReplicas();
+const prisma = (replicas.length
+  ? (basePrisma.$extends(readReplicas({ replicas })) as unknown as PrismaClient)
+  : basePrisma) as PrismaClient;
 
 console.log(
   `🗄️  Database: ${isNeonUrl ? 'Neon Postgres (pooled)' : 'Postgres (direct)'} ` +

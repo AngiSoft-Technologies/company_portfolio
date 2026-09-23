@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FaGithub, FaExternalLinkAlt, FaEye } from 'react-icons/fa';
+import { resolveAssetUrl } from '../../utils/constants';
 
 const ModernProjectCard = ({
   title,
@@ -48,7 +49,7 @@ const ModernProjectCard = ({
         <img
           loading="lazy"
           decoding="async"
-          src={image || '/uploads/public/images/project-placeholder.png'}
+          src={resolveAssetUrl(image || '/uploads/public/images/project-placeholder.png')}
           alt={title}
           className="w-full h-full object-cover transition-all duration-700"
           style={{

@@ -188,14 +188,14 @@ const CapabilityCard = ({
   const content = (
     <>
       <span
-        className="absolute right-3 top-3 text-[#00C2FF]"
+        className="absolute right-3 top-3 text-[#00AFFF]"
         aria-hidden="true"
       >
         <FaArrowDown className="-rotate-45 text-[8px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </span>
 
       <Icon
-        className="text-[28px] text-[#00C2FF]"
+        className="text-[28px] text-[#00AFFF]"
         aria-hidden="true"
       />
 
@@ -212,11 +212,11 @@ const CapabilityCard = ({
     border border-white/15 bg-[#0A1B38]
     px-5 py-5 text-center no-underline
     transition duration-500
-    hover:border-[#00C2FF]/60
+    hover:border-[#00AFFF]/60
     hover:bg-[#0C2142]
     focus-visible:outline-none
     focus-visible:ring-2
-    focus-visible:ring-[#00C2FF]
+    focus-visible:ring-[#00AFFF]
     ${
       visible
         ? 'translate-y-0 opacity-100'

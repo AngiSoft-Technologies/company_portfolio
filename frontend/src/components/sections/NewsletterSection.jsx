@@ -213,7 +213,7 @@ const NewsletterSection = () => {
                 disabled={status === 'loading'}
                 className="group flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || '#0029CC'} 100%)`,
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark || '#003BCE'} 100%)`,
                   boxShadow: `0 4px 20px ${colors.primary}60`
                 }}
               >

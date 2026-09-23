@@ -9,6 +9,7 @@ import inviteRouter from './routes/invite';
 import bookingsRouter from './routes/bookings';
 import chatbotRouter from './routes/chatbot';
 import paymentsRouter from './routes/payments';
+import paymentConsoleRouter from './routes/payment-console';
 import authRouter from './routes/auth';
 import uploadsRouter from './routes/uploads';
 import servicesRouter from './routes/services';
@@ -34,9 +35,11 @@ import leadsRouter from './routes/leads';
 import supportTicketsRouter from './routes/support-tickets';
 import productsRouter from './routes/products';
 import { trackPageView } from './services/analytics';
+import { getAllowedOrigins } from './config/origins';
 import { authRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/auth';
 import { sanitizeMiddleware } from './middleware/validation';
+import { publicJsonCache } from './middleware/cache';
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/errorHandler';
 import { initSentry } from './services/monitoring/sentry';
 import prisma from './db';
@@ -56,6 +59,7 @@ import industriesRouter from './routes/industries';
 import solutionsRouter from './routes/solutions';
 import rolesRouter from './routes/roles';
 import employeeProfilesRouter from './routes/employee-profiles';
+import aiConfigRouter from './routes/ai-config';
 
 dotenv.config();
 initSentry();
@@ -77,11 +81,11 @@ app.use(helmet({
     },
 }));
 // Production CORS: allow frontend domains (set CORS_ORIGIN in env or use defaults)
-const defaultOrigins = ['https://angisoft.co.ke', 'https://www.angisoft.co.ke', 'https://admin.angisoft.co.ke', 'https://www.admin.angisoft.co.ke', 'https://client.angisoft.co.ke', 'https://www.client.angisoft.co.ke', 'https://www.angisoft.co.ke/'];
-const allowed = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-    : defaultOrigins;
+const allowed = getAllowedOrigins();
 app.use(cors({ origin: allowed, credentials: true } as any));
+// Signed webhooks need the pristine raw body (Stripe signature / Paystack HMAC),
+// so capture it BEFORE the global JSON parser runs for those paths only.
+app.use(['/api/payments/webhook', '/api/payments/paystack/webhook'], express.raw({ type: '*/*' }) as any);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -104,6 +108,21 @@ app.use(
     })
 );
 app.use(sanitizeMiddleware);
+
+// Public JSON caching for unauthenticated GET content endpoints (Redis when
+// REDIS_URL is set, in-memory otherwise). Must sit before the API routers so
+// it can intercept them; the raw webhook + auth routers are unaffected.
+app.use(publicJsonCache());
+
+if (process.env.MCP_HTTP_ENABLED === 'true') {
+    // Optional read-only MCP-over-HTTP endpoint (Streamable HTTP). Disabled by
+    // default; keep it off unless an MCP client is wired up.
+    app.post('/mcp', (req, res, next) => {
+        import('./mcp')
+            .then(({ handleMcpHttpRequest }) => handleMcpHttpRequest(req, res))
+            .catch(next);
+    });
+}
 
 app.get('/', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -238,6 +257,7 @@ app.use('/api/auth', authRateLimiter, authRouter);
 app.use('/api/invite', inviteRouter(prisma));
 app.use('/api/bookings', bookingsRouter(prisma));
 app.use('/api/payments', paymentsRouter(prisma));
+app.use('/api/admin/payments', paymentConsoleRouter(prisma));
 app.use('/api/uploads', uploadsRouter());
 app.use('/api/services', servicesRouter());
 app.use('/api/projects', projectsRouter());
@@ -247,6 +267,7 @@ app.use('/api/service-categories', serviceCategoriesRouter());
 app.use('/api/settings', requireAuth, settingsRouter());
 app.use('/api/staff', staffRouter(prisma));
 app.use('/api/admin', adminRouter(prisma));
+app.use('/api/admin', aiConfigRouter(prisma));
 app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
 app.use('/api/client-projects', clientProjectsRouter(prisma));
 app.use('/api/client-portal', clientPortalRouter(prisma));

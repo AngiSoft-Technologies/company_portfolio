@@ -2,12 +2,14 @@
 // These describe technology areas AngiSoft works with practically — not enterprise
 // capabilities proven at scale. Defined outside the component to avoid per-render recreation.
 
+import { resolveAssetUrl } from '../utils/constants';
+
 const technologyTrends = [
   {
     id: 'ai-assisted-engineering',
     name: 'AI-Assisted Engineering',
     icon: 'FaBrain',
-    bgImage: '/uploads/public/images/trends/ai-assisted-engineering.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/trends/ai-assisted-engineering.jpg'),
     description:
       'We use AI-assisted tooling to write, review and refactor code faster, while keeping a human engineer responsible for correctness and security.',
     capabilities: [
@@ -21,7 +23,7 @@ const technologyTrends = [
     id: 'cloud-deployment',
     name: 'Cloud Deployment',
     icon: 'FaCloud',
-    bgImage: '/uploads/public/images/trends/cloud-deployment.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/trends/cloud-deployment.jpg'),
     description:
       'We ship projects using modern hosting platforms so your application is reachable, reliable and easy to update.',
     capabilities: [
@@ -35,7 +37,7 @@ const technologyTrends = [
     id: 'data-reporting',
     name: 'Data & Reporting',
     icon: 'FaDatabase',
-    bgImage: '/uploads/public/images/trends/data-reporting.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/trends/data-reporting.jpg'),
     description:
       'We turn raw data into clear reports and dashboards using tools your team already understands.',
     capabilities: [
@@ -49,7 +51,7 @@ const technologyTrends = [
     id: 'workflow-automation',
     name: 'Workflow Automation',
     icon: 'FaRobot',
-    bgImage: '/uploads/public/images/trends/workflow-automation.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/trends/workflow-automation.jpg'),
     description:
       'We automate repetitive tasks with scripts and integrations so your team spends time on the work that matters.',
     capabilities: [
@@ -63,7 +65,7 @@ const technologyTrends = [
     id: 'secure-software-practices',
     name: 'Secure Software Practices',
     icon: 'FaLock',
-    bgImage: '/uploads/public/images/trends/secure-software-practices.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/trends/secure-software-practices.jpg'),
     description:
       'We build with security in mind from the start — careful with data, access and validation.',
     capabilities: [

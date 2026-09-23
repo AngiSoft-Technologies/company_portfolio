@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import SkillCard from '../cards/SkillCard';
 import { apiGet } from '../../js/httpClient';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
+import { resolveAssetUrl } from '../../utils/constants';
 
-const placeholderSkillIcon = '/uploads/public/images/skill-placeholder.svg';
+const placeholderSkillIcon = resolveAssetUrl('/uploads/public/images/skill-placeholder.svg');
 
 const Skills = ({ theme }) => {
     const { copy: uiCopy } = useSiteCopy();
@@ -33,7 +34,7 @@ const Skills = ({ theme }) => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-12">
                     {sectionCopy.title && (
-                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight bg-gradient-to-r from-[#0A3DFF] to-[#00C2FF] bg-clip-text text-transparent">
+                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight bg-gradient-to-r from-[#0875FF] to-[#00AFFF] bg-clip-text text-transparent">
                             {sectionCopy.title}
                         </h2>
                     )}
@@ -62,7 +63,7 @@ const Skills = ({ theme }) => {
                             {displaySkills.map((skill, index) => (
                                 <SkillCard
                                     key={skill._id || index}
-                                    image={skill.imageLink || placeholderSkillIcon}
+                                    image={resolveAssetUrl(skill.imageLink || placeholderSkillIcon)}
                                     name={skill.name}
                                     theme={theme}
                                 />

@@ -26,7 +26,7 @@ export function getIndustryRoute(slugOrIndustry) {
     return `/industries/${encodeURIComponent(slug)}`;
 }
 
-const DEFAULT_BG = '/uploads/public/images/services/it-consulting.jpg';
+const DEFAULT_BG = resolveAssetUrl('/uploads/public/images/services/it-consulting.jpg');
 
 // Normalize one raw industry record from /api/site/industries.
 export function normalizeIndustry(raw, index = 0) {

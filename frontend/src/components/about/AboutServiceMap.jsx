@@ -283,7 +283,7 @@ const ServiceMapCard = ({
     transition duration-700
     focus-visible:outline-none
     focus-visible:ring-2
-    focus-visible:ring-[#00C2FF]
+    focus-visible:ring-[#00AFFF]
     ${
       visible
         ? 'translate-y-0 opacity-100'

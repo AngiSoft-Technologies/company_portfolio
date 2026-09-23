@@ -129,7 +129,7 @@ The repository already contains a draft Prisma schema at `backend/prisma/schema.
 
 ## How to run locally (developer)
 
-Copy `.env.example` to `.env` and set `DATABASE_URL`.
+Backend config lives in the runtime file `backend/.env` (gitignored — there is intentionally no `.env.example` template). Set `DATABASE_URL` and all secrets there.
 
 ```bash
 cd backend

@@ -91,9 +91,9 @@ const normalizeModel = (
     accent:
       model?.accent ||
       [
-        '#0A3DFF',
-        '#00C2FF',
-        '#39FF6A',
+        '#0875FF',
+        '#00AFFF',
+        '#27D94B',
       ][index % 3],
 
     enabled:
@@ -224,7 +224,7 @@ const AboutCollaboration = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 

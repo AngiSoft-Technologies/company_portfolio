@@ -248,7 +248,7 @@ const AboutPricingQuotation = ({
           <div className="flex items-center px-6 py-8 md:px-10 md:py-9">
             <blockquote className="relative">
               <FaQuoteLeft
-                className="absolute -left-1 -top-1 text-xl text-[#00C2FF]/45"
+                className="absolute -left-1 -top-1 text-xl text-[#00AFFF]/45"
                 aria-hidden="true"
               />
 
@@ -295,7 +295,7 @@ const AboutPricingQuotation = ({
             data.cta?.to && (
               <Link
                 to={data.cta.to}
-                className="group mt-8 inline-flex items-center gap-3 text-sm font-semibold text-[#00C2FF] no-underline"
+                className="group mt-8 inline-flex items-center gap-3 text-sm font-semibold text-[#00AFFF] no-underline"
               >
                 {data.cta.label}
 
@@ -323,7 +323,7 @@ const InvestmentList = ({
           className="flex items-start gap-2 text-sm leading-7 text-white/65"
         >
           <span
-            className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-[#00C2FF]"
+            className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-[#00AFFF]"
             aria-hidden="true"
           />
 
@@ -350,8 +350,8 @@ const LeadershipFallback = ({
     .toUpperCase();
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A1B38] via-[#0A3DFF]/20 to-[#07142B]">
-      <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-2xl font-black text-[#00C2FF]">
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A1B38] via-[#0875FF]/20 to-[#07142B]">
+      <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00AFFF]/30 bg-[#00AFFF]/10 text-2xl font-black text-[#00AFFF]">
         {initials}
       </span>
     </div>

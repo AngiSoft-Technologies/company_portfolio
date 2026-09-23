@@ -485,7 +485,7 @@ const ReviewTestimonialCard = ({
             href={testimonial.reviewUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00C2FF] no-underline"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00AFFF] no-underline"
           >
             Read review
 
@@ -496,7 +496,7 @@ const ReviewTestimonialCard = ({
         {testimonial.projectUrl && (
           <Link
             to={testimonial.projectUrl}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00C2FF] no-underline"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00AFFF] no-underline"
           >
             View project
 
@@ -510,7 +510,7 @@ const ReviewTestimonialCard = ({
           href={testimonial.shareUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex h-7 w-7 items-center justify-center border-l border-white/10 text-[#00C2FF]"
+          className="flex h-7 w-7 items-center justify-center border-l border-white/10 text-[#00AFFF]"
           aria-label="Share testimonial"
         >
           <FaShareAlt className="text-[10px]" />
@@ -572,7 +572,7 @@ const VideoTestimonialCard = ({
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0A3DFF] via-[#0A1B38] to-[#07142B]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0875FF] via-[#0A1B38] to-[#07142B]" />
           )}
 
           <div
@@ -588,7 +588,7 @@ const VideoTestimonialCard = ({
             </p>
 
             {!testimonial.verified && (
-              <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#00C2FF]">
+              <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#00AFFF]">
                 External layout demo
               </p>
             )}
@@ -633,7 +633,7 @@ const VideoTestimonialCard = ({
                 }
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold text-[#00C2FF]"
+                className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold text-[#00AFFF]"
               >
                 Watch on YouTube
 
@@ -658,7 +658,7 @@ const ClientAvatar = ({
         )}
         alt={testimonial.clientName}
         loading="lazy"
-        className="h-9 w-9 shrink-0 rounded-full border border-[#00C2FF]/25 object-cover"
+        className="h-9 w-9 shrink-0 rounded-full border border-[#00AFFF]/25 object-cover"
       />
     );
   }
@@ -673,7 +673,7 @@ const ClientAvatar = ({
       .toUpperCase();
 
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[10px] font-bold text-[#00C2FF]">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#00AFFF]/30 bg-[#00AFFF]/10 text-[10px] font-bold text-[#00AFFF]">
       {initials || 'AT'}
     </span>
   );

@@ -1,14 +1,16 @@
+import { resolveAssetUrl } from './constants';
+
 export const BACKGROUND_ASSETS = {
-  heroStudio: '/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg',
-  developerPanel: '/uploads/public/images/developer-8829735_1280.jpg',
-  webDevelopment: '/uploads/public/images/web-development.jpg',
-  softwareCompany: '/uploads/public/images/Software-Development-Company.jpg',
-  desktopWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png',
-  landingWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Website-Landing-sr-Design.png',
-  campaignBanner: '/uploads/public/images/Posters-Campaigns/AngiSoft-Campaign-Banner.png',
-  thankYouPoster: '/uploads/public/images/Posters-Campaigns/AngiSoft-Thank-You.png',
-  watermark: '/uploads/public/images/Branding/AngiSoft-Watermsrk.png',
-  carBranding: '/uploads/public/images/Branding/AngiSoft-Car-Branding.png',
+  heroStudio: resolveAssetUrl('/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg'),
+  developerPanel: resolveAssetUrl('/uploads/public/images/developer-8829735_1280.jpg'),
+  webDevelopment: resolveAssetUrl('/uploads/public/images/web-development.jpg'),
+  softwareCompany: resolveAssetUrl('/uploads/public/images/Software-Development-Company.jpg'),
+  desktopWallpaper: resolveAssetUrl('/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png'),
+  landingWallpaper: resolveAssetUrl('/uploads/public/images/Wallpapers/AngiSoft-Website-Landing-sr-Design.png'),
+  campaignBanner: resolveAssetUrl('/uploads/public/images/Posters-Campaigns/AngiSoft-Campaign-Banner.png'),
+  thankYouPoster: resolveAssetUrl('/uploads/public/images/Posters-Campaigns/AngiSoft-Thank-You.png'),
+  watermark: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Watermsrk.png'),
+  carBranding: resolveAssetUrl('/uploads/public/images/Branding/AngiSoft-Car-Branding.png'),
 };
 
 export const BACKGROUND_VARIANTS = {

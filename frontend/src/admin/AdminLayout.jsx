@@ -7,7 +7,7 @@ import {
     FaShareAlt, FaBell, FaEnvelope, FaUserCircle, FaArchive, FaCheck,
     FaTrash, FaChevronDown, FaSearch, FaGlobe, FaBlog,
     FaRobot, FaBox, FaQuestionCircle, FaBullhorn, FaChartBar, FaSitemap, FaAward,
-    FaIndustry, FaLightbulb, FaTags
+    FaIndustry, FaLightbulb, FaTags, FaBrain, FaMoneyBillWave
 } from 'react-icons/fa';
 import AngiSoftLogo from '../components/brand/AngiSoftLogo';
 import { apiGet, apiPatch, apiPost, getAccessToken, setAccessToken } from '../js/httpClient';
@@ -19,6 +19,7 @@ const navSections = [
         items: [
             { to: '/admin', label: 'Dashboard', icon: FaTachometerAlt },
             { to: '/admin/bookings', label: 'Bookings', icon: FaBriefcase },
+            { to: '/admin/payments', label: 'Payments', icon: FaMoneyBillWave },
             { to: '/admin/client-projects', label: 'Client Projects', icon: FaProjectDiagram },
             { to: '/admin/staff-dashboard', label: 'My Dashboard', icon: FaUserCircle },
         ]
@@ -52,6 +53,7 @@ const navSections = [
     {
         title: 'AI',
         items: [
+            { to: '/admin/ai-config', label: 'AI Providers', icon: FaBrain },
             { to: '/admin/chat-conversations', label: 'Chatbot Leads', icon: FaRobot },
         ]
     },

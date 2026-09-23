@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
 import { useSiteCopy } from '../hooks/useSiteCopy';
-import { API_BASE_URL } from '../utils/constants';
+import { API_BASE_URL, resolveAssetUrl } from '../utils/constants';
 import { getProjectDetailPath } from '../utils/detailPaths';
 import { 
     FaCode, FaExternalLinkAlt, FaGithub, FaFilter,
@@ -64,7 +64,7 @@ const ProjectLists = () => {
             <ParallaxSection
                 speed={0.25}
                 treatment="technical"
-                backgroundImage="/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg"
+                backgroundImage={resolveAssetUrl('/uploads/public/images/programming-background-with-person-working-with-codes-computer.jpg')}
                 className="relative py-32 overflow-hidden"
             >
                 <div className="angi-grain" />
@@ -198,9 +198,11 @@ const ProjectLists = () => {
                             {filteredProjects.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {filteredProjects.map((project, idx) => {
-                                        const mainImage = project.images && project.images.length > 0 
-                                            ? project.images[0] 
-                                            : (project.image || '/uploads/public/images/project-placeholder.png');
+                                        const mainImage = resolveAssetUrl(
+                                            (project.images && project.images.length > 0)
+                                                ? project.images[0]
+                                                : (project.image || '/uploads/public/images/project-placeholder.png')
+                                        );
                                         
                                         const detailPath = getProjectDetailPath(project);
 

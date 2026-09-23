@@ -65,6 +65,7 @@ const SocialMediaAdmin = lazy(() => import('./admin/crud/SocialMediaAdmin'));
 const QuotesAdmin = lazy(() => import('./admin/crud/QuotesAdmin'));
 const SiteSettingsAdmin = lazy(() => import('./admin/crud/SiteSettingsAdmin'));
 const ChatConversationsAdmin = lazy(() => import('./admin/crud/ChatConversationsAdmin'));
+const AIConfigAdmin = lazy(() => import('./admin/AIConfigAdmin'));
 const ProductsAdmin = lazy(() => import('./admin/crud/ProductsAdmin'));
 const FaqsAdmin = lazy(() => import('./admin/crud/FaqsAdmin'));
 const CareersAdmin = lazy(() => import('./admin/crud/CareersAdmin'));
@@ -76,6 +77,7 @@ const HomeSectionsAdmin = lazy(() => import('./admin/crud/HomeSectionsAdmin'));
 const AnnouncementsAdmin = lazy(() => import('./admin/crud/AnnouncementsAdmin'));
 const ProductFaqsAdmin = lazy(() => import('./admin/crud/ProductFaqsAdmin'));
 const CertificationsAdmin = lazy(() => import('./admin/crud/CertificationsAdmin'));
+const PaymentsAdmin = lazy(() => import('./admin/PaymentsAdmin'));
 
 const AdminProtectedLayout = () => {
   const [status, setStatus] = useState('checking'); // 'checking' | 'ok' | 'no'
@@ -162,6 +164,7 @@ const RoutesComponent = () => {
           <Route index element={<EnhancedAdminDashboard />} />
           <Route path="bookings" element={<BookingsManagement />} />
           <Route path="bookings/:id" element={<BookingsManagement />} />
+          <Route path="payments" element={<PaymentsAdmin />} />
           <Route path="client-projects" element={<ClientProjectsManagement />} />
           <Route path="staff" element={<StaffManagement />} />
           <Route path="staff/:id/access" element={<StaffAccess />} />
@@ -184,6 +187,7 @@ const RoutesComponent = () => {
           <Route path="social-media" element={<SocialMediaAdmin />} />
           <Route path="quotes" element={<QuotesAdmin />} />
           <Route path="chat-conversations" element={<ChatConversationsAdmin />} />
+          <Route path="ai-config" element={<AIConfigAdmin />} />
           <Route path="products" element={<ProductsAdmin />} />
           <Route path="product-faqs" element={<ProductFaqsAdmin />} />
           <Route path="faqs" element={<FaqsAdmin />} />

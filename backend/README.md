@@ -32,13 +32,14 @@ backend/
 ├── test/                  Vitest + Supertest specs
 ├── scripts/               Migration and utility scripts
 ├── Dockerfile             Production container build
-└── .env.example           Required environment variables
+└── .env                   Runtime config + secrets (gitignored; no .env.example)
 ```
 
 ## Setup
 
 ```bash
-cp .env.example .env       # fill in DATABASE_URL and secrets
+# no .env.example — edit backend/.env directly (gitignored) and fill in
+# DATABASE_URL + secrets there.
 npm install
 npx prisma generate        # generate Prisma client
 npm run prisma:migrate:dev # run migrations
@@ -53,7 +54,9 @@ npm run dev                # API at http://localhost:5000
 | `npm run dev` | Start dev server with ts-node-dev (hot reload) |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm run start` | Run compiled output |
-| `npm run start:prod` | Migrate + seed + start (Docker entrypoint) |
+| `npm run start:prod` | Migrate + seed + start (legacy Docker entrypoint) |
+| `npm run start:worker` | Workers-only process (Fly `worker` group) |
+| `npm run mcp:stdio` | Model Context Protocol server over stdio |
 | `npm run prisma:generate` | Generate Prisma client |
 | `npm run prisma:migrate:dev` | Create and apply migrations |
 | `npm run prisma:migrate` | Deploy migrations (production) |
@@ -62,15 +65,21 @@ npm run dev                # API at http://localhost:5000
 
 ## Environment Variables
 
-See `.env.example` for the full list. Key variables:
+Config comes from `backend/.env` (no `.env.example` template). Key variables:
 
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string (Neon) |
 | `JWT_SECRET` | JWT signing key (min 32 chars) |
 | `STRIPE_SECRET` | Stripe secret key |
+| `PAYSTACK_SECRET_KEY` | Paystack secret key |
+| `MPESA_*` | M-Pesa Daraja STK Push sandbox/production creds |
+| `PAYHERO_*` | PayHero aggregation API creds (Kenyan banks/M-Pesa) |
 | `SMTP_*` | Zoho Mail SMTP credentials |
-| `S3_*` | S3/R2 storage credentials |
+| `S3_*` | S3/R2 storage credentials (AWS_* names accepted, set by `fly storage create`) |
+| `REDIS_URL` | Url — powers queue + cache; unset = in-memory fallbacks |
+| `REDIS_FAMILY` | IPv6 family for Upstash-on-Fly Redis (6) |
+| `CACHE_ENABLED` / `PUBLIC_CACHE_TTL` | Public JSON response cache |
 | `OPENAI_API_KEY` | AI chatbot API key |
 
 ## API Endpoints
@@ -89,11 +98,22 @@ The server exposes REST endpoints under `/api/`:
 
 Health check: `GET /health`
 
-## Deployment
+## Deployment (Fly.io)
 
-Deployed to **Railway** via Docker (`Dockerfile`). The container runs `npm run start:prod` which applies migrations, seeds (if needed), and starts the server.
+Deployed to **Fly.io** via Docker (`backend/Dockerfile`); see `backend/fly.toml`.
 
-Config: `../railway.json` with health check on `/health`.
+```bash
+fly launch --no-deploy                            # first time, from backend/
+fly storage create --public                       # Tigris bucket → sets AWS_* secrets
+fly redis create                                  # Upstash Redis → put its URL in REDIS_URL
+fly secrets set "REDIS_URL=..." "REDIS_FAMILY=6"  # plus DATABASE_URL, JWT_SECRET, SMTP_*, ...
+fly certs add api.angisoft.co.ke                  # attach the custom domain
+fly deploy                                        # migrations run via release_command
+fly scale count web=2 worker=1                    # scale independently
+```
+
+One image, two process groups: `web` (`npm run start`, HTTP + realtime) and `worker`
+(`npm run start:worker`, queue workers only — no HTTP listener).
 
 ## Testing
 

@@ -75,7 +75,7 @@ export const PRODUCTS = [
     tagline: 'Fuel Station Automation Platform',
     description: 'Complete fuel station management with pump control, inventory tracking, analytics, and staff management.',
     icon: 'FaGasPump',
-    gradient: 'linear-gradient(135deg, #0A3DFF 0%, #00C2FF 100%)',
+    gradient: 'linear-gradient(135deg, #0875FF 0%, #00AFFF 100%)',
     features: ['Fuel Management', 'Pump Control', 'Inventory Tracking', 'Analytics Dashboard', 'Staff Management'],
   },
   {
@@ -84,7 +84,7 @@ export const PRODUCTS = [
     tagline: 'POS & ERP Platform',
     description: 'All-in-one point-of-sale and ERP system for retail, wholesale, and restaurant businesses.',
     icon: 'FaStore',
-    gradient: 'linear-gradient(135deg, #8A2BE2 0%, #00C2FF 100%)',
+    gradient: 'linear-gradient(135deg, #8A2BE2 0%, #00AFFF 100%)',
     features: ['Sales Management', 'Inventory', 'Customer CRM', 'Supplier Management', 'Multi-branch'],
   },
   {
@@ -93,7 +93,7 @@ export const PRODUCTS = [
     tagline: 'Property Discovery Platform',
     description: 'Modern property discovery platform connecting tenants with landlords through smart search and booking.',
     icon: 'FaHome',
-    gradient: 'linear-gradient(135deg, #39FF6A 0%, #00C2FF 100%)',
+    gradient: 'linear-gradient(135deg, #27D94B 0%, #00AFFF 100%)',
     features: ['House Hunting', 'Property Listings', 'Landlord Management', 'Maps Integration', 'Booking'],
   },
   {
@@ -109,15 +109,15 @@ export const PRODUCTS = [
 
 // Brand Colors — AngiSoft Official Palette
 export const BRAND_COLORS = {
-    primary: '#0A3DFF',
-    primaryLight: '#3B6FFF',
-    primaryDark: '#0029CC',
-    secondary: '#00C2FF',
-    secondaryLight: '#5DD8FF',
-    secondaryDark: '#0099CC',
-    accent: '#8A2BE2',
-    success: '#39FF6A',
-    successDark: '#16C95B',
+    primary: '#0875FF',
+    primaryLight: '#3B9AFF',
+    primaryDark: '#003BCE',
+    secondary: '#00AFFF',
+    secondaryLight: '#18D8FF',
+    secondaryDark: '#0088CC',
+    accent: '#18D8FF',
+    success: '#27D94B',
+    successDark: '#1EB83D',
     warning: '#F59E0B',
     error: '#EF4444',
     navy: '#07142B',

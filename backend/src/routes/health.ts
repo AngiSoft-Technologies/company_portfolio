@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { getWorkers } from '../queue';
+import { getRedisUrl, redisConnectionOptions } from '../services/redis';
 
 export default function healthRouter(prisma: PrismaClient) {
     const router = Router();
@@ -46,6 +48,54 @@ export default function healthRouter(prisma: PrismaClient) {
         } catch {
             res.status(503).json({ ready: false });
         }
+    });
+
+    // Deep readiness probe for orchestration (Railway): DB hard-gated; Redis —
+    // if configured — must answer a ping; background workers must be up. All
+    // checks reported individually so operators see exactly what is failing.
+    router.get('/readyz', async (req, res) => {
+        const checks: Record<string, unknown> = {};
+
+        let dbOk = false;
+        try {
+            await prisma.$queryRaw`SELECT 1`;
+            dbOk = true;
+        } catch (err: any) {
+            checks.databaseError = err.message;
+        }
+        checks.database = dbOk;
+
+        let redisOk: boolean | 'not_configured' = 'not_configured';
+        const redisUrl = getRedisUrl();
+        if (redisUrl) {
+            redisOk = false;
+            try {
+                const Redis = (await import('ioredis')).default;
+                const client = new Redis(redisUrl, {
+                    ...(redisConnectionOptions() as Record<string, unknown>),
+                    lazyConnect: true,
+                    maxRetriesPerRequest: 1,
+                });
+                // Never let a connection 'error' event escape as an unhandled
+                // 'error' EventEmitter throw — it would crash the machine.
+                client.on('error', () => { /* surfaced via ping failure below */ });
+                try {
+                    const pong = await Promise.race([client.ping(), new Promise<null>((r) => setTimeout(() => r(null), 1500))]);
+                    redisOk = pong === 'PONG';
+                } finally {
+                    client.disconnect();
+                }
+            } catch (err: any) {
+                checks.redisError = err.message;
+            }
+        }
+        checks.redis = redisOk;
+
+        const workers = getWorkers();
+        checks.workers = workers;
+
+        const ready = dbOk && redisOk !== false && workers.every((w) => w.running);
+        res.status(ready ? 200 : 503).json({ ready, checks });
     });
 
     return router;

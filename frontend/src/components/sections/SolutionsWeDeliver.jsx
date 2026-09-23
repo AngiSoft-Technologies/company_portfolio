@@ -6,12 +6,13 @@ import {
   FaSchool,
 } from 'react-icons/fa';
 import '../../css/SolutionsWeDeliver.css';
+import { resolveAssetUrl } from '../../utils/constants';
 
 const solutionCategories = [
   {
     id: 'enterprise',
     name: 'Enterprise Solutions',
-    bgImage: '/uploads/public/images/services/enterprise.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/services/enterprise.jpg'),
     items: [
       { id: 'enterprise-applications', icon: FaBuilding, name: 'Enterprise Applications' },
       { id: 'erp-systems', icon: FaCogs, name: 'ERP Systems' },
@@ -24,7 +25,7 @@ const solutionCategories = [
   {
     id: 'web-mobile',
     name: 'Web & Mobile',
-    bgImage: '/uploads/public/images/services/web-mobile.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/services/web-mobile.jpg'),
     items: [
       { id: 'web-portals', icon: FaGlobe, name: 'Web Portals' },
       { id: 'mobile-applications', icon: FaMobileAlt, name: 'Mobile Applications' },
@@ -37,7 +38,7 @@ const solutionCategories = [
   {
     id: 'industry',
     name: 'Industry Solutions',
-    bgImage: '/uploads/public/images/services/industry.jpg',
+    bgImage: resolveAssetUrl('/uploads/public/images/services/industry.jpg'),
     items: [
       { id: 'isp-billing', icon: FaNetworkWired, name: 'ISP Billing & Portals' },
       { id: 'school-management', icon: FaSchool, name: 'School Management Systems' },

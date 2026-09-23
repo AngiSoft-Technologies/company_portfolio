@@ -24,6 +24,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/socket.io': {
+          target,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
       },
       port: 5173,
       open: true,

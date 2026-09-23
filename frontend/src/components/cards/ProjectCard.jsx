@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { resolveAssetUrl } from '../../utils/constants';
 
 const ProjectCard = ({ image, title, description, id, slug, theme}) => {
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ const ProjectCard = ({ image, title, description, id, slug, theme}) => {
                     alt={title} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                     onError={(e) => {
-                        e.target.src = '/uploads/public/images/project-placeholder.png';
+                        e.target.src = resolveAssetUrl('/uploads/public/images/project-placeholder.png');
                     }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

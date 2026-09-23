@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { ScrollReveal, GlassmorphismCard, ParallaxSection } from '../components/modern';
+import { resolveAssetUrl } from '../utils/constants';
 import { 
     FaArrowLeft, FaExternalLinkAlt, FaGithub, FaChevronLeft, FaChevronRight,
     FaCode, FaCalendarAlt, FaRocket, FaArrowRight, FaEye
 } from 'react-icons/fa';
 
-const placeholderImg = '/uploads/public/images/project-placeholder.png';
+const placeholderImg = resolveAssetUrl('/uploads/public/images/project-placeholder.png');
 
 const ProjectDetails = () => {
     const { slug } = useParams();

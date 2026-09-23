@@ -3,7 +3,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import { apiGet } from '../../js/httpClient';
 import { useSiteCopy } from '../../hooks/useSiteCopy';
-import { APP_NAME } from '../../utils/constants';
+import { APP_NAME, resolveAssetUrl } from '../../utils/constants';
 import {
   FaRocket,
   FaArrowRight,
@@ -64,7 +64,7 @@ const getDefaultHeroData = () => ({
     { id: 'principles', value: 3, suffix: '', label: 'Brand Principles', icon: 'FaHeadset', type: 'count' }
   ],
   backgroundVideo: '/videos/Matrix_rain_code.mp4',
-  backgroundImage: '/uploads/public/images/Software-Development-Company.jpg'
+  backgroundImage: resolveAssetUrl('/uploads/public/images/Software-Development-Company.jpg')
 });
 
 const Hero = () => {
@@ -141,7 +141,7 @@ const Hero = () => {
   const content = heroData;
   const heroCopy = uiCopy?.home?.hero || {};
   const brandName = branding?.siteName || APP_NAME;
-  const backgroundImage = content?.backgroundImage;
+  const backgroundImage = resolveAssetUrl(content?.backgroundImage);
   const backgroundVideo = content?.backgroundVideo;
   const hasVideo = Boolean(backgroundVideo);
 

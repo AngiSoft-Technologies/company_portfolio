@@ -15,7 +15,7 @@ const products = [
     name: 'PetroFlow',
     tagline: 'Fuel Station Management',
     logo: PRODUCT_LOGOS.petroflow,
-    accent: '#0A3DFF',
+    accent: '#0875FF',
     features: [
       'Real-time fuel inventory tracking',
       'Automated pump meter integration',
@@ -39,7 +39,7 @@ const products = [
     name: 'KejaLink',
     tagline: 'Property Management',
     logo: PRODUCT_LOGOS.kejalink,
-    accent: '#00C2FF',
+    accent: '#00AFFF',
     features: [
       'Tenant & lease management',
       'Automated rent collection',
@@ -51,7 +51,7 @@ const products = [
     name: 'AngiTunes',
     tagline: 'Music Distribution',
     logo: PRODUCT_LOGOS.angitunes,
-    accent: '#39FF6A',
+    accent: '#27D94B',
     features: [
       'Multi-platform music distribution',
       'Royalty tracking & analytics',

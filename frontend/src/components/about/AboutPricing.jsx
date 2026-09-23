@@ -146,7 +146,7 @@ const AboutPricing = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0875FF]/15"
               aria-hidden="true"
             />
 
@@ -197,7 +197,7 @@ const AboutPricing = ({
             >
               <Link
                 to={data.cta.to}
-                className="group inline-flex min-h-12 items-center justify-center gap-3 bg-[#0A3DFF] px-7 py-3.5 text-sm font-bold text-white no-underline transition hover:bg-[#3B6FFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2FF]"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 bg-[#0875FF] px-7 py-3.5 text-sm font-bold text-white no-underline transition hover:bg-[#3B9AFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AFFF]"
               >
                 {data.cta.label}
 

@@ -107,10 +107,10 @@ export const defaultAbout = {
         true,
 
       imageUrl:
-        '/uploads/public/images/about/hero/prof-angera-founder.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/prof-angera-founder.jpg'),
 
       mobileImageUrl:
-        '/uploads/public/images/about/hero/prof-angera-founder-mobile.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/prof-angera-founder-mobile.jpg'),
 
       imageAlt:
         'Prof Angera Silas, founder of AngiSoft Technologies',
@@ -139,10 +139,10 @@ export const defaultAbout = {
         true,
 
       imageUrl:
-        '/uploads/public/images/about/hero/angisoft-product-work.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/angisoft-product-work.jpg'),
 
       mobileImageUrl:
-        '/uploads/public/images/about/hero/angisoft-product-work-mobile.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/angisoft-product-work-mobile.jpg'),
 
       imageAlt:
         'AngiSoft software and product development work',
@@ -171,10 +171,10 @@ export const defaultAbout = {
         true,
 
       imageUrl:
-        '/uploads/public/images/about/hero/angisoft-team.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/angisoft-team.jpg'),
 
       mobileImageUrl:
-        '/uploads/public/images/about/hero/angisoft-team-mobile.jpg',
+        resolveAssetUrl('/uploads/public/images/about/hero/angisoft-team-mobile.jpg'),
 
       imageAlt:
         'AngiSoft technology team and collaborators',
@@ -291,7 +291,7 @@ export const defaultAbout = {
         'AngiSoft officially began in December 2024 after grassroots technology work that included debugging systems, teaching beginner coding, preparing professional documents, analysing data, installing software and helping people access essential online services.',
 
       imageUrl:
-        '/uploads/public/images/about/numbers/founded-2024.jpg',
+        resolveAssetUrl('/uploads/public/images/about/numbers/founded-2024.jpg'),
 
       imageAlt:
         'Early AngiSoft technology work and company beginnings',
@@ -300,7 +300,7 @@ export const defaultAbout = {
         'center',
 
       accent:
-        '#0A3DFF',
+        '#0875FF',
 
       link: {
         label:
@@ -340,7 +340,7 @@ export const defaultAbout = {
         'AngiSoft has contributed to websites, mobile applications, databases, management systems, data workflows and software recovery projects while continuing to expand its delivery capability.',
 
       imageUrl:
-        '/uploads/public/images/about/numbers/projects.jpg',
+        resolveAssetUrl('/uploads/public/images/about/numbers/projects.jpg'),
 
       imageAlt:
         'Software projects delivered and supported by AngiSoft',
@@ -389,7 +389,7 @@ export const defaultAbout = {
         'PetroFlow, DukaFlow, KejaLink and AngiTunes represent AngiSoft’s transition from one-off technical work into original African technology products.',
 
       imageUrl:
-        '/uploads/public/images/about/numbers/product-ecosystems.jpg',
+        resolveAssetUrl('/uploads/public/images/about/numbers/product-ecosystems.jpg'),
 
       imageAlt:
         'AngiSoft product ecosystems',
@@ -438,7 +438,7 @@ export const defaultAbout = {
         'Our service areas include web and mobile development, code debugging, data analysis, document support, database design, management systems, software installation, feature upgrades, posters and guided online applications.',
 
       imageUrl:
-        '/uploads/public/images/about/numbers/digital-empowerment.jpg',
+        resolveAssetUrl('/uploads/public/images/about/numbers/digital-empowerment.jpg'),
 
       imageAlt:
         'AngiSoft practical technology and digital-support services',
@@ -447,7 +447,7 @@ export const defaultAbout = {
         'center',
 
       accent:
-        '#00C2FF',
+        '#00AFFF',
 
       link: {
         label:
@@ -482,7 +482,7 @@ export const defaultAbout = {
       'Headquartered in Nairobi and operating through direct and remote collaboration, AngiSoft serves clients and develops solutions for Kenyan, East African and wider African needs.',
 
     mapImageUrl:
-      '/uploads/public/images/about/geography/world-map-dots-light.svg',
+      resolveAssetUrl('/uploads/public/images/about/geography/world-map-dots-light.svg'),
 
     mapAlt:
       'Map showing AngiSoft Technologies delivery reach',
@@ -502,7 +502,7 @@ export const defaultAbout = {
           'Direct and remote delivery',
 
         color:
-          '#0A3DFF',
+          '#0875FF',
       },
 
       {
@@ -536,7 +536,7 @@ export const defaultAbout = {
           'Remote digital delivery',
 
         color:
-          '#39FF6A',
+          '#27D94B',
       },
     ],
 
@@ -690,7 +690,7 @@ export const defaultAbout = {
       'AngiSoft’s sustainability approach is grounded in accessible technology, knowledge transfer, responsible system design and solutions that remain useful after delivery.',
 
     imageUrl:
-      '/uploads/public/images/about/sustainability/digital-empowerment.jpg',
+      resolveAssetUrl('/uploads/public/images/about/sustainability/digital-empowerment.jpg'),
 
     imageAlt:
       'Digital empowerment and responsible technology',
@@ -781,7 +781,7 @@ export const defaultAbout = {
           'Flexible Delivery',
 
         imageUrl:
-          '/uploads/public/images/about/collaboration/flexible-delivery.svg',
+          resolveAssetUrl('/uploads/public/images/about/collaboration/flexible-delivery.svg'),
 
         imageAlt:
           'Flexible software delivery illustration',
@@ -805,7 +805,7 @@ export const defaultAbout = {
           'Smooth Integration',
 
         imageUrl:
-          '/uploads/public/images/about/collaboration/seamless-integration.svg',
+          resolveAssetUrl('/uploads/public/images/about/collaboration/seamless-integration.svg'),
 
         imageAlt:
           'System integration illustration',
@@ -829,7 +829,7 @@ export const defaultAbout = {
           'Communication and Ownership',
 
         imageUrl:
-          '/uploads/public/images/about/collaboration/communication-ownership.svg',
+          resolveAssetUrl('/uploads/public/images/about/collaboration/communication-ownership.svg'),
 
         imageAlt:
           'Project communication and ownership illustration',
@@ -885,7 +885,7 @@ export const defaultAbout = {
         'Coding support, data analysis, document preparation, installations, online applications, posters and beginner technology teaching.',
 
       imageUrl:
-        '/uploads/public/images/about/highlights/grassroots-origin.jpg',
+        resolveAssetUrl('/uploads/public/images/about/highlights/grassroots-origin.jpg'),
 
       imageAlt:
         'Grassroots technology services',
@@ -911,7 +911,7 @@ export const defaultAbout = {
         'Prof Angera Silas establishes AngiSoft as a unified software, product and digital-services brand.',
 
       imageUrl:
-        '/uploads/public/images/about/highlights/founding-2024.jpg',
+        resolveAssetUrl('/uploads/public/images/about/highlights/founding-2024.jpg'),
 
       imageAlt:
         'AngiSoft founding milestone',
@@ -937,7 +937,7 @@ export const defaultAbout = {
         'Work grows across websites, management systems, mobile applications and database-driven platforms.',
 
       imageUrl:
-        '/uploads/public/images/about/highlights/systems-growth-2025.jpg',
+        resolveAssetUrl('/uploads/public/images/about/highlights/systems-growth-2025.jpg'),
 
       imageAlt:
         'Growth into software systems',
@@ -963,7 +963,7 @@ export const defaultAbout = {
         'Development continues across PetroFlow, DukaFlow, KejaLink and AngiTunes.',
 
       imageUrl:
-        '/uploads/public/images/about/highlights/ecosystems-2026.jpg',
+        resolveAssetUrl('/uploads/public/images/about/highlights/ecosystems-2026.jpg'),
 
       imageAlt:
         'AngiSoft product ecosystem development',
@@ -1008,7 +1008,7 @@ export const defaultAbout = {
         'POS, stock, sales and business-management workflows.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/retail.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/retail.jpg'),
 
       imageAlt:
         'Retail and SME operations',
@@ -1034,7 +1034,7 @@ export const defaultAbout = {
         'School management, learning and student-support systems.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/education.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/education.jpg'),
 
       imageAlt:
         'Education technology',
@@ -1060,7 +1060,7 @@ export const defaultAbout = {
         'Property discovery, management and stakeholder coordination.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/real-estate.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/real-estate.jpg'),
 
       imageAlt:
         'Real estate and property technology',
@@ -1086,7 +1086,7 @@ export const defaultAbout = {
         'Fuel-station operations, stock and transaction automation.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/oil-gas.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/oil-gas.jpg'),
 
       imageAlt:
         'Fuel and energy operations',
@@ -1112,7 +1112,7 @@ export const defaultAbout = {
         'Digital platforms for artists, DJs and content distribution.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/creative-industry.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/creative-industry.jpg'),
 
       imageAlt:
         'Creative and entertainment industry',
@@ -1138,7 +1138,7 @@ export const defaultAbout = {
         'Operational systems, documents, reporting and digital workflows.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/professional-services.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/professional-services.jpg'),
 
       imageAlt:
         'Professional services',
@@ -1164,7 +1164,7 @@ export const defaultAbout = {
         'Booking, customer-service and operations tooling.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/hospitality.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/hospitality.jpg'),
 
       imageAlt:
         'Hospitality operations',
@@ -1190,7 +1190,7 @@ export const defaultAbout = {
         'Fleet, dispatch, tracking and coordination workflows.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/transport.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/transport.jpg'),
 
       imageAlt:
         'Transport and logistics',
@@ -1260,7 +1260,7 @@ export const defaultAbout = {
         'Kingsway School Management System',
 
       logoUrl:
-        '/uploads/public/images/about/clients/kingsway.svg',
+        resolveAssetUrl('/uploads/public/images/about/clients/kingsway.svg'),
 
       logoAlt:
         'Kingsway School Management System',
@@ -1360,7 +1360,7 @@ export const defaultAbout = {
         'An AngiSoft product under development for fuel operations, stock, transactions and reporting.',
 
       imageUrl:
-        '/uploads/public/images/about/highlights/ecosystems-2026.jpg',
+        resolveAssetUrl('/uploads/public/images/about/highlights/ecosystems-2026.jpg'),
 
       imageAlt:
         'PetroFlow product development',
@@ -1394,7 +1394,7 @@ export const defaultAbout = {
         'A business-management product designed for SMEs, shops and larger retail operations.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/retail.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/retail.jpg'),
 
       imageAlt:
         'DukaFlow retail product',
@@ -1428,7 +1428,7 @@ export const defaultAbout = {
         'A platform for agents, agencies, landlords, caretakers and property seekers.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/real-estate.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/real-estate.jpg'),
 
       imageAlt:
         'KejaLink property platform',
@@ -1462,7 +1462,7 @@ export const defaultAbout = {
         'A Flutter-based platform for Kenyan artists and DJs to distribute music, sell mixes and engage their audiences.',
 
       imageUrl:
-        '/uploads/public/images/about/industries/creative-industry.jpg',
+        resolveAssetUrl('/uploads/public/images/about/industries/creative-industry.jpg'),
 
       imageAlt:
         'AngiTunes music platform',
@@ -1542,7 +1542,7 @@ export const defaultAbout = {
           'web',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/web-development.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/web-development.webp'),
 
         imageAlt:
           'Web development illustration',
@@ -1562,7 +1562,7 @@ export const defaultAbout = {
           'mobile',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/mobile-development.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/mobile-development.webp'),
 
         imageAlt:
           'Mobile application development illustration',
@@ -1582,7 +1582,7 @@ export const defaultAbout = {
           'debugging',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/code-debugging.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/code-debugging.webp'),
 
         imageAlt:
           'Code debugging illustration',
@@ -1602,7 +1602,7 @@ export const defaultAbout = {
           'data',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/data-analysis.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/data-analysis.webp'),
 
         imageAlt:
           'Data analysis illustration',
@@ -1622,7 +1622,7 @@ export const defaultAbout = {
           'documents',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/document-editing.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/document-editing.webp'),
 
         imageAlt:
           'Document editing illustration',
@@ -1642,7 +1642,7 @@ export const defaultAbout = {
           'database',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/database-design.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/database-design.webp'),
 
         imageAlt:
           'System and database design illustration',
@@ -1662,7 +1662,7 @@ export const defaultAbout = {
           'systems',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/custom-systems.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/custom-systems.webp'),
 
         imageAlt:
           'Custom business systems illustration',
@@ -1682,7 +1682,7 @@ export const defaultAbout = {
           'installation',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/software-installation.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/software-installation.webp'),
 
         imageAlt:
           'Software installation illustration',
@@ -1702,7 +1702,7 @@ export const defaultAbout = {
           'upgrades',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/system-upgrades.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/system-upgrades.webp'),
 
         imageAlt:
           'Software and system upgrades illustration',
@@ -1722,7 +1722,7 @@ export const defaultAbout = {
           'graphics',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/posters-graphics.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/posters-graphics.webp'),
 
         imageAlt:
           'Poster and graphic design illustration',
@@ -1742,7 +1742,7 @@ export const defaultAbout = {
           'applications',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/online-applications.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/online-applications.webp'),
 
         imageAlt:
           'Online application services illustration',
@@ -1762,7 +1762,7 @@ export const defaultAbout = {
           'products',
 
         imageUrl:
-          '/uploads/public/images/about/service-map/in-house-products.webp',
+          resolveAssetUrl('/uploads/public/images/about/service-map/in-house-products.webp'),
 
         imageAlt:
           'AngiSoft software products illustration',
@@ -1809,7 +1809,7 @@ export const defaultAbout = {
         'How AngiSoft approaches transparent software delivery',
 
       thumbnailUrl:
-        '/uploads/public/images/about/transparency/video-cover.jpg',
+        resolveAssetUrl('/uploads/public/images/about/transparency/video-cover.jpg'),
 
       thumbnailAlt:
         'Transparent software-delivery presentation',
@@ -2835,7 +2835,7 @@ export const defaultAbout = {
       true,
 
     imageUrl:
-      '/uploads/public/images/about/leadership/prof-angera-pricing.jpg',
+      resolveAssetUrl('/uploads/public/images/about/leadership/prof-angera-pricing.jpg'),
 
     imageAlt:
       'Prof Angera Silas discussing software investment',
@@ -2882,10 +2882,10 @@ export const defaultAbout = {
       'Whether you need custom software, a digital product, data automation, an existing-system upgrade or dependable technical support, AngiSoft will help turn the requirement into a practical working solution.',
 
     imageUrl:
-      '/uploads/public/images/about/final-cta/build-with-angisoft.webp',
+      resolveAssetUrl('/uploads/public/images/about/final-cta/build-with-angisoft.webp'),
 
     mobileImageUrl:
-      '/uploads/public/images/about/final-cta/build-with-angisoft-mobile.webp',
+      resolveAssetUrl('/uploads/public/images/about/final-cta/build-with-angisoft-mobile.webp'),
 
     imageAlt:
       'Building digital solutions with AngiSoft Technologies',

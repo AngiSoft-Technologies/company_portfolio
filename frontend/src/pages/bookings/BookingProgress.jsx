@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../utils/constants';
 import { getBookingLookupPath } from '../../utils/booking/bookingRoutes';
 import { getBookingFollowUpContactPath } from '../../utils/contact/contactRoutes';
 import { toast } from '../../utils/toast';
+import useRealtime from '../../hooks/useRealtime';
 
 import BookingProgressHero from '../../components/bookings/BookingProgressHero';
 import BookingStageProgress from '../../components/bookings/BookingStageProgress';
@@ -42,6 +43,7 @@ const BookingProgress = () => {
 
     const token = searchParams.get('token') || '';
     const email = searchParams.get('email') || '';
+    const realtime = useRealtime();
 
     const load = async () => {
         setLoading(true);
@@ -65,6 +67,21 @@ const BookingProgress = () => {
         if (reference) load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reference, token, email]);
+
+    // Realtime: join this booking's room (proving knowledge of tracking token)
+    // and auto-refresh when the backend pushes a booking:event.
+    useEffect(() => {
+        if (!booking?.id) return undefined;
+        realtime.emit('booking:join', { reference, token }, () => {});
+        const unsub = realtime.subscribe('booking:event', (e) => {
+            if (e?.bookingId === booking.id) refetch();
+        });
+        return () => {
+            realtime.emit('booking:leave', { bookingId: booking.id });
+            unsub();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [booking?.id]);
 
     const refetch = () => load();
 

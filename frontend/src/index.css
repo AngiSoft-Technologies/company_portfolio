@@ -1500,7 +1500,7 @@ section {
 .dashboard-stat-messages { background: #FFE4E6; color: #EF4444; }
 .dashboard-stat-contacts { background: #E6F9FF; color: #00AFFF; }
 
-.dark .dashboard-stat-projects { background: #0B1E3D; color: #3B6FFF; }
+.dark .dashboard-stat-projects { background: #0B1E3D; color: #3B9AFF; }
 .dark .dashboard-stat-skills { background: #0B2E1A; color: #27D94B; }
 .dark .dashboard-stat-services { background: #2E1A0B; color: #F59E0B; }
 .dark .dashboard-stat-testimonials { background: #1A0B2E; color: #0875FF; }
@@ -1547,7 +1547,7 @@ section {
 .modal-btn-confirm-warning { @apply text-white; background: #F59E0B; }
 .modal-btn-confirm-warning:hover { background: #D97706; }
 .modal-btn-confirm-info { @apply text-white; background: #00AFFF; }
-.modal-btn-confirm-info:hover { background: #0099CC; }
+.modal-btn-confirm-info:hover { background: #0088CC; }
 
 .modal-btn-close {
   @apply absolute top-4 right-4 bg-transparent text-2xl border-none cursor-pointer px-3 py-1 rounded-full;
@@ -2166,7 +2166,7 @@ h1, h2, h3, h4, h5, h6 {
     4px;
 
   color:
-    #00c2ff;
+    #00afff;
 
   font-size:
     0.72em;
@@ -2214,7 +2214,7 @@ h1, h2, h3, h4, h5, h6 {
     24px;
 
   background:
-    #0a3dff;
+    #0875ff;
 
   padding:
     10px 16px;
@@ -2241,7 +2241,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-company-hero-cta:hover {
   background:
-    #3b6fff;
+    #3b9aff;
 
   transform:
     translateY(-1px);
@@ -2569,7 +2569,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-hero-pagination
   .swiper-pagination-bullet-active {
   background:
-    #00c2ff;
+    #00afff;
 
   transform:
     scale(1.15);
@@ -2655,10 +2655,10 @@ h1, h2, h3, h4, h5, h6 {
 .about-hero-prev:hover,
 .about-hero-next:hover {
   border-color:
-    #00c2ff;
+    #00afff;
 
   background:
-    #0a3dff;
+    #0875ff;
 }
 
 .about-hero-prev
@@ -2910,7 +2910,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-hero-next:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset:
     3px;
@@ -3490,7 +3490,7 @@ h1, h2, h3, h4, h5, h6 {
 
   border:
     1px solid
-    #00c2ff;
+    #00afff;
 
   padding:
     8px 14px;
@@ -3512,7 +3512,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-number-copy-link:hover {
   background:
-    #00c2ff;
+    #00afff;
 
   color:
     #07142b;
@@ -4141,7 +4141,7 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 19px;
 
     color:
-      #00c2ff;
+      #00afff;
 
     font-size: 0.74rem;
 
@@ -4219,7 +4219,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-number-mobile-copy a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset:
     3px;
@@ -4742,7 +4742,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 10px;
 
   background:
-    #0a3dff;
+    #0875ff;
 
   padding:
     12px 20px;
@@ -4773,7 +4773,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-sustainability-button:hover {
   background:
-    #3b6fff;
+    #3b9aff;
 
   transform:
     translateY(-2px);
@@ -4797,7 +4797,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-sustainability-button:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset:
     3px;
@@ -5083,7 +5083,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-collaboration a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset:
     3px;
@@ -5367,7 +5367,7 @@ h1, h2, h3, h4, h5, h6 {
   background:
     rgba(0, 194, 255, 0.07);
 
-  color: #00c2ff;
+  color: #00afff;
 
   font-size:
     0.63rem;
@@ -5614,7 +5614,7 @@ h1, h2, h3, h4, h5, h6 {
 
   padding-bottom: 3px;
 
-  color: #00c2ff;
+  color: #00afff;
 
   font-size: 0.74rem;
 
@@ -5637,7 +5637,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-highlight-link:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset: 3px;
 }
@@ -6392,7 +6392,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-client-next:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     3px;
 }
@@ -6417,7 +6417,7 @@ h1, h2, h3, h4, h5, h6 {
   height: 5px;
   margin-right: 9px;
   background:
-    #00c2ff;
+    #00afff;
 }
 
 .about-target-market:hover {
@@ -6436,7 +6436,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-client-logo-item:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     -2px;
   position:
@@ -6595,8 +6595,8 @@ h1, h2, h3, h4, h5, h6 {
   background:
     linear-gradient(
       90deg,
-      #0a3dff,
-      #00c2ff
+      #0875ff,
+      #00afff
     );
 }
 
@@ -6774,8 +6774,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-testimonial-prev:hover,
 .about-testimonial-next:hover {
-  border-color: #00c2ff;
-  background: #0a3dff;
+  border-color: #00afff;
+  background: #0875ff;
   color: #ffffff;
   box-shadow:
     0 12px 28px
@@ -6821,7 +6821,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-testimonials a:focus-visible,
 .about-testimonials button:focus-visible {
-  outline: 2px solid #00c2ff;
+  outline: 2px solid #00afff;
   outline-offset: 3px;
 }
 
@@ -7235,7 +7235,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-service-map a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     3px;
 }
@@ -7387,8 +7387,8 @@ h1, h2, h3, h4, h5, h6 {
   background:
     linear-gradient(
       90deg,
-      #0a3dff,
-      #00c2ff
+      #0875ff,
+      #00afff
     );
   pointer-events: none;
 }
@@ -7437,7 +7437,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-transparency-video button:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     3px;
 }
@@ -7576,7 +7576,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-partnerships a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     2px;
 }
@@ -7836,7 +7836,7 @@ h1, h2, h3, h4, h5, h6 {
   a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
   outline-offset:
     3px;
 }
@@ -8342,7 +8342,7 @@ h1, h2, h3, h4, h5, h6 {
   height: 2px;
   margin-bottom: 14px;
   background:
-    #00c2ff;
+    #00afff;
   transform-origin:
     left center;
   transform:
@@ -8630,7 +8630,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
 
   color:
-    #00c2ff;
+    #00afff;
 
   font-size:
     0.68rem;
@@ -8751,10 +8751,10 @@ h1, h2, h3, h4, h5, h6 {
 .about-final-cta-primary {
   border:
     1px solid
-    #0a3dff;
+    #0875ff;
 
   background:
-    #0a3dff;
+    #0875ff;
 
   color:
     #ffffff;
@@ -8762,10 +8762,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-final-cta-primary:hover {
   border-color:
-    #3b6fff;
+    #3b9aff;
 
   background:
-    #3b6fff;
+    #3b9aff;
 
   transform:
     translateY(-2px);
@@ -8785,10 +8785,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-final-cta-secondary:hover {
   border-color:
-    #00c2ff;
+    #00afff;
 
   color:
-    #00c2ff;
+    #00afff;
 
   transform:
     translateY(-2px);
@@ -8857,12 +8857,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .about-final-contact-link:hover {
   color:
-    #00c2ff;
+    #00afff;
 }
 
 .about-final-contact-link.is-whatsapp:hover {
   color:
-    #39ff6a;
+    #27d94b;
 }
 
 .about-final-contact-icon {
@@ -8879,7 +8879,7 @@ h1, h2, h3, h4, h5, h6 {
     rgba(0, 194, 255, 0.3);
 
   color:
-    #00c2ff;
+    #00afff;
 
   font-size:
     0.65rem;
@@ -8891,7 +8891,7 @@ h1, h2, h3, h4, h5, h6 {
     rgba(57, 255, 106, 0.3);
 
   color:
-    #39ff6a;
+    #27d94b;
 }
 
 .about-final-cta-reassurance {
@@ -8950,8 +8950,8 @@ h1, h2, h3, h4, h5, h6 {
   background:
     linear-gradient(
       180deg,
-      #0a3dff,
-      #00c2ff
+      #0875ff,
+      #00afff
     );
 }
 
@@ -9035,7 +9035,7 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
 
   color:
-    #00c2ff;
+    #00afff;
 
   font-size:
     0.63rem;
@@ -9153,7 +9153,7 @@ h1, h2, h3, h4, h5, h6 {
 .about-final-cta a:focus-visible {
   outline:
     2px solid
-    #00c2ff;
+    #00afff;
 
   outline-offset:
     3px;

@@ -1,4 +1,5 @@
 import prisma from '../db';
+import { emitToUser } from './realtime';
 
 export async function createNotification(
     userId: string,
@@ -8,9 +9,21 @@ export async function createNotification(
     link?: string,
     meta?: object
 ) {
-    return prisma.notification.create({
+    const notification = await prisma.notification.create({
         data: { userId, type, title, message, link, meta }
     });
+    // Fire-and-forget realtime delivery to the recipient's connected sockets.
+    setImmediate(() => {
+        emitToUser(userId, 'notification:new', {
+            id: notification.id,
+            type: notification.type,
+            title: notification.title,
+            message: notification.message,
+            link: notification.link,
+            createdAt: notification.createdAt,
+        });
+    });
+    return notification;
 }
 
 export async function getNotifications(userId: string, unreadOnly = false) {

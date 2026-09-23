@@ -7,6 +7,7 @@ import { useServices } from '../../hooks/useServices';
 import { useServiceSearch } from '../../hooks/useServiceSearch';
 import { useTheme } from '../../contexts/ThemeContext';
 import ScrollReveal from '../../components/modern/ScrollReveal';
+import { resolveAssetUrl } from '../../utils/constants';
 
 import ServicesHero from '../../components/services/ServicesHero';
 import ServicesToolbar from '../../components/services/ServicesToolbar';
@@ -32,7 +33,7 @@ import '../../css/services/service-pricing-banner.css';
 import '../../css/services/service-cta.css';
 import '../../css/services/service-responsive.css';
 
-const HERO_IMAGE = '/uploads/public/images/Software-Development-Company.jpg';
+const HERO_IMAGE = resolveAssetUrl('/uploads/public/images/Software-Development-Company.jpg');
 
 const ServicesList = () => {
     const { colors } = useTheme();
