@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "3": "^2.1.0",
+    "@flydotio/dockerfile": "^0.7.10",
     "@types/bcrypt": "^5.0.0",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.3",
@@ -68,6 +69,12 @@
     "vitest": "^4.1.0"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "prisma@7.10.0": true,
+    "msgpackr-extract@3.0.4": true,
+    "@prisma/engines@7.10.0": true
   }
 }

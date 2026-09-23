@@ -57,6 +57,7 @@ About Company — ScienceSoft.*
 backend/.vscodeignore
 backend/IMPLEMENTATION_PLAN.txt
 AGENTS.md
+CLAUDE.md
 .claude
 .devin
 .openclaude

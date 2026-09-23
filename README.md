@@ -22,56 +22,6 @@ robust-portfolio/
 | AI | OpenAI / Hugging Face chatbot | — |
 | Email | Zoho Mail SMTP | — |
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js >= 22
-- PostgreSQL database (e.g. [Neon](https://neon.tech))
-
-### 1. Backend
-
-```bash
-cd backend
-cp .env.example .env          # fill in DATABASE_URL and secrets
-npm install
-npx prisma generate
-npm run prisma:migrate:dev    # create tables
-npm run prisma:seed           # seed sample data
-npm run dev                   # API at http://localhost:5000
-```
-
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev                   # Vite at http://localhost:5173
-```
-
-The Vite dev server proxies `/api` and `/uploads` to the backend.
-
-### 3. Run Tests
-
-```bash
-cd backend && npm test        # Vitest + Supertest
-cd frontend && npm run lint   # ESLint
-```
-
-## Deployment
-
-| Component | Platform | Trigger |
-|-----------|----------|---------|
-| Frontend | Netlify | Push to `main` (`.github/workflows/netlify-deploy.yml`) |
-| Backend | Railway | Docker build from `backend/Dockerfile` |
-
-## Key Features
-
-- **Public site** — services, projects, staff profiles, blog, testimonials, AI chatbot
-- **Admin CMS** — role-based dashboard (ADMIN, MARKETING, DEVELOPER) for managing all public content
-- **Staff portal** — self-service profiles, client tracking, project management
-- **Payments** — Stripe checkout for paid services
-- **Blog** — org-authored posts with drafts and publish workflow
 
 ## Contributing
 
