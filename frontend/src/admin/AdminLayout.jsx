@@ -10,7 +10,7 @@ import {
     FaIndustry, FaLightbulb, FaTags
 } from 'react-icons/fa';
 import AngiSoftLogo from '../components/brand/AngiSoftLogo';
-import { apiGet, apiPatch } from '../js/httpClient';
+import { apiGet, apiPatch, apiPost, getAccessToken, setAccessToken } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 
 const navSections = [
@@ -126,7 +126,7 @@ const AdminLayout = ({ children }) => {
 
     useEffect(() => {
         const fetchAdmin = async () => {
-            const token = localStorage.getItem('adminToken');
+            const token = getAccessToken();
             if (!token) return;
             try {
                 const res = await fetch('/api/admin/me', {
@@ -163,8 +163,14 @@ const AdminLayout = ({ children }) => {
         setNotifications(n => n.filter(x => x._id !== id && x.id !== id));
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
+    const handleLogout = async () => {
+        try {
+            // Revoke the refresh token server-side (httpOnly cookie cleared).
+            await apiPost('/auth/logout');
+        } catch {
+            // ignore network errors; local session is cleared regardless
+        }
+        setAccessToken(null);
         navigate('/admin/login');
     };
 

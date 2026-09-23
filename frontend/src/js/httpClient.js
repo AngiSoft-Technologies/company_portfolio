@@ -1,6 +1,50 @@
 import { getFingerprint } from './fingerprint';
 import { toast } from '../utils/toast';
 
+/**
+ * Single source of truth for session/auth state on the frontend.
+ *
+ * Security model (Option A now, Option B later):
+ *  - Access tokens live ONLY in memory (module scope). They are never written
+ *    to localStorage/sessionStorage/indexedDB, so an XSS payload cannot
+ *    exfiltrate a long-lived credential.
+ *  - The refresh token is an httpOnly + SameSite=strict cookie set by the
+ *    backend. It is invisible to JS and sent automatically by the browser on
+ *    /api/auth/refresh (credentials: 'include').
+ *  - On a 401 the client silently refreshes once, retries the original request,
+ *    and only redirects to login if refresh fails.
+ *  - On full page reload the in-memory token is gone; components call
+ *    ensureSession() (or the route guards do) to rehydrate via /auth/refresh.
+ *
+ * Option B readiness: same-site rules treat *.angisoft.co.ke subdomains as one
+ * site, so the SameSite=strict refresh cookie keeps working for admin/client/
+ * public on different subdomains. Only a move to a totally different registrable
+ * domain would require SameSite=None; Secure (not in scope).
+ */
+
+// ─── In-memory token store ────────────────────────────────────────────────
+let adminAccessToken = null;
+let clientAccessToken = null;
+let refreshPromise = null; // in-flight /auth/refresh (dedupe concurrent 401s)
+
+export const setAccessToken = (t) => { adminAccessToken = t || null; };
+export const getAccessToken = () => adminAccessToken;
+export const setClientAccessToken = (t) => { clientAccessToken = t || null; };
+export const getClientAccessToken = () => clientAccessToken;
+
+const clearSession = () => {
+  adminAccessToken = null;
+  clientAccessToken = null;
+  refreshPromise = null;
+};
+
+// ─── CSRF double-submit helper (same-origin only) ─────────────────────────
+const readCookie = (name) => {
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : '';
+};
+
 const normalizeOrigin = (origin) => {
   if (!origin) return origin;
   return origin.replace(/\/+$/, '').replace(/\/api$/, '');
@@ -24,30 +68,86 @@ export const setNotificationHandler = (handler) => {
   notificationHandler = handler;
 };
 
+// Attempt a silent refresh via the httpOnly refresh cookie. Deduplicated so a
+// burst of 401s triggers exactly one refresh call.
+const tryRefresh = async () => {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const url = buildApiUrl('/auth/refresh');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // send the httpOnly refresh cookie
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('refresh failed');
+      const data = await res.json();
+      if (!data.accessToken) throw new Error('no token in refresh response');
+      adminAccessToken = data.accessToken;
+      return data.accessToken;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+};
+
+const redirectToLogin = () => {
+  clearSession();
+  const p = window.location.pathname;
+  if (p.startsWith('/admin')) {
+    toast.error('Session expired. Please login again.');
+    setTimeout(() => { window.location.href = '/admin/login'; }, 1000);
+  } else if (p.startsWith('/portal')) {
+    toast.error('Session expired. Please request a new portal link.');
+    setTimeout(() => { window.location.href = '/portal/request'; }, 800);
+  }
+};
+
+// Resolve the bearer token for a request. Explicit token wins; otherwise use
+// the in-memory admin or client-portal token (never localStorage).
+const resolveToken = (token) => token || adminAccessToken || clientAccessToken;
+
+const doFetch = async (method, url, headers, body, token) => {
+  const options = { method, headers, credentials: 'include' };
+  if (body !== undefined && body !== null) options.body = body;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  // Double-submit CSRF header for state-changing requests (same-origin only;
+  // ignored cross-origin where SameSite=strict on the cookie is the defense).
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+    const csrf = readCookie('csrfToken');
+    if (csrf) headers['x-csrf-token'] = csrf;
+  }
+
+  return fetch(url, options);
+};
+
+const handleError = (message) => {
+  console.error('API Error:', message);
+  toast.error(message);
+  if (notificationHandler) notificationHandler(message, 'error');
+};
+
 export const apiRequest = async (method, endpoint, data = null, token = null) => {
+  const url = buildApiUrl(endpoint);
+  const headers = { 'Content-Type': 'application/json' };
+  let body = data !== null && data !== undefined ? JSON.stringify(data) : null;
+
+  // First attempt (with silent-refresh retry on 401).
   try {
-    // Prepend API origin if endpoint does not start with http
-    const url = buildApiUrl(endpoint);
-    const headers = { 'Content-Type': 'application/json' };
-    
-    // Add auth token if provided
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      // Try to get token from localStorage
-      const storedToken = localStorage.getItem('adminToken');
-      if (storedToken) {
-        headers['Authorization'] = `Bearer ${storedToken}`;
+    let response = await doFetch(method, url, headers, body, resolveToken(token));
+    if (response.status === 401 && adminAccessToken) {
+      // Token may be expired; try one silent refresh then retry once.
+      try {
+        await tryRefresh();
+        response = await doFetch(method, url, headers, body, resolveToken(token));
+      } catch {
+        redirectToLogin();
+        throw new Error('Session expired');
       }
     }
-    
-    const options = {
-      method,
-      headers,
-    };
-    if (data) options.body = JSON.stringify(data);
 
-    const response = await fetch(url, options);
     let result;
     try {
       result = await response.json();
@@ -56,29 +156,17 @@ export const apiRequest = async (method, endpoint, data = null, token = null) =>
     }
 
     if (!response.ok) {
-      // Handle 401 unauthorized - clear token and redirect
-      if (response.status === 401) {
-        localStorage.removeItem('adminToken');
-        toast.error('Session expired. Please login again.');
-        if (window.location.pathname.startsWith('/admin')) {
-          setTimeout(() => {
-            window.location.href = '/admin/login';
-          }, 1500);
-        }
-      }
-      // Centralized error handling
       const errorMessage = result.error || result.message || 'API Error';
-      toast.error(errorMessage);
-      if (notificationHandler) notificationHandler(errorMessage, 'error');
-      throw new Error(errorMessage);
+      if (response.status === 401) redirectToLogin();
+      handleError(errorMessage);
+      const err = new Error(errorMessage);
+      err.status = response.status;
+      throw err;
     }
     return result;
   } catch (error) {
-    // Centralized logging
-    console.error('API Error:', error);
-    const errorMessage = error.message || 'Network error. Please check your connection.';
-    toast.error(errorMessage);
-    if (notificationHandler) notificationHandler(errorMessage, 'error');
+    if (error.status) throw error; // already handled
+    handleError(error.message || 'Network error. Please check your connection.');
     throw error;
   }
 };
@@ -86,15 +174,13 @@ export const apiRequest = async (method, endpoint, data = null, token = null) =>
 export const apiGet = (endpoint, token = null) => apiRequest('GET', endpoint, null, token);
 
 // Non-throwing GET: returns { ok, status, data, error } instead of throwing,
-// so hooks can branch on res.ok without try/catch. Used by data-driven
-// public list/detail hooks (blog, etc.) that render dedicated error states.
+// so hooks can branch on res.ok without try/catch.
 export const safeGet = async (endpoint, token = null) => {
   try {
     const result = await apiRequest('GET', endpoint, null, token);
     return { ok: true, status: 200, data: result, error: null };
   } catch (error) {
     const message = error?.message || 'Failed to load data';
-    // apiRequest throws a plain Error without .status; surface it if present.
     const status = typeof error?.status === 'number' ? error.status : 0;
     return { ok: false, status, data: null, error: message };
   }
@@ -105,20 +191,12 @@ export const apiPut = (endpoint, data, token = null) => apiRequest('PUT', endpoi
 export const apiDelete = (endpoint, token = null) => apiRequest('DELETE', endpoint, null, token);
 export const apiPatch = (endpoint, data, token = null) => apiRequest('PATCH', endpoint, data, token);
 
-const getClientPortalToken = () => localStorage.getItem('clientPortalToken');
-
+// ─── Client portal (separate token, no refresh — magic-link sessions) ─────
 const clientPortalRequest = async (method, endpoint, data = null) => {
   try {
-    return await apiRequest(method, endpoint, data, getClientPortalToken());
+    return await apiRequest(method, endpoint, data, getClientAccessToken());
   } catch (error) {
-    if (window.location.pathname.startsWith('/portal')) {
-      localStorage.removeItem('clientPortalToken');
-      if (!window.location.pathname.startsWith('/portal/request')) {
-        setTimeout(() => {
-          window.location.href = '/portal/request';
-        }, 800);
-      }
-    }
+    if (error?.status === 401) redirectToLogin();
     throw error;
   }
 };
@@ -128,12 +206,24 @@ export const clientApiPost = (endpoint, data) => clientPortalRequest('POST', end
 export const clientApiPatch = (endpoint, data) => clientPortalRequest('PATCH', endpoint, data);
 
 /**
- * Upload a file to the backend. The endpoint should be like '/upload/image', '/upload/icon', '/upload/document'.
- * The '/api' prefix will be added automatically.
- * @param {string} endpoint - The upload endpoint (e.g. '/upload/image')
- * @param {File} file - The file to upload
- * @param {string|null} token - Optional auth token
- * @returns {Promise<object>} - The backend response (should include a 'url' field)
+ * Rehydrate the admin session after a full page reload. Route guards call this;
+ * it silently refreshes if a refresh cookie exists. Returns true when an access
+ * token is available.
+ */
+export const ensureSession = async () => {
+  if (adminAccessToken) return true;
+  if (clientAccessToken) return true;
+  try {
+    await tryRefresh();
+    return !!adminAccessToken;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Upload a file to the backend. The endpoint should be like '/upload/image',
+ * '/upload/icon', '/upload/document'. The '/api' prefix is added automatically.
  */
 export const apiUpload = async (endpoint, file, token = null, metadata = {}) => {
   const url = buildApiUrl(endpoint);
@@ -146,6 +236,7 @@ export const apiUpload = async (endpoint, file, token = null, metadata = {}) => 
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
+    credentials: 'include',
   });
   if (!res.ok) throw new Error('Upload failed');
   return await res.json();

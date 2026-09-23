@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { apiPost } from '../js/httpClient';
+import { apiPost, setClientAccessToken } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import GlassmorphismCard from '../components/modern/GlassmorphismCard';
 
@@ -21,7 +21,7 @@ const ClientPortalAccess = () => {
 
     apiPost('/client-portal/session', { token })
       .then((response) => {
-        localStorage.setItem('clientPortalToken', response.accessToken);
+        setClientAccessToken(response.accessToken);
         navigate('/portal', { replace: true });
       })
       .catch(() => {

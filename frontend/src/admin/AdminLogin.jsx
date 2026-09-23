@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiPost } from '../js/httpClient';
+import { apiPost, setAccessToken } from '../js/httpClient';
 import { useTheme } from '../contexts/ThemeContext';
 import AngiSoftLogo from '../components/brand/AngiSoftLogo';
 import { FaEnvelope, FaEye, FaEyeSlash, FaMoon, FaSun, FaArrowRight, FaKey } from 'react-icons/fa';
@@ -23,7 +23,7 @@ const AdminLogin = () => {
         try {
             const data = await apiPost('/auth/login', { email, password });
             if (data.accessToken) {
-                localStorage.setItem('adminToken', data.accessToken);
+                setAccessToken(data.accessToken);
                 window.location.href = '/admin';
             } else {
                 setError('Login failed: No token received');

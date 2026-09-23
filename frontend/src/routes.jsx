@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { ensureSession, getAccessToken, getClientAccessToken } from "./js/httpClient";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import ProjectDetails from "./pages/ProjectDetails";
@@ -77,8 +78,15 @@ const ProductFaqsAdmin = lazy(() => import('./admin/crud/ProductFaqsAdmin'));
 const CertificationsAdmin = lazy(() => import('./admin/crud/CertificationsAdmin'));
 
 const AdminProtectedLayout = () => {
-  const isLoggedIn = !!localStorage.getItem('adminToken');
-  if (!isLoggedIn) return <Navigate to="/admin/login" replace />;
+  const [status, setStatus] = useState('checking'); // 'checking' | 'ok' | 'no'
+  useEffect(() => {
+    let active = true;
+    // On reload the in-memory token is gone; try to rehydrate via refresh cookie.
+    ensureSession().then((ok) => { if (active) setStatus(ok ? 'ok' : 'no'); });
+    return () => { active = false; };
+  }, []);
+  if (status === 'checking') return <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Checking session…</div>;
+  if (status === 'no' || !getAccessToken()) return <Navigate to="/admin/login" replace />;
   return (
     <AdminLayout>
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Loading...</div>}>
@@ -89,8 +97,14 @@ const AdminProtectedLayout = () => {
 };
 
 const ClientProtectedRoute = () => {
-  const isLoggedIn = !!localStorage.getItem('clientPortalToken');
-  if (!isLoggedIn) return <Navigate to="/portal/request" replace />;
+  const [status, setStatus] = useState('checking');
+  useEffect(() => {
+    let active = true;
+    ensureSession().then((ok) => { if (active) setStatus(ok ? 'ok' : 'no'); });
+    return () => { active = false; };
+  }, []);
+  if (status === 'checking') return <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>Checking session…</div>;
+  if (status === 'no' || !getClientAccessToken()) return <Navigate to="/portal/request" replace />;
   return <Outlet />;
 };
 
