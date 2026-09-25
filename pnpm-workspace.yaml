@@ -1,0 +1,13 @@
+packages:
+  - "frontend/web"
+  - "frontend/admin"
+  - "backend"
+  - "packages/*"
+
+allowBuilds:
+  bcrypt: true
+  esbuild: true
+  msgpackr-extract: true
+  workerd: true
+  "@tailwindcss/oxide": true
+  sharp: true

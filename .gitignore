@@ -34,6 +34,7 @@ Thumbs.db
 coverage/
 .cache/
 .sass-cache/
+.turbo/
 
 # Misc
 *.tgz
@@ -56,6 +57,7 @@ About Company — ScienceSoft.*
 .remember
 backend/.vscodeignore
 backend/IMPLEMENTATION_PLAN.txt
+REVAMP_PLAN.md
 AGENTS.md
 CLAUDE.md
 .claude

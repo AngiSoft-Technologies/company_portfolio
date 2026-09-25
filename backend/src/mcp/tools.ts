@@ -35,15 +35,15 @@ export function registerReadOnlyTools(server: McpServer) {
         'list_services',
         { title: 'List services', description: 'List published services and service categories.' },
         async () => {
-            const services = await prisma.service.findMany({
-                where: { published: true },
-                orderBy: { createdAt: 'desc' },
-                take: 100,
-            });
-            const categories = await prisma.serviceCategory.findMany({
-                where: { published: true },
-                orderBy: { name: 'asc' },
-            });
+            const services = await prisma.orm.public.Service
+                .where({ published: true })
+                .orderBy((s) => s.createdAt.desc())
+                .limit(100)
+                .all();
+            const categories = await prisma.orm.public.ServiceCategory
+                .where({ published: true })
+                .orderBy((c) => c.name.asc())
+                .all();
             return json({ services, categories });
         }
     );
@@ -57,9 +57,9 @@ export function registerReadOnlyTools(server: McpServer) {
             inputSchema: { slug: z.string() },
         },
         async ({ slug }) => {
-            const service = await prisma.service.findUnique({
-                where: { slug: String(slug) },
-            });
+            const service = await prisma.orm.public.Service
+                .where({ slug: String(slug) })
+                .first();
             if (!service || !service.published) return json({ error: `No published service for slug "${slug}"` });
             return json(service);
         }
@@ -70,11 +70,11 @@ export function registerReadOnlyTools(server: McpServer) {
         'list_projects',
         { title: 'List projects', description: 'List published portfolio projects.' },
         async () => {
-            const projects = await prisma.project.findMany({
-                where: { published: true },
-                orderBy: { createdAt: 'desc' },
-                take: 100,
-            });
+            const projects = await prisma.orm.public.Project
+                .where({ published: true })
+                .orderBy((p) => p.createdAt.desc())
+                .limit(100)
+                .all();
             return json(projects);
         }
     );
@@ -88,7 +88,9 @@ export function registerReadOnlyTools(server: McpServer) {
             inputSchema: { slug: z.string() },
         },
         async ({ slug }) => {
-            const project = await prisma.project.findUnique({ where: { slug: String(slug) } });
+            const project = await prisma.orm.public.Project
+                .where({ slug: String(slug) })
+                .first();
             if (!project || !project.published) return json({ error: `No published project for slug "${slug}"` });
             return json(project);
         }
@@ -99,11 +101,11 @@ export function registerReadOnlyTools(server: McpServer) {
         'list_products',
         { title: 'List products', description: 'List published products.' },
         async () => {
-            const products = await prisma.product.findMany({
-                where: { published: true },
-                orderBy: { createdAt: 'desc' },
-                take: 100,
-            });
+            const products = await prisma.orm.public.Product
+                .where({ published: true })
+                .orderBy((p) => p.createdAt.desc())
+                .limit(100)
+                .all();
             return json(products);
         }
     );
@@ -113,18 +115,12 @@ export function registerReadOnlyTools(server: McpServer) {
         'list_blog_posts',
         { title: 'List blog posts', description: 'List published blog posts.' },
         async () => {
-            const posts = await prisma.blogPost.findMany({
-                where: { published: true },
-                orderBy: { publishedAt: 'desc' },
-                take: 100,
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    subtitle: true,
-                    publishedAt: true,
-                },
-            });
+            const posts = await prisma.orm.public.BlogPost
+                .where({ published: true })
+                .orderBy((p) => p.publishedAt.desc())
+                .limit(100)
+                .select('id', 'title', 'slug', 'subtitle', 'publishedAt')
+                .all();
             return json(posts);
         }
     );
@@ -134,10 +130,10 @@ export function registerReadOnlyTools(server: McpServer) {
         'list_testimonials',
         { title: 'List testimonials', description: 'List published testimonials.' },
         async () => {
-            const testimonials = await prisma.testimonial.findMany({
-                orderBy: { createdAt: 'desc' },
-                take: 100,
-            });
+            const testimonials = await prisma.orm.public.Testimonial
+                .orderBy((t) => t.createdAt.desc())
+                .limit(100)
+                .all();
             return json(testimonials);
         }
     );

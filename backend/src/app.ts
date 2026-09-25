@@ -5,61 +5,62 @@ import compression from 'compression';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import inviteRouter from './routes/invite';
-import bookingsRouter from './routes/bookings';
-import chatbotRouter from './routes/chatbot';
-import paymentsRouter from './routes/payments';
-import paymentConsoleRouter from './routes/payment-console';
-import authRouter from './routes/auth';
-import uploadsRouter from './routes/uploads';
-import servicesRouter from './routes/services';
-import projectsRouter from './routes/projects';
-import blogsRouter from './routes/blogs';
-import testimonialsRouter from './routes/testimonials';
-import serviceCategoriesRouter from './routes/service-categories';
-import settingsRouter from './routes/settings';
-import staffRouter from './routes/staff';
-import adminRouter from './routes/admin';
-import staffDashboardRouter from './routes/staff-dashboard';
-import clientProjectsRouter from './routes/client-projects';
-import clientPortalRouter from './routes/client-portal';
-import healthRouter from './routes/health';
-import siteRouter from './routes/site';
-import newsletterRouter from './routes/newsletter';
-import faqRouter from './routes/faq';
-import notificationsRouter from './routes/notifications';
-import announcementsRouter from './routes/announcements';
-import newslettersRouter from './routes/newsletters';
-import surveysRouter from './routes/surveys';
-import leadsRouter from './routes/leads';
-import supportTicketsRouter from './routes/support-tickets';
-import productsRouter from './routes/products';
-import { trackPageView } from './services/analytics';
-import { getAllowedOrigins } from './config/origins';
-import { authRateLimiter } from './middleware/rateLimiter';
-import { requireAuth } from './middleware/auth';
-import { sanitizeMiddleware } from './middleware/validation';
-import { publicJsonCache } from './middleware/cache';
-import { errorHandler, notFoundHandler, asyncHandler } from './middleware/errorHandler';
-import { initSentry } from './services/monitoring/sentry';
+import inviteRouter from './modules/identity/routes/invite';
+import bookingsRouter from './modules/bookings/routes/bookings';
+import chatbotRouter from './modules/ai/routes/chatbot';
+import paymentsRouter from './modules/billing/routes/payments';
+import paymentConsoleRouter from './modules/billing/routes/payment-console';
+import authRouter from './modules/identity/routes/auth';
+import uploadsRouter from './modules/files/routes/uploads';
+import servicesRouter from './modules/cms/routes/services';
+import projectsRouter from './modules/projects/routes/projects';
+import blogsRouter from './modules/cms/routes/blogs';
+import testimonialsRouter from './modules/cms/routes/testimonials';
+import serviceCategoriesRouter from './modules/cms/routes/service-categories';
+import settingsRouter from './modules/cms/routes/settings';
+import staffRouter from './modules/identity/routes/staff';
+import adminRouter from './shared/routes/admin';
+import staffDashboardRouter from './modules/identity/routes/staff-dashboard';
+import clientProjectsRouter from './modules/projects/routes/client-projects';
+import clientPortalRouter from './modules/crm/routes/client-portal';
+import healthRouter from './shared/routes/health';
+import siteRouter from './modules/cms/routes/site';
+import newsletterRouter from './modules/crm/routes/newsletter';
+import faqRouter from './modules/cms/routes/faq';
+import notificationsRouter from './modules/notifications/routes/notifications';
+import announcementsRouter from './modules/cms/routes/announcements';
+import newslettersRouter from './modules/crm/routes/newsletters';
+import surveysRouter from './modules/crm/routes/surveys';
+import leadsRouter from './modules/crm/routes/leads';
+import supportTicketsRouter from './modules/crm/routes/support-tickets';
+import productsRouter from './modules/cms/routes/products';
+import { trackPageView } from './modules/analytics/services/analytics';
+import { getAllowedOrigins } from './shared/config/origins';
+import { authRateLimiter } from './shared/middleware/rateLimiter';
+import { requireAuth } from './shared/middleware/auth';
+import { sanitizeMiddleware } from './shared/middleware/validation';
+import { publicJsonCache } from './shared/middleware/cache';
+import { errorHandler, notFoundHandler, asyncHandler } from './shared/middleware/errorHandler';
+import { initSentry } from './shared/services/monitoring/sentry';
+import { toPublicUrl } from './modules/files/services/storage/s3';
 import prisma from './db';
 
 // New route imports
-import careersRouter from './routes/careers';
-import companyStatsRouter from './routes/company-stats';
-import homeSectionsRouter from './routes/home-sections';
-import aboutSectionsRouter from './routes/about-sections';
-import staffBlogsRouter from './routes/staff-blogs';
-import certificationsRouter from './routes/certifications';
-import productInquiriesRouter from './routes/product-inquiries';
-import staffAccessRouter from './routes/staff-access';
-import productFaqsRouter from './routes/product-faqs';
-import contactEnquiriesRouter from './routes/contact-enquiries';
-import industriesRouter from './routes/industries';
-import solutionsRouter from './routes/solutions';
-import rolesRouter from './routes/roles';
-import employeeProfilesRouter from './routes/employee-profiles';
-import aiConfigRouter from './routes/ai-config';
+import careersRouter from './modules/projects/routes/careers';
+import companyStatsRouter from './modules/cms/routes/company-stats';
+import homeSectionsRouter from './modules/cms/routes/home-sections';
+import aboutSectionsRouter from './modules/cms/routes/about-sections';
+import staffBlogsRouter from './modules/cms/routes/staff-blogs';
+import certificationsRouter from './modules/identity/routes/certifications';
+import productInquiriesRouter from './modules/crm/routes/product-inquiries';
+import staffAccessRouter from './modules/identity/routes/staff-access';
+import productFaqsRouter from './modules/cms/routes/product-faqs';
+import contactEnquiriesRouter from './modules/crm/routes/contact-enquiries';
+import industriesRouter from './modules/cms/routes/industries';
+import solutionsRouter from './modules/cms/routes/solutions';
+import rolesRouter from './modules/identity/routes/roles';
+import employeeProfilesRouter from './modules/identity/routes/employee-profiles';
+import aiConfigRouter from './modules/ai/routes/ai-config';
 
 dotenv.config();
 initSentry();
@@ -107,6 +108,18 @@ app.use(
         },
     })
 );
+// Legacy public uploads were migrated to object storage (Tigris, served via
+// the public CDN — see scripts/migrate-uploads-to-tigris.mjs). Any
+// /uploads/public/* asset missing from local disk falls through to a CDN
+// redirect so existing DB-referenced URLs keep resolving.
+app.get("/uploads/public/*", (req, res) => {
+    const key = req.path
+        .replace(/^\/uploads\//, "")
+        .split("/")
+        .filter((segment) => segment && segment !== "." && segment !== "..")
+        .join("/");
+    res.redirect(302, toPublicUrl(key));
+});
 app.use(sanitizeMiddleware);
 
 // Public JSON caching for unauthenticated GET content endpoints (Redis when
@@ -118,7 +131,7 @@ if (process.env.MCP_HTTP_ENABLED === 'true') {
     // Optional read-only MCP-over-HTTP endpoint (Streamable HTTP). Disabled by
     // default; keep it off unless an MCP client is wired up.
     app.post('/mcp', (req, res, next) => {
-        import('./mcp')
+        import('./mcp/index.js')
             .then(({ handleMcpHttpRequest }) => handleMcpHttpRequest(req, res))
             .catch(next);
     });
@@ -310,7 +323,7 @@ app.use((req, res, next) => {
 app.post('/api/admin/revoke/:employeeId', requireAuth, asyncHandler(async (req, res) => {
     if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Not allowed' });
     const employeeId = (req.params as any).employeeId;
-    await prisma.refreshToken.deleteMany({ where: { employeeId } });
+    await prisma.orm.public.RefreshToken.where((r) => r.employeeId.eq(employeeId)).delete();
     res.json({ ok: true });
 }));
 

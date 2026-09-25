@@ -1,32 +1,30 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../src/db';
 
 describe('Integration: booking -> payment flow', () => {
     beforeAll(async () => {
         // reset only test-owned data so seeded/live Neon content is not damaged
-        const testClients = await prisma.client.findMany({
-            where: { email: { in: ['test@example.com', 'test2@example.com'] } },
-            select: { id: true }
-        });
+        const testClients = await prisma.orm.public.Client
+            .where((c) => c.email.in(['test@example.com', 'test2@example.com']))
+            .select('id')
+            .all();
         const testClientIds = testClients.map((client) => client.id);
 
-        await prisma.payment.deleteMany({
-            where: { clientId: { in: testClientIds } }
-        });
-        await prisma.booking.deleteMany({
-            where: { clientId: { in: testClientIds } }
-        });
-        await prisma.client.deleteMany({
-            where: { id: { in: testClientIds } }
-        });
+        await prisma.orm.public.Payment
+            .where((p) => p.clientId.in(testClientIds))
+            .delete();
+        await prisma.orm.public.Booking
+            .where((b) => b.clientId.in(testClientIds))
+            .delete();
+        await prisma.orm.public.Client
+            .where((c) => c.id.in(testClientIds))
+            .delete();
     });
 
     afterAll(async () => {
-        await prisma.$disconnect();
+        await prisma.close();
     });
 
     it('POST /api/bookings creates booking and optionally PaymentIntent', async () => {
@@ -72,16 +70,17 @@ describe('Integration: booking -> payment flow', () => {
 
 describe('Integration: invite -> accept -> login', () => {
     beforeAll(async () => {
-        await prisma.refreshToken.deleteMany({});
-        await prisma.employee.deleteMany({
-            where: {
-                email: { in: ['jane@angisoft.com', 'john@angisoft.com'] }
-            }
-        });
+        // predicate delete: RefreshToken has no default-safe bulk form
+        await prisma.orm.public.RefreshToken
+            .where((t) => t.id.isNotNull())
+            .delete();
+        await prisma.orm.public.Employee
+            .where((e) => e.email.in(['jane@angisoft.com', 'john@angisoft.com']))
+            .delete();
     });
 
     afterAll(async () => {
-        await prisma.$disconnect();
+        await prisma.close();
     });
 
     it('POST /api/invite requires admin authentication', async () => {
@@ -96,7 +95,9 @@ describe('Integration: invite -> accept -> login', () => {
         const invite = await request(app)
             .post('/api/invite')
             .send({ firstName: 'John', lastName: 'Admin', email: 'john@angisoft.com' });
-        const emp = await prisma.employee.findUnique({ where: { email: 'john@angisoft.com' } });
+        const emp = await prisma.orm.public.Employee
+            .where({ email: 'john@angisoft.com' })
+            .first();
         const token = emp?.inviteToken;
         if (!token) return;
         const res = await request(app)

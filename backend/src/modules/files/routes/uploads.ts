@@ -1,0 +1,502 @@
+import { Router, Response, Request, NextFunction } from 'express';
+import crypto from 'crypto';
+import fs from 'fs';
+import multer from 'multer';
+import path from 'path';
+import prisma from '../../../db';
+import { newId } from '../../../prisma/db';
+import { generatePresignedPutUrl, isS3Enabled, toPublicUrl, uploadObject, getObject } from '../services/storage/s3';
+import { z } from 'zod';
+import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
+
+const router = Router();
+const maxUploadSize = 50 * 1024 * 1024;
+const allowedMimeTypes = [
+    'application/pdf',
+    'application/zip',
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'text/plain'
+];
+const ownerTypes = ['booking', 'client_project', 'project_deliverable', 'project_comment', 'employee', 'employee_document', 'general'] as const;
+const signedUploadKeys = new Map<string, number>();
+const documentMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/zip',
+    'text/plain'
+];
+const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const adminUploadRoles = ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'DEVELOPER'];
+const documentAdminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR'];
+const IMAGE_MAX = 5 * 1024 * 1024;
+const DOCUMENT_MAX = 10 * 1024 * 1024;
+
+const signSchema = z.object({
+    filename: z.string().min(1),
+    contentType: z.string(),
+    size: z.coerce.number().int().positive().max(maxUploadSize).optional(),
+    ownerType: z.enum(ownerTypes).default('general'),
+    ownerId: z.string().optional()
+});
+
+const confirmSchema = z.object({
+    key: z.string().min(1),
+    filename: z.string().min(1),
+    mime: z.string().optional(),
+    size: z.coerce.number().int().nonnegative().max(maxUploadSize).optional(),
+    ownerType: z.enum(ownerTypes).default('general'),
+    ownerId: z.string().optional()
+});
+
+
+function safeFilename(filename: string) {
+    const parsed = path.parse(filename);
+    const name = parsed.name.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'upload';
+    const ext = parsed.ext.replace(/[^a-z0-9.]+/gi, '').slice(0, 12);
+    return `${name}${ext}`;
+}
+
+function isAdminUploadRole(role?: string) {
+    return Boolean(role && adminUploadRoles.includes(role));
+}
+
+function isDocumentAdminRole(role?: string) {
+    return Boolean(role && documentAdminRoles.includes(role));
+}
+
+function safePathSegment(value?: string) {
+    if (!value) return undefined;
+    const segment = value.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+    return segment || undefined;
+}
+
+function safeOwnerId(value?: string) {
+    if (!value) return undefined;
+    return safePathSegment(value) === value ? value : undefined;
+}
+
+function uploadScope(req: AuthRequest, ownerId?: string) {
+    return safePathSegment(ownerId) || safePathSegment(req.user?.sub) || 'general';
+}
+
+function isPathInside(childPath: string, parentPath: string) {
+    const relative = path.relative(parentPath, childPath);
+    return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+function ensureDir(dir: string) {
+    fs.mkdirSync(dir, { recursive: true });
+}
+
+function fileFilterFor(allowedTypes: string[]) {
+    return (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+        if (!allowedTypes.includes(file.mimetype)) {
+            cb(new Error('File type not allowed'));
+            return;
+        }
+        cb(null, true);
+    };
+}
+
+function localStorage(relativeRoot: string, allowedTypes: string[], maxSize: number) {
+    return multer({
+        storage: multer.diskStorage({
+            destination: (req: AuthRequest, file, cb) => {
+                const ownerType = ownerTypes.includes(req.body.ownerType) ? req.body.ownerType : 'general';
+                const scope = uploadScope(req, req.body.ownerId);
+                const uploadRoot = path.resolve(process.cwd(), 'uploads', relativeRoot);
+                const directory = path.resolve(uploadRoot, ownerType, scope);
+                if (!isPathInside(directory, uploadRoot)) {
+                    cb(new Error('Invalid upload destination'), '');
+                    return;
+                }
+                ensureDir(directory);
+                cb(null, directory);
+            },
+            filename: (_req, file, cb) => {
+                cb(null, `${crypto.randomUUID()}-${safeFilename(file.originalname)}`);
+            }
+        }),
+        limits: { fileSize: maxSize },
+        fileFilter: fileFilterFor(allowedTypes)
+    });
+}
+
+/** In-memory multer used when object storage is enabled — never touches the disk. */
+function memoryStorage(allowedTypes: string[], maxSize: number) {
+    return multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: maxSize },
+        fileFilter: fileFilterFor(allowedTypes)
+    });
+}
+
+function multerErrorHandler(err: any, _req: AuthRequest, res: any, next: any) {
+    if (!err) return next();
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File too large' });
+    }
+    return res.status(400).json({ error: err.message || 'Upload failed' });
+}
+
+function publicUploadUrl(filePath: string) {
+    const relative = path.relative(path.resolve(process.cwd(), 'uploads/public'), filePath).split(path.sep).join('/');
+    return `/uploads/public/${relative}`;
+}
+
+function privateDownloadUrl(fileId: string) {
+    return `/api/uploads/files/${fileId}/download`;
+}
+
+function rawProxyUrl(fileId: string) {
+    return `/api/uploads/files/${fileId}/raw`;
+}
+
+function safeUnlink(filePath?: string) {
+    if (filePath) fs.unlink(filePath, () => {});
+}
+
+/**
+ * Persist an upload. When object storage (Tigris/S3/R2) is configured the byte
+ * buffer is pushed straight to the bucket and the `File` row points at the
+ * object key — nothing is written to the ephemeral local disk. Otherwise the
+ * legacy disk-storage path is used, unchanged.
+ */
+async function createUploadFile(req: AuthRequest, visibility: 'public' | 'private', category?: string) {
+    if (!req.file) throw new Error('No file uploaded');
+    const ownerType = (ownerTypes.includes(req.body.ownerType) ? req.body.ownerType : 'general') as typeof ownerTypes[number];
+    const ownerId = safeOwnerId(req.body.ownerId);
+    const isPublic = visibility === 'public';
+
+    if (isS3Enabled() && req.file.buffer) {
+        const key = buildStorageKey(ownerType, ownerId, req.file.originalname, req.user?.sub);
+        await uploadObject({
+            key,
+            body: req.file.buffer,
+            contentType: req.file.mimetype,
+            publicRead: isPublic
+        });
+
+        const file = await prisma.orm.public.File.create({
+            id: newId(),
+            ownerType,
+            ownerId: ownerId ?? null,
+            filename: req.file.originalname,
+            url: '',
+            mime: req.file.mimetype,
+            size: req.file.size,
+            uploadedBy: req.user?.sub ?? null,
+            metadata: {
+                storage: 's3',
+                key,
+                visibility,
+                public: isPublic,
+                category: category || req.body.category || (isPublic ? 'image' : 'document'),
+                contentType: req.file.mimetype
+            },
+            ...(ownerType === 'client_project' ? { clientProjectId: ownerId ?? null } : {}),
+            ...(ownerType === 'project_deliverable' ? { deliverableId: ownerId ?? null } : {}),
+            ...(ownerType === 'project_comment' ? { commentId: ownerId ?? null } : {})
+        });
+
+        const url = isPublic ? (process.env.S3_PUBLIC_BASE_URL ? toPublicUrl(key) : rawProxyUrl(file.id)) : privateDownloadUrl(file.id);
+        return prisma.orm.public.File.where({ id: file.id }).update({ url });
+    }
+
+    const url = isPublic ? publicUploadUrl(req.file.path) : '';
+    const file = await prisma.orm.public.File.create({
+        id: newId(),
+        ownerType,
+        ownerId: ownerId ?? null,
+        filename: req.file.originalname,
+        url,
+        mime: req.file.mimetype,
+        size: req.file.size,
+        uploadedBy: req.user?.sub ?? null,
+        metadata: {
+            storage: 'local',
+            visibility,
+            category: category || req.body.category || (isPublic ? 'image' : 'document'),
+            path: req.file.path
+        },
+        ...(ownerType === 'client_project' ? { clientProjectId: ownerId ?? null } : {}),
+        ...(ownerType === 'project_deliverable' ? { deliverableId: ownerId ?? null } : {}),
+        ...(ownerType === 'project_comment' ? { commentId: ownerId ?? null } : {})
+    });
+
+    if (!isPublic) {
+        return prisma.orm.public.File.where({ id: file.id }).update({ url: privateDownloadUrl(file.id) });
+    }
+
+    return file;
+}
+
+async function canDownloadFile(req: AuthRequest, file: any) {
+    if (isDocumentAdminRole(req.user?.role)) return true;
+    if (file.uploadedBy && file.uploadedBy === req.user?.sub) return true;
+    if (file.ownerType === 'employee_document' || file.ownerType === 'employee') {
+        return file.ownerId === req.user?.sub;
+    }
+    if (file.ownerType === 'general') return false;
+    return canAttachToOwner(req, file.ownerType, file.ownerId || undefined);
+}
+
+const imageDiskUpload = localStorage('public/images', imageMimeTypes, IMAGE_MAX);
+const imageRemoteUpload = memoryStorage(imageMimeTypes, IMAGE_MAX);
+const documentDiskUpload = localStorage('private/documents', documentMimeTypes, DOCUMENT_MAX);
+const documentRemoteUpload = memoryStorage(documentMimeTypes, DOCUMENT_MAX);
+
+async function canAttachToOwner(req: AuthRequest, ownerType: typeof ownerTypes[number], ownerId?: string) {
+    if (isAdminUploadRole(req.user?.role)) return true;
+    if (ownerType === 'general') return true;
+    if (!ownerId) return false;
+
+    if (ownerType === 'employee' || ownerType === 'employee_document') {
+        return ownerId === req.user?.sub;
+    }
+
+    if (ownerType === 'booking') {
+        const booking = await prisma.orm.public.Booking.where({ id: ownerId }).first();
+        return booking?.assignedToId === req.user?.sub;
+    }
+
+    if (ownerType === 'client_project') {
+        const project = await prisma.orm.public.ClientProject
+            .where({ id: ownerId })
+            .include('booking')
+            .first();
+        return project?.ownerId === req.user?.sub || (project as any)?.booking.assignedToId === req.user?.sub;
+    }
+
+    if (ownerType === 'project_deliverable') {
+        const deliverable = await prisma.orm.public.ProjectDeliverable
+            .where({ id: ownerId })
+            .include('project', (p) => p.include('booking'))
+            .first();
+        return (deliverable as any)?.project.ownerId === req.user?.sub || (deliverable as any)?.project.booking.assignedToId === req.user?.sub;
+    }
+
+    if (ownerType === 'project_comment') {
+        const comment = await prisma.orm.public.ProjectComment
+            .where({ id: ownerId })
+            .include('project', (p) => p.include('booking'))
+            .first();
+        return (comment as any)?.project.ownerId === req.user?.sub || (comment as any)?.project.booking.assignedToId === req.user?.sub;
+    }
+
+    return false;
+}
+
+function buildStorageKey(ownerType: typeof ownerTypes[number], ownerId: string | undefined, filename: string, userId?: string) {
+    const scope = ownerId || userId || 'general';
+    return `${ownerType}/${scope}/${crypto.randomUUID()}-${safeFilename(filename)}`;
+}
+
+/**
+ * Public read access to synced marketing/CMS media.
+ * Only `File` rows marked public (metadata.public === true) are returned, so
+ * private uploads stay gated behind the authenticated download endpoint above.
+ */
+const isPublicFile = (file: { metadata?: any }) => {
+    const meta = file.metadata ?? {};
+    return meta.public === true || (Array.isArray(meta.path) && meta.path.includes('public'));
+};
+
+router.get('/', async (_req, res) => {
+    try {
+        const ownerType = typeof _req.query.ownerType === 'string' ? _req.query.ownerType : undefined;
+        const files = await (ownerType
+            ? prisma.orm.public.File.where({ ownerType })
+            : prisma.orm.public.File)
+            .orderBy((f) => f.createdAt.desc())
+            .all();
+        res.json(files.filter(isPublicFile));
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/:id', async (req, res) => {
+    try {
+        const file = await prisma.orm.public.File.where({ id: req.params.id }).first();
+        if (!file || !isPublicFile(file)) return res.status(404).json({ error: 'File not found' });
+        res.json(file);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/sign', requireAuth, async (req: AuthRequest, res) => {
+    const parsed = signSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+
+    const { filename, contentType, ownerType, ownerId } = parsed.data;
+    if (!allowedMimeTypes.includes(contentType)) return res.status(400).json({ error: 'File type not allowed' });
+    if (!await canAttachToOwner(req, ownerType, ownerId)) return res.status(403).json({ error: 'Not allowed for this upload owner' });
+
+    const key = buildStorageKey(ownerType, ownerId, filename, req.user?.sub);
+    signedUploadKeys.set(key, Date.now() + 1000 * 60 * 15);
+    try {
+        const url = await generatePresignedPutUrl(key, contentType);
+        res.json({ url, key });
+    } catch (err: any) {
+        console.error('Error generating presigned url', err);
+        res.status(500).json({ error: 'Unable to generate upload url' });
+    }
+});
+
+router.post('/confirm', requireAuth, async (req: AuthRequest, res) => {
+    const parsed = confirmSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+
+    const { key, filename, mime, size, ownerType, ownerId } = parsed.data;
+    if (mime && !allowedMimeTypes.includes(mime)) return res.status(400).json({ error: 'File type not allowed' });
+    const signedExpiry = signedUploadKeys.get(key);
+    if (!signedExpiry || signedExpiry < Date.now()) return res.status(400).json({ error: 'Upload key was not signed or has expired' });
+    signedUploadKeys.delete(key);
+    const expectedPrefix = `${ownerType}/${ownerId || req.user?.sub || 'general'}/`;
+    if (!key.startsWith(expectedPrefix)) return res.status(400).json({ error: 'Upload key does not match owner scope' });
+    if (!await canAttachToOwner(req, ownerType, ownerId)) return res.status(403).json({ error: 'Not allowed for this upload owner' });
+
+    try {
+        const url = toPublicUrl(key);
+        const file = await prisma.orm.public.File.create({
+            id: newId(),
+            ownerType,
+            ownerId: ownerId ?? null,
+            filename: safeFilename(filename),
+            url,
+            mime: mime || 'application/octet-stream',
+            size: size || 0,
+            uploadedBy: req.user?.sub ?? null,
+            metadata: { storage: 's3', key, public: true, visibility: 'public' },
+            ...(ownerType === 'client_project' ? { clientProjectId: ownerId ?? null } : {}),
+            ...(ownerType === 'project_deliverable' ? { deliverableId: ownerId ?? null } : {}),
+            ...(ownerType === 'project_comment' ? { commentId: ownerId ?? null } : {})
+        });
+        res.json({ file });
+    } catch (err: any) {
+        console.error('Error confirming upload', err);
+        res.status(500).json({ error: 'Unable to confirm upload' });
+    }
+});
+
+router.post('/local/image', requireAuth, (req: AuthRequest, res: Response, next: NextFunction) => {
+    const upload = isS3Enabled() ? imageRemoteUpload : imageDiskUpload;
+    upload.single('file')(req, res, next);
+}, multerErrorHandler, async (req: AuthRequest, res: Response) => {
+    const ownerType = (ownerTypes.includes(req.body.ownerType) ? req.body.ownerType : 'general') as typeof ownerTypes[number];
+    const ownerId = safeOwnerId(req.body.ownerId);
+    if (req.body.ownerId && !ownerId) {
+        safeUnlink((req.file as any)?.path);
+        return res.status(400).json({ error: 'Invalid upload owner' });
+    }
+    if (!isAdminUploadRole(req.user?.role) && !await canAttachToOwner(req, ownerType, ownerId)) {
+        safeUnlink((req.file as any)?.path);
+        return res.status(403).json({ error: 'Not allowed for this upload owner' });
+    }
+
+    try {
+        const file = await createUploadFile(req, 'public', req.body.category || 'image');
+        res.json({ file, url: (file as any).url });
+    } catch (err: any) {
+        safeUnlink((req.file as any)?.path);
+        console.error('Error saving local image upload', err);
+        res.status(500).json({ error: 'Unable to save image upload' });
+    }
+});
+
+router.post('/local/document', requireAuth, (req: AuthRequest, res: Response, next: NextFunction) => {
+    const upload = isS3Enabled() ? documentRemoteUpload : documentDiskUpload;
+    upload.single('file')(req, res, next);
+}, multerErrorHandler, async (req: AuthRequest, res: Response) => {
+    const ownerType = (ownerTypes.includes(req.body.ownerType) ? req.body.ownerType : 'general') as typeof ownerTypes[number];
+    const ownerId = safeOwnerId(req.body.ownerId);
+    if (req.body.ownerId && !ownerId) {
+        safeUnlink((req.file as any)?.path);
+        return res.status(400).json({ error: 'Invalid upload owner' });
+    }
+    if (!await canAttachToOwner(req, ownerType, ownerId)) {
+        safeUnlink((req.file as any)?.path);
+        return res.status(403).json({ error: 'Not allowed for this upload owner' });
+    }
+
+    try {
+        const file = await createUploadFile(req, 'private', req.body.category || 'document');
+        res.json({ file, url: (file as any).url });
+    } catch (err: any) {
+        safeUnlink((req.file as any)?.path);
+        console.error('Error saving local document upload', err);
+        res.status(500).json({ error: 'Unable to save document upload' });
+    }
+});
+
+/** Public read-proxy for S3-stored public files when S3_PUBLIC_BASE_URL is not set. */
+router.get('/files/:fileId/raw', async (req, res) => {
+    const file = await prisma.orm.public.File.where({ id: req.params.fileId }).first();
+    if (!file || !isPublicFile(file)) return res.status(404).json({ error: 'File not found' });
+
+    const metadata = (file.metadata || {}) as { storage?: string; key?: string };
+    if (metadata.storage !== 's3' || !metadata.key) return res.status(404).json({ error: 'Object not found' });
+
+    try {
+        const obj = await getObject(metadata.key);
+        res.setHeader('Content-Type', obj.ContentType || file.mime || 'application/octet-stream');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        const body = obj.Body as any;
+        if (body && typeof body.pipe === 'function') {
+            body.pipe(res);
+        } else if (body) {
+            res.send(Buffer.isBuffer(body) ? body : Buffer.from(body as any));
+        } else {
+            res.status(404).json({ error: 'Object is empty' });
+        }
+    } catch (err) {
+        console.error('Error streaming s3 object', err);
+        res.status(404).json({ error: 'Unable to stream object' });
+    }
+});
+
+router.get('/files/:fileId/download', requireAuth, async (req: AuthRequest, res) => {
+    const file = await prisma.orm.public.File.where({ id: req.params.fileId }).first();
+    if (!file) return res.status(404).json({ error: 'File not found' });
+    if (!await canDownloadFile(req, file)) return res.status(403).json({ error: 'Not allowed to download this file' });
+
+    const metadata = (file.metadata || {}) as { storage?: string; key?: string; path?: string; visibility?: string };
+
+    if (metadata.storage === 's3' && metadata.key) {
+        try {
+            const obj = await getObject(metadata.key);
+            res.setHeader('Content-Type', obj.ContentType || file.mime || 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename || 'download')}"`);
+            const body = obj.Body as any;
+            if (body && typeof body.pipe === 'function') {
+                body.pipe(res);
+                return;
+            }
+            if (body) {
+                res.send(Buffer.isBuffer(body) ? body : Buffer.from(body as any));
+                return;
+            }
+            return res.status(404).json({ error: 'Object is empty' });
+        } catch (err) {
+            console.error('Error streaming s3 object', err);
+            return res.status(500).json({ error: 'Unable to download file' });
+        }
+    }
+
+    const privateRoot = path.resolve(process.cwd(), 'uploads/private');
+    const localPath = metadata?.path ? path.resolve(metadata.path) : null;
+    if (!localPath || !isPathInside(localPath, privateRoot)) {
+        return res.status(404).json({ error: 'Private file not found' });
+    }
+
+    res.download(localPath, file.filename);
+});
+
+export default function uploadsRouter() {
+    return router;
+}

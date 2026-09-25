@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import prisma from '../src/db';
+import { ts } from '../src/prisma/db';
 
 dotenv.config();
 
@@ -196,10 +197,20 @@ const industriesValue = {
 };
 
 async function run() {
-  await prisma.setting.upsert({
-    where: { key: 'site_industries' },
-    update: { value: industriesValue as any },
-    create: { key: 'site_industries', value: industriesValue as any },
+  await prisma.transaction(async (tx) => {
+    const existing = await tx.orm.public.Setting.where({ key: 'site_industries' }).first();
+    if (existing) {
+      await tx.orm.public.Setting.where({ key: 'site_industries' }).update({
+        value: industriesValue as any,
+        updatedAt: ts(),
+      });
+    } else {
+      await tx.orm.public.Setting.create({
+        key: 'site_industries',
+        value: industriesValue as any,
+        updatedAt: ts(),
+      });
+    }
   });
   console.log('✅ Upserted site_industries with 12 canonical industries');
 }
@@ -210,5 +221,5 @@ run()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma.close();
   });

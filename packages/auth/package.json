@@ -1,0 +1,24 @@
+{
+  "name": "@angisoft/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-router-dom": "^7.15.1",
+    "@angisoft/api-client": "workspace:*",
+    "@angisoft/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8"
+  }
+}

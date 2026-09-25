@@ -41,8 +41,8 @@ backend/
 # no .env.example — edit backend/.env directly (gitignored) and fill in
 # DATABASE_URL + secrets there.
 npm install
-npx prisma generate        # generate Prisma client
-npm run prisma:migrate:dev # run migrations
+npx prisma contract emit   # emit P8 contract artifacts (src/prisma/) — committed ones also work
+npm run prisma:migrate:dev # emit contract + plan a migration from changes
 npm run prisma:seed        # seed sample data
 npm run dev                # API at http://localhost:5000
 ```
@@ -54,12 +54,12 @@ npm run dev                # API at http://localhost:5000
 | `npm run dev` | Start dev server with ts-node-dev (hot reload) |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm run start` | Run compiled output |
-| `npm run start:prod` | Migrate + seed + start (legacy Docker entrypoint) |
+| `npm run start:prod` | Start the compiled server (migrations run during deployment) |
 | `npm run start:worker` | Workers-only process (Fly `worker` group) |
 | `npm run mcp:stdio` | Model Context Protocol server over stdio |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:migrate:dev` | Create and apply migrations |
-| `npm run prisma:migrate` | Deploy migrations (production) |
+| `npm run prisma:generate` | Emit Prisma 8 contract artifacts |
+| `npm run prisma:migrate:dev` | Emit contract + plan a migration |
+| `npm run prisma:migrate` | Apply planned migrations (production) |
 | `npm run prisma:seed` | Seed database |
 | `npm test` | Run Vitest |
 
@@ -129,5 +129,6 @@ Prisma schema defines models for: Employee, Service, Project, BlogPost, Testimon
 
 ```bash
 npx prisma studio    # visual database browser
-npx prisma migrate dev --name describe_change   # create a migration
+npx prisma contract emit && npx prisma migration plan   # plan a migration from contract changes
+npx prisma db migrate --db "$DATABASE_URL"               # apply planned migrations
 ```

@@ -1,0 +1,22 @@
+[build]
+  base = "../frontend/web"
+  command = "pnpm install --frozen-lockfile && pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
+
+# Proxy uploaded assets to the API host. The SPA is served from Netlify,
+# but /uploads/* lives only on the backend container (api.angisoft.co.ke).
+# Declared BEFORE the /* catch-all so it takes precedence.
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://api.angisoft.co.ke/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
