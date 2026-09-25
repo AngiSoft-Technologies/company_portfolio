@@ -1,13 +1,12 @@
-# Netlify redirect rules — shared reference for the two apps.
-#
-# Both frontend/web and frontend/admin are built by Netlify from their own
-# directories. Each app carries a netlify.toml (in infrastructure/netlify/ as
-# the canonical copy). The rules below are identical in both apps and MUST be
-# declared BEFORE the SPA catch-all:
-#
-#   1. /uploads/*  -> https://api.angisoft.co.ke/uploads/:splat   (proxy assets to backend)
-#   2. /*          -> /index.html                                 (SPA fallback)
-#
-# If admin is ever served from a subpath (admin.angisoft.co.ke), add a
-# redirect from /admin/* to the admin app or a Netlify site-level proxy. The
-# preferred production shape is two separate Netlify sites.
+# Netlify configuration
+
+The effective Netlify configuration lives beside each application:
+
+- `frontend/web/netlify.toml`
+- `frontend/admin/netlify.toml`
+
+The files in `infrastructure/netlify/` are synchronized deployment references. Netlify discovers the app-level files when each site's **Package directory** is set to the corresponding frontend directory, while the base directory remains the repository root.
+
+The web site owns `angisoft.co.ke` and `www.angisoft.co.ke`. The admin site owns `admin.angisoft.co.ke` and `www.admin.angisoft.co.ke`. Both sites use `https://api.angisoft.co.ke` and `https://cdn.angisoft.co.ke`.
+
+Both configurations proxy `/uploads/*` to the API before applying the SPA fallback. The API can redirect legacy upload paths to the shared CDN. The preferred production setup is two separate Netlify sites.

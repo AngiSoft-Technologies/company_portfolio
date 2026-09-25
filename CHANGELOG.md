@@ -371,7 +371,7 @@ User sees: Updated bio ✅
 
 ### Dependencies
 - PostgreSQL database (must be running)
-- Node.js 16+ (must have npx)
+- Node.js 24+ (must have npx)
 - All npm packages installed
 
 ---

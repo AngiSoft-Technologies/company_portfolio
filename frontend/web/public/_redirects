@@ -1,1 +1,2 @@
-/*    /index.html   200
+/uploads/*  https://api.angisoft.co.ke/uploads/:splat  200
+/*          /index.html                              200

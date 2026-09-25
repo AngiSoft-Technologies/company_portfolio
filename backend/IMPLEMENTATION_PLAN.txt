@@ -31,7 +31,7 @@ Primary responsibilities
 - Audit logging, sessions, refresh-token rotation & revocation
 
 Core architecture decisions
-- Runtime: Node 18+ with TypeScript and Express. Export app for tests.
+- Runtime: Node 24+ with TypeScript and Express. Export app for tests.
 - ORM: Prisma (Postgres). Keep Prisma schema authoritative in `prisma/schema.prisma`.
 - Auth: JWT access tokens (short-lived) + rotating refresh tokens stored hashed in DB. RS256 support via KMS or file fallback.
 - 2FA: TOTP (otplib) + hashed backup codes stored; enable per-employee.

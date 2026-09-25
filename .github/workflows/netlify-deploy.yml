@@ -7,6 +7,9 @@ on:
 jobs:
     build-and-deploy:
         runs-on: ubuntu-latest
+        env:
+            VITE_API_BASE_URL: https://api.angisoft.co.ke
+            VITE_SOCKET_URL: https://api.angisoft.co.ke
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -14,21 +17,30 @@ jobs:
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "18"
+                  node-version: "24"
 
-            - name: Install dependencies (frontend)
-              run: npm ci --prefix frontend
+            - name: Enable pnpm
+              run: corepack enable
 
-            - name: Build frontend
-              run: npm run build --prefix frontend
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-            - name: Deploy to Netlify
+            - name: Build web
+              run: pnpm --filter angisoft-web build
+
+            - name: Build admin
+              run: pnpm --filter angisoft-admin build
+
+            - name: Deploy web
               uses: netlify/actions/cli@master
               with:
-                  args: deploy --dir=frontend/dist --prod --site=$NETLIFY_SITE_ID
+                  args: deploy --dir=frontend/web/dist --prod --site=${{ secrets.NETLIFY_SITE_ID }}
               env:
                   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-                  NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-# Requirements:
-# - Add NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID to this repo's Secrets (Settings → Secrets & variables → Actions)
-# - Keep Vite env vars (e.g. VITE_API_BASE_URL) configured in Netlify UI or as GitHub secrets and injected into Netlify environment
+
+            - name: Deploy admin
+              uses: netlify/actions/cli@master
+              with:
+                  args: deploy --dir=frontend/admin/dist --prod --site=${{ secrets.NETLIFY_ADMIN_SITE_ID }}
+              env:
+                  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

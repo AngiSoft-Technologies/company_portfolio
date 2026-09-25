@@ -27,7 +27,15 @@ function resolveDatabaseUrl(): string | undefined {
     .replace(/^'([\s\S]*)'$/, '$1')
     .trim();
 
-  return stripped || undefined;
+  if (!stripped) return undefined;
+
+  try {
+    const url = new URL(stripped);
+    url.searchParams.delete('channel_binding');
+    return url.toString();
+  } catch {
+    return stripped;
+  }
 }
 
 export default definePrismaConfig({

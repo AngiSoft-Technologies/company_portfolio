@@ -1,30 +1,3 @@
-[build]
-  base = "frontend"
-  command = "npm ci && npm run build"
-  publish = "dist"
-  functions = "netlify/functions"
-
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "24"
   SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# Proxy uploaded assets to the API host. The SPA is served from Netlify,
-# but /uploads/* lives only on the backend container (api.angisoft.co.ke).
-# Without this, /uploads/public/... requests fall through to the SPA
-# catch-all below and return index.html instead of the image. The Vite dev
-# proxy does the same thing locally; this replicates it at the edge.
-# Declared BEFORE the /* catch-all so it takes precedence.
-[[redirects]]
-  from = "/uploads/*"
-  to = "https://api.angisoft.co.ke/uploads/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

@@ -9,10 +9,11 @@ const DEFAULT_ORIGINS = [
   'https://www.admin.angisoft.co.ke',
   'https://client.angisoft.co.ke',
   'https://www.client.angisoft.co.ke',
-  'https://www.angisoft.co.ke',
   // Local dev (Vite default + API port)
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
   'http://localhost:3000',
 ];
 

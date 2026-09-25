@@ -4,7 +4,7 @@ Express + TypeScript API powering the AngiSoft Technologies platform, with Postg
 
 ## Tech Stack
 
-- **Runtime**: Node.js >= 22
+- **Runtime**: Node.js >= 24
 - **Framework**: Express 4
 - **Language**: TypeScript
 - **Database**: PostgreSQL (Neon) with Prisma ORM

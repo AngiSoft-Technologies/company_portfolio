@@ -3,6 +3,10 @@ import request from 'supertest';
 import app from '../src/app';
 import prisma from '../src/db';
 
+afterAll(async () => {
+    await prisma.close();
+});
+
 describe('Integration: booking -> payment flow', () => {
     beforeAll(async () => {
         // reset only test-owned data so seeded/live Neon content is not damaged
@@ -21,10 +25,6 @@ describe('Integration: booking -> payment flow', () => {
         await prisma.orm.public.Client
             .where((c) => c.id.in(testClientIds))
             .delete();
-    });
-
-    afterAll(async () => {
-        await prisma.close();
     });
 
     it('POST /api/bookings creates booking and optionally PaymentIntent', async () => {
@@ -77,10 +77,6 @@ describe('Integration: invite -> accept -> login', () => {
         await prisma.orm.public.Employee
             .where((e) => e.email.in(['jane@angisoft.com', 'john@angisoft.com']))
             .delete();
-    });
-
-    afterAll(async () => {
-        await prisma.close();
     });
 
     it('POST /api/invite requires admin authentication', async () => {

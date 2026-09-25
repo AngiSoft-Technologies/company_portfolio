@@ -6,8 +6,8 @@ swap_size_mb = 512
   dockerfile = "../infrastructure/docker/Dockerfile"
 
 [deploy]
-release_command = 'npx prisma db migrate --db "$DATABASE_URL"'
-seed_command = "ts-node prisma/seed.ts"
+  release_command = "npx prisma db migrate"
+
 
 [http_service]
 auto_start_machines = true
