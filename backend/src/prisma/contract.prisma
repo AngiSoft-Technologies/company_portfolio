@@ -1,0 +1,1440 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+namespace public {
+  model AboutSection {
+    id        String       @id(map: "AboutSection_pkey")
+    key       String
+    title     String
+    sortOrder Int          @default(0)
+    enabled   Boolean      @default(true)
+    content   Jsonb?
+    createdAt TimestampString(3) @default(now())
+    updatedAt TimestampString(3)
+
+    @@index([enabled], map: "AboutSection_enabled_idx")
+    @@index([key], map: "AboutSection_key_key", unique: true)
+    @@index([sortOrder], map: "AboutSection_sortOrder_idx")
+  @@map("AboutSection")
+}
+
+  model AnalyticsEvent {
+    id        String       @id(map: "AnalyticsEvent_pkey")
+    _type     String       @map("type")
+    entity    String?
+    entityId  String?
+    meta      Jsonb?
+    createdAt TimestampString(3) @default(now())
+
+    @@index([_type, createdAt], map: "AnalyticsEvent_type_createdAt_idx")
+  @@map("AnalyticsEvent")
+}
+
+  model Announcement {
+    id          String        @id(map: "Announcement_pkey")
+    title       String
+    body        String
+    audience    String        @default("all")
+    priority    String        @default("normal")
+    published   Boolean       @default(false)
+    publishedAt TimestampString(3)?
+    expiresAt   TimestampString(3)?
+    authorId    String?
+    createdAt   TimestampString(3)  @default(now())
+    updatedAt   TimestampString(3)
+  @@map("Announcement")
+}
+
+  model AppRole {
+    id                      String                   @id(map: "AppRole_pkey")
+    key                     String
+    name                    String
+    description             String?
+    system                  Boolean                  @default(false)
+    createdAt               TimestampString(3)             @default(now())
+    updatedAt               TimestampString(3)
+    employeeRoleAssignments EmployeeRoleAssignment[]
+    rolePermissions         RolePermission[]
+
+    @@index([key], map: "AppRole_key_key", unique: true)
+  @@map("AppRole")
+}
+
+  model AuditLog {
+    id        String         @id(map: "AuditLog_pkey")
+    actorId   String?
+    actorRole pg.enum(Role)?
+    action    String
+    entity    String
+    entityId  String?
+    meta      Jsonb?
+    createdAt TimestampString(3)   @default(now())
+  @@map("AuditLog")
+}
+
+  model BlogCategory {
+    id          String     @id(map: "BlogCategory_pkey")
+    name        String
+    slug        String
+    description String?
+    blogPosts   BlogPost[]
+
+    @@index([name], map: "BlogCategory_name_key", unique: true)
+    @@index([slug], map: "BlogCategory_slug_key", unique: true)
+  @@map("BlogCategory")
+}
+
+  model Department {
+    id          String       @id(map: "Department_pkey")
+    key         String
+    name        String
+    description String?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    employees   Employee[]
+    positions   Position[]
+
+    @@index([key], map: "Department_key_key", unique: true)
+  @@map("Department")
+}
+
+  model Position {
+    id                    String       @id(map: "Position_pkey")
+    departmentId          String
+    title                 String
+    displayTitleTemplate  String?
+    defaultPermissionKeys String[]?     @default([]) @noCheck(elementNotNull)
+    seniorityLevels       String[]?     @default([]) @noCheck(elementNotNull)
+    createdAt             TimestampString(3) @default(now())
+    updatedAt             TimestampString(3)
+    employees             Employee[]
+    department            Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "Position_departmentId_fkey")
+
+    @@index([departmentId], map: "Position_departmentId_idx")
+    @@index([departmentId, title], map: "Position_departmentId_title_key", unique: true)
+  @@map("Position")
+}
+
+  model Employee {
+    id                      String                     @id(map: "Employee_pkey")
+    firstName               String
+    lastName                String
+    email                   String
+    phone                   String?
+    role                    pg.enum(Role)              @default("DEVELOPER")
+    username                String?
+    passwordHash            String?
+    invitedAt               TimestampString(3)?
+    inviteToken             String?
+    inviteExpiry            TimestampString(3)?
+    twoFactorSecret         String?
+    twoFactorEnabled        Boolean                    @default(false)
+    acceptedAt              TimestampString(3)?
+    bio                     String?
+    avatarUrl               String?
+    createdAt               TimestampString(3)               @default(now())
+    updatedAt               TimestampString(3)
+    resetExpiry             TimestampString(3)?
+    resetToken              String?
+    publicTitle             String?
+    publicSummary           String?
+    location                String?
+    websiteUrl              String?
+    linkedinUrl             String?
+    twitterUrl              String?
+    githubUrl               String?
+    skills                  String[]                   @default([]) @noCheck(elementNotNull)
+    specialties             String[]                   @default([]) @noCheck(elementNotNull)
+    publicEmail             String?
+    publicPhone             String?
+    profilePublished        Boolean                    @default(true)
+    profileOrder            Int                        @default(0)
+    cvUrl                   String?
+    portfolioUrl            String?
+    experienceJson          Jsonb?
+    educationJson           Jsonb?
+    resumePublished         Boolean                    @default(false)
+    department              String?
+    featured                Boolean                    @default(false)
+    joinYear                Int?
+    profileVisibility       pg.enum(ProfileVisibility) @default("PUBLIC")
+    seniorityLevel          String?
+    departmentId            String?
+    positionId              String?
+    blogPosts               BlogPost[]
+    bookings                Booking[]
+    certifications          Certification[]
+    clientProjects          ClientProject[]
+    contactEnquiries        ContactEnquiry[]
+    employeePermissions     EmployeePermission[]
+    employeePortfolioItems  EmployeePortfolioItem[]
+    employeeProfileStats    EmployeeProfileStat[]
+    employeeRoleAssignments EmployeeRoleAssignment[]
+    productTeamMembers      ProductTeamMember[]
+    projects                Project[]
+    projectActivities       ProjectActivity[]
+    projectComments         ProjectComment[]
+    projectEmployees        ProjectEmployee[]
+    refreshTokens           RefreshToken[]
+    services                Service[]
+    staffBlogs              StaffBlog[]
+    twoFactorBackupCodes    TwoFactorBackupCode[]
+    departmentDepartment    Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_departmentId_fkey")
+    position                Position?                  @relation(fields: [positionId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_positionId_fkey")
+
+    @@index([departmentId], map: "Employee_departmentId_idx")
+    @@index([email], map: "Employee_email_key", unique: true)
+    @@index([inviteToken], map: "Employee_inviteToken_key", unique: true)
+    @@index([positionId], map: "Employee_positionId_idx")
+    @@index([resetToken], map: "Employee_resetToken_key", unique: true)
+    @@index([username], map: "Employee_username_key", unique: true)
+  @@map("Employee")
+}
+
+  model BlogPost {
+    id             String         @id(map: "BlogPost_pkey")
+    title          String
+    slug           String
+    content        String
+    authorId       String
+    tags           String[]?       @noCheck(elementNotNull)
+    published      Boolean        @default(false)
+    publishedAt    TimestampString(3)?
+    createdAt      TimestampString(3)   @default(now())
+    updatedAt      TimestampString(3)
+    coverImage     String?
+    excerpt        String?
+    readingTime    Int?
+    seoTitle       String?
+    seoDescription String?
+    views          Int            @default(0)
+    likes          Int            @default(0)
+    categoryId     String?
+    seoKeywords    String[]       @default([]) @noCheck(elementNotNull)
+    featured       Boolean        @default(false)
+    subtitle       String?
+    contentType    String         @default("article")
+    mediaUrl       String?
+    transcript     String?
+    visibilityType String         @default("permanent")
+    visibleUntil   TimestampString(3)?
+    resourceLinks  Jsonb?
+    blogComments   BlogComment[]
+    blogReactions  BlogReaction[]
+    author         Employee       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "BlogPost_authorId_fkey", index: false)
+    category       BlogCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "BlogPost_categoryId_fkey", index: false)
+
+    @@index([slug], map: "BlogPost_slug_key", unique: true)
+  @@map("BlogPost")
+}
+
+  model BlogComment {
+    id        String       @id(map: "BlogComment_pkey")
+    postId    String
+    authorId  String?
+    parentId  String?
+    name      String?
+    email     String?
+    body      String
+    approved  Boolean      @default(false)
+    createdAt TimestampString(3) @default(now())
+    post      BlogPost     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "BlogComment_postId_fkey")
+
+    @@index([postId], map: "BlogComment_postId_idx")
+  @@map("BlogComment")
+}
+
+  model BlogReaction {
+    id         String       @id(map: "BlogReaction_pkey")
+    postId     String
+    visitorKey String
+    _type      String       @default("like") @map("type")
+    createdAt  TimestampString(3) @default(now())
+    post       BlogPost     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "BlogReaction_postId_fkey", index: false)
+
+    @@index([postId, visitorKey], map: "BlogReaction_postId_visitorKey_key", unique: true)
+  @@map("BlogReaction")
+}
+
+  model Client {
+    id                 String              @id(map: "Client_pkey")
+    name               String
+    email              String
+    phone              String?
+    org                String?
+    createdAt          TimestampString(3)        @default(now())
+    passwordHash       String?
+    avatarUrl          String?
+    location           String?
+    verified           Boolean             @default(false)
+    updatedAt          TimestampString(3)
+    bookings           Booking[]
+    clientAccessTokens ClientAccessToken[]
+    clientProjects     ClientProject[]
+    productInquiries   ProductInquiry[]
+    supportTickets     SupportTicket[]
+
+    @@index([email], map: "Client_email_key", unique: true)
+  @@map("Client")
+}
+
+  model Booking {
+    id                 String                 @id(map: "Booking_pkey")
+    clientId           String
+    title              String
+    description        String
+    projectType        pg.enum(ProjectType)
+    details            Jsonb?
+    status             pg.enum(BookingStatus) @default("SUBMITTED")
+    priceEstimate      Float?
+    assignedToId       String?
+    termsAcceptedAt    TimestampString(3)?
+    depositPaidAt      TimestampString(3)?
+    createdAt          TimestampString(3)           @default(now())
+    updatedAt          TimestampString(3)
+    publicReference    String
+    trackingToken      String
+    budgetAmount       Float?
+    currency           String                 @default("KES")
+    currentStage       String                 @default("submitted")
+    desiredOutcome     String?
+    packageSlug        String?
+    packageTitle       String?
+    preferredDate      TimestampString(3)?
+    preferredTimeline  String?
+    pricingType        String?
+    productSlug        String?
+    productTitle       String?
+    quotedAmount       Float?
+    quotedCurrency     String?
+    referrerEntityId   String?
+    referrerEntityType String?
+    requestEntityId    String?
+    requestEntitySlug  String?
+    requestEntityType  String?
+    requestType        String?
+    serviceSlug        String?
+    serviceTitle       String?
+    source             String?
+    sourcePath         String?
+    submittedAt        TimestampString(3)?
+    bookingEvents      BookingEvent[]
+    clientProject      ClientProject[]
+    contactEnquiries   ContactEnquiry[]
+    files              File[]
+    notes              Note[]
+    payments           Payment[]
+    assignedTo         Employee?              @relation(fields: [assignedToId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Booking_assignedToId_fkey", index: false)
+    client             Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Booking_clientId_fkey", index: false)
+
+    @@index([publicReference], map: "Booking_publicReference_key", unique: true)
+    @@index([trackingToken], map: "Booking_trackingToken_key", unique: true)
+  @@map("Booking")
+}
+
+  model BookingEvent {
+    id          String                  @id(map: "BookingEvent_pkey")
+    bookingId   String
+    _type       String                  @map("type")
+    title       String
+    description String?
+    stage       String?
+    status      pg.enum(BookingStatus)?
+    visibility  String                  @default("customer")
+    actorType   String                  @default("system")
+    actorId     String?
+    metadata    Jsonb?
+    createdAt   TimestampString(3)            @default(now())
+    booking     Booking                 @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "BookingEvent_bookingId_fkey")
+
+    @@index([bookingId, createdAt], map: "BookingEvent_bookingId_createdAt_idx")
+    @@index([bookingId], map: "BookingEvent_bookingId_idx")
+  @@map("BookingEvent")
+}
+
+  model Certification {
+    id         String       @id(map: "Certification_pkey")
+    employeeId String
+    name       String
+    issuer     String
+    year       Int?
+    url        String?
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Certification_employeeId_fkey")
+
+    @@index([employeeId], map: "Certification_employeeId_idx")
+  @@map("Certification")
+}
+
+  model ChatConversation {
+    id                String        @id(map: "ChatConversation_pkey")
+    visitorName       String
+    visitorEmail      String
+    visitorPhone      String?
+    intent            String?
+    quality           Int?
+    notes             String?
+    status            String        @default("open")
+    createdAt         TimestampString(3)  @default(now())
+    updatedAt         TimestampString(3)
+    deviceFingerprint String?
+    chatMessages      ChatMessage[]
+
+    @@index([createdAt], map: "ChatConversation_createdAt_idx")
+    @@index([deviceFingerprint], map: "ChatConversation_deviceFingerprint_idx")
+    @@index([status], map: "ChatConversation_status_idx")
+    @@index([visitorEmail], map: "ChatConversation_visitorEmail_idx")
+  @@map("ChatConversation")
+}
+
+  model ChatMessage {
+    id             String           @id(map: "ChatMessage_pkey")
+    conversationId String
+    sender         String           @default("visitor")
+    message        String
+    tokens         Int?
+    createdAt      TimestampString(3)     @default(now())
+    conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ChatMessage_conversationId_fkey")
+
+    @@index([conversationId], map: "ChatMessage_conversationId_idx")
+    @@index([createdAt], map: "ChatMessage_createdAt_idx")
+  @@map("ChatMessage")
+}
+
+  model ClientAccessToken {
+    id        String        @id(map: "ClientAccessToken_pkey")
+    clientId  String
+    tokenHash String
+    purpose   String        @default("portal")
+    expiresAt TimestampString(3)
+    usedAt    TimestampString(3)?
+    revokedAt TimestampString(3)?
+    ip        String?
+    userAgent String?
+    createdAt TimestampString(3)  @default(now())
+    client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ClientAccessToken_clientId_fkey")
+
+    @@index([clientId], map: "ClientAccessToken_clientId_idx")
+    @@index([expiresAt], map: "ClientAccessToken_expiresAt_idx")
+    @@index([tokenHash], map: "ClientAccessToken_tokenHash_key", unique: true)
+  @@map("ClientAccessToken")
+}
+
+  model ClientProject {
+    id                  String                       @id(map: "ClientProject_pkey")
+    bookingId           String
+    clientId            String
+    title               String
+    description         String
+    status              pg.enum(ClientProjectStatus) @default("PLANNING")
+    progress            Int                          @default(0)
+    ownerId             String?
+    startedAt           TimestampString(3)?
+    dueAt               TimestampString(3)?
+    deliveredAt         TimestampString(3)?
+    completedAt         TimestampString(3)?
+    createdAt           TimestampString(3)                 @default(now())
+    updatedAt           TimestampString(3)
+    files               File[]
+    projectActivities   ProjectActivity[]
+    projectComments     ProjectComment[]
+    projectDeliverables ProjectDeliverable[]
+    projectMilestones   ProjectMilestone[]
+    booking             Booking                      @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ClientProject_bookingId_fkey")
+    client              Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ClientProject_clientId_fkey")
+    owner               Employee?                    @relation(fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ClientProject_ownerId_fkey")
+
+    @@index([bookingId], map: "ClientProject_bookingId_key", unique: true)
+    @@index([clientId], map: "ClientProject_clientId_idx")
+    @@index([createdAt], map: "ClientProject_createdAt_idx")
+    @@index([ownerId], map: "ClientProject_ownerId_idx")
+    @@index([status], map: "ClientProject_status_idx")
+  @@map("ClientProject")
+}
+
+  model CompanyStat {
+    id          String       @id(map: "CompanyStat_pkey")
+    label       String
+    value       Int
+    suffix      String       @default("")
+    icon        String?
+    order       Int          @default(0)
+    published   Boolean      @default(true)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    description String?
+    valueType   String       @default("plain")
+    prefix      String       @default("")
+    useGrouping Boolean?     @map("use_grouping")
+  @@map("CompanyStat")
+}
+
+  model Product {
+    id                 String                 @id(map: "Product_pkey")
+    name               String
+    slug               String
+    tagline            String?
+    description        String
+    category           String?
+    logoUrl            String?
+    bannerUrl          String?
+    features           Jsonb?
+    pricing            Jsonb?
+    screenshots        Jsonb?
+    demoUrl            String?
+    status             pg.enum(ProductStatus) @default("DEVELOPMENT")
+    seoTitle           String?
+    seoDesc            String?
+    published          Boolean                @default(false)
+    sortOrder          Int                    @default(0)
+    createdAt          TimestampString(3)           @default(now())
+    updatedAt          TimestampString(3)
+    contactEnquiries   ContactEnquiry[]
+    productFaqs        ProductFaq[]
+    productInquiries   ProductInquiry[]
+    productTeamMembers ProductTeamMember[]
+
+    @@index([slug], map: "Product_slug_key", unique: true)
+  @@map("Product")
+}
+
+  model ServiceCategory {
+    id          String       @id(map: "ServiceCategory_pkey")
+    name        String
+    slug        String
+    description String?
+    icon        String?
+    order       Int          @default(0)
+    published   Boolean      @default(true)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    services    Service[]
+
+    @@index([name], map: "ServiceCategory_name_key", unique: true)
+    @@index([slug], map: "ServiceCategory_slug_key", unique: true)
+  @@map("ServiceCategory")
+}
+
+  model Service {
+    id                      String           @id(map: "Service_pkey")
+    title                   String
+    slug                    String
+    description             String
+    priceFrom               Float?
+    images                  String[]?         @noCheck(elementNotNull)
+    authorId                String?
+    published               Boolean          @default(false)
+    createdAt               TimestampString(3)     @default(now())
+    updatedAt               TimestampString(3)
+    category                String           @default("General")
+    targetAudience          String?
+    scope                   String?
+    categoryId              String?
+    currency                String           @default("KES")
+    features                String[]         @default([]) @noCheck(elementNotNull)
+    seoTitle                String?
+    seoDesc                 String?
+    featured                Boolean          @default(false)
+    pricing                 Jsonb?
+    contactEnquiries        ContactEnquiry[]
+    author                  Employee?        @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_authorId_fkey", index: false)
+    categoryServiceCategory ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_categoryId_fkey", index: false)
+
+    @@index([slug], map: "Service_slug_key", unique: true)
+  @@map("Service")
+}
+
+  model ContactEnquiry {
+    id                      String        @id(map: "ContactEnquiry_pkey")
+    publicReference         String
+    name                    String
+    email                   String
+    phone                   String?
+    preferredResponseMethod String        @default("email")
+    enquiryType             String
+    subject                 String
+    message                 String
+    serviceId               String?
+    productId               String?
+    bookingId               String?
+    bookingReference        String?
+    organisation            String?
+    source                  String?
+    sourcePath              String?
+    status                  String        @default("new")
+    priority                String        @default("normal")
+    assignedStaffId         String?
+    createdAt               TimestampString(3)  @default(now())
+    updatedAt               TimestampString(3)
+    respondedAt             TimestampString(3)?
+    closedAt                TimestampString(3)?
+    assigneeId              String?
+    assignee                Employee?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ContactEnquiry_assigneeId_fkey")
+    booking                 Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ContactEnquiry_bookingId_fkey", index: false)
+    product                 Product?      @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ContactEnquiry_productId_fkey", index: false)
+    service                 Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ContactEnquiry_serviceId_fkey", index: false)
+
+    @@index([assigneeId], map: "ContactEnquiry_assigneeId_idx")
+    @@index([bookingReference], map: "ContactEnquiry_bookingReference_idx")
+    @@index([enquiryType], map: "ContactEnquiry_enquiryType_idx")
+    @@index([publicReference], map: "ContactEnquiry_publicReference_key", unique: true)
+    @@index([status], map: "ContactEnquiry_status_idx")
+  @@map("ContactEnquiry")
+}
+
+  model EmployeePermission {
+    id            String        @id(map: "EmployeePermission_pkey")
+    employeeId    String
+    permissionKey String
+    effect        String
+    grantedById   String?
+    grantedAt     TimestampString(3)  @default(now())
+    expiresAt     TimestampString(3)?
+    employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeePermission_employeeId_fkey")
+
+    @@index([employeeId], map: "EmployeePermission_employeeId_idx")
+    @@index([employeeId, permissionKey], map: "EmployeePermission_employeeId_permissionKey_key", unique: true)
+    @@index([permissionKey], map: "EmployeePermission_permissionKey_idx")
+  @@map("EmployeePermission")
+}
+
+  model EmployeePortfolioItem {
+    id          String       @id(map: "EmployeePortfolioItem_pkey")
+    employeeId  String
+    title       String
+    slug        String?
+    category    String?
+    summary     String
+    description String?
+    imageUrl    String?
+    projectUrl  String?
+    repoUrl     String?
+    techStack   String[]?     @default([]) @noCheck(elementNotNull)
+    featured    Boolean      @default(false)
+    published   Boolean      @default(true)
+    order       Int          @default(0)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeePortfolioItem_employeeId_fkey", index: false)
+
+    @@index([employeeId, published], map: "EmployeePortfolioItem_employeeId_published_idx")
+  @@map("EmployeePortfolioItem")
+}
+
+  model EmployeeProfileStat {
+    id         String       @id(map: "EmployeeProfileStat_pkey")
+    employeeId String
+    label      String
+    value      Int
+    suffix     String       @default("")
+    order      Int          @default(0)
+    published  Boolean      @default(true)
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeeProfileStat_employeeId_fkey", index: false)
+
+    @@index([employeeId, published], map: "EmployeeProfileStat_employeeId_published_idx")
+  @@map("EmployeeProfileStat")
+}
+
+  model EmployeeRoleAssignment {
+    id         String       @id(map: "EmployeeRoleAssignment_pkey")
+    employeeId String
+    roleId     String
+    createdAt  TimestampString(3) @default(now())
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeeRoleAssignment_employeeId_fkey")
+    role       AppRole      @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeeRoleAssignment_roleId_fkey")
+
+    @@index([employeeId], map: "EmployeeRoleAssignment_employeeId_idx")
+    @@index([employeeId, roleId], map: "EmployeeRoleAssignment_employeeId_roleId_key", unique: true)
+    @@index([roleId], map: "EmployeeRoleAssignment_roleId_idx")
+  @@map("EmployeeRoleAssignment")
+}
+
+  model Faq {
+    id        String       @id(map: "Faq_pkey")
+    question  String
+    answer    String
+    category  String       @default("General")
+    order     Int          @default(0)
+    published Boolean      @default(true)
+    createdAt TimestampString(3) @default(now())
+    updatedAt TimestampString(3)
+  @@map("Faq")
+}
+
+  model ProjectComment {
+    id         String                            @id(map: "ProjectComment_pkey")
+    projectId  String
+    authorId   String?
+    clientId   String?
+    body       String
+    visibility pg.enum(ProjectCommentVisibility) @default("CLIENT")
+    createdAt  TimestampString(3)                      @default(now())
+    updatedAt  TimestampString(3)
+    files      File[]
+    author     Employee?                         @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProjectComment_authorId_fkey", index: false)
+    project    ClientProject                     @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProjectComment_projectId_fkey")
+
+    @@index([projectId], map: "ProjectComment_projectId_idx")
+    @@index([visibility], map: "ProjectComment_visibility_idx")
+  @@map("ProjectComment")
+}
+
+  model ProjectDeliverable {
+    id          String                     @id(map: "ProjectDeliverable_pkey")
+    projectId   String
+    title       String
+    description String?
+    status      pg.enum(DeliverableStatus) @default("DRAFT")
+    sharedAt    TimestampString(3)?
+    acceptedAt  TimestampString(3)?
+    createdAt   TimestampString(3)               @default(now())
+    updatedAt   TimestampString(3)
+    files       File[]
+    project     ClientProject              @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProjectDeliverable_projectId_fkey")
+
+    @@index([projectId], map: "ProjectDeliverable_projectId_idx")
+    @@index([status], map: "ProjectDeliverable_status_idx")
+  @@map("ProjectDeliverable")
+}
+
+  model File {
+    id              String              @id(map: "File_pkey")
+    bookingId       String?
+    ownerType       String
+    ownerId         String?
+    filename        String
+    url             String
+    mime            String
+    size            Int
+    uploadedBy      String?
+    createdAt       TimestampString(3)        @default(now())
+    metadata        Jsonb?
+    clientProjectId String?
+    deliverableId   String?
+    commentId       String?
+    booking         Booking?            @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "File_bookingId_fkey", index: false)
+    clientProject   ClientProject?      @relation(fields: [clientProjectId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "File_clientProjectId_fkey", index: false)
+    comment         ProjectComment?     @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "File_commentId_fkey", index: false)
+    deliverable     ProjectDeliverable? @relation(fields: [deliverableId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "File_deliverableId_fkey", index: false)
+  @@map("File")
+}
+
+  model HomePageSection {
+    id          String       @id(map: "HomePageSection_pkey")
+    sectionId   String
+    title       String
+    visible     Boolean      @default(true)
+    order       Int          @default(0)
+    settings    Jsonb?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    component   String?
+    description String?
+
+    @@index([sectionId], map: "HomePageSection_sectionId_key", unique: true)
+  @@map("HomePageSection")
+}
+
+  model Industry {
+    id          String       @id(map: "Industry_pkey")
+    name        String
+    slug        String
+    description String?
+    icon        String?
+    sortOrder   Int          @default(0)
+    active      Boolean      @default(true)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([active], map: "Industry_active_idx")
+    @@index([slug], map: "Industry_slug_key", unique: true)
+    @@index([sortOrder], map: "Industry_sortOrder_idx")
+  @@map("Industry")
+}
+
+  model JobPosting {
+    id                      String                    @id(map: "JobPosting_pkey")
+    title                   String
+    slug                    String
+    department              String?
+    location                String                    @default("Nairobi, Kenya")
+    _type                   String                    @default("full-time") @map("type")
+    description             String
+    requirements            String[]                  @noCheck(elementNotNull)
+    benefits                String[]                  @noCheck(elementNotNull)
+    salaryRange             String?
+    published               Boolean                   @default(false)
+    expiresAt               TimestampString(3)?
+    createdAt               TimestampString(3)              @default(now())
+    updatedAt               TimestampString(3)
+    applicationDeadline     TimestampString(3)?
+    employmentType          String?
+    experienceLevel         String?
+    featured                Boolean                   @default(false)
+    openings                Int?                      @default(1)
+    preferredQualifications String[]?                  @default([]) @noCheck(elementNotNull)
+    publishedAt             TimestampString(3)?
+    responsibilities        String[]?                  @default([]) @noCheck(elementNotNull)
+    salaryCurrency          String                    @default("KES")
+    salaryMax               Int?
+    salaryMin               Int?
+    salaryVisibility        pg.enum(SalaryVisibility) @default("RANGE")
+    status                  pg.enum(JobStatus)        @default("DRAFT")
+    summary                 String?
+    technologies            String[]?                  @default([]) @noCheck(elementNotNull)
+    workplaceType           String?
+
+    @@index([department], map: "JobPosting_department_idx")
+    @@index([featured], map: "JobPosting_featured_idx")
+    @@index([slug], map: "JobPosting_slug_key", unique: true)
+    @@index([status], map: "JobPosting_status_idx")
+  @@map("JobPosting")
+}
+
+  model Lead {
+    id           String       @id(map: "Lead_pkey")
+    name         String
+    email        String
+    phone        String?
+    source       String?
+    status       String       @default("new")
+    notes        String?
+    assignedToId String?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+  @@map("Lead")
+}
+
+  model Newsletter {
+    id             String        @id(map: "Newsletter_pkey")
+    subject        String
+    body           String
+    htmlBody       String?
+    status         String        @default("draft")
+    scheduledAt    TimestampString(3)?
+    sentAt         TimestampString(3)?
+    recipientCount Int           @default(0)
+    openCount      Int           @default(0)
+    clickCount     Int           @default(0)
+    authorId       String?
+    createdAt      TimestampString(3)  @default(now())
+  @@map("Newsletter")
+}
+
+  model Note {
+    id        String       @id(map: "Note_pkey")
+    bookingId String
+    authorId  String?
+    text      String
+    createdAt TimestampString(3) @default(now())
+    booking   Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Note_bookingId_fkey", index: false)
+  @@map("Note")
+}
+
+  model Notification {
+    id        String       @id(map: "Notification_pkey")
+    userId    String
+    userType  String       @default("employee")
+    _type     String       @map("type")
+    title     String
+    message   String
+    link      String?
+    read      Boolean      @default(false)
+    meta      Jsonb?
+    createdAt TimestampString(3) @default(now())
+
+    @@index([createdAt], map: "Notification_createdAt_idx")
+    @@index([userId, read], map: "Notification_userId_read_idx")
+  @@map("Notification")
+}
+
+  model PageView {
+    id        String       @id(map: "PageView_pkey")
+    path      String
+    referrer  String?
+    userAgent String?
+    ip        String?
+    sessionId String?
+    createdAt TimestampString(3) @default(now())
+
+    @@index([path, createdAt], map: "PageView_path_createdAt_idx")
+  @@map("PageView")
+}
+
+  model Payment {
+    id         String                   @id(map: "Payment_pkey")
+    bookingId  String?
+    clientId   String?
+    amount     Float
+    currency   String                   @default("KES")
+    provider   pg.enum(PaymentProvider)
+    providerId String
+    status     pg.enum(PaymentStatus)
+    metadata   Jsonb?
+    createdAt  TimestampString(3)             @default(now())
+    updatedAt  TimestampString(3)
+    reference  String?
+    channelId  String?
+    booking    Booking?                 @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Payment_bookingId_fkey")
+
+    @@index([bookingId], map: "Payment_bookingId_idx")
+    @@index([clientId], map: "Payment_clientId_idx")
+    @@index([createdAt], map: "Payment_createdAt_idx")
+    @@index([providerId], map: "Payment_providerId_key", unique: true)
+    @@index([provider], map: "Payment_provider_idx")
+    @@index([provider, status, createdAt], map: "Payment_provider_status_createdAt_idx")
+    @@index([reference], map: "Payment_reference_key", unique: true)
+    @@index([status], map: "Payment_status_idx")
+  @@map("Payment")
+}
+
+  model PaymentChannel {
+    id                String       @id(map: "PaymentChannel_pkey")
+    provider          String       @default("PAYHERO")
+    providerChannelId String?
+    channelType       String
+    shortCode         String?
+    accountNumber     String?
+    accountId         String?
+    transactionType   String?
+    description       String?
+    isActive          Boolean      @default(true)
+    idempotencyKey    String?
+    meta              Jsonb?
+    createdAt         TimestampString(3) @default(now())
+    updatedAt         TimestampString(3)
+
+    @@index([channelType], map: "PaymentChannel_channelType_idx")
+    @@index([idempotencyKey], map: "PaymentChannel_idempotencyKey_key", unique: true)
+    @@index([providerChannelId], map: "PaymentChannel_providerChannelId_key", unique: true)
+    @@index([provider, isActive], map: "PaymentChannel_provider_isActive_idx")
+  @@map("PaymentChannel")
+}
+
+  model PaymentWallet {
+    id         String        @id(map: "PaymentWallet_pkey")
+    provider   String        @default("PAYHERO")
+    walletType String
+    balance    Float         @default(0)
+    name       String?
+    meta       Jsonb?
+    syncedAt   TimestampString(3)?
+    createdAt  TimestampString(3)  @default(now())
+    updatedAt  TimestampString(3)
+
+    @@index([provider, walletType], map: "PaymentWallet_provider_walletType_key", unique: true)
+  @@map("PaymentWallet")
+}
+
+  model Payout {
+    id                String        @id(map: "Payout_pkey")
+    provider          String        @default("PAYHERO")
+    reference         String
+    providerReference String?
+    amount            Float
+    currency          String        @default("KES")
+    channel           String
+    phoneNumber       String?
+    accountNumber     String?
+    networkCode       String?
+    status            String        @default("PENDING")
+    metadata          Jsonb?
+    completedAt       TimestampString(3)?
+    createdAt         TimestampString(3)  @default(now())
+    updatedAt         TimestampString(3)
+
+    @@index([createdAt], map: "Payout_createdAt_idx")
+    @@index([provider], map: "Payout_provider_idx")
+    @@index([provider, status], map: "Payout_provider_status_idx")
+    @@index([reference], map: "Payout_reference_key", unique: true)
+    @@index([status, createdAt], map: "Payout_status_createdAt_idx")
+    @@index([status], map: "Payout_status_idx")
+  @@map("Payout")
+}
+
+  model Permission {
+    id              String           @id(map: "Permission_pkey")
+    key             String
+    description     String?
+    createdAt       TimestampString(3)     @default(now())
+    updatedAt       TimestampString(3)
+    rolePermissions RolePermission[]
+
+    @@index([key], map: "Permission_key_key", unique: true)
+  @@map("Permission")
+}
+
+  model PermissionPreset {
+    id             String       @id(map: "PermissionPreset_pkey")
+    key            String
+    name           String
+    description    String?
+    permissionKeys String[]?     @default([]) @noCheck(elementNotNull)
+    createdAt      TimestampString(3) @default(now())
+    updatedAt      TimestampString(3)
+
+    @@index([key], map: "PermissionPreset_key_key", unique: true)
+  @@map("PermissionPreset")
+}
+
+  model PrismaMigrations {
+    id                VarChar(36)  @id(map: "_prisma_migrations_pkey")
+    checksum          VarChar(64)
+    finishedAt        Timestamptz? @map("finished_at")
+    migrationName     VarChar(255) @map("migration_name")
+    logs              String?
+    rolledBackAt      Timestamptz? @map("rolled_back_at")
+    startedAt         Timestamptz  @default(now()) @map("started_at")
+    appliedStepsCount Int          @default(0) @map("applied_steps_count")
+
+    @@map("_prisma_migrations")
+  }
+
+  model ProductFaq {
+    id        String       @id(map: "ProductFaq_pkey")
+    productId String
+    question  String
+    answer    String
+    order     Int          @default(0)
+    published Boolean      @default(true)
+    createdAt TimestampString(3) @default(now())
+    updatedAt TimestampString(3)
+    product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProductFaq_productId_fkey")
+
+    @@index([productId], map: "ProductFaq_productId_idx")
+  @@map("ProductFaq")
+}
+
+  model ProductInquiry {
+    id        String       @id(map: "ProductInquiry_pkey")
+    productId String
+    clientId  String?
+    name      String
+    email     String
+    phone     String?
+    message   String
+    status    String       @default("new")
+    createdAt TimestampString(3) @default(now())
+    updatedAt TimestampString(3)
+    client    Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProductInquiry_clientId_fkey", index: false)
+    product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProductInquiry_productId_fkey")
+
+    @@index([productId], map: "ProductInquiry_productId_idx")
+    @@index([status], map: "ProductInquiry_status_idx")
+  @@map("ProductInquiry")
+}
+
+  model ProductTeamMember {
+    id            String       @id(map: "ProductTeamMember_pkey")
+    productId     String
+    employeeId    String
+    roleInProduct String?
+    createdAt     TimestampString(3) @default(now())
+    employee      Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProductTeamMember_employeeId_fkey")
+    product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProductTeamMember_productId_fkey")
+
+    @@index([employeeId], map: "ProductTeamMember_employeeId_idx")
+    @@index([productId, employeeId], map: "ProductTeamMember_productId_employeeId_key", unique: true)
+    @@index([productId], map: "ProductTeamMember_productId_idx")
+  @@map("ProductTeamMember")
+}
+
+  model Project {
+    id                String            @id(map: "Project_pkey")
+    title             String
+    slug              String
+    description       String
+    _type             String            @map("type")
+    images            String[]?          @noCheck(elementNotNull)
+    demoUrl           String?
+    repoUrl           String?
+    techStack         String[]?          @noCheck(elementNotNull)
+    authorId          String?
+    published         Boolean           @default(false)
+    createdAt         TimestampString(3)      @default(now())
+    updatedAt         TimestampString(3)
+    industry          String?
+    featured          Boolean           @default(false)
+    seoTitle          String?
+    seoDesc           String?
+    projectActivities ProjectActivity[]
+    projectEmployees  ProjectEmployee[]
+    author            Employee?         @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Project_authorId_fkey", index: false)
+
+    @@index([slug], map: "Project_slug_key", unique: true)
+  @@map("Project")
+}
+
+  model ProjectActivity {
+    id                 String                       @id(map: "ProjectActivity_pkey")
+    actorId            String?
+    _type              pg.enum(ProjectActivityType) @map("type")
+    message            String
+    meta               Jsonb?
+    visibleToClient    Boolean                      @default(true)
+    createdAt          TimestampString(3)                 @default(now())
+    clientProjectId    String?
+    portfolioProjectId String?
+    actor              Employee?                    @relation(fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProjectActivity_actorId_fkey", index: false)
+    clientProject      ClientProject?               @relation(fields: [clientProjectId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProjectActivity_clientProjectId_fkey")
+    portfolioProject   Project?                     @relation(fields: [portfolioProjectId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProjectActivity_portfolioProjectId_fkey")
+
+    @@index([clientProjectId], map: "ProjectActivity_clientProjectId_idx")
+    @@index([createdAt], map: "ProjectActivity_createdAt_idx")
+    @@index([portfolioProjectId], map: "ProjectActivity_portfolioProjectId_idx")
+  @@map("ProjectActivity")
+}
+
+  model ProjectEmployee {
+    id         String       @id(map: "ProjectEmployee_pkey")
+    projectId  String
+    employeeId String
+    role       String?
+    createdAt  TimestampString(3) @default(now())
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProjectEmployee_employeeId_fkey", index: false)
+    project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProjectEmployee_projectId_fkey", index: false)
+
+    @@index([projectId, employeeId], map: "ProjectEmployee_projectId_employeeId_key", unique: true)
+  @@map("ProjectEmployee")
+}
+
+  model ProjectMilestone {
+    id          String                   @id(map: "ProjectMilestone_pkey")
+    projectId   String
+    title       String
+    description String?
+    status      pg.enum(MilestoneStatus) @default("TODO")
+    sortOrder   Int                      @default(0)
+    dueAt       TimestampString(3)?
+    completedAt TimestampString(3)?
+    createdAt   TimestampString(3)             @default(now())
+    updatedAt   TimestampString(3)
+    project     ClientProject            @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProjectMilestone_projectId_fkey")
+
+    @@index([projectId], map: "ProjectMilestone_projectId_idx")
+    @@index([status], map: "ProjectMilestone_status_idx")
+  @@map("ProjectMilestone")
+}
+
+  model RefreshToken {
+    id          String       @id(map: "RefreshToken_pkey")
+    token       String
+    employeeId  String
+    expiresAt   TimestampString(3)
+    createdAt   TimestampString(3) @default(now())
+    ip          String?
+    userAgent   String?
+    fingerprint String?
+    revoked     Boolean      @default(false)
+    employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "RefreshToken_employeeId_fkey", index: false)
+
+    @@index([token], map: "RefreshToken_token_key", unique: true)
+  @@map("RefreshToken")
+}
+
+  model Testimonial {
+    id              String           @id(map: "Testimonial_pkey")
+    name            String
+    company         String?
+    role            String?
+    text            String
+    rating          Int?
+    imageUrl        String?
+    confirmed       Boolean          @default(false)
+    createdAt       TimestampString(3)     @default(now())
+    updatedAt       TimestampString(3)
+    videoUrl        String?
+    location        String?
+    projectType     String?
+    productId       String?
+    featured        Boolean          @default(false)
+    rejected        Boolean          @default(false)
+    rejectionReason String?
+    adminReply      String?
+    helpfulCount    Int              @default(0)
+    reviewReactions ReviewReaction[]
+  @@map("Testimonial")
+}
+
+  model ReviewReaction {
+    id            String       @id(map: "ReviewReaction_pkey")
+    testimonialId String
+    visitorKey    String
+    _type         String       @default("helpful") @map("type")
+    createdAt     TimestampString(3) @default(now())
+    testimonial   Testimonial  @relation(fields: [testimonialId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ReviewReaction_testimonialId_fkey", index: false)
+
+    @@index([testimonialId, visitorKey], map: "ReviewReaction_testimonialId_visitorKey_key", unique: true)
+  @@map("ReviewReaction")
+}
+
+  model RolePermission {
+    roleId       String
+    permissionId String
+    permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "RolePermission_permissionId_fkey", index: false)
+    role         AppRole    @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "RolePermission_roleId_fkey", index: false)
+
+    @@id([roleId, permissionId], map: "RolePermission_pkey")
+  @@map("RolePermission")
+}
+
+  model Setting {
+    key       String       @id(map: "Setting_pkey")
+    value     Jsonb
+    updatedAt TimestampString(3)
+  @@map("Setting")
+}
+
+  model Solution {
+    id          String       @id(map: "Solution_pkey")
+    name        String
+    slug        String
+    description String?
+    icon        String?
+    sortOrder   Int          @default(0)
+    active      Boolean      @default(true)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([active], map: "Solution_active_idx")
+    @@index([slug], map: "Solution_slug_key", unique: true)
+    @@index([sortOrder], map: "Solution_sortOrder_idx")
+  @@map("Solution")
+}
+
+  model StaffBlog {
+    id         String       @id(map: "StaffBlog_pkey")
+    employeeId String
+    title      String
+    slug       String
+    content    String
+    coverImage String?
+    tags       String[]     @default([]) @noCheck(elementNotNull)
+    published  Boolean      @default(false)
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "StaffBlog_employeeId_fkey")
+
+    @@index([employeeId], map: "StaffBlog_employeeId_idx")
+    @@index([slug], map: "StaffBlog_slug_key", unique: true)
+  @@map("StaffBlog")
+}
+
+  model Subscriber {
+    id                    String                 @id(map: "Subscriber_pkey")
+    email                 String
+    name                  String?
+    confirmed             Boolean                @default(false)
+    confirmToken          String?
+    unsubToken            String
+    subscribedAt          TimestampString(3)           @default(now())
+    confirmedAt           TimestampString(3)?
+    unsubscribedAt        TimestampString(3)?
+    subscriberPreferences SubscriberPreference[]
+
+    @@index([confirmToken], map: "Subscriber_confirmToken_key", unique: true)
+    @@index([email], map: "Subscriber_email_key", unique: true)
+    @@index([unsubToken], map: "Subscriber_unsubToken_key", unique: true)
+  @@map("Subscriber")
+}
+
+  model SubscriberPreference {
+    id           String       @id(map: "SubscriberPreference_pkey")
+    subscriberId String
+    tag          String
+    createdAt    TimestampString(3) @default(now())
+    subscriber   Subscriber   @relation(fields: [subscriberId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "SubscriberPreference_subscriberId_fkey", index: false)
+
+    @@index([subscriberId, tag], map: "SubscriberPreference_subscriberId_tag_key", unique: true)
+  @@map("SubscriberPreference")
+}
+
+  model SupportTicket {
+    id             String          @id(map: "SupportTicket_pkey")
+    clientId       String?
+    subject        String
+    body           String
+    status         String          @default("open")
+    priority       String          @default("normal")
+    assignedToId   String?
+    createdAt      TimestampString(3)    @default(now())
+    updatedAt      TimestampString(3)
+    ticketMessages TicketMessage[]
+    client         Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "SupportTicket_clientId_fkey", index: false)
+  @@map("SupportTicket")
+}
+
+  model Survey {
+    id              String           @id(map: "Survey_pkey")
+    title           String
+    description     String?
+    audience        String           @default("clients")
+    status          String           @default("draft")
+    questions       Jsonb
+    publishedAt     TimestampString(3)?
+    closedAt        TimestampString(3)?
+    createdAt       TimestampString(3)     @default(now())
+    surveyResponses SurveyResponse[]
+  @@map("Survey")
+}
+
+  model SurveyResponse {
+    id           String       @id(map: "SurveyResponse_pkey")
+    surveyId     String
+    respondentId String?
+    answers      Jsonb
+    createdAt    TimestampString(3) @default(now())
+    survey       Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "SurveyResponse_surveyId_fkey")
+
+    @@index([surveyId], map: "SurveyResponse_surveyId_idx")
+  @@map("SurveyResponse")
+}
+
+  model TicketMessage {
+    id        String        @id(map: "TicketMessage_pkey")
+    ticketId  String
+    authorId  String?
+    body      String
+    internal  Boolean       @default(false)
+    createdAt TimestampString(3)  @default(now())
+    ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "TicketMessage_ticketId_fkey", index: false)
+  @@map("TicketMessage")
+}
+
+  model TwoFactorBackupCode {
+    id         String       @id(map: "TwoFactorBackupCode_pkey")
+    employeeId String
+    codeHash   String
+    used       Boolean      @default(false)
+    createdAt  TimestampString(3) @default(now())
+    employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "TwoFactorBackupCode_employeeId_fkey", index: false)
+  @@map("TwoFactorBackupCode")
+}
+
+  native_enum BookingStatus {
+    SUBMITTED = "SUBMITTED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    TERMS_ACCEPTED = "TERMS_ACCEPTED"
+    DEPOSIT_PAID = "DEPOSIT_PAID"
+    IN_PROGRESS = "IN_PROGRESS"
+    DELIVERED = "DELIVERED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+  }
+
+  native_enum ClientProjectStatus {
+    PLANNING = "PLANNING"
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    DELIVERED = "DELIVERED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+  }
+
+  native_enum DeliverableStatus {
+    DRAFT = "DRAFT"
+    SHARED = "SHARED"
+    ACCEPTED = "ACCEPTED"
+    REVISION_REQUESTED = "REVISION_REQUESTED"
+  }
+
+  native_enum JobStatus {
+    DRAFT = "DRAFT"
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+    FILLED = "FILLED"
+    ON_HOLD = "ON_HOLD"
+    ARCHIVED = "ARCHIVED"
+  }
+
+  native_enum MilestoneStatus {
+    TODO = "TODO"
+    IN_PROGRESS = "IN_PROGRESS"
+    BLOCKED = "BLOCKED"
+    COMPLETED = "COMPLETED"
+  }
+
+  native_enum PaymentProvider {
+    STRIPE = "STRIPE"
+    PAYPAL = "PAYPAL"
+    MPESA = "MPESA"
+    OTHER = "OTHER"
+    PAYSTACK = "PAYSTACK"
+    PAYHERO = "PAYHERO"
+  }
+
+  native_enum PaymentStatus {
+    PENDING = "PENDING"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+  }
+
+  native_enum ProductStatus {
+    PLANNED = "PLANNED"
+    DEVELOPMENT = "DEVELOPMENT"
+    BETA = "BETA"
+    LIVE = "LIVE"
+    MAINTENANCE = "MAINTENANCE"
+    DEPRECATED = "DEPRECATED"
+  }
+
+  native_enum ProfileVisibility {
+    PRIVATE = "PRIVATE"
+    INTERNAL = "INTERNAL"
+    PUBLIC = "PUBLIC"
+  }
+
+  native_enum ProjectActivityType {
+    PROJECT_CREATED = "PROJECT_CREATED"
+    STATUS_CHANGED = "STATUS_CHANGED"
+    PROGRESS_UPDATED = "PROGRESS_UPDATED"
+    MILESTONE_CREATED = "MILESTONE_CREATED"
+    MILESTONE_UPDATED = "MILESTONE_UPDATED"
+    COMMENT_ADDED = "COMMENT_ADDED"
+    FILE_UPLOADED = "FILE_UPLOADED"
+    DELIVERABLE_ADDED = "DELIVERABLE_ADDED"
+    DELIVERABLE_ACCEPTED = "DELIVERABLE_ACCEPTED"
+  }
+
+  native_enum ProjectCommentVisibility {
+    INTERNAL = "INTERNAL"
+    CLIENT = "CLIENT"
+  }
+
+  native_enum ProjectType {
+    SOFTWARE = "SOFTWARE"
+    RESUME = "RESUME"
+    DOCUMENT_EDIT = "DOCUMENT_EDIT"
+    REPORT = "REPORT"
+    OTHER = "OTHER"
+    DATA_ANALYSIS = "DATA_ANALYSIS"
+    CYBER_SERVICE = "CYBER_SERVICE"
+    ADVERTISING = "ADVERTISING"
+    INTERNET_SERVICE = "INTERNET_SERVICE"
+    ENTERTAINMENT = "ENTERTAINMENT"
+  }
+
+  native_enum Role {
+    ADMIN = "ADMIN"
+    MARKETING = "MARKETING"
+    DEVELOPER = "DEVELOPER"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    MANAGER = "MANAGER"
+    HR = "HR"
+    STAFF = "STAFF"
+    CONTENT_CREATOR = "CONTENT_CREATOR"
+    BLOG_MANAGER = "BLOG_MANAGER"
+  }
+
+  native_enum SalaryVisibility {
+    HIDDEN = "HIDDEN"
+    RANGE = "RANGE"
+    EXACT = "EXACT"
+  }
+}

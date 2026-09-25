@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { Prisma } from '@prisma/client';
 
-// Reuse the app's already-configured Prisma client (Neon driver adapter),
-// which is the single source of truth for the database connection.
+// Reuse the app's already-configured Prisma 8 client (the single source of
+// truth for the database connection) plus its write helpers.
 import prisma from '../src/db';
+import { ts, newId } from '../src/prisma/db';
 
 // Optional pre-generated About-page default content. When present, it seeds the
 // canonical 26-key contract described by the frontend hook. Regenerate with:
@@ -41,29 +41,29 @@ async function main() {
     const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
     const hash = await bcrypt.hash(password, 10);
 
-    const existing = await prisma.employee.findUnique({ where: { email: 'admin@angisoft.co.ke' } });
+    const existing = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
     if (!existing) {
-        await prisma.employee.create({
-            data: {
-                firstName: 'Super',
-                lastName: 'Admin',
-                email: 'admin@angisoft.co.ke',
-                role: 'SUPER_ADMIN',
-                username: 'super-admin',
-                passwordHash: hash,
-                twoFactorEnabled: false,
-                twoFactorSecret: null,
-                acceptedAt: new Date(),
-                bio: 'System Administrator for AngiSoft Technologies. Innovate \u2022 Build \u2022 Empower.',
-                phone: '+254710398690'
-            }
+        await prisma.orm.public.Employee.create({
+            id: newId(),
+            firstName: 'Super',
+            lastName: 'Admin',
+            email: 'admin@angisoft.co.ke',
+            role: 'SUPER_ADMIN',
+            username: 'super-admin',
+            passwordHash: hash,
+            twoFactorEnabled: false,
+            twoFactorSecret: null,
+            acceptedAt: ts(),
+            bio: 'System Administrator for AngiSoft Technologies. Innovate \u2022 Build \u2022 Empower.',
+            phone: '+254710398690',
+            updatedAt: ts()
         });
         console.log('✅ Admin user created (email: admin@angisoft.co.ke, password: from ADMIN_PASSWORD env or default)');
     } else {
         console.log('ℹ️  Admin user already exists');
     }
 
-    const admin = await prisma.employee.findUnique({ where: { email: 'admin@angisoft.co.ke' } });
+    const admin = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
     const overwritePublicContent = process.env.SEED_OVERWRITE_PUBLIC_CONTENT === 'true';
 
     const permissionKeys = [
@@ -75,10 +75,16 @@ async function main() {
     ];
 
     for (const key of permissionKeys) {
-        await prisma.permission.upsert({
-            where: { key },
-            update: {},
-            create: { key, description: key.replace(/\./g, ' ') }
+        await prisma.transaction(async (tx) => {
+            const existingPermission = await tx.orm.public.Permission.where({ key }).first();
+            if (!existingPermission) {
+                await tx.orm.public.Permission.create({
+                    id: newId(),
+                    key,
+                    description: key.replace(/\./g, ' '),
+                    updatedAt: ts()
+                });
+            }
         });
     }
 
@@ -94,35 +100,72 @@ async function main() {
     ];
 
     for (const definition of roleDefinitions) {
-        const role = await prisma.appRole.upsert({
-            where: { key: definition.key },
-            update: { name: definition.name, description: definition.description, system: true },
-            create: { key: definition.key, name: definition.name, description: definition.description, system: true }
+        const role = await prisma.transaction(async (tx) => {
+            const existingRole = await tx.orm.public.AppRole.where({ key: definition.key }).first();
+            if (existingRole) {
+                return tx.orm.public.AppRole.where({ key: definition.key }).update({
+                    name: definition.name,
+                    description: definition.description,
+                    system: true,
+                    updatedAt: ts()
+                });
+            }
+            return tx.orm.public.AppRole.create({
+                id: newId(),
+                key: definition.key,
+                name: definition.name,
+                description: definition.description,
+                system: true,
+                updatedAt: ts()
+            });
         });
-        const permissions = await prisma.permission.findMany({ where: { key: { in: definition.permissions } } });
-        await prisma.rolePermission.createMany({
-            data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
-            skipDuplicates: true
-        });
+        if (!role) continue;
+        const permissions = await prisma.orm.public.Permission
+            .where((p) => p.key.in(definition.permissions))
+            .all();
+        for (const permission of permissions) {
+            await prisma.transaction(async (tx) => {
+                const existingAssignment = await tx.orm.public.RolePermission
+                    .where({ roleId: role.id, permissionId: permission.id })
+                    .first();
+                if (!existingAssignment) {
+                    await tx.orm.public.RolePermission.create({
+                        roleId: role.id,
+                        permissionId: permission.id
+                    });
+                }
+            });
+        }
     }
 
     if (admin) {
-        const superRole = await prisma.appRole.findUnique({ where: { key: 'SUPER_ADMIN' } });
+        const superRole = await prisma.orm.public.AppRole.where({ key: 'SUPER_ADMIN' }).first();
         if (superRole) {
-            await prisma.employeeRoleAssignment.upsert({
-                where: { employeeId_roleId: { employeeId: admin.id, roleId: superRole.id } },
-                update: {},
-                create: { employeeId: admin.id, roleId: superRole.id }
+            await prisma.transaction(async (tx) => {
+                const existingAssignment = await tx.orm.public.EmployeeRoleAssignment
+                    .where((a) => a.employeeId.eq(admin.id))
+                    .where((a) => a.roleId.eq(superRole.id))
+                    .first();
+                if (!existingAssignment) {
+                    await tx.orm.public.EmployeeRoleAssignment.create({
+                        id: newId(),
+                        employeeId: admin.id,
+                        roleId: superRole.id
+                    });
+                }
             });
         }
     }
     console.log('✅ RBAC roles and permissions seeded');
 
     const seedSetting = async (key: string, value: any) => {
-        await prisma.setting.upsert({
-            where: { key },
-            update: overwritePublicContent ? { value } : {},
-            create: { key, value }
+        await prisma.transaction(async (tx) => {
+            const existingSetting = await tx.orm.public.Setting.where({ key }).first();
+            if (!existingSetting) {
+                await tx.orm.public.Setting.create({ key, value, updatedAt: ts() });
+            } else if (overwritePublicContent) {
+                await tx.orm.public.Setting.where({ key }).update({ value, updatedAt: ts() });
+            }
         });
     };
 
@@ -157,14 +200,32 @@ async function main() {
         };
         const seen = new Set<string>();
         let idx = 0;
+        const upsertAboutSection = async (key: string, sortOrder: number, updatePayload: Record<string, unknown> | null) => {
+            await prisma.transaction(async (tx) => {
+                const existingSection = await tx.orm.public.AboutSection.where({ key }).first();
+                if (!existingSection) {
+                    await tx.orm.public.AboutSection.create({
+                        id: newId(),
+                        key,
+                        title: titles[key] || key,
+                        sortOrder,
+                        enabled: true,
+                        content: about[key],
+                        updatedAt: ts()
+                    });
+                } else if (updatePayload) {
+                    await tx.orm.public.AboutSection.where({ key }).update({ ...updatePayload, updatedAt: ts() });
+                }
+            });
+        };
         for (const key of order) {
             if (!(key in about)) continue;
             seen.add(key);
-            await prisma.aboutSection.upsert({
-                where: { key },
-                update: overwritePublicContent ? { content: about[key], sortOrder: idx, title: titles[key] || key, enabled: true } : {},
-                create: { key, title: titles[key] || key, sortOrder: idx, enabled: true, content: about[key] }
-            });
+            await upsertAboutSection(
+                key,
+                idx,
+                overwritePublicContent ? { content: about[key], sortOrder: idx, title: titles[key] || key, enabled: true } : null
+            );
             idx += 1;
         }
         // Any keys in the canonical contract not yet seen still get seeded.
@@ -174,11 +235,7 @@ async function main() {
         const extra = (ABOUT_SECTION_KEYS.length ? ABOUT_SECTION_KEYS : Object.keys(about))
             .filter((k) => !seen.has(k) && k in about);
         for (const key of extra) {
-            await prisma.aboutSection.upsert({
-                where: { key },
-                update: overwritePublicContent ? { content: about[key], sortOrder: idx } : {},
-                create: { key, title: titles[key] || key, sortOrder: idx, enabled: true, content: about[key] }
-            });
+            await upsertAboutSection(key, idx, overwritePublicContent ? { content: about[key], sortOrder: idx } : null);
             idx += 1;
         }
     };
@@ -518,23 +575,27 @@ async function main() {
         }
     };
 
-    await prisma.setting.upsert({
-        where: { key: 'site_branding' },
-        update: { value: brandingValue },
-        create: {
-            key: 'site_branding',
-            value: brandingValue
+    await prisma.transaction(async (tx) => {
+        const existingBranding = await tx.orm.public.Setting.where({ key: 'site_branding' }).first();
+        if (existingBranding) {
+            await tx.orm.public.Setting.where({ key: 'site_branding' }).update({ value: brandingValue, updatedAt: ts() });
+        } else {
+            await tx.orm.public.Setting.create({
+                key: 'site_branding',
+                value: brandingValue,
+                updatedAt: ts()
+            });
         }
     });
     console.log('  ✅ Branding settings');
 
     // UI Copy (Headings, labels, CTAs)
-    await prisma.setting.upsert({
-        where: { key: 'site_ui' },
-        update: {},
-        create: {
-            key: 'site_ui',
-            value: {
+    await prisma.transaction(async (tx) => {
+        const existingUi = await tx.orm.public.Setting.where({ key: 'site_ui' }).first();
+        if (!existingUi) {
+            await tx.orm.public.Setting.create({
+                key: 'site_ui',
+                value: {
                 home: {
                     hero: {
                         welcomeLabel: 'Welcome to',
@@ -650,7 +711,9 @@ async function main() {
                         }
                     }
                 }
-            }
+                },
+                updatedAt: ts()
+            });
         }
     });
     console.log('  ✅ UI copy settings');
@@ -2000,28 +2063,34 @@ async function main() {
 
 
     for (const item of services) {
-        const category = await prisma.serviceCategory.upsert({
-            where: { slug: item.category.slug },
-            update: {
-                name: item.category.name,
-                description: item.category.description,
-                icon: item.category.icon,
-                order: item.category.order,
-                published: item.category.published
-            },
-            create: {
+        const category = await prisma.transaction(async (tx) => {
+            const existingCategory = await tx.orm.public.ServiceCategory.where({ slug: item.category.slug }).first();
+            if (existingCategory) {
+                return tx.orm.public.ServiceCategory.where({ slug: item.category.slug }).update({
+                    name: item.category.name,
+                    description: item.category.description,
+                    icon: item.category.icon,
+                    order: item.category.order,
+                    published: item.category.published,
+                    updatedAt: ts()
+                });
+            }
+            return tx.orm.public.ServiceCategory.create({
+                id: newId(),
                 name: item.category.name,
                 slug: item.category.slug,
                 description: item.category.description,
                 icon: item.category.icon,
                 order: item.category.order,
-                published: item.category.published
-            }
+                published: item.category.published,
+                updatedAt: ts()
+            });
         });
+        if (!category) continue;
 
-        await prisma.service.upsert({
-            where: { slug: item.service.slug },
-            update: {
+        await prisma.transaction(async (tx) => {
+            const existingService = await tx.orm.public.Service.where({ slug: item.service.slug }).first();
+            const serviceData = {
                 title: item.service.title,
                 description: item.service.description,
                 priceFrom: item.service.priceFrom,
@@ -2036,25 +2105,17 @@ async function main() {
                 featured: item.service.featured,
                 category: category.name,
                 categoryId: category.id,
-                authorId: admin?.id
-            },
-            create: {
-                title: item.service.title,
-                slug: item.service.slug,
-                description: item.service.description,
-                priceFrom: item.service.priceFrom,
-                currency: item.service.currency,
-                targetAudience: item.service.targetAudience,
-                scope: item.service.scope,
-                seoTitle: item.service.seoTitle,
-                seoDesc: item.service.seoDesc,
-                features: item.service.features,
-                images: item.service.images,
-                published: item.service.published,
-                featured: item.service.featured,
-                category: category.name,
-                categoryId: category.id,
-                authorId: admin?.id
+                authorId: admin?.id ?? null
+            };
+            if (existingService) {
+                await tx.orm.public.Service.where({ slug: item.service.slug }).update({ ...serviceData, updatedAt: ts() });
+            } else {
+                await tx.orm.public.Service.create({
+                    id: newId(),
+                    slug: item.service.slug,
+                    ...serviceData,
+                    updatedAt: ts()
+                });
             }
         });
     }
@@ -2076,7 +2137,7 @@ async function main() {
                 tags: ['Programming', 'Developers', 'Career Growth', 'Software Engineering', 'Africa'],
                 featured: true,
                 published: true,
-                publishedAt: new Date('2026-01-25'),
+                publishedAt: '2026-01-25T00:00:00.000Z',
 
                 content: `
 # How I Started Programming With Almost Nothing
@@ -2453,7 +2514,7 @@ That is how many real technology journeys begin.
                 ],
                 featured: true,
                 published: true,
-                publishedAt: new Date('2026-01-28'),
+                publishedAt: '2026-01-28T00:00:00.000Z',
 
                 content: `
 # The Complete Beginner Roadmap to Becoming a Mobile App Developer in 2026
@@ -2813,7 +2874,7 @@ That is how real developers grow.
                 ],
                 featured: true,
                 published: true,
-                publishedAt: new Date('2026-01-30'),
+                publishedAt: '2026-01-30T00:00:00.000Z',
 
                 content: `
 # Why Every Beginner Developer Must Learn Git and GitHub Early
@@ -3067,20 +3128,37 @@ The important thing is continuing to learn and build.
 
         for (const post of posts) {
             const { category, ...postData } = post;
-            const blogCategory = await prisma.blogCategory.upsert({
-                where: { slug: slugify(category) },
-                update: { name: category },
-                create: {
+            const blogCategory = await prisma.transaction(async (tx) => {
+                const existingCategory = await tx.orm.public.BlogCategory.where({ slug: slugify(category) }).first();
+                if (existingCategory) {
+                    return tx.orm.public.BlogCategory.where({ slug: slugify(category) }).update({ name: category });
+                }
+                return tx.orm.public.BlogCategory.create({
+                    id: newId(),
                     name: category,
                     slug: slugify(category),
                     description: `${category} articles and insights`
-                }
+                });
             });
+            if (!blogCategory) continue;
 
-            await prisma.blogPost.upsert({
-                where: { slug: post.slug },
-                update: { ...postData, authorId: admin.id, categoryId: blogCategory.id },
-                create: { ...postData, authorId: admin.id, categoryId: blogCategory.id }
+            await prisma.transaction(async (tx) => {
+                const existingPost = await tx.orm.public.BlogPost.where({ slug: post.slug }).first();
+                const postPayload = {
+                    ...postData,
+                    publishedAt: ts(postData.publishedAt),
+                    authorId: admin.id,
+                    categoryId: blogCategory.id
+                };
+                if (existingPost) {
+                    await tx.orm.public.BlogPost.where({ slug: post.slug }).update({ ...postPayload, updatedAt: ts() });
+                } else {
+                    await tx.orm.public.BlogPost.create({
+                        id: newId(),
+                        ...postPayload,
+                        updatedAt: ts()
+                    });
+                }
             });
         }
         console.log(`  ✅ ${posts.length} blog posts seeded`);
@@ -3158,9 +3236,15 @@ The important thing is continuing to learn and build.
     ];
 
     for (const testimonial of testimonials) {
-        const existing = await prisma.testimonial.findFirst({ where: { name: testimonial.name, company: testimonial.company } });
+        const existing = await prisma.orm.public.Testimonial
+            .where({ name: testimonial.name, company: testimonial.company })
+            .first();
         if (!existing) {
-            await prisma.testimonial.create({ data: testimonial });
+            await prisma.orm.public.Testimonial.create({
+                id: newId(),
+                updatedAt: ts(),
+                ...testimonial
+            });
         }
     }
     console.log(`  ✅ ${testimonials.length} authentic testimonial/story entries seeded`);
@@ -3224,15 +3308,15 @@ The important thing is continuing to learn and build.
     ];
 
     for (const member of staffMembers) {
-        const existing = await prisma.employee.findUnique({ where: { email: member.email } });
+        const existing = await prisma.orm.public.Employee.where({ email: member.email }).first();
         if (!existing) {
             const memberHash = await bcrypt.hash('Welcome123!', 10);
-            await prisma.employee.create({
-                data: {
-                    ...member,
-                    passwordHash: memberHash,
-                    acceptedAt: new Date()
-                }
+            await prisma.orm.public.Employee.create({
+                id: newId(),
+                updatedAt: ts(),
+                ...member,
+                passwordHash: memberHash,
+                acceptedAt: ts()
             });
         }
     }
@@ -3428,9 +3512,14 @@ The important thing is continuing to learn and build.
 
 
     for (const faq of faqs) {
-        const existing = await prisma.faq.findFirst({ where: { question: faq.question } });
+        const existing = await prisma.orm.public.Faq.where({ question: faq.question }).first();
         if (!existing) {
-            await prisma.faq.create({ data: { ...faq, published: true } });
+            await prisma.orm.public.Faq.create({
+                id: newId(),
+                updatedAt: ts(),
+                ...faq,
+                published: true
+            });
         }
     }
     console.log(`  ✅ ${faqs.length} FAQs seeded`);
@@ -3494,10 +3583,17 @@ The important thing is continuing to learn and build.
     ];
 
     for (const product of products) {
-        await prisma.product.upsert({
-            where: { slug: product.slug },
-            update: product,
-            create: product
+        await prisma.transaction(async (tx) => {
+            const existing = await tx.orm.public.Product.where({ slug: product.slug }).first();
+            if (existing) {
+                await tx.orm.public.Product.where({ slug: product.slug }).update({ ...product, updatedAt: ts() });
+            } else {
+                await tx.orm.public.Product.create({
+                    id: newId(),
+                    ...product,
+                    updatedAt: ts()
+                });
+            }
         });
     }
     console.log(`  ✅ ${products.length} products seeded`);
@@ -3544,9 +3640,13 @@ The important thing is continuing to learn and build.
     ];
 
     for (const stat of stats) {
-        const existing = await prisma.companyStat.findFirst({ where: { label: stat.label } });
+        const existing = await prisma.orm.public.CompanyStat.where({ label: stat.label }).first();
         if (!existing) {
-            await prisma.companyStat.create({ data: stat });
+            await prisma.orm.public.CompanyStat.create({
+                id: newId(),
+                updatedAt: ts(),
+                ...stat
+            });
         }
     }
     console.log(`  ✅ ${stats.length} company stats seeded`);
@@ -3576,7 +3676,7 @@ The important thing is continuing to learn and build.
     // Real, currently open roles. The public API filters status: 'OPEN',
     // so only these are visible on /careers. Replace with CMS-managed rows
     // as hiring needs change.
-    const jobs: Prisma.JobPostingCreateInput[] = [
+    const jobs = [
         {
             title: 'Flutter Mobile Developer',
             slug: 'flutter-mobile-developer',
@@ -3732,13 +3832,25 @@ The important thing is continuing to learn and build.
             benefits: ['Flexible Working', 'Learning and Development', 'Project Ownership', 'Fair Compensation'],
             published: true
         }
-    ];
+    ] as const;
 
     for (const job of jobs) {
-        await prisma.jobPosting.upsert({
-            where: { slug: job.slug },
-            update: job,
-            create: job
+        await prisma.transaction(async (tx) => {
+            const existing = await tx.orm.public.JobPosting.where({ slug: job.slug }).first();
+            const payload = {
+                ...job,
+                applicationDeadline: ts(job.applicationDeadline),
+                publishedAt: ts(job.publishedAt)
+            };
+            if (existing) {
+                await tx.orm.public.JobPosting.where({ slug: job.slug }).update({ ...payload, updatedAt: ts() });
+            } else {
+                await tx.orm.public.JobPosting.create({
+                    id: newId(),
+                    ...payload,
+                    updatedAt: ts()
+                });
+            }
         });
     }
     console.log(`  ✅ ${jobs.length} job postings seeded`);
@@ -3869,10 +3981,17 @@ The important thing is continuing to learn and build.
 
 
     for (const section of homeSections) {
-        await prisma.homePageSection.upsert({
-            where: { sectionId: section.sectionId },
-            update: section,
-            create: section
+        await prisma.transaction(async (tx) => {
+            const existing = await tx.orm.public.HomePageSection.where({ sectionId: section.sectionId }).first();
+            if (existing) {
+                await tx.orm.public.HomePageSection.where({ sectionId: section.sectionId }).update({ ...section, updatedAt: ts() });
+            } else {
+                await tx.orm.public.HomePageSection.create({
+                    id: newId(),
+                    ...section,
+                    updatedAt: ts()
+                });
+            }
         });
     }
     console.log(`  ✅ ${homeSections.length} home page sections seeded`);
@@ -3886,5 +4005,5 @@ main()
         process.exit(1);
     })
     .finally(async () => {
-        await prisma.$disconnect();
+        await prisma.close();
     });

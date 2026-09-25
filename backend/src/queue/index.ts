@@ -14,7 +14,7 @@
 
 import { Queue, Worker } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
-import { redisConnectionOptions } from '../services/redis';
+import { redisConnectionOptions } from '../shared/services/redis';
 
 interface QueueJob {
     id: string;

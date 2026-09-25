@@ -1,13 +1,14 @@
 import app from './app';
 import { validateDatabaseConnection, disconnectDatabase } from './db';
-import { initRealtime, closeRealtime } from './services/realtime';
-import { getAllowedOrigins } from './config/origins';
+import { initRealtime, closeRealtime } from './shared/services/realtime';
+import { getAllowedOrigins } from './shared/config/origins';
 import { startEmailWorker } from './workers/emailWorker';
 import { startFileProcessor } from './workers/fileProcessor';
 import { startReconciliationWorker } from './workers/reconciliationWorker';
 import { closeWorkers } from './queue';
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number.parseInt(process.env.PORT || '5000', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 
 async function bootstrap() {
   // Validate database connection before accepting traffic
@@ -17,8 +18,8 @@ async function bootstrap() {
     process.exit(1);
   }
 
-  const server = app.listen(PORT, () =>
-    console.log(`🚀 Server running on http://localhost:${PORT}`)
+  const server = app.listen(PORT, HOST, () =>
+    console.log(`🚀 Server running on http://${HOST}:${PORT}`)
   );
 
   // Realtime (Socket.IO) on the same HTTP server.

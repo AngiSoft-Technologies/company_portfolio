@@ -1,0 +1,19 @@
+{
+  "name": "@angisoft/utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vite": "^7.3.3",
+    "@types/node": "^22.15.0"
+  }
+}

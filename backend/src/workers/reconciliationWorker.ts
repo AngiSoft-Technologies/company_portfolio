@@ -1,8 +1,9 @@
 import { createWorker } from '../queue';
 import prisma from '../db';
-import { applyPaymentOutcome } from '../services/payments';
-import * as payhero from '../services/payments/payheroService';
-import * as paystack from '../services/payments/paystackService';
+import { ts } from '../prisma/db';
+import { applyPaymentOutcome } from '../modules/billing/services/payments';
+import * as payhero from '../modules/billing/services/payments/payheroService';
+import * as paystack from '../modules/billing/services/payments/paystackService';
 
 /** Age after which a PENDING row is considered reconcile-worthy (callbacks may have been missed). */
 const RECONCILE_AFTER_MS = 2 * 60 * 1000;
@@ -33,33 +34,44 @@ export function startReconciliationWorker() {
                 const it = stripe.paymentIntents.list({ created: { gte: Math.floor(start.getTime() / 1000), lte: Math.floor(end.getTime() / 1000) }, limit: 100 });
                 for await (const pi of it) {
                     const providerId = pi.id;
-                    const existing = await prisma.payment.findUnique({ where: { providerId } });
+                    const existing = await prisma.orm.public.Payment.where({ providerId }).first();
+                    const status = pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING';
+                    const metadata = JSON.parse(JSON.stringify(pi));
                     if (!existing) {
-                        await prisma.payment.create({ data: { provider: 'STRIPE', providerId, amount: (pi.amount_received || pi.amount || 0) / 100, currency: (pi.currency || 'KES').toUpperCase(), status: pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING', metadata: JSON.parse(JSON.stringify(pi)) } });
+                        await prisma.orm.public.Payment.create({
+                            id: crypto.randomUUID(),
+                            updatedAt: ts(),
+                            provider: 'STRIPE' as any,
+                            providerId,
+                            amount: (pi.amount_received || pi.amount || 0) / 100,
+                            currency: String(pi.currency || 'KES').toUpperCase(),
+                            status: status as any,
+                            metadata,
+                            bookingId: pi.metadata?.bookingId || null,
+                            clientId: null,
+                            reference: null,
+                            channelId: null,
+                        });
                         count++;
-                    } else {
-                        const status = pi.status === 'succeeded' ? 'SUCCEEDED' : 'PENDING';
-                        if (existing.status !== status) {
-                            await prisma.payment.update({ where: { id: existing.id }, data: { status, metadata: JSON.parse(JSON.stringify(pi)) } });
-                            count++;
-                        }
+                    } else if (existing.status !== status) {
+                        await prisma.orm.public.Payment.where({ id: existing.id }).update({ status: status as any, metadata });
+                        count++;
                     }
                 }
             }
 
             // ─── PayHero: poll status of PENDING STK payments by reference ──
             if (payhero.isConfigured()) {
-                const pending = await prisma.payment.findMany({
-                    where: {
-                        provider: 'PAYHERO',
-                        status: 'PENDING',
-                        reference: { not: null },
-                        createdAt: { lt: new Date(Date.now() - RECONCILE_AFTER_MS) },
-                    },
-                    take: 50,
-                    orderBy: { createdAt: 'asc' },
-                });
-                for (const payment of pending) {
+                const cutoff = ts(Date.now() - RECONCILE_AFTER_MS);
+                const pending = await prisma.orm.public.Payment
+                    .where((p) => p.provider.eq('PAYHERO'))
+                    .where((p) => p.status.eq('PENDING'))
+                    .where((p) => p.reference.isNotNull())
+                    .where((p) => p.createdAt.lt(cutoff))
+                    .orderBy((p) => p.createdAt.asc())
+                    .limit(50)
+                    .all();
+                for (const payment of pending as any[]) {
                     try {
                         const status = await payhero.getTransactionStatus(payment.reference!);
                         if (isPayHeroSuccess(status.status) || status.success === true) {
@@ -91,30 +103,29 @@ export function startReconciliationWorker() {
                 }
 
                 // ─── PayHero: settle PENDING payouts/top-ups by provider ref ──
-                const pendingPayouts = await prisma.payout.findMany({
-                    where: {
-                        provider: 'PAYHERO',
-                        status: 'PENDING',
-                        createdAt: { lt: new Date(Date.now() - RECONCILE_AFTER_MS) },
-                    },
-                    take: 50,
-                    orderBy: { createdAt: 'asc' },
-                });
-                for (const payout of pendingPayouts) {
+                const pendingPayouts = await prisma.orm.public.Payout
+                    .where((p) => p.provider.eq('PAYHERO'))
+                    .where((p) => p.status.eq('PENDING'))
+                    .where((p) => p.createdAt.lt(cutoff))
+                    .orderBy((p) => p.createdAt.asc())
+                    .limit(50)
+                    .all();
+                for (const payout of pendingPayouts as any[]) {
                     const payoutRef = payout.providerReference || payout.reference;
                     if (!payoutRef) continue;
                     try {
                         const status = await payhero.getTransactionStatus(payoutRef);
                         if (isPayHeroSuccess(status.status)) {
-                            await prisma.payout.update({
-                                where: { id: payout.id },
-                                data: { status: 'SUCCEEDED', completedAt: new Date(), metadata: { ...(payout.metadata as object || {}), reconciled: status.meta } },
+                            await prisma.orm.public.Payout.where({ id: payout.id }).update({
+                                status: 'SUCCEEDED',
+                                completedAt: ts(),
+                                metadata: { ...(payout.metadata as object || {}), reconciled: status.meta },
                             });
                             count++;
                         } else if (isPayHeroFailure(status.status)) {
-                            await prisma.payout.update({
-                                where: { id: payout.id },
-                                data: { status: 'FAILED', metadata: { ...(payout.metadata as object || {}), reconciled: status.meta } },
+                            await prisma.orm.public.Payout.where({ id: payout.id }).update({
+                                status: 'FAILED',
+                                metadata: { ...(payout.metadata as object || {}), reconciled: status.meta },
                             });
                             count++;
                         }
@@ -126,17 +137,16 @@ export function startReconciliationWorker() {
 
             // ─── Paystack: verify PENDING card payments by reference ────────
             if (paystack.isConfigured()) {
-                const pending = await prisma.payment.findMany({
-                    where: {
-                        provider: 'PAYSTACK',
-                        status: 'PENDING',
-                        reference: { not: null },
-                        createdAt: { lt: new Date(Date.now() - RECONCILE_AFTER_MS) },
-                    },
-                    take: 50,
-                    orderBy: { createdAt: 'asc' },
-                });
-                for (const payment of pending) {
+                const cutoff = ts(Date.now() - RECONCILE_AFTER_MS);
+                const pending = await prisma.orm.public.Payment
+                    .where((p) => p.provider.eq('PAYSTACK'))
+                    .where((p) => p.status.eq('PENDING'))
+                    .where((p) => p.reference.isNotNull())
+                    .where((p) => p.createdAt.lt(cutoff))
+                    .orderBy((p) => p.createdAt.asc())
+                    .limit(50)
+                    .all();
+                for (const payment of pending as any[]) {
                     try {
                         const txn = await paystack.verifyTransaction(payment.reference!);
                         if (txn?.status === 'success') {
@@ -152,16 +162,14 @@ export function startReconciliationWorker() {
                                 clientId: payment.clientId || undefined,
                             });
                             count++;
-                        } else if (txn?.status === 'failed' || txn?.status === 'abandoned') {
-                            if (txn.status === 'failed') {
-                                await applyPaymentOutcome(prisma, {
-                                    provider: 'PAYSTACK',
-                                    providerId: payment.providerId,
-                                    status: 'FAILED',
-                                    metadata: { ...(payment.metadata as object || {}), reconciled: txn },
-                                });
-                                count++;
-                            }
+                        } else if (txn?.status === 'failed') {
+                            await applyPaymentOutcome(prisma, {
+                                provider: 'PAYSTACK',
+                                providerId: payment.providerId,
+                                status: 'FAILED',
+                                metadata: { ...(payment.metadata as object || {}), reconciled: txn },
+                            });
+                            count++;
                         }
                     } catch (err: any) {
                         console.warn('Paystack reconciliation skipped:', err?.message);

@@ -1,45 +1,72 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
-import { signAccessToken } from '../src/utils/token';
+import { signAccessToken } from '../src/modules/identity/utils/token';
 
 // We'll mock the prisma client methods used by the auth flows.
+// Shape mirrors the Prisma 8 contract client: prisma.orm.public.<Model>.where(...).first()/update()/...
 vi.mock('../src/db', () => {
     // simple in-memory store for employees and tokens
     const employees: any[] = [];
     const tokens: any[] = [];
+
+    const matches = (item: any, criteria: any) =>
+        Object.entries(criteria).every(([k, v]) => item[k] === v);
+
+    const queryable = (store: any[]) => ({
+        where(criteria: any) {
+            const hit = () => store.find((x) => matches(x, criteria)) ?? null;
+            return {
+                first: async () => hit(),
+                all: async () => store.filter((x) => matches(x, criteria)),
+                update: async (data: any) => {
+                    const e = hit();
+                    if (e) Object.assign(e, data);
+                    return e;
+                },
+                delete: async () => {
+                    const e = hit();
+                    const idx = e ? store.indexOf(e) : -1;
+                    if (idx >= 0) store.splice(idx, 1);
+                    return e;
+                },
+                deleteAndCount: async () => {
+                    const before = store.length;
+                    for (let i = store.length - 1; i >= 0; i--) {
+                        if (matches(store[i], criteria)) store.splice(i, 1);
+                    }
+                    return { count: before - store.length };
+                },
+            };
+        },
+    });
+
     return {
         default: {
-            employee: {
-                findUnique: vi.fn(async ({ where }: any) => employees.find(e => e.email === where.email || e.id === where.id || e.inviteToken === where.inviteToken)),
-                findFirst: vi.fn(async ({ where }: any) => employees.find(e => e.resetToken === where.resetToken)),
-                create: vi.fn(async ({ data }: any) => { const e = { ...data, id: 'emp_' + (employees.length + 1), createdAt: new Date() }; employees.push(e); return e; }),
-                update: vi.fn(async ({ where, data }: any) => { const e = employees.find(x => x.id === where.id || x.email === where.email); Object.assign(e, data); return e; }),
+            orm: {
+                public: {
+                    Employee: {
+                        ...queryable(employees),
+                        create: async (data: any) => {
+                            const e = { id: 'emp_' + (employees.length + 1), createdAt: new Date(), ...data };
+                            employees.push(e);
+                            return e;
+                        },
+                    },
+                    RefreshToken: {
+                        ...queryable(tokens),
+                        create: async (data: any) => {
+                            const t = { id: 't_' + (tokens.length + 1), ...data };
+                            tokens.push(t);
+                            return t;
+                        },
+                    },
+                },
             },
-            refreshToken: {
-                create: vi.fn(async ({ data }: any) => { const t = { ...data, id: 't_' + (tokens.length + 1) }; tokens.push(t); return t; }),
-                findUnique: vi.fn(async ({ where }: any) => tokens.find(t => t.token === where.token)),
-                delete: vi.fn(async ({ where }: any) => { const idx = tokens.findIndex(t => t.id === where.id); if (idx >= 0) tokens.splice(idx, 1); }),
-                updateMany: vi.fn(async ({ where, data }: any) => {
-                    let count = 0;
-                    tokens.forEach(t => {
-                        const matchesId = !where.id || t.id === where.id;
-                        const matchesEmployee = !where.employeeId || t.employeeId === where.employeeId;
-                        const matchesToken = !where.token || t.token === where.token;
-                        const matchesRevoked = where.revoked === undefined || t.revoked === where.revoked;
-                        const matchesExpiry = !where.expiresAt?.gt || t.expiresAt > where.expiresAt.gt;
-                        if (matchesId && matchesEmployee && matchesToken && matchesRevoked && matchesExpiry) {
-                            Object.assign(t, data);
-                            count += 1;
-                        }
-                    });
-                    return { count };
-                }),
-            }
-        }
+        },
     };
 });
 
-vi.mock('../src/services/email', () => ({
+vi.mock('../src/shared/services/email', () => ({
     sendMail: vi.fn(async () => true),
     verifyTransporter: vi.fn(async () => true)
 }));

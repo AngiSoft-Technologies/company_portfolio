@@ -1,5 +1,5 @@
 import { createWorker } from '../queue';
-import { sendMailDirect } from '../services/email';
+import { sendMailDirect } from '../shared/services/email';
 
 export function startEmailWorker() {
     try {

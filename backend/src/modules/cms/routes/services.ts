@@ -1,0 +1,153 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import db, { type Db } from '../../../db';
+import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requirePermission, requireRoles, isRole } from '../../../shared/middleware/roles';
+import { servicesController } from '../controllers/servicesController';
+
+const createSchema = z.object({
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  categoryId: z.string().optional().nullable(),
+  priceFrom: z.coerce.number().optional(),
+  targetAudience: z.string().optional(),
+  scope: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  published: z.boolean().optional()
+});
+
+const updateSchema = createSchema.partial();
+
+export default function servicesRouter(prisma: Db = db) {
+    const router = Router();
+
+    router.get('/', optionalAuth, async (req: AuthRequest, res) => {
+        try {
+            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const isDeveloper = isRole(req, ['DEVELOPER']);
+            const services = await servicesController.list({
+                where: includeAll ? {} : (isDeveloper ? { authorId: req.user?.sub } : { published: true })
+            });
+            res.json(services);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
+        try {
+            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const isDeveloper = isRole(req, ['DEVELOPER']);
+            const service = await servicesController.get(req.params.id, {
+                where: includeAll
+                    ? {}
+                    : (isDeveloper ? { authorId: req.user?.sub } : { published: true })
+            });
+            if (!service) return res.status(404).json({ error: 'Not found' });
+            res.json(service);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    router.post('/', requireAuth, requirePermission('services.create'), async (req: AuthRequest, res) => {
+        const parsed = createSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        try {
+            const data = parsed.data;
+            let categoryLabel = data.category || 'General';
+            if (data.categoryId) {
+                const category = await prisma.orm.public.ServiceCategory.where({ id: data.categoryId }).first();
+                if (category) categoryLabel = category.name;
+            }
+            const authorId = req.user?.sub || undefined;
+            const created = await servicesController.create({
+                ...data,
+                category: categoryLabel,
+                authorId
+            }, req.user);
+            res.status(201).json(created);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    router.put('/:id', requireAuth, requirePermission('services.update'), async (req: AuthRequest, res) => {
+        const parsed = updateSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        try {
+            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            if (!canManageAll) {
+                const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
+                if (!existing || existing.authorId !== req.user?.sub) {
+                    return res.status(403).json({ error: 'Not authorized' });
+                }
+            }
+            const data = parsed.data;
+            let categoryLabel = data.category;
+            if (data.categoryId) {
+                const category = await prisma.orm.public.ServiceCategory.where({ id: data.categoryId }).first();
+                if (category) categoryLabel = category.name;
+            }
+            const updated = await servicesController.update(req.params.id, {
+                ...data,
+                ...(categoryLabel ? { category: categoryLabel } : {})
+            }, req.user);
+            res.json(updated);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    router.delete('/:id', requireAuth, requirePermission('services.archive'), async (req: AuthRequest, res) => {
+        try {
+            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            if (!canManageAll) {
+                const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
+                if (!existing || existing.authorId !== req.user?.sub) {
+                    return res.status(403).json({ error: 'Not authorized' });
+                }
+            }
+            await servicesController.delete(req.params.id, req.user);
+            res.json({ ok: true });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // ── Pricing admin (Service.pricing JSON) ──
+    // Least-invasive gap fix: no dedicated PricingPackage table. Expose the
+    // existing Service.pricing JSON for admin viewing/editing.
+    router.get('/admin/pricing', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (_req: AuthRequest, res) => {
+        try {
+            const services = await prisma.orm.public.Service
+                .select('id', 'title', 'slug', 'category', 'priceFrom', 'pricing')
+                .orderBy((s: any) => s.title.asc())
+                .all();
+            res.json(services);
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Update only the pricing JSON field. Body must be a non-null object or array.
+    router.put('/:id/pricing', requireAuth, requirePermission('services.manage_pricing'), async (req: AuthRequest, res) => {
+        const value = req.body?.pricing;
+        if (value === null || value === undefined || typeof value !== 'object') {
+            return res.status(400).json({ error: 'pricing must be a JSON object or array' });
+        }
+        try {
+            const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
+            if (!existing) return res.status(404).json({ error: 'Not found' });
+            const updated = await prisma.orm.public.Service.where({ id: req.params.id })
+                .update({ pricing: value });
+            res.json({ id: updated!.id, pricing: updated!.pricing });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    return router;
+}

@@ -10,6 +10,7 @@
  * (or: npx ts-node prisma/seed-professional.ts)
  */
 import prisma from '../src/db';
+import { ts, newId } from '../src/prisma/db';
 
 // Real keys from PERMISSION_CATALOGUE (kept in sync manually; only include
 // keys that actually exist in the running catalogue).
@@ -210,45 +211,77 @@ async function main() {
   let presetCount = 0;
 
   for (const d of DEPARTMENTS) {
-    await prisma.department.upsert({
-      where: { key: d.key },
-      update: { name: d.name, description: d.description },
-      create: { key: d.key, name: d.name, description: d.description },
+    await prisma.transaction(async (tx) => {
+      const existing = await tx.orm.public.Department.where({ key: d.key }).first();
+      if (existing) {
+        await tx.orm.public.Department.where({ key: d.key }).update({
+          name: d.name,
+          description: d.description,
+          updatedAt: ts(),
+        });
+      } else {
+        await tx.orm.public.Department.create({
+          id: newId(),
+          key: d.key,
+          name: d.name,
+          description: d.description,
+          updatedAt: ts(),
+        });
+      }
     });
     depCount++;
   }
 
   for (const [deptKey, positions] of Object.entries(POSITIONS)) {
-    const dept = await prisma.department.findUnique({ where: { key: deptKey } });
+    const dept = await prisma.orm.public.Department.where({ key: deptKey }).first();
     if (!dept) {
       console.warn(`Skipping positions for unknown department ${deptKey}`);
       continue;
     }
     for (const p of positions) {
-      await prisma.position.upsert({
-        where: { departmentId_title: { departmentId: dept.id, title: p.title } },
-        update: {
+      await prisma.transaction(async (tx) => {
+        const existing = await tx.orm.public.Position
+          .where((x) => x.departmentId.eq(dept.id))
+          .where((x) => x.title.eq(p.title))
+          .first();
+        const payload = {
           displayTitleTemplate: p.displayTitleTemplate,
           defaultPermissionKeys: p.keys,
           seniorityLevels: SENIORITY,
-        },
-        create: {
-          departmentId: dept.id,
-          title: p.title,
-          displayTitleTemplate: p.displayTitleTemplate,
-          defaultPermissionKeys: p.keys,
-          seniorityLevels: SENIORITY,
-        },
+        };
+        if (existing) {
+          await tx.orm.public.Position
+            .where((x) => x.departmentId.eq(dept.id))
+            .where((x) => x.title.eq(p.title))
+            .update({ ...payload, updatedAt: ts() });
+        } else {
+          await tx.orm.public.Position.create({
+            id: newId(),
+            departmentId: dept.id,
+            title: p.title,
+            ...payload,
+            updatedAt: ts(),
+          });
+        }
       });
       posCount++;
     }
   }
 
   for (const p of PRESETS) {
-    await prisma.permissionPreset.upsert({
-      where: { key: p.key },
-      update: { name: p.name, description: p.description, permissionKeys: p.keys },
-      create: { key: p.key, name: p.name, description: p.description, permissionKeys: p.keys },
+    await prisma.transaction(async (tx) => {
+      const existing = await tx.orm.public.PermissionPreset.where({ key: p.key }).first();
+      const payload = { name: p.name, description: p.description, permissionKeys: p.keys };
+      if (existing) {
+        await tx.orm.public.PermissionPreset.where({ key: p.key }).update({ ...payload, updatedAt: ts() });
+      } else {
+        await tx.orm.public.PermissionPreset.create({
+          id: newId(),
+          key: p.key,
+          ...payload,
+          updatedAt: ts(),
+        });
+      }
     });
     presetCount++;
   }
@@ -260,9 +293,9 @@ async function main() {
 }
 
 main()
-  .then(() => prisma.$disconnect())
+  .then(() => prisma.close())
   .catch(async (e) => {
     console.error('Seed failed:', e);
-    await prisma.$disconnect();
+    await prisma.close();
     process.exit(1);
   });

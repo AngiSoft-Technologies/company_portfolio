@@ -7,10 +7,10 @@ export function startFileProcessor() {
             const { fileId } = job.data;
             console.log(`📁 Processing file: ${fileId}`);
             // TODO: download file from storage, generate thumbnail, upload, update DB
-            await prisma.file.update({ 
-                where: { id: fileId }, 
-                data: { metadata: { processedAt: new Date().toISOString() } } 
-            }).catch(() => null);
+            await prisma.orm.public.File
+                .where({ id: fileId })
+                .update({ metadata: { processedAt: new Date().toISOString() } as any })
+                .catch(() => null);
             console.log(`✅ File processed: ${fileId}`);
         });
         return worker;
