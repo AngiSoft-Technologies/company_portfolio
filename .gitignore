@@ -58,6 +58,7 @@ About Company — ScienceSoft.*
 backend/.vscodeignore
 backend/IMPLEMENTATION_PLAN.txt
 REVAMP_PLAN.md
+.playwright-cli
 AGENTS.md
 CLAUDE.md
 .claude
