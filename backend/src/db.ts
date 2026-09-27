@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { Client } from 'pg';
 import { db, type Db, type Tx } from './prisma/db';
 import { resolveDatabaseUrl } from './connectionUrl';
 
@@ -27,17 +28,24 @@ console.log(
 
 // ─── Connection validation ─────────────────────────────────────
 export async function validateDatabaseConnection(): Promise<boolean> {
+    // Startup checks use a short-lived direct Postgres connection. The Prisma
+    // pool is intentionally untouched so a failed probe cannot leave a stale
+    // pooled socket behind before the HTTP server begins accepting traffic.
+    const client = new Client({
+        connectionString: rawDatabaseUrl,
+        ssl: isNeonUrl ? { rejectUnauthorized: false } : undefined,
+    });
     try {
-        const plan = db.raw.sql`SELECT version() AS version`
-            .returnsRow({ version: db.sql.public.AboutSection.columns.id })
-            .build();
-        const rows = await db.runtime().query(plan);
-        const version = (rows as any[])[0]?.version ?? 'unknown';
+        await client.connect();
+        const result = await client.query<{ version: string }>('SELECT version() AS version');
+        const version = result.rows[0]?.version ?? 'unknown';
         console.log(`✅ Database connection verified: ${String(version).split(' ').slice(0, 2).join(' ')}`);
         return true;
     } catch (err: any) {
-        console.error('❌ Database connection failed:', err.message);
+        console.error('❌ Database connection failed:', err?.stack || err?.message || err);
         return false;
+    } finally {
+        await client.end().catch(() => undefined);
     }
 }
 

@@ -6,7 +6,6 @@ import '@/index.css';
 import { ThemeProvider } from '@/lib/theme';
 import { ToastHost } from '@/lib/toast';
 import { registerServiceWorker } from '@angisoft/offline';
-import swUrl from '@/workers/sw.js?url';
 
 const container = document.getElementById('root');
 
@@ -21,4 +20,4 @@ ReactDOM.createRoot(container as HTMLElement).render(
   </React.StrictMode>,
 );
 
-registerServiceWorker(swUrl);
+registerServiceWorker();

@@ -1,0 +1,72 @@
+/* Pricing banner after the catalogue. */
+.service-pricing-banner {
+    margin-top: 4rem;
+}
+
+.service-pricing-banner__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 2rem 2.25rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(0, 175, 255, 0.25);
+    background:
+        radial-gradient(600px 300px at 90% 0%, rgba(0, 175, 255, 0.16), transparent 60%),
+        linear-gradient(160deg, rgba(13, 34, 67, 0.95), rgba(7, 20, 43, 0.95));
+}
+
+.service-pricing-banner__title {
+    margin: 0 0 0.5rem;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    color: #F5F7FA;
+}
+
+.service-pricing-banner__desc {
+    margin: 0;
+    max-width: 520px;
+    color: #CBD5E1;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.service-pricing-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.service-pricing-banner__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-pricing-banner__btn--primary {
+    background: linear-gradient(120deg, #0875FF, #00AFFF);
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.28);
+}
+
+.service-pricing-banner__btn--primary:hover { transform: translateY(-2px); }
+
+.service-pricing-banner__btn--ghost {
+    border: 1px solid rgba(0, 175, 255, 0.45);
+    color: #F5F7FA;
+}
+
+.service-pricing-banner__btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+
+@media (max-width: 720px) {
+    .service-pricing-banner__inner { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+    .service-pricing-banner__actions { width: 100%; }
+    .service-pricing-banner__btn { flex: 1 1 auto; justify-content: center; }
+}

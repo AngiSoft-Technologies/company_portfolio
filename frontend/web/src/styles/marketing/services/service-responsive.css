@@ -1,0 +1,106 @@
+/* Responsive catalogue grid + page refinements (320px -> 1440px+).
+   Grid column targets per spec:
+     360-639px : 2 cols
+     640-1023px: 2 cols (tablet)
+     1024-1399: 3 cols (desktop)
+     1400px+   : 4 cols (large desktop) */
+
+/* Desktop (1024-1399px): 3 columns */
+@media (min-width: 1024px) {
+    .service-catalog-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Large desktop (1400px+): 4 columns */
+@media (min-width: 1400px) {
+    .service-catalog-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Very narrow phones — keep 2 columns while readable; only collapse below 329px */
+@media (max-width: 329px) {
+    .service-catalog-grid {
+        grid-template-columns: 1fr;
+    }
+    .services-container { padding: 0 0.625rem; }
+}
+
+@media (max-width: 340px) {
+    .service-catalog-card { padding: 0.8rem 0.85rem; }
+    .service-catalog-card__title { font-size: 0.92rem; }
+    .service-catalog-card__description { font-size: 0.74rem; }
+    .service-catalog-card__actions { gap: 0.35rem; }
+    .service-catalog-card__details,
+    .service-catalog-card__book { font-size: 0.74rem; padding: 0.45rem 0.4rem; }
+}
+
+/* Tablet/desktop polish: keep toolbar row stable above phone */
+@media (min-width: 600px) and (max-width: 1023px) {
+    .services-toolbar__inner { flex-wrap: wrap; }
+}
+
+@media (min-width: 1200px) {
+    .services-container,
+    .sd-hero,
+    .sd-section,
+    .sd-breadcrumbs {
+        max-width: 1320px;
+    }
+}
+
+/* =========================================================================
+   Service Detail — responsive overrides
+   ========================================================================= */
+
+/* Hero: 2-column desktop → single column on tablet/phone */
+@media (max-width: 900px) {
+    .service-hero__inner {
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+        padding: clamp(2rem, 5vw, 3rem) 1.25rem;
+    }
+    .service-hero__media { order: -1; }
+}
+
+/* Quick-facts + content grids scale down before stacking */
+@media (max-width: 1023px) {
+    .service-quick-facts__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .service-outcome__grid,
+    .service-feature-list__grid,
+    .service-deliverables__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 639px) {
+    .service-quick-facts__grid { grid-template-columns: 1fr; }
+    .service-outcome__grid,
+    .service-feature-list__grid,
+    .service-deliverables__grid { grid-template-columns: 1fr; }
+
+    /* Gallery nav arrows become compact and touch-friendly */
+    .service-gallery__stage { gap: 0.4rem; }
+    .service-gallery__nav { width: 2.4rem; height: 2.4rem; }
+
+    /* CTA buttons go full-width on small screens */
+    .service-contact-cta__actions .btn,
+    .service-pricing__actions .btn { width: 100%; justify-content: center; }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .service-catalog-card,
+    .service-catalog-card__icon,
+    .service-catalog-card__book svg,
+    .sd-btn,
+    .sd-related-link,
+    .sd-gallery__dot {
+        transition: none !important;
+    }
+    .service-catalog-card:hover { transform: none; }
+    .service-card-skeleton__media,
+    .sk-line {
+        animation: none !important;
+    }
+}

@@ -59,10 +59,10 @@ export function StaffDashboard() {
         subtitle="Your assigned work, schedule and next actions."
         actions={
           <>
-            <Link to="/admin/projects">
+            <Link to="/projects">
               <Button variant="outline">Projects</Button>
             </Link>
-            <Link to="/admin/bookings">
+            <Link to="/bookings">
               <Button>Bookings</Button>
             </Link>
           </>

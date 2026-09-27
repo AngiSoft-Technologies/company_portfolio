@@ -1,0 +1,258 @@
+/* ==========================================================================
+   TechTrendsSection — dedicated stylesheet
+   Background image is supplied via the --trend-background-image custom property
+   (set inline from active data). All static layout/overlay/responsive lives here.
+   ========================================================================== */
+
+.angi-trends-section {
+    position: relative;
+    padding: var(--section-y, clamp(2.25rem, 3.2vw, 3.5rem)) 0;
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.angi-trends-tabs-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 2.25rem;
+}
+.angi-trends-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.angi-trends-tabs {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+    justify-content: center;
+    padding: 0.25rem;
+}
+@media (max-width: 639px) {
+    .angi-trends-tabs {
+        justify-content: flex-start;
+    }
+}
+
+.angi-trends-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.5rem 1.1rem;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+.angi-trends-tab-icon {
+    font-size: 0.95rem;
+}
+.angi-trends-tab.is-active {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(8, 117, 255, 0.3);
+}
+.angi-trends-tab:focus-visible {
+    outline: 2px solid var(--accent, #00AFFF);
+    outline-offset: 2px;
+}
+
+/* Panel: rounded, contained on desktop; flattened to edge on phones. */
+.angi-trends-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    /* Glass over the band photo rather than an opaque card. */
+    background: transparent;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    margin-top: 2rem;
+    display: flex;
+    isolation: isolate;
+}
+@media (max-width: 639px) {
+    .angi-trends-panel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        margin-left: calc(var(--container-padding, 1.25rem) * -1);
+        margin-right: calc(var(--container-padding, 1.25rem) * -1);
+    }
+}
+
+.angi-trends-background {
+    position: absolute;
+    inset: 0;
+    background-image: var(--trend-background-image);
+    background-size: cover;
+    background-position: center;
+    /* The section band already carries a photo, so the per-tab image is a
+       layered tint rather than a second opaque photo. */
+    opacity: 0.4;
+    mix-blend-mode: luminosity;
+    z-index: -2;
+    transition: background-image 0.3s ease, opacity 0.3s ease;
+}
+/* Navy scrim, not an 82% white wash: keeps the media readable and the copy
+   legible (WCAG 1.4.11 non-text contrast / F83). */
+.angi-trends-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--trends-scrim);
+    z-index: -1;
+}
+
+.angi-trends-content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.75rem);
+}
+@media (min-width: 900px) {
+    .angi-trends-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: center;
+    }
+}
+
+.angi-trends-introduction {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.angi-trends-icon {
+    width: clamp(2.75rem, 9vw, 3.5rem);
+    height: clamp(2.75rem, 9vw, 3.5rem);
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+    color: #fff;
+    background: var(--color-primary);
+}
+.angi-trends-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--trends-ink);
+    margin: 0;
+}
+.angi-trends-description {
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.angi-trends-capabilities-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.85rem;
+}
+.angi-trends-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.angi-trends-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.96rem;
+    line-height: 1.5;
+    color: var(--trends-ink);
+}
+.angi-trends-item-dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: 0.45rem;
+    border-radius: 9999px;
+    background: var(--accent, #00AFFF);
+}
+
+.angi-trends-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+@media (max-width: 379px) {
+    .angi-trends-title {
+        font-size: 1.35rem;
+    }
+    .angi-trends-description {
+        font-size: 0.9rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .angi-trends-tab,
+    .angi-trends-background,
+    .angi-trends-footer .angi-btn-primary {
+        transition: none !important;
+    }
+}
+
+/* Tech-trends media tokens, per theme. */
+html[data-theme='light'] {
+  --trends-scrim: linear-gradient(150deg, rgb(7 20 43 / 0.82) 0%, rgb(7 20 43 / 0.58) 58%, rgb(0 60 110 / 0.44) 100%);
+  --trends-ink: #FFFFFF;
+}
+
+html:not([data-theme='light']) {
+  --trends-scrim: linear-gradient(150deg, rgb(5 15 31 / 0.9) 0%, rgb(7 20 43 / 0.74) 58%, rgb(8 40 70 / 0.6) 100%);
+  --trends-ink: #F5F7FA;
+}
+
+/* The trends panel sits on the band photo: light ink in both themes. */
+.angi-trends-panel .angi-trends-title,
+.angi-trends-panel .angi-trends-item,
+.angi-trends-panel .angi-trends-capabilities-label {
+    color: #F5F7FA;
+}
+.angi-trends-panel .angi-trends-item {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+}
+.angi-trends-panel .angi-trends-item-dot {
+    background: var(--color-cyan-bright);
+}
+
+/* Trend tabs sit on the band photo. */
+.angi-trends-tab {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: rgba(226, 240, 255, 0.82);
+    backdrop-filter: blur(12px);
+}
+.angi-trends-tab[aria-selected='true'] {
+    color: #07142B;
+    background: var(--color-cyan-bright);
+    border-color: var(--color-cyan-bright);
+}

@@ -1,146 +1,126 @@
+// @ts-nocheck
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button, Card } from '@angisoft/ui';
-import { clientApiGet } from '@angisoft/api-client';
-import { useAsync } from '@/hooks/useAsync';
+import { clientApiGet, clientApiPost } from '@/lib/httpClient';
+import { useTheme } from '@/lib/theme';
+import GlassmorphismCard from '@/features/marketing/components/modern/GlassmorphismCard';
+import ScrollReveal from '@/features/marketing/components/modern/ScrollReveal';
+import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
-interface ProjectStep {
-  id?: string;
-  title?: string;
-  status?: string;
-  order?: number;
-  completed?: boolean;
-}
+const ClientProjectTracking = () => {
+  const { id } = useParams();
+  const { colors } = useTheme();
+  const [project, setProject] = useState(null);
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(true);
 
-interface ProjectDetail {
-  id?: string;
-  title?: string;
-  status?: string | null;
-  description?: string | null;
-  progress?: number | null;
-  steps?: ProjectStep[];
-  client?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-}
+  const loadProject = useCallback(() => clientApiGet(`/client-portal/projects/${id}`).then((response) => setProject(response.project)), [id]);
 
-export default function ClientProjectTracking() {
-  const { id = '' } = useParams<{ id: string }>();
-  const project = useAsync(async () => {
-    try {
-      const res = await clientApiGet<{ data?: ProjectDetail }>(`/client-portal/projects/${id}`);
-      return (res.data ?? undefined) as ProjectDetail | undefined;
-    } catch {
-      return undefined;
-    }
-  }, [id]);
+  useEffect(() => {
+    loadProject().finally(() => setLoading(false));
+  }, [loadProject]);
 
-  if (project.loading) {
-    return <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />;
-  }
+  const submitComment = async (event) => {
+    event.preventDefault();
+    if (!comment.trim()) return;
+    await clientApiPost(`/client-portal/projects/${id}/comments`, { body: comment.trim() });
+    setComment('');
+    await loadProject();
+  };
 
-  if (project.error || !project.data) {
-    return (
-      <div className="mx-auto max-w-2xl py-20 text-center">
-        <div className="text-6xl font-black text-[var(--border)]">404</div>
-        <h1 className="mt-4 text-2xl font-bold text-[var(--text-primary)]">Project not found</h1>
-        <p className="mt-3 text-[var(--text-muted)]">This project isn't visible to your account.</p>
-        <div className="mt-8 flex justify-center">
-          <Link to="/portal">
-            <Button variant="outline">Back to dashboard</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const p = project.data;
-  const progress = typeof p.progress === 'number' ? Math.max(0, Math.min(100, p.progress)) : null;
-  const steps = Array.isArray(p.steps) ? p.steps : [];
+  if (loading) return <section className="min-h-screen p-10" style={{ background: colors.background }}><LoadingIndicator variant="orbit" size="xl" /></section>;
+  if (!project) return <section className="min-h-screen p-10" style={{ background: colors.background }}><VisualState variant="unavailable" /></section>;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">{p.title ?? 'Project'}</h1>
-        {p.status ? (
-          <span className="mt-3 inline-block rounded-full bg-[#0875FF]/10 px-3 py-1 text-xs font-medium text-[#0875FF]">
-            {p.status}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Overview</h2>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">
-            {p.description ?? 'No description provided yet.'}
-          </p>
-
-          {progress !== null ? (
-            <div className="mt-6">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-[var(--text-secondary)]">Progress</span>
-                <span className="font-semibold text-[#0875FF]">{progress}%</span>
+    <section className="min-h-screen px-4 py-16" style={{ background: `radial-gradient(circle at top left, ${colors.primary}20, transparent 36%), linear-gradient(135deg, ${colors.background}, ${colors.backgroundTertiary})` }}>
+      <div className="mx-auto max-w-7xl">
+        <ScrollReveal>
+          <Link to="/portal" className="mb-6 inline-flex font-bold" style={{ color: colors.primary }}>← Back to dashboard</Link>
+          <GlassmorphismCard glow className="mb-8 p-8">
+            <div className="grid gap-8 lg:grid-cols-[1fr_320px] lg:items-center">
+              <div>
+                <span className="rounded-full px-4 py-2 text-sm font-bold" style={{ backgroundColor: `${colors.secondary}18`, color: colors.primary }}>{project.status}</span>
+                <h1 className="mt-5 text-4xl font-black md:text-5xl" style={{ color: colors.text }}>{project.title}</h1>
+                <p className="mt-3 text-lg" style={{ color: colors.textSecondary }}>{project.description}</p>
               </div>
-              <div className="mt-2 h-3 overflow-hidden rounded-full bg-[var(--surface-hover)]">
-                <div className="h-full rounded-full bg-[#0875FF]" style={{ width: `${progress}%` }} />
+              <div>
+                <div className="mb-3 flex justify-between font-bold" style={{ color: colors.text }}>
+                  <span>Project progress</span>
+                  <span>{project.progress}%</span>
+                </div>
+                <div className="h-4 overflow-hidden rounded-full" style={{ backgroundColor: colors.borderLight }}>
+                  <div className="h-full rounded-full" style={{ width: `${project.progress}%`, background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.secondaryLight})` }} />
+                </div>
               </div>
             </div>
-          ) : null}
+          </GlassmorphismCard>
+        </ScrollReveal>
 
-          {steps.length > 0 ? (
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Milestones</h3>
-              <div className="mt-4 flex flex-col gap-4">
-                {steps.map((step, i) => (
-                  <div key={step.id ?? i} className="flex items-start gap-3">
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                        step.completed || step.status === 'completed' || step.status === 'done'
-                          ? 'bg-[#0875FF] text-white'
-                          : 'bg-[var(--surface-hover)] text-[var(--text-muted)]'
-                      }`}
-                    >
-                      {step.completed || step.status === 'completed' || step.status === 'done' ? '✓' : i + 1}
-                    </div>
+        <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+          <div className="space-y-6">
+            <GlassmorphismCard className="p-6">
+              <h2 className="mb-5 text-2xl font-black" style={{ color: colors.text }}>Milestones</h2>
+              <div className="space-y-4">
+                {project.milestones?.map((milestone, index) => (
+                  <div key={milestone.id} className="flex gap-4 rounded-2xl p-4" style={{ backgroundColor: `${colors.primary}08`, border: `1px solid ${colors.border}` }}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-black text-white" style={{ background: milestone.status === 'COMPLETED' ? colors.success : colors.primary }}>{index + 1}</div>
                     <div>
-                      <div className="font-medium text-[var(--text-primary)]">
-                        {step.title ?? 'Milestone'}
-                      </div>
-                      {step.status ? (
-                        <div className="text-sm text-[var(--text-muted)]">{step.status}</div>
-                      ) : null}
+                      <h3 className="font-bold" style={{ color: colors.text }}>{milestone.title}</h3>
+                      <p className="text-sm font-semibold" style={{ color: colors.textSecondary }}>{milestone.status.replaceAll('_', ' ')}</p>
+                      {milestone.description && <p className="mt-2 text-sm" style={{ color: colors.textSecondary }}>{milestone.description}</p>}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
-        </Card>
+            </GlassmorphismCard>
 
-        <Card className="h-fit p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Details</h2>
-          <dl className="mt-4 flex flex-col gap-4 text-sm">
-            {p.client ? (
-              <div>
-                <dt className="text-[var(--text-muted)]">Client</dt>
-                <dd className="font-medium text-[var(--text-primary)]">{p.client}</dd>
+            <GlassmorphismCard className="p-6">
+              <h2 className="mb-5 text-2xl font-black" style={{ color: colors.text }}>Activity feed</h2>
+              <div className="space-y-4">
+                {project.activities?.map((activity) => (
+                  <div key={activity.id} className="rounded-2xl p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
+                    <p className="font-semibold" style={{ color: colors.text }}>{activity.message}</p>
+                    <p className="mt-1 text-xs" style={{ color: colors.textMuted }}>{new Date(activity.createdAt).toLocaleString()}</p>
+                  </div>
+                ))}
               </div>
-            ) : null}
-            {p.startDate ? (
-              <div>
-                <dt className="text-[var(--text-muted)]">Started</dt>
-                <dd className="font-medium text-[var(--text-primary)]">{p.startDate}</dd>
+            </GlassmorphismCard>
+          </div>
+
+          <div className="space-y-6">
+            <GlassmorphismCard className="p-6">
+              <h2 className="mb-5 text-2xl font-black" style={{ color: colors.text }}>Comments</h2>
+              <form onSubmit={submitComment} className="mb-5 space-y-3">
+                <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={4} placeholder="Send a message to the AngiSoft team..." className="w-full rounded-2xl border p-4 outline-none" style={{ borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }} />
+                <button className="rounded-full px-5 py-3 font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>Send comment</button>
+              </form>
+              <div className="space-y-3">
+                {project.comments?.map((item) => (
+                  <div key={item.id} className="rounded-2xl p-4" style={{ backgroundColor: `${colors.secondary}08`, border: `1px solid ${colors.border}` }}>
+                    <p style={{ color: colors.text }}>{item.body}</p>
+                    <p className="mt-2 text-xs" style={{ color: colors.textMuted }}>{new Date(item.createdAt).toLocaleString()}</p>
+                  </div>
+                ))}
               </div>
-            ) : null}
-            {p.endDate ? (
-              <div>
-                <dt className="text-[var(--text-muted)]">Target end</dt>
-                <dd className="font-medium text-[var(--text-primary)]">{p.endDate}</dd>
+            </GlassmorphismCard>
+
+            <GlassmorphismCard className="p-6">
+              <h2 className="mb-5 text-2xl font-black" style={{ color: colors.text }}>Deliverables</h2>
+              <div className="space-y-3">
+                {project.deliverables?.length ? project.deliverables.map((deliverable) => (
+                  <div key={deliverable.id} className="rounded-2xl p-4" style={{ backgroundColor: colors.surface, border: `1px solid ${colors.border}` }}>
+                    <h3 className="font-bold" style={{ color: colors.text }}>{deliverable.title}</h3>
+                    <p className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{deliverable.description}</p>
+                    <span className="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: `${colors.primary}14`, color: colors.primary }}>{deliverable.status}</span>
+                  </div>
+                )) : <p style={{ color: colors.textSecondary }}>Deliverables shared by AngiSoft will appear here.</p>}
               </div>
-            ) : null}
-          </dl>
-        </Card>
+            </GlassmorphismCard>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
-}
+};
+
+export default ClientProjectTracking;

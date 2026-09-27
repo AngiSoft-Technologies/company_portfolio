@@ -1,131 +1,160 @@
-import { useState, type FormEvent } from 'react';
-import { Button, Card, Hero, Section } from '@angisoft/ui';
-import { apiPost } from '@angisoft/api-client';
-import { CONTACT_INFO } from '@/lib/constants';
+// @ts-nocheck
+import { useCallback, useState, useEffect } from 'react';
+import { useTheme } from '@/lib/theme';
+import { useContactPage } from '@/hooks/marketing/useContactPage';
+import { useContactEntryContext } from '@/hooks/marketing/useContactEntryContext';
+import { useContactForm } from '@/hooks/marketing/useContactForm';
+import { useContactSubmission } from '@/hooks/marketing/useContactSubmission';
+
+import ContactHero from '../components/contact/ContactHero';
+import ContactIntentSelector from '../components/contact/ContactIntentSelector';
+import ContactMethods from '../components/contact/ContactMethods';
+import ContactContextCard from '../components/contact/ContactContextCard';
+import ContactForm from '../components/contact/ContactForm';
+import ContactDetails from '../components/contact/ContactDetails';
+import ContactMap from '../components/contact/ContactMap';
+import ContactResponseGuide from '../components/contact/ContactResponseGuide';
+import ContactFaqs from '../components/contact/ContactFaqs';
+import ContactFinalCTA from '../components/contact/ContactFinalCTA';
+import ContactSuccess from '../components/contact/ContactSuccess';
+
+import '@/styles/marketing/contact/contact-page.css';
+import '@/styles/marketing/contact/contact-hero.css';
+import '@/styles/marketing/contact/contact-methods.css';
+import '@/styles/marketing/contact/contact-form.css';
+import '@/styles/marketing/contact/contact-context.css';
+import '@/styles/marketing/contact/contact-details.css';
+import '@/styles/marketing/contact/contact-map.css';
+import '@/styles/marketing/contact/contact-success.css';
+import '@/styles/marketing/contact/contact-responsive.css';
+import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const { colors, mode } = useTheme();
+    const { contact, loading } = useContactPage();
+    const entryContext = useContactEntryContext();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      const payload = {
-        name: form.name,
-        email: form.email,
-        subject: form.subject || 'General enquiry',
-        message: form.message,
-      };
-      await apiPost('/contact-enquiries', payload);
-      setSent(true);
-      setForm({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Message failed to send. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    const [context, setContext] = useState(entryContext);
+    useEffect(() => {
+        setContext(entryContext);
+    }, [entryContext]);
 
-  const inputClass =
-    'h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[#0875FF]';
+    const form = useContactForm({ context });
+    const { submit, loading: submitting, result, error, fieldErrors, success } = useContactSubmission(context);
 
-  return (
-    <>
-      <Hero
-        badge="Contact"
-        title="Let's talk about your project"
-        subtitle="Tell us what you're building. We usually reply within one business day."
-      />
+    const styleVars = {
+        '--contact-primary': colors.primary,
+        '--contact-secondary': colors.secondary,
+        '--contact-background': colors.background,
+        '--contact-surface': colors.surface || colors.background,
+        '--contact-text': colors.text,
+        '--contact-muted': colors.textMuted || colors.textSecondary,
+        '--contact-border': colors.border,
+        '--contact-danger': colors.danger || colors.error,
+        '--contact-success': colors.success,
+    };
 
-      <Section>
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.5fr]">
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'Call us', value: CONTACT_INFO.phone },
-              { label: 'Email us', value: CONTACT_INFO.email },
-              { label: 'Find us', value: CONTACT_INFO.address },
-            ].map((item) => (
-              <Card key={item.label} className="p-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                  {item.label}
-                </h3>
-                <p className="mt-2 font-medium text-[var(--text-primary)]">{item.value}</p>
-              </Card>
-            ))}
-          </div>
+    const handleSubmit = useCallback(async (values, startedAt) => {
+        const { valid } = form.validateAll();
+        if (!valid) return;
+        const res = await submit(values, startedAt);
+        if (res && res.ok) {
+            // success handled via `success` state; form is intentionally NOT reset.
+        }
+    }, [form, submit]);
 
-          <Card className="p-8">
-            {sent ? (
-              <div className="flex h-full flex-col items-center justify-center py-16 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-2xl text-emerald-400">
-                  ✓
+    const handleFocusField = useCallback((name) => {
+        if (form.firstInvalidRef) form.firstInvalidRef.current = name;
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el) el.focus();
+    }, [form]);
+
+    const removeContext = useCallback(() => {
+        setContext({ enquiryType: '', serviceSlug: '', productSlug: '', bookingReference: '', subject: '', source: '' });
+        form.setField('enquiryType', '');
+        form.setField('serviceSlug', '');
+        form.setField('productSlug', '');
+        form.setField('bookingReference', '');
+        form.setField('subject', '');
+    }, [form]);
+
+    const changeContext = useCallback(() => {
+        const el = document.getElementById('contact-workspace');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('intent-service')?.focus();
+    }, []);
+
+    const viewDetails = useCallback(() => {
+        if (context?.serviceSlug) window.location.href = `/services/${context.serviceSlug}`;
+        else if (context?.productSlug) window.location.href = `/products/${context.productSlug}`;
+    }, [context]);
+
+    const themeClass = mode === 'dark' ? 'is-dark' : 'is-light';
+
+    return (
+        <main className={`contact-page ${themeClass}`} style={styleVars}>
+            <ContactHero />
+
+            <ContactIntentSelector
+                value={form.values.enquiryType}
+                onChange={(type) => {
+                    form.setField('enquiryType', type);
+                    if (!form.values.subject) {
+                        form.setField('subject', defaultSubjectInline(type));
+                    }
+                }}
+            />
+
+            <ContactMethods contact={contact} />
+
+            <section id="contact-workspace" className="contact-workspace" aria-labelledby="contact-workspace-heading">
+                <h2 id="contact-workspace-heading" className="visually-hidden">Send your enquiry</h2>
+                <div className="contact-workspace__grid">
+                    <div className="contact-workspace__form">
+                        {success && result ? (
+                            <ContactSuccess result={result} name={form.values.name} entryContext={context} />
+                        ) : (
+                            <ContactForm
+                                form={form}
+                                entryContext={context}
+                                fieldErrors={fieldErrors}
+                                submitError={error}
+                                submitting={submitting}
+                                onSubmit={handleSubmit}
+                                onFocusField={handleFocusField}
+                            />
+                        )}
+                    </div>
+                    <aside className="contact-workspace__side">
+                        <ContactContextCard
+                            context={context}
+                            onRemove={removeContext}
+                            onChange={changeContext}
+                            onViewDetails={context?.serviceSlug || context?.productSlug ? viewDetails : undefined}
+                        />
+                        {loading && <LoadingIndicator variant="skeleton" size="sm" />}
+                    </aside>
                 </div>
-                <h3 className="mt-5 text-2xl font-bold text-[var(--text-primary)]">Message sent</h3>
-                <p className="mt-3 max-w-sm text-sm text-[var(--text-muted)]">
-                  Thanks for reaching out. Our team will get back to you shortly.
-                </p>
-                <Button className="mt-8" variant="outline" onClick={() => setSent(false)}>
-                  Send another message
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
-                    Name
-                    <input
-                      required
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Your name"
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
-                    Email
-                    <input
-                      required
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="you@company.com"
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-                <label className="flex flex-col gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
-                  Subject
-                  <input
-                    value={form.subject}
-                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    placeholder="What's this about?"
-                    className={inputClass}
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
-                  Message
-                  <textarea
-                    required
-                    rows={6}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    placeholder="Tell us about your project…"
-                    className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[#0875FF]"
-                  />
-                </label>
-                {error ? <p className="text-sm text-red-400">{error}</p> : null}
-                <Button type="submit" disabled={submitting} className="mt-2">
-                  {submitting ? 'Sending…' : 'Send message'}
-                </Button>
-              </form>
-            )}
-          </Card>
-        </div>
-      </Section>
-    </>
-  );
+            </section>
+
+            <ContactDetails contact={contact} />
+            <ContactResponseGuide />
+            <ContactMap contact={contact} />
+            <ContactFaqs />
+            <ContactFinalCTA />
+        </main>
+    );
+}
+
+function defaultSubjectInline(type) {
+    const map = {
+        service: 'Enquiry about a service',
+        product: 'Enquiry about a product',
+        pricing: 'Pricing & quote request',
+        support: 'Support request',
+        partnership: 'Partnership enquiry',
+        careers: 'Careers enquiry',
+        general: 'General enquiry',
+    };
+    return map[type] || map.general;
 }

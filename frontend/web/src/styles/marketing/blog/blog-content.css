@@ -1,0 +1,109 @@
+/* Rendered article content (prose). Width kept in the editorial 680-780px band. */
+.blog-content {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--blog-text);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.blog-content h2,
+.blog-content h3 {
+  font-family: 'Sora', sans-serif;
+  scroll-margin-top: 6rem;
+  color: var(--blog-text);
+  line-height: 1.25;
+}
+
+.blog-content h2 { font-size: 1.5rem; margin: 2.2rem 0 1rem; font-weight: 700; }
+.blog-content h3 { font-size: 1.2rem; margin: 1.75rem 0 0.75rem; font-weight: 600; }
+
+.blog-content p { margin: 0 0 1.1rem; }
+
+.blog-content a {
+  color: var(--blog-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.blog-content a:hover { text-decoration-thickness: 2px; }
+
+.blog-content ul,
+.blog-content ol { margin: 0 0 1.1rem; padding-left: 1.5rem; }
+
+.blog-content li { margin-bottom: 0.4rem; }
+
+.blog-content blockquote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1.25rem;
+  border-left: 4px solid var(--blog-secondary);
+  background: color-mix(in srgb, var(--blog-secondary) 8%, transparent);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--blog-text);
+  font-style: italic;
+}
+
+.blog-content blockquote p:last-child { margin-bottom: 0; }
+
+.blog-content code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.9em;
+  background: color-mix(in srgb, var(--blog-secondary) 14%, transparent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+}
+
+.blog-content pre {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #04101f;
+  border: 1px solid var(--blog-border);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.blog-content pre code {
+  background: transparent;
+  padding: 0;
+  color: #e6f0ff;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+  overflow: hidden;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.blog-content th,
+.blog-content td {
+  border: 1px solid var(--blog-border);
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+}
+
+.blog-content th { background: var(--blog-surface); font-weight: 700; }
+
+.blog-content hr {
+  border: none;
+  border-top: 1px solid var(--blog-border);
+  margin: 2rem 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-content * { scroll-behavior: auto !important; }
+}

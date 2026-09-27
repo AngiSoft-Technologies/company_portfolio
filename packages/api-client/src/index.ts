@@ -94,7 +94,7 @@ const redirectToLogin = (): void => {
   if (p.startsWith('/admin')) {
     toast.error('Session expired. Please login again.');
     setTimeout(() => {
-      window.location.href = '/admin/login';
+      window.location.href = '/login';
     }, 1000);
   } else if (p.startsWith('/portal')) {
     toast.error('Session expired. Please request a new portal link.');

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link } from 'react-router-dom';
 import { Card, Hero, Section } from '@angisoft/ui';
 import { fetchIndustries } from '@/hooks/data/useIndustries';

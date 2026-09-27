@@ -6,36 +6,32 @@ import {
   Home,
   About,
   Services,
-  ProductDetail,
+  ServiceDetail,
   Products,
-  AngiTunes,
-  DukaFlow,
-  KejaLink,
-  PetroFlow,
+  ProductDetail,
   Pricing,
   Contact,
   Careers,
   Blog,
   BlogDetail,
   Staff,
+  StaffDetail,
   Testimonials,
   Projects,
+  ProjectDetail,
   Industries,
+  IndustryDetail,
   Solutions,
+  SolutionDetail,
   CategoryDetail,
+  NewsletterConfirm,
+  NewsletterUnsubscribe,
   Privacy,
   Terms,
   NotFound,
 } from '@/features/marketing/pages';
-import {
-  ClientDashboard,
-  ClientProjectTracking,
-  Booking,
-  BookingStatus,
-  BookingHistory,
-  BookingLookup,
-  BookingProgress,
-} from '@/features/client-portal/pages';
+import { Booking, BookingStatus, BookingHistory, BookingLookup, BookingProgress } from '@/features/bookings/pages';
+import { ClientDashboard, ClientProjectTracking } from '@/features/client-portal/pages';
 import { ClientPortalRequest, ClientPortalAccess } from '@/features/auth/pages';
 
 export function AppRoutes() {
@@ -45,47 +41,44 @@ export function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/services/:slug" element={<ServiceDetail />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:slug" element={<ProductDetail />} />
-        <Route path="/products/angitunes" element={<AngiTunes />} />
-        <Route path="/products/dukaflow" element={<DukaFlow />} />
-        <Route path="/products/kejalink" element={<KejaLink />} />
-        <Route path="/products/petroflow" element={<PetroFlow />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogDetail />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/staff/:usernameOrId" element={<StaffDetail />} />
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/project/:slug" element={<ProjectDetail />} />
         <Route path="/industries" element={<Industries />} />
-        <Route path="/industries/:slug" element={<CategoryDetail />} />
+        <Route path="/industries/:slug" element={<IndustryDetail />} />
+        <Route path="/industry/:slug" element={<IndustryDetail />} />
         <Route path="/solutions" element={<Solutions />} />
+        <Route path="/solutions/:slug" element={<SolutionDetail />} />
+        <Route path="/solution/:slug" element={<CategoryDetail />} />
+        <Route path="/technology/:slug" element={<CategoryDetail />} />
+        <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
+        <Route path="/newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/book" element={<Booking />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/booking/:id" element={<BookingStatus />} />
+        <Route path="/bookings" element={<BookingHistory />} />
+        <Route path="/bookings/:reference" element={<BookingProgress />} />
+        <Route path="/track-booking" element={<BookingLookup />} />
       </Route>
 
       <Route path="/portal/request" element={<ClientPortalRequest />} />
       <Route path="/portal/access" element={<ClientPortalAccess />} />
-      <Route
-        element={
-          <ClientProtectedRoute>
-            <PortalLayout />
-          </ClientProtectedRoute>
-        }
-      >
+      <Route element={<ClientProtectedRoute><PortalLayout /></ClientProtectedRoute>}>
         <Route path="/portal" element={<ClientDashboard />} />
         <Route path="/portal/projects/:id" element={<ClientProjectTracking />} />
-        <Route path="/portal/booking" element={<Booking />} />
-        <Route path="/portal/booking/status" element={<BookingStatus />} />
-        <Route path="/portal/booking/history" element={<BookingHistory />} />
-        <Route path="/portal/booking/lookup" element={<BookingLookup />} />
-        <Route path="/portal/booking/:ref" element={<BookingProgress />} />
       </Route>
-
-      <Route path="/booking/lookup" element={<BookingLookup />} />
-      <Route path="/booking/:ref" element={<BookingProgress />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

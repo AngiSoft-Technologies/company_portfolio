@@ -1,0 +1,103 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "AngiSoft Technologies" [ref=e8]
+      - navigation
+      - button "Search" [ref=e10] [cursor=pointer]
+  - main [ref=e13]:
+    - main [ref=e14]:
+      - paragraph [ref=e17]: Loading AngiSoft content…
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: Key Facts
+          - heading "Key Facts About AngiSoft" [level=2] [ref=e22]
+        - generic [ref=e23]: No key facts available yet.
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]: Our Services
+          - heading "Explore Our Offering" [level=2] [ref=e28]
+          - paragraph [ref=e29]: Service categories, descriptions, images and names below are loaded from the API.
+        - generic [ref=e30]: Loading services…
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]: Our Industry Expertise
+          - heading [level=2]
+        - status [ref=e35]: Loading industries…
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: Solutions
+          - heading "Solutions We Deliver" [level=2] [ref=e40]
+          - paragraph [ref=e41]: Solution categories and capabilities below are loaded from the API.
+        - generic [ref=e42]: Loading solutions…
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: Technology
+          - heading "Tech Trends We Build With" [level=2] [ref=e47]
+          - paragraph [ref=e48]: Technology focus areas and capabilities below are loaded from the API.
+        - generic [ref=e49]: Loading technology focus areas…
+        - link "See How We Work" [ref=e51] [cursor=pointer]:
+          - /url: /services
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: Products
+          - heading "Products" [level=2] [ref=e58]
+          - paragraph
+        - generic [ref=e59]: Loading products…
+      - generic [ref=e60]: Brand media is not available yet.
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]: Technology Stack
+          - heading "Technologies and Platforms We Work With" [level=2] [ref=e68]
+        - status [ref=e69]: Loading technologies…
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - generic [ref=e73]: Get In Touch
+          - heading "Contact AngiSoft" [level=2] [ref=e74]
+          - paragraph
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - heading "Send us a message" [level=3] [ref=e77]
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - generic [ref=e80]:
+                  - generic [ref=e81]: Full Name *
+                  - textbox "Full Name" [ref=e82]
+                - generic [ref=e83]:
+                  - generic [ref=e84]: Email *
+                  - textbox "Email" [ref=e85]
+              - generic [ref=e86]:
+                - generic [ref=e87]: Phone
+                - textbox "Phone" [ref=e88]
+              - generic [ref=e89]:
+                - generic [ref=e90]: Message *
+                - textbox "Message" [ref=e91]
+              - group "Preferred Communication" [ref=e92]:
+                - radiogroup "Preferred Communication" [ref=e94]:
+                  - radio "email" [checked] [ref=e95] [cursor=pointer]
+                  - radio "phone" [ref=e96] [cursor=pointer]
+                  - radio "whatsapp" [ref=e97] [cursor=pointer]
+              - generic [ref=e98] [cursor=pointer]:
+                - checkbox "I'd like to discuss an NDA before sharing details" [ref=e99]
+                - generic [ref=e100]: I'd like to discuss an NDA before sharing details
+              - button "Send Message" [ref=e101] [cursor=pointer]
+          - generic [ref=e102]:
+            - heading "Contact Information" [level=3] [ref=e103]
+            - paragraph [ref=e104]: Send a message and the team will respond using your preferred channel.
+            - list
+  - generic [ref=e105]:
+    - link [ref=e108] [cursor=pointer]:
+      - /url: /
+      - img "AngiSoft Technologies" [ref=e111]
+    - generic [ref=e112]:
+      - generic [ref=e113]: Social Handles
+      - generic [ref=e115]:
+        - generic [ref=e116]: Newsletter
+        - generic [ref=e117]:
+          - textbox "Your email address" [ref=e118]
+          - button [ref=e119] [cursor=pointer]
+    - contentinfo [ref=e122]:
+      - link "Staff Login" [ref=e131] [cursor=pointer]:
+        - /url: https://admin.angisoft.co.ke/login
+  - button "Open chat" [ref=e134] [cursor=pointer]

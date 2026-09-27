@@ -6,52 +6,52 @@ const NAV_GROUPS: { title: string; links: { to: string; label: string }[] }[] = 
   {
     title: 'Overview',
     links: [
-      { to: '/admin', label: 'Dashboard' },
-      { to: '/admin/staff-dashboard', label: 'Staff Dashboard' },
+      { to: '/', label: 'Dashboard' },
+      { to: '/staff-dashboard', label: 'Staff Dashboard' },
     ],
   },
   {
     title: 'CRM',
     links: [
-      { to: '/admin/contacts', label: 'Contacts' },
-      { to: '/admin/chat', label: 'Chat Conversations' },
+      { to: '/contacts', label: 'Contacts' },
+      { to: '/chat', label: 'Chat Conversations' },
     ],
   },
   {
     title: 'Operations',
     links: [
-      { to: '/admin/projects', label: 'Projects' },
-      { to: '/admin/client-projects', label: 'Client Projects' },
-      { to: '/admin/bookings', label: 'Bookings' },
-      { to: '/admin/payments', label: 'Payments' },
+      { to: '/projects', label: 'Projects' },
+      { to: '/client-projects', label: 'Client Projects' },
+      { to: '/bookings', label: 'Bookings' },
+      { to: '/payments', label: 'Payments' },
     ],
   },
   {
     title: 'Content',
     links: [
-      { to: '/admin/blogs', label: 'Blogs' },
-      { to: '/admin/products', label: 'Products' },
-      { to: '/admin/services', label: 'Services' },
-      { to: '/admin/service-categories', label: 'Service Categories' },
-      { to: '/admin/sections', label: 'Home Sections' },
-      { to: '/admin/testimonials', label: 'Testimonials' },
-      { to: '/admin/faqs', label: 'FAQs' },
-      { to: '/admin/industries', label: 'Industries' },
-      { to: '/admin/solutions', label: 'Solutions' },
-      { to: '/admin/careers', label: 'Careers' },
-      { to: '/admin/pricing', label: 'Pricing' },
-      { to: '/admin/about', label: 'About Sections' },
+      { to: '/blogs', label: 'Blogs' },
+      { to: '/products', label: 'Products' },
+      { to: '/services', label: 'Services' },
+      { to: '/service-categories', label: 'Service Categories' },
+      { to: '/sections', label: 'Home Sections' },
+      { to: '/testimonials', label: 'Testimonials' },
+      { to: '/faqs', label: 'FAQs' },
+      { to: '/industries', label: 'Industries' },
+      { to: '/solutions', label: 'Solutions' },
+      { to: '/careers', label: 'Careers' },
+      { to: '/pricing', label: 'Pricing' },
+      { to: '/about', label: 'About Sections' },
     ],
   },
   {
     title: 'People & System',
     links: [
-      { to: '/admin/staff', label: 'Staff Management' },
-      { to: '/admin/staff-access', label: 'Staff Access' },
-      { to: '/admin/ai', label: 'AI Config' },
-      { to: '/admin/uploads', label: 'File Uploads' },
-      { to: '/admin/settings', label: 'Site Settings' },
-      { to: '/admin/system', label: 'System Panel' },
+      { to: '/staff', label: 'Staff Management' },
+      { to: '/staff-access', label: 'Staff Access' },
+      { to: '/ai', label: 'AI Config' },
+      { to: '/uploads', label: 'File Uploads' },
+      { to: '/settings', label: 'Site Settings' },
+      { to: '/system', label: 'System Panel' },
     ],
   },
 ];
@@ -66,7 +66,7 @@ export function AdminLayout() {
     } catch {
       /* ignore */
     }
-    window.location.href = '/admin/login';
+    window.location.href = '/login';
   };
 
   return (
@@ -92,7 +92,7 @@ export function AdminLayout() {
                   <NavLink
                     key={l.to}
                     to={l.to}
-                    end={l.to === '/admin'}
+                    end={l.to === '/'}
                     className={({ isActive }) =>
                       `block rounded-lg px-3 py-1.5 text-sm transition-colors ${
                         isActive
@@ -121,7 +121,7 @@ export function AdminLayout() {
       <div className="ml-64 flex min-h-screen flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
           <div className="text-sm text-slate-500">
-            {location.pathname === '/admin' ? 'Dashboard' : location.pathname.replace('/admin/', '')}
+            {location.pathname === '/' ? 'Dashboard' : location.pathname.replace(/^\//, '')}
           </div>
           <div className="flex items-center gap-3">
             <Link to="/" className="text-sm text-slate-500 hover:text-slate-900">

@@ -1,0 +1,112 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]:
+          - generic:
+            - img "AngiSoft Technologies"
+      - navigation
+      - button "Search" [ref=e8] [cursor=pointer]
+  - main [ref=e11]:
+    - main [ref=e12]:
+      - generic [ref=e14]:
+        - status
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Key Facts
+          - heading "Key Facts About AngiSoft" [level=2] [ref=e19]
+        - status [ref=e20]
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: Our Services
+          - heading "Explore Our Offering" [level=2] [ref=e30]
+        - generic [ref=e31]:
+          - status
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: Our Industry Expertise
+          - heading [level=2]
+        - generic [ref=e36]:
+          - status
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]: Solutions
+          - heading "Solutions We Deliver" [level=2] [ref=e41]
+        - generic [ref=e42]:
+          - status
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: Technology
+          - heading "Tech Trends We Build With" [level=2] [ref=e47]
+        - generic [ref=e48]:
+          - status
+        - link "See How We Work" [ref=e50] [cursor=pointer]:
+          - /url: /services
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]: Products
+          - heading "Products" [level=2] [ref=e57]
+          - paragraph
+        - generic [ref=e58]:
+          - status
+      - generic [ref=e61]:
+        - status
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]: Technology Stack
+          - heading "Technologies and Platforms We Work With" [level=2] [ref=e66]
+        - generic [ref=e67]:
+          - status
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: Get In Touch
+          - heading "Contact AngiSoft" [level=2] [ref=e72]
+          - paragraph
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - heading "Send us a message" [level=3] [ref=e75]
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - generic [ref=e79]: Full Name *
+                  - textbox "Full Name" [ref=e80]
+                - generic [ref=e81]:
+                  - generic [ref=e82]: Email *
+                  - textbox "Email" [ref=e83]
+              - generic [ref=e84]:
+                - generic [ref=e85]: Phone
+                - textbox "Phone" [ref=e86]
+              - generic [ref=e87]:
+                - generic [ref=e88]: Message *
+                - textbox "Message" [ref=e89]
+              - group "Preferred Communication" [ref=e90]:
+                - radiogroup "Preferred Communication" [ref=e92]:
+                  - radio "email" [checked] [ref=e93] [cursor=pointer]
+                  - radio "phone" [ref=e94] [cursor=pointer]
+                  - radio "whatsapp" [ref=e95] [cursor=pointer]
+              - generic [ref=e96] [cursor=pointer]:
+                - checkbox "I'd like to discuss an NDA before sharing details" [ref=e97]
+                - generic [ref=e98]: I'd like to discuss an NDA before sharing details
+              - button "Send Message" [ref=e99] [cursor=pointer]
+          - generic [ref=e100]:
+            - heading "Contact Information" [level=3] [ref=e101]
+            - paragraph [ref=e102]: Send a message and the team will respond using your preferred channel.
+            - list
+  - generic [ref=e103]:
+    - link [ref=e106] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e107]:
+        - generic:
+          - img "AngiSoft Technologies"
+    - generic [ref=e108]:
+      - generic [ref=e109]: Social Handles
+      - generic [ref=e111]:
+        - generic [ref=e112]: Newsletter
+        - generic [ref=e113]:
+          - textbox "Your email address" [ref=e114]
+          - button [ref=e115] [cursor=pointer]
+    - contentinfo [ref=e118]:
+      - link "Staff Login" [ref=e127] [cursor=pointer]:
+        - /url: https://admin.angisoft.co.ke/login
+  - button "Open chat" [ref=e130] [cursor=pointer]

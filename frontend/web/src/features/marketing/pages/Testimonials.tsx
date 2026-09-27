@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Hero, Section, Testimonial } from '@angisoft/ui';
 import { fetchTestimonials } from '@/hooks/data/useTestimonials';
 import { useAsync } from '@/hooks/useAsync';

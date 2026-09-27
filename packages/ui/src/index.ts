@@ -2,7 +2,7 @@ export * from './tokens';
 export * from './themes';
 export * from './hooks';
 
-export { Button, Card, Section, Hero, Testimonial, LogoCloud } from './components';
+export { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState } from './components';
 export type {
   ButtonProps,
   CardProps,
@@ -10,7 +10,11 @@ export type {
   HeroProps,
   TestimonialProps,
   LogoCloudProps,
+  LoadingIndicatorProps,
+  LoadingVariant,
+  VisualStateProps,
+  VisualStateVariant,
 } from './components';
 
-import { Button, Card, Section, Hero, Testimonial, LogoCloud } from './components';
-export default { Button, Card, Section, Hero, Testimonial, LogoCloud };
+import { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState } from './components';
+export default { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState };

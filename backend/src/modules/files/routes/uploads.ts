@@ -5,7 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import prisma from '../../../db';
 import { newId } from '../../../prisma/db';
-import { generatePresignedPutUrl, isS3Enabled, toPublicUrl, uploadObject, getObject } from '../services/storage/s3';
+import { generatePresignedGetUrl, generatePresignedPutUrl, isS3Enabled, toPublicUrl, uploadObject, getObject } from '../services/storage/s3';
 import { z } from 'zod';
 import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
 
@@ -469,21 +469,10 @@ router.get('/files/:fileId/download', requireAuth, async (req: AuthRequest, res)
 
     if (metadata.storage === 's3' && metadata.key) {
         try {
-            const obj = await getObject(metadata.key);
-            res.setHeader('Content-Type', obj.ContentType || file.mime || 'application/octet-stream');
-            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename || 'download')}"`);
-            const body = obj.Body as any;
-            if (body && typeof body.pipe === 'function') {
-                body.pipe(res);
-                return;
-            }
-            if (body) {
-                res.send(Buffer.isBuffer(body) ? body : Buffer.from(body as any));
-                return;
-            }
-            return res.status(404).json({ error: 'Object is empty' });
+            const url = await generatePresignedGetUrl(metadata.key, file.filename || 'download', 300);
+            return res.redirect(url);
         } catch (err) {
-            console.error('Error streaming s3 object', err);
+            console.error('Error signing private object', err);
             return res.status(500).json({ error: 'Unable to download file' });
         }
     }

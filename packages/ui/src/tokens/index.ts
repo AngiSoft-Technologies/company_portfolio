@@ -11,22 +11,61 @@ export const brand = {
   motto: 'Innovate • Build • Empower',
 } as const;
 
+/**
+ * Official AngiSoft palette.
+ *
+ * Sourced from the brand assets themselves, not hand-picked:
+ *   - logo-symbol.svg                          -> #0077F1, #00A4F6, #02CCFC, #00156A
+ *   - AngiSoft_Dark_Background_Logo-removebg   -> #02CCFC, #00156A, white wordmark
+ *   - AngiSoftFooterWave.tsx                   -> #061324, #071C70, #123DFF, #00AFFF, #24B947
+ *
+ * The system is one hue ramp (electric blue -> azure -> cyan) over an abyssal
+ * navy base, with a single green accent. Nothing else is a brand colour.
+ */
 export const colors = {
-  primary: '#0875FF',
+  // Blue ramp
+  primary: '#0875FF',        // logo #0077F1
   primaryLight: '#3B9AFF',
   primaryDark: '#003BCE',
-  secondary: '#00AFFF',
+  royalBlue: '#00156A',      // logo — deepest blue in the mark
+  indigo: '#071C70',         // footer wave gradient
+  blueBright: '#123DFF',     // footer wave gradient
+
+  // Cyan / azure ramp
+  secondary: '#00AFFF',      // logo #00A4F6 + footer wave
+  cyanBright: '#02CCFC',     // logo — brightest cyan in the mark
   secondaryLight: '#18D8FF',
   secondaryDark: '#0088CC',
   accent: '#18D8FF',
+
+  // Accent green (footer wave crest only)
+  green: '#24B947',
   success: '#27D94B',
   successDark: '#1EB83D',
-  warning: '#F59E0B',
-  error: '#EF4444',
+
+  // Navy base
+  abyss: '#061324',          // footer wave body + gradient end
   navy: '#07142B',
   navyLight: '#0B1E3D',
   navyLighter: '#102A55',
+
+  // Neutrals
   offWhite: '#F5F7FA',
+  white: '#FFFFFF',
+  tintPale: '#DDEFFF',
+  tintMist: '#CCE2FA',
+
+  // Status
+  warning: '#F59E0B',
+  error: '#EF4444',
+} as const;
+
+/** The footer wave is a brand asset, so its stops live beside the palette. */
+export const brandGradients = {
+  footerWave:
+    'linear-gradient(90deg, #061324 0%, #071C70 28%, #123DFF 52%, #00AFFF 78%, #061324 100%)',
+  brandSweep:
+    'linear-gradient(90deg, #00156A 0%, #0875FF 38%, #00AFFF 70%, #02CCFC 100%)',
 } as const;
 
 /** One accent family per view; neutral/light surfaces everywhere else. */
@@ -44,7 +83,7 @@ export const semantic = {
     lightMuted: colors.offWhite,
   },
   border: {
-    dark: 'rgba(0, 175, 255, 0.22)',
+    dark: 'rgba(148, 163, 184, 0.18)',
     light: 'rgba(15, 23, 42, 0.1)',
   },
 } as const;
@@ -127,33 +166,27 @@ export const motion = {
   },
 } as const;
 
-export const gradients = {
-  primary: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-  secondary: `linear-gradient(135deg, ${colors.secondary} 0%, ${colors.success} 100%)`,
-  brand: `linear-gradient(135deg, #18D8FF 0%, ${colors.primary} 45%, ${colors.primaryDark} 100%)`,
-} as const;
-
 export type AngiSoftColors = typeof colors;
 export type AngiSoftTokens = {
   colors: typeof colors;
+  brandGradients: typeof brandGradients;
   semantic: typeof semantic;
   typography: typeof typography;
   spacing: typeof spacing;
   radius: typeof radius;
   elevation: typeof elevation;
   motion: typeof motion;
-  gradients: typeof gradients;
 };
 
 export const tokens: AngiSoftTokens = {
   colors,
+  brandGradients,
   semantic,
   typography,
   spacing,
   radius,
   elevation,
   motion,
-  gradients,
 };
 
 export default tokens;

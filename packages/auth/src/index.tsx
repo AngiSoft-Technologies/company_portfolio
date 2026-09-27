@@ -5,7 +5,7 @@ import type { Role } from '@angisoft/types';
 
 /**
  * AdminProtectedLayout — route guard for the staff/admin area.
- * On mount rehydrates the session via /auth/refresh; redirects to /admin/login
+ * On mount rehydrates the session via /auth/refresh; redirects to /login
  * when no access token is available.
  */
 export function AdminProtectedLayout({ children }: { children: ReactNode }): ReactNode {
@@ -28,7 +28,7 @@ export function AdminProtectedLayout({ children }: { children: ReactNode }): Rea
   if (checking) return null;
 
   if (!authed) {
-    return <Navigate to="/admin/login" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;

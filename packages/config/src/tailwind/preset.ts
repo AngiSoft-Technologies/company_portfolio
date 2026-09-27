@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 
 /**
  * AngiSoft shared Tailwind preset. Single source of truth for brand colors,
- * fonts, gradients and shadows — consumed by frontend/web and frontend/admin.
+ * fonts, surfaces and shadows — consumed by frontend/web and frontend/admin.
  * Values mirror packages/ui/tokens (CSS variables) and the official brand.
  */
 const preset: Config = {
@@ -40,12 +40,8 @@ const preset: Config = {
         sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
         display: ['"Sora"', '"DM Sans"', 'sans-serif'],
       },
-      backgroundImage: {
-        'angi-gradient': 'linear-gradient(135deg, #0875FF 0%, #00AFFF 100%)',
-        'angi-dark': 'linear-gradient(180deg, #07142B 0%, #0B1E3D 100%)',
-      },
       boxShadow: {
-        'angi-glow': '0 0 24px rgba(24, 216, 255, 0.35)',
+        'angi-raised': '0 10px 30px rgba(7, 20, 43, 0.12)',
       },
       borderRadius: {
         xl2: '1.25rem',

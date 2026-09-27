@@ -1,0 +1,178 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]:
+          - generic:
+            - img "AngiSoft Technologies"
+      - navigation [ref=e7]:
+        - link "Home" [ref=e8] [cursor=pointer]:
+          - /url: /
+      - generic [ref=e9]:
+        - button "Switch to light theme" [ref=e10] [cursor=pointer]
+        - button "Search" [ref=e13] [cursor=pointer]
+  - main [ref=e16]:
+    - main [ref=e17]:
+      - status [ref=e19]
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Our Services
+          - heading "Explore Our Offering" [level=2] [ref=e29]
+        - status [ref=e31]
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]: Our Industry Expertise
+          - heading [level=2]
+        - status [ref=e42]
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: Solutions
+          - heading "Solutions We Deliver" [level=2] [ref=e52]
+        - status [ref=e54]
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]: Technology
+          - heading "Tech Trends We Build With" [level=2] [ref=e64]
+        - status [ref=e66]
+        - link "See How We Work" [ref=e73] [cursor=pointer]:
+          - /url: /services
+      - generic [ref=e77]:
+        - generic:
+          - generic:
+            - heading [level=2]
+        - status [ref=e78]:
+          - button "Retry" [ref=e84] [cursor=pointer]
+      - generic [ref=e91]:
+        - status [ref=e92]
+        - generic [aria-hidden]:
+          - generic: Operations
+          - generic: Software
+          - generic: Automation
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: Technology Stack
+          - heading "Technologies and Platforms We Work With" [level=2] [ref=e102]
+        - status [ref=e104]
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - generic [ref=e113]: Get In Touch
+          - heading "Contact AngiSoft" [level=2] [ref=e114]
+          - paragraph
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - heading "Send us a message" [level=3] [ref=e117]
+            - generic [ref=e118]:
+              - generic [ref=e119]:
+                - generic [ref=e120]:
+                  - generic [ref=e121]: Full Name *
+                  - textbox "Full Name" [ref=e122]
+                - generic [ref=e123]:
+                  - generic [ref=e124]: Email *
+                  - textbox "Email" [ref=e125]
+              - generic [ref=e126]:
+                - generic [ref=e127]: Phone
+                - textbox "Phone" [ref=e128]
+              - generic [ref=e129]:
+                - generic [ref=e130]: Message *
+                - textbox "Message" [ref=e131]
+              - group "Preferred Communication" [ref=e132]:
+                - radiogroup "Preferred Communication" [ref=e134]:
+                  - radio "email" [checked] [ref=e135] [cursor=pointer]
+                  - radio "phone" [ref=e136] [cursor=pointer]
+                  - radio "whatsapp" [ref=e137] [cursor=pointer]
+              - generic [ref=e138] [cursor=pointer]:
+                - checkbox "I'd like to discuss an NDA before sharing details" [ref=e139]
+                - generic [ref=e140]: I'd like to discuss an NDA before sharing details
+              - button "Send Message" [ref=e141] [cursor=pointer]
+          - generic [ref=e142]:
+            - heading "Contact Information" [level=3] [ref=e143]
+            - paragraph [ref=e144]: Send a message and the team will respond using your preferred channel.
+            - list
+  - contentinfo [ref=e145]:
+    - generic [ref=e146]:
+      - link [ref=e149] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e150]:
+          - generic:
+            - img "AngiSoft Technologies"
+      - generic [ref=e151]:
+        - generic [ref=e152]: Social Handles
+        - generic [ref=e154]:
+          - generic [ref=e155]: Newsletter
+          - generic [ref=e156]:
+            - textbox "Your email address" [ref=e157]
+            - button [ref=e158] [cursor=pointer]
+    - link "Staff Login" [ref=e170] [cursor=pointer]:
+      - /url: https://admin.angisoft.co.ke/login
+  - button "Open chat" [ref=e173] [cursor=pointer]
+  - generic:
+    - button "✕ Failed to fetch" [ref=e177] [cursor=pointer]:
+      - generic [ref=e178]: ✕
+      - generic [ref=e179]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e180] [cursor=pointer]:
+      - generic [ref=e181]: ✕
+      - generic [ref=e182]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e183] [cursor=pointer]:
+      - generic [ref=e184]: ✕
+      - generic [ref=e185]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e186] [cursor=pointer]:
+      - generic [ref=e187]: ✕
+      - generic [ref=e188]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e189] [cursor=pointer]:
+      - generic [ref=e190]: ✕
+      - generic [ref=e191]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e192] [cursor=pointer]:
+      - generic [ref=e193]: ✕
+      - generic [ref=e194]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e195] [cursor=pointer]:
+      - generic [ref=e196]: ✕
+      - generic [ref=e197]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e198] [cursor=pointer]:
+      - generic [ref=e199]: ✕
+      - generic [ref=e200]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e201] [cursor=pointer]:
+      - generic [ref=e202]: ✕
+      - generic [ref=e203]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e204] [cursor=pointer]:
+      - generic [ref=e205]: ✕
+      - generic [ref=e206]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e207] [cursor=pointer]:
+      - generic [ref=e208]: ✕
+      - generic [ref=e209]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e210] [cursor=pointer]:
+      - generic [ref=e211]: ✕
+      - generic [ref=e212]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e213] [cursor=pointer]:
+      - generic [ref=e214]: ✕
+      - generic [ref=e215]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e216] [cursor=pointer]:
+      - generic [ref=e217]: ✕
+      - generic [ref=e218]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e219] [cursor=pointer]:
+      - generic [ref=e220]: ✕
+      - generic [ref=e221]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e222] [cursor=pointer]:
+      - generic [ref=e223]: ✕
+      - generic [ref=e224]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e225] [cursor=pointer]:
+      - generic [ref=e226]: ✕
+      - generic [ref=e227]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e228] [cursor=pointer]:
+      - generic [ref=e229]: ✕
+      - generic [ref=e230]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e231] [cursor=pointer]:
+      - generic [ref=e232]: ✕
+      - generic [ref=e233]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e234] [cursor=pointer]:
+      - generic [ref=e235]: ✕
+      - generic [ref=e236]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e237] [cursor=pointer]:
+      - generic [ref=e238]: ✕
+      - generic [ref=e239]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e240] [cursor=pointer]:
+      - generic [ref=e241]: ✕
+      - generic [ref=e242]: Failed to fetch
+    - button "✕ Failed to fetch" [ref=e243] [cursor=pointer]:
+      - generic [ref=e244]: ✕
+      - generic [ref=e245]: Failed to fetch

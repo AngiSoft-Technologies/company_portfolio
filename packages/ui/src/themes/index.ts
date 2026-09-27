@@ -1,4 +1,4 @@
-import { colors, motion, radius, semantic, typography } from '../tokens';
+import { brandGradients, colors, motion, radius, semantic, typography } from '../tokens';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -18,27 +18,36 @@ export interface ThemeSurfaceColors {
 const darkSurface: ThemeSurfaceColors = {
   background: colors.navy,
   backgroundSecondary: colors.navyLight,
-  surface: colors.navyLight,
+  surface: '#0D2344',
   surfaceHover: colors.navyLighter,
   text: colors.offWhite,
-  textSecondary: '#CBD5E1',
+  textSecondary: '#C7D2E0',
   textMuted: '#94A3B8',
   border: semantic.border.dark,
-  borderLight: 'rgba(215, 227, 255, 0.14)',
-  cardBg: 'rgba(11, 30, 61, 0.78)',
+  borderLight: 'rgba(148, 163, 184, 0.12)',
+  cardBg: 'rgba(13, 35, 68, 0.92)',
 };
 
+/**
+ * Light surfaces are deliberately brand-tinted, not neutral white.
+ *
+ * A pure `#FFFFFF` / `#F5F7FA` pair made every light-theme surface collapse to
+ * the same value, so sections lost their separation and low-contrast text
+ * (`#64748B` on white) sat on the same white as the background. These values
+ * keep a cool paper base with enough chroma to tint surfaces, and darken the
+ * muted text ramp so secondary copy clears WCAG AA on light backgrounds.
+ */
 const lightSurface: ThemeSurfaceColors = {
-  background: colors.offWhite,
+  background: '#F2F6FD',
   backgroundSecondary: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceHover: '#F8FAFC',
+  surfaceHover: '#E9F1FE',
   text: colors.navy,
-  textSecondary: '#334155',
-  textMuted: '#64748B',
-  border: semantic.border.light,
-  borderLight: 'rgba(15, 23, 42, 0.08)',
-  cardBg: 'rgba(255, 255, 255, 0.9)',
+  textSecondary: '#334A6B',
+  textMuted: '#5A7291',
+  border: 'rgba(8, 117, 255, 0.16)',
+  borderLight: 'rgba(8, 117, 255, 0.1)',
+  cardBg: '#FFFFFF',
 };
 
 export const themeSurfaces: Record<ThemeMode, ThemeSurfaceColors> = {
@@ -59,7 +68,18 @@ export function applyCssVariables(mode: ThemeMode = 'dark'): void {
     '--color-secondary-light': colors.secondaryLight,
     '--color-secondary-dark': colors.secondaryDark,
     '--color-accent': colors.accent,
+    '--color-cyan-bright': colors.cyanBright,
+    '--color-royal-blue': colors.royalBlue,
+    '--color-indigo': colors.indigo,
+    '--color-blue-bright': colors.blueBright,
+    '--color-green': colors.green,
+    '--color-abyss': colors.abyss,
+    '--color-tint-pale': colors.tintPale,
+    '--color-tint-mist': colors.tintMist,
+    '--color-white': colors.white,
     '--color-success': colors.success,
+    '--gradient-footer-wave': brandGradients.footerWave,
+    '--gradient-brand-sweep': brandGradients.brandSweep,
     '--color-warning': colors.warning,
     '--color-error': colors.error,
     '--color-navy': colors.navy,
@@ -77,9 +97,13 @@ export function applyCssVariables(mode: ThemeMode = 'dark'): void {
     '--border-light': surf.borderLight,
     '--card-bg': surf.cardBg,
 
-    '--gradient-primary': `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-    '--gradient-secondary': `linear-gradient(135deg, ${colors.secondary} 0%, ${colors.success} 100%)`,
-    '--gradient-brand': `linear-gradient(135deg, #18D8FF 0%, ${colors.primary} 45%, ${colors.primaryDark} 100%)`,
+    '--gradient-primary': colors.primary,
+    '--gradient-secondary': colors.secondary,
+    '--gradient-brand': colors.primary,
+    '--surface-raised': mode === 'dark' ? colors.navyLighter : '#FFFFFF',
+    '--shadow-color': mode === 'dark' ? '0 0 0' : '7 20 43',
+    '--focus-ring': 'rgba(8, 117, 255, 0.32)',
+    '--section-y': 'clamp(2.75rem, 4vw, 4.5rem)',
 
     '--font-display': typography.fontFamily.display,
     '--font-body': typography.fontFamily.body,

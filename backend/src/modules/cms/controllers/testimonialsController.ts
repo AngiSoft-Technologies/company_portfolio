@@ -15,7 +15,7 @@ export const testimonialsController = {
     async list(options: any = {}) {
         const { where, take, skip, ...rest } = options;
         let query = prisma.orm.public.Testimonial.orderBy((t) => t.createdAt.desc());
-        if (where) query = query.where((t) => where(t));
+        if (where) query = query.where(where);
         if (skip) query = query.offset(Number(skip));
         if (take) query = query.limit(Number(take));
         let rows: Awaited<ReturnType<typeof query.all>> = [];
@@ -30,7 +30,7 @@ export const testimonialsController = {
     async get(id: string, options: any = {}) {
         const { where, ...rest } = options;
         let query = prisma.orm.public.Testimonial.where({ id });
-        if (where) query = query.where((t) => where(t));
+        if (where) query = query.where(where);
         void rest;
         try {
             return await query.first();

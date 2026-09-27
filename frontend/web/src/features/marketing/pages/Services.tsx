@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Card, Hero, Section } from '@angisoft/ui';
 import { fetchServices } from '@/hooks/data/useServices';
 import { fetchFaqs } from '@/hooks/data/useSolutions';

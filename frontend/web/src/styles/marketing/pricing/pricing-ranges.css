@@ -1,0 +1,55 @@
+/* Pricing — estimated ranges (real category floors, "KSh 15,000" format) */
+.pricing-ranges__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.1rem;
+}
+.pricing-range {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pricing-range:hover {
+    border-color: var(--pricing-border-strong);
+    box-shadow: var(--pricing-shadow);
+}
+.pricing-range__category {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1.15rem;
+    color: var(--pricing-text);
+}
+.pricing-range__from {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--pricing-accent);
+    font-family: 'Sora', system-ui, sans-serif;
+}
+.pricing-range__desc {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+.pricing-range__includes {
+    list-style: none;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+}
+.pricing-range__includes li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    color: var(--pricing-text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.pricing-range__includes svg { color: var(--pricing-accent-2); margin-top: 0.2rem; flex: none; }

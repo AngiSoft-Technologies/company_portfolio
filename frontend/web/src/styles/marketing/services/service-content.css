@@ -1,0 +1,175 @@
+/* =========================================================================
+   Service Detail — content sections that sit inside the main flow.
+   Covers: outcome, features, deliverables, audience.
+   Driven by --sd-* tokens defined in service-detail.css.
+   ========================================================================= */
+
+/* ---------- Outcome ---------- */
+.service-outcome__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.service-outcome__card {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    padding: 1.2rem;
+    border-radius: var(--sd-radius);
+    border: 1px solid var(--sd-border);
+    background: var(--sd-surface);
+}
+.service-outcome__bullet {
+    flex: none;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-top: 0.45rem;
+    border-radius: 999px;
+    background: linear-gradient(120deg, var(--sd-accent), var(--sd-accent-2));
+}
+.service-outcome__text { color: var(--sd-text); line-height: 1.6; }
+
+/* ---------- Features (What's Included) ---------- */
+.service-feature-list__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.service-feature-list__item {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--sd-radius);
+    border: 1px solid var(--sd-border);
+    background: var(--sd-surface);
+    color: var(--sd-text);
+    line-height: 1.55;
+}
+.service-feature-list__check {
+    flex: none;
+    color: var(--sd-accent-2);
+    margin-top: 0.15rem;
+    font-size: 1rem;
+}
+
+/* ---------- Service-specific contact CTA ---------- */
+.service-contact-cta { margin-top: 1rem; }
+.service-contact-cta__panel {
+    padding: clamp(1.8rem, 4vw, 3rem);
+    text-align: center;
+    border-radius: 1.5rem;
+    border: 1px solid var(--sd-border-strong);
+    background:
+        radial-gradient(600px 300px at 50% -20%, rgba(0, 175, 255, 0.16), transparent 60%),
+        var(--sd-surface);
+}
+.service-contact-cta__title {
+    margin: 0 0 0.6rem;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.4rem, 3.5vw, 2.1rem);
+    color: var(--sd-text);
+}
+.service-contact-cta__text {
+    margin: 0 auto 1.6rem;
+    max-width: 620px;
+    color: var(--sd-muted);
+    line-height: 1.6;
+}
+.service-contact-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 1rem;
+    justify-content: center;
+}
+
+/* ---------- Deliverables ---------- */
+.service-deliverables__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.service-deliverables__card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--sd-radius);
+    border: 1px solid var(--sd-border);
+    background: var(--sd-surface);
+    color: var(--sd-text);
+}
+.service-deliverables__icon { color: var(--sd-accent-2); font-size: 1rem; }
+
+/* ---------- Audience ---------- */
+.service-audience__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.service-audience__pill {
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--sd-border);
+    background: var(--sd-surface);
+    color: var(--sd-text);
+    font-size: 0.9rem;
+}
+
+/* ---------- FAQs ---------- */
+.service-faqs__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0;
+}
+.service-faqs__item {
+    border: 1px solid var(--sd-border);
+    border-radius: var(--sd-radius);
+    background: var(--sd-surface);
+    overflow: hidden;
+}
+.service-faqs__qtitle { margin: 0; }
+.service-faqs__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--sd-text);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    min-height: 44px;
+}
+.service-faqs__icon {
+    flex: none;
+    color: var(--sd-accent);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+.service-faqs__panel { padding: 0; }
+.service-faqs__answer {
+    margin: 0;
+    padding: 0 1.25rem 1.2rem;
+    color: var(--sd-muted);
+    line-height: 1.7;
+}

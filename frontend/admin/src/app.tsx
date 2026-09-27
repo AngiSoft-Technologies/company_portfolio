@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AdminLogin } from '@/layouts/AdminLogin';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { NotFoundAdmin } from '@/layouts/NotFoundAdmin';
@@ -13,10 +13,16 @@ import { StaffManagement, StaffAccess } from '@/features/hr-staff';
 import { AIConfigAdmin } from '@/features/ai-tools';
 import { SystemPanel, FileUploadManager } from '@/features/settings';
 
+function LegacyAdminRedirect() {
+  const location = useLocation();
+  const target = location.pathname.replace(/^\/admin(?:\/|$)/, '/') || '/';
+  return <Navigate to={target} replace />;
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/login" element={<AdminLogin />} />
       <Route
         element={
           <AdminProtectedLayout>
@@ -24,35 +30,36 @@ export default function App() {
           </AdminProtectedLayout>
         }
       >
-        <Route path="/admin" element={<EnhancedAdminDashboard />} />
-        <Route path="/admin/dashboard" element={<EnhancedAdminDashboard />} />
-        <Route path="/admin/staff-dashboard" element={<StaffDashboard />} />
-        <Route path="/admin/contacts" element={<ContactsAdmin />} />
-        <Route path="/admin/chat" element={<ChatConversationsAdmin />} />
-        <Route path="/admin/projects" element={<ProjectsAdmin />} />
-        <Route path="/admin/client-projects" element={<ClientProjectsManagement />} />
-        <Route path="/admin/bookings" element={<BookingsManagement />} />
-        <Route path="/admin/blogs" element={<BlogAdmin />} />
-        <Route path="/admin/products" element={<ProductsAdmin />} />
-        <Route path="/admin/services" element={<ServicesAdmin />} />
-        <Route path="/admin/service-categories" element={<ServiceCategoriesAdmin />} />
-        <Route path="/admin/sections" element={<HomeSectionsAdmin />} />
-        <Route path="/admin/settings" element={<SiteSettingsAdmin />} />
-        <Route path="/admin/faqs" element={<FaqsAdmin />} />
-        <Route path="/admin/careers" element={<CareersAdmin />} />
-        <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
-        <Route path="/admin/industries" element={<IndustriesAdmin />} />
-        <Route path="/admin/solutions" element={<SolutionsAdmin />} />
-        <Route path="/admin/pricing" element={<PricingAdmin />} />
-        <Route path="/admin/about" element={<AboutAdmin />} />
-        <Route path="/admin/payments" element={<PaymentsAdmin />} />
-        <Route path="/admin/staff" element={<StaffManagement />} />
-        <Route path="/admin/staff-access" element={<StaffAccess />} />
-        <Route path="/admin/ai" element={<AIConfigAdmin />} />
-        <Route path="/admin/system" element={<SystemPanel />} />
-        <Route path="/admin/uploads" element={<FileUploadManager />} />
+        <Route path="/" element={<EnhancedAdminDashboard />} />
+        <Route path="dashboard" element={<EnhancedAdminDashboard />} />
+        <Route path="staff-dashboard" element={<StaffDashboard />} />
+        <Route path="contacts" element={<ContactsAdmin />} />
+        <Route path="chat" element={<ChatConversationsAdmin />} />
+        <Route path="projects" element={<ProjectsAdmin />} />
+        <Route path="client-projects" element={<ClientProjectsManagement />} />
+        <Route path="bookings" element={<BookingsManagement />} />
+        <Route path="blogs" element={<BlogAdmin />} />
+        <Route path="products" element={<ProductsAdmin />} />
+        <Route path="services" element={<ServicesAdmin />} />
+        <Route path="service-categories" element={<ServiceCategoriesAdmin />} />
+        <Route path="sections" element={<HomeSectionsAdmin />} />
+        <Route path="settings" element={<SiteSettingsAdmin />} />
+        <Route path="faqs" element={<FaqsAdmin />} />
+        <Route path="careers" element={<CareersAdmin />} />
+        <Route path="testimonials" element={<TestimonialsAdmin />} />
+        <Route path="industries" element={<IndustriesAdmin />} />
+        <Route path="solutions" element={<SolutionsAdmin />} />
+        <Route path="pricing" element={<PricingAdmin />} />
+        <Route path="about" element={<AboutAdmin />} />
+        <Route path="payments" element={<PaymentsAdmin />} />
+        <Route path="staff" element={<StaffManagement />} />
+        <Route path="staff-access" element={<StaffAccess />} />
+        <Route path="ai" element={<AIConfigAdmin />} />
+        <Route path="system" element={<SystemPanel />} />
+        <Route path="uploads" element={<FileUploadManager />} />
       </Route>
-      <Route path="/admin/*" element={<NotFoundAdmin />} />
+      <Route path="/admin" element={<LegacyAdminRedirect />} />
+      <Route path="/admin/*" element={<LegacyAdminRedirect />} />
       <Route path="*" element={<NotFoundAdmin />} />
     </Routes>
   );

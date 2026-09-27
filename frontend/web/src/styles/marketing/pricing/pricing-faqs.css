@@ -1,0 +1,39 @@
+/* Pricing — FAQ accordion */
+.pricing-faqs__list {
+    display: grid;
+    gap: 0.8rem;
+    max-width: 880px;
+}
+.pricing-faq {
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    overflow: hidden;
+}
+.pricing-faq__q {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    color: var(--pricing-text);
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1.02rem;
+    padding: 1.1rem 1.4rem;
+    cursor: pointer;
+}
+.pricing-faq__icon {
+    flex: none;
+    color: var(--pricing-accent);
+    transition: transform 0.2s ease;
+}
+.pricing-faq--open .pricing-faq__icon { transform: rotate(45deg); }
+.pricing-faq__a {
+    margin: 0;
+    padding: 0 1.4rem 1.2rem;
+    color: var(--pricing-muted);
+    line-height: 1.7;
+}

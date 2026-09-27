@@ -260,7 +260,7 @@ async function main() {
                 type: 'video',
                 video: '/videos/Matrix_rain_code.mp4',
                 poster: '/uploads/public/images/Software-Development-Company.jpg',
-                badge: 'AngiSoft Technologies',
+                badge: 'Digital Delivery',
                 headline: 'Building Africa’s',
                 headlineHighlight: 'Digital Future',
                 tagline: 'From software engineering to automation and creator ecosystems, AngiSoft builds technology designed for real-world impact.',
@@ -272,12 +272,12 @@ async function main() {
                 id: 1,
                 type: 'image',
                 image: '/uploads/public/images/Software-Development-Company.jpg',
-                badge: 'Our Products',
-                headline: 'Purpose-Built',
-                headlineHighlight: 'Software',
-                tagline: 'PetroFlow, DukaFlow, KejaLink, AngiTunes — solutions designed for real business challenges.',
-                primaryCta: { label: 'Explore Products', to: '/products' },
-                secondaryCta: { label: 'See Services', to: '/services' },
+                badge: 'Custom Software',
+                headline: 'Software for',
+                headlineHighlight: 'Real Operations',
+                tagline: 'Custom platforms, dashboards, automation, and mobile systems for teams that need reliable daily operations.',
+                primaryCta: { label: 'View Services', to: '/services' },
+                secondaryCta: { label: 'See Our Work', to: '/projects' },
             },
             {
                 id: 2,
@@ -367,10 +367,10 @@ async function main() {
                 id: 9,
                 type: 'image',
                 image: '/uploads/public/images/cms/setting-site_hero-value-slides-6-image-10d57800bf.jpg',
-                badge: 'Product Ecosystem',
-                headline: 'PetroFlow, DukaFlow,',
-                headlineHighlight: 'KejaLink & AngiTunes',
-                tagline: 'A growing ecosystem of products focused on retail, fuel operations, creator platforms, housing systems, and digital transformation.',
+                badge: 'Digital Products & Platforms',
+                headline: 'Practical Products for',
+                headlineHighlight: 'Growing Businesses',
+                tagline: 'A growing portfolio of software directions for operations, commerce, property, creators, and digital service delivery.',
                 primaryCta: { label: 'Explore Products', to: '/products' },
                 secondaryCta: { label: 'View Success Stories', to: '/projects' },
             },
@@ -415,7 +415,7 @@ async function main() {
         stats: [
             { value: 2024, suffix: '', label: 'Founded', icon: 'FaSeedling' },
             { value: 10, suffix: '+', label: 'Core Services', icon: 'FaLayerGroup' },
-            { value: 4, suffix: '+', label: 'Product Ecosystems', icon: 'FaRocket' },
+            { value: 12, suffix: '', label: 'Industries Served', icon: 'FaRocket' },
             { value: 3, suffix: '', label: 'Innovate • Build • Empower', icon: 'FaHandsHelping' }
         ],
 
@@ -1204,9 +1204,9 @@ async function main() {
     console.log('  ✅ Tech platform settings');
 
     await seedSetting('site_success_stories', {
-        badge: 'Product Direction',
-        title: 'AngiSoft product ecosystems',
-        subtitle: 'These products show how AngiSoft is evolving from service delivery into scalable software ecosystems.',
+        badge: 'Platform Directions',
+        title: 'Digital platform directions',
+        subtitle: 'Operational software directions for industry workflows, commerce, property, creators, and growing teams.',
         stories: [
             { productSlug: 'petroflow', title: 'PetroFlow', headline: 'Fuel station operations made trackable', excerpt: 'A petroleum management direction for stock, shifts, sales, reporting, and station workflows.', status: 'DEVELOPMENT', year: '2026' },
             { productSlug: 'dukaflow', title: 'DukaFlow', headline: 'Retail management for local businesses', excerpt: 'A shop and SME operations platform for inventory, sales, customers, and business records.', status: 'DEVELOPMENT', year: '2026' },

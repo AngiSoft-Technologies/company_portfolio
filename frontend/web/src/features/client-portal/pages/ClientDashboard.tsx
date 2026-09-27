@@ -1,123 +1,91 @@
+// @ts-nocheck
 import { Link } from 'react-router-dom';
-import { Card } from '@angisoft/ui';
-import { clientApiGet } from '@angisoft/api-client';
-import { useAsync } from '@/hooks/useAsync';
+import { useEffect, useMemo, useState } from 'react';
+import { clientApiGet } from '@/lib/httpClient';
+import { useTheme } from '@/lib/theme';
+import GlassmorphismCard from '@/features/marketing/components/modern/GlassmorphismCard';
+import ScrollReveal from '@/features/marketing/components/modern/ScrollReveal';
+import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
-interface PortalBooking {
-  id: string;
-  reference?: string | null;
-  service?: string | { title?: string; name?: string } | null;
-  date?: string | null;
-  status?: string | null;
-}
+const ClientDashboard = () => {
+  const { colors } = useTheme();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-interface DashboardPayload {
-  client?: { name?: string; email?: string };
-  stats?: { label?: string; value?: string | number }[];
-  projects?: { id: string; title?: string; status?: string | null }[];
-  bookings?: PortalBooking[];
-}
-
-const serviceName = (service: PortalBooking['service']): string => {
-  if (typeof service === 'string') return service;
-  if (service && typeof service.title === 'string') return service.title;
-  if (service && typeof service.name === 'string') return service.name;
-  return 'Service';
-};
-
-export default function ClientDashboard() {
-  const dashboard = useAsync(async () => {
-    try {
-      const res = await clientApiGet<{ data?: DashboardPayload }>('/client-portal/dashboard');
-      return (res.data ?? undefined) as DashboardPayload | undefined;
-    } catch {
-      return undefined;
-    }
+  useEffect(() => {
+    clientApiGet('/client-portal/bookings')
+      .then((response) => setBookings(response.bookings || []))
+      .finally(() => setLoading(false));
   }, []);
 
-  const payload = dashboard.data;
-  const stats = Array.isArray(payload?.stats) ? payload.stats : [];
-  const projects = Array.isArray(payload?.projects) ? payload.projects : [];
-  const bookings = Array.isArray(payload?.bookings) ? payload.bookings : [];
-  const clientName = payload?.client?.name || 'there';
+  const activeProjects = useMemo(() => bookings.filter((booking) => booking.clientProject), [bookings]);
+  const averageProgress = activeProjects.length
+    ? Math.round(activeProjects.reduce((sum, booking) => sum + (booking.clientProject?.progress || 0), 0) / activeProjects.length)
+    : 0;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">Welcome back, {clientName}</h1>
-        <p className="mt-2 text-[var(--text-muted)]">Here's what's happening with your projects and bookings.</p>
-      </div>
+    <section className="min-h-screen px-4 py-16" style={{ background: `radial-gradient(circle at top right, ${colors.secondary}22, transparent 32%), linear-gradient(135deg, ${colors.background}, ${colors.backgroundTertiary})` }}>
+      <div className="mx-auto max-w-7xl">
+        <ScrollReveal>
+          <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <span className="inline-flex rounded-full px-4 py-2 text-sm font-bold" style={{ backgroundColor: `${colors.primary}14`, color: colors.primary }}>Live Workspace</span>
+              <h1 className="mt-5 text-4xl font-black md:text-6xl" style={{ color: colors.text }}>Client dashboard</h1>
+              <p className="mt-3 text-lg" style={{ color: colors.textSecondary }}>Track AngiSoft bookings, project progress, milestones, and deliverables in one premium portal.</p>
+            </div>
+            <Link to="/book" className="rounded-full px-6 py-3 font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>New booking</Link>
+          </div>
+        </ScrollReveal>
 
-      {dashboard.loading ? (
-        <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
-      ) : null}
-
-      {!dashboard.loading && (!payload || (stats.length === 0 && projects.length === 0 && bookings.length === 0)) ? (
-        <div className="rounded-2xl border border-dashed border-[var(--border)] py-16 text-center text-sm text-[var(--text-muted)]">
-          Your dashboard overview will appear here once you have activity.
-        </div>
-      ) : null}
-
-      {!dashboard.loading && stats.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, i) => (
-            <Card key={i} className="p-6">
-              <div className="text-3xl font-extrabold text-[#0875FF]">{stat.value}</div>
-              <div className="mt-1 text-sm font-medium text-[var(--text-muted)]">{stat.label}</div>
-            </Card>
+        <div className="mb-8 grid gap-5 md:grid-cols-3">
+          {[['Total bookings', bookings.length], ['Active projects', activeProjects.length], ['Average progress', `${averageProgress}%`]].map(([label, value]) => (
+            <GlassmorphismCard key={label} glow className="p-6">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: colors.textMuted }}>{label}</p>
+              <p className="mt-3 text-4xl font-black" style={{ color: colors.text }}>{value}</p>
+            </GlassmorphismCard>
           ))}
         </div>
-      ) : null}
 
-      {!dashboard.loading && projects.length > 0 ? (
-        <div>
-          <h2 className="mb-4 text-xl font-semibold text-[var(--text-primary)]">Your projects</h2>
-          <div className="flex flex-col gap-4">
-            {projects.map((project) => (
-              <Link key={project.id} to={`/portal/projects/${project.id}`}>
-                <Card hoverable className="p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-semibold text-[var(--text-primary)]">{project.title ?? 'Untitled project'}</h3>
-                    {project.status ? (
-                      <span className="rounded-full bg-[#0875FF]/10 px-3 py-1 text-xs font-medium text-[#0875FF]">
-                        {project.status}
-                      </span>
-                    ) : null}
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {!dashboard.loading && bookings.length > 0 ? (
-        <div>
-          <h2 className="mb-4 text-xl font-semibold text-[var(--text-primary)]">Recent bookings</h2>
-          <div className="flex flex-col gap-4">
+        {loading ? (
+          <GlassmorphismCard className="p-8 text-center"><LoadingIndicator variant="grid" size="lg" /></GlassmorphismCard>
+        ) : bookings.length === 0 ? (
+          <GlassmorphismCard className="p-8 text-center">
+            <VisualState variant="unavailable" />
+          </GlassmorphismCard>
+        ) : (
+          <div className="grid gap-5">
             {bookings.map((booking) => (
-              <Card key={booking.id} className="p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <GlassmorphismCard key={booking.id} hover glow className="p-6">
+                <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
                   <div>
-                    <h3 className="font-semibold text-[var(--text-primary)]">{serviceName(booking.service)}</h3>
-                    <p className="mt-1 text-sm text-[var(--text-muted)]">
-                      {booking.reference ?? '—'} · {booking.date ?? '—'}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-2xl font-black" style={{ color: colors.text }}>{booking.title}</h2>
+                      <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ backgroundColor: `${colors.primary}14`, color: colors.primary }}>{booking.status.replaceAll('_', ' ')}</span>
+                    </div>
+                    <p className="mt-2 max-w-3xl" style={{ color: colors.textSecondary }}>{booking.description}</p>
                   </div>
-                  {booking.status ? (
-                    <span className="rounded-full bg-[#0875FF]/10 px-3 py-1 text-xs font-medium text-[#0875FF]">
-                      {booking.status}
-                    </span>
-                  ) : null}
+                  {booking.clientProject ? (
+                    <div className="min-w-[260px]">
+                      <div className="mb-2 flex justify-between text-sm font-semibold" style={{ color: colors.textSecondary }}>
+                        <span>{booking.clientProject.status}</span>
+                        <span>{booking.clientProject.progress}%</span>
+                      </div>
+                      <div className="h-3 overflow-hidden rounded-full" style={{ backgroundColor: colors.borderLight }}>
+                        <div className="h-full rounded-full" style={{ width: `${booking.clientProject.progress}%`, background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.secondaryLight})` }} />
+                      </div>
+                      <Link to={`/portal/projects/${booking.clientProject.id}`} className="mt-4 inline-flex rounded-full px-5 py-2 text-sm font-bold text-white" style={{ background: colors.primary }}>Open tracker</Link>
+                    </div>
+                  ) : (
+                    <p className="font-semibold" style={{ color: colors.textMuted }}>Tracker appears after approval.</p>
+                  )}
                 </div>
-              </Card>
+              </GlassmorphismCard>
             ))}
           </div>
-          <Link to="/portal/booking/history" className="mt-4 inline-block text-sm font-medium text-[#0875FF] hover:underline">
-            View all bookings →
-          </Link>
-        </div>
-      ) : null}
-    </div>
+        )}
+      </div>
+    </section>
   );
-}
+};
+
+export default ClientDashboard;

@@ -117,6 +117,15 @@ export async function generatePresignedPutUrl(key: string, contentType = 'applic
     return getSignedUrl(client(), cmd, { expiresIn: expiresSeconds });
 }
 
+export async function generatePresignedGetUrl(key: string, filename = 'download', expiresSeconds = 300) {
+    const cmd = new GetObjectCommand({
+        Bucket: getBucket(),
+        Key: key,
+        ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`
+    });
+    return getSignedUrl(client(), cmd, { expiresIn: expiresSeconds });
+}
+
 /** Upload a buffer/stream straight to the bucket (used by multer memory uploads). */
 export async function uploadObject(opts: { key: string; body: Buffer | Uint8Array | string; contentType: string; publicRead?: boolean }) {
     if (!isConfigured()) throw new Error('S3 storage is not configured');

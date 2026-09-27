@@ -1,0 +1,85 @@
+/* =========================================================================
+   Service Detail — pricing block.
+   Driven by --sd-* tokens defined in service-detail.css.
+   ========================================================================= */
+
+.service-pricing {
+    padding: clamp(1.6rem, 3vw, 2.4rem);
+    border-radius: 1.4rem;
+    border: 1px solid var(--sd-border-strong);
+    background:
+        radial-gradient(520px 280px at 88% -10%, rgba(0, 175, 255, 0.14), transparent 60%),
+        var(--sd-surface);
+}
+.service-pricing__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.service-pricing__head { margin-bottom: 1.2rem; }
+.service-pricing__title {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    color: var(--sd-text);
+}
+.service-pricing__amount {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+    margin: 0.6rem 0 0;
+    color: var(--sd-text);
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.3rem, 3vw, 1.9rem);
+    font-weight: 800;
+}
+.service-pricing__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0;
+    color: var(--sd-muted);
+    line-height: 1.6;
+    max-width: 64ch;
+}
+.service-pricing__note svg { color: var(--sd-accent); margin-top: 0.2rem; flex: none; }
+
+.service-pricing__factors {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--sd-border);
+    padding-top: 1.25rem;
+}
+.service-pricing__factors-title {
+    margin: 0 0 0.7rem;
+    font-size: 0.95rem;
+    color: var(--sd-text);
+}
+.service-pricing__factors-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+}
+.service-pricing__factors-list li {
+    padding: 0.7rem 0.95rem;
+    border-radius: var(--sd-radius);
+    border: 1px solid var(--sd-border);
+    background: var(--sd-surface-2);
+    color: var(--sd-text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.service-pricing__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 1rem;
+    margin-top: 1.6rem;
+}
+
+@media (max-width: 639px) {
+    .service-pricing__factors-list { grid-template-columns: 1fr; }
+}

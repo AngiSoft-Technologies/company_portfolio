@@ -53,6 +53,7 @@ export function resolveDatabaseUrl(): string {
   const isProduction = process.env.NODE_ENV === 'production';
 
   const parsed = new URL(raw);
+  parsed.searchParams.delete('channel_binding');
   const isPooler =
     parsed.hostname.includes('-pooler') ||
     parsed.searchParams.get('pgbouncer') === 'true';
@@ -71,7 +72,7 @@ export function resolveDatabaseUrl(): string {
 
   if (isProduction) {
     if (!parsed.searchParams.has('connection_limit')) {
-      parsed.searchParams.set('connection_limit', isPooler ? '1' : '10');
+            parsed.searchParams.set('connection_limit', isPooler ? '5' : '10');
     }
     if (!parsed.searchParams.has('pool_timeout')) {
       parsed.searchParams.set('pool_timeout', '30');

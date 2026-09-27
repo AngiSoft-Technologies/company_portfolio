@@ -1,0 +1,463 @@
+/* ==========================================================================
+   Hero — dedicated stylesheet (scoped)
+   Desktop visual direction preserved: full-height hero, video/poster
+   background, centered content, status badge, gradient h1, two CTAs,
+   four compact stats, decorative orbs + grid + lines. All responsive,
+   layout and decorative styling moved out of JSX into here. Only dynamic
+   theme CSS variables (--hero-*) remain inline.
+   ========================================================================== */
+
+:root {
+  --site-header-height: 72px;
+}
+
+.angi-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: calc(100svh - var(--site-header-height, 72px));
+  padding-top: var(--site-header-height, 72px);
+  padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  text-align: center;
+  background: linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 30%, #0f172a 100%);
+}
+
+/* ── Background layers ── */
+.angi-hero-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.angi-hero-poster,
+.angi-hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.angi-hero-poster {
+  opacity: 0.48;
+  filter: saturate(0.85) contrast(1.08);
+  transition: opacity 0.8s ease-in-out;
+}
+.angi-hero.has-video.is-video-loaded .angi-hero-poster {
+  opacity: 0;
+}
+
+.angi-hero-video {
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+.angi-hero.has-video.is-video-loaded .angi-hero-video {
+  opacity: 0.4;
+}
+
+/* Radial mouse-glow overlay */
+.angi-hero-orbs {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.angi-hero-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(60px);
+  animation: hero-orb-pulse 6s ease-in-out infinite;
+}
+.angi-hero-orb--primary {
+  width: 24rem;
+  height: 24rem;
+  top: 10%;
+  left: 5%;
+  background: color-mix(in srgb, var(--hero-primary, #0875FF) 18%, transparent);
+  animation-duration: 7s;
+}
+.angi-hero-orb--secondary {
+  width: 20rem;
+  height: 20rem;
+  bottom: 15%;
+  right: 10%;
+  background: color-mix(in srgb, var(--hero-secondary, #00AFFF) 12%, transparent);
+  animation-duration: 9s;
+  animation-delay: 2s;
+}
+.angi-hero-orb--tertiary {
+  width: 16rem;
+  height: 16rem;
+  top: 40%;
+  right: 30%;
+  background: color-mix(in srgb, var(--hero-primary, #0875FF) 8%, transparent);
+  animation-duration: 11s;
+  animation-delay: 1s;
+}
+
+@keyframes hero-orb-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Grid pattern */
+.angi-hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Animated lines */
+.angi-hero-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+}
+
+/* ── Content ── */
+.angi-hero-container {
+  position: relative;
+  z-index: 10;
+  width: min(100% - 2rem, 1150px);
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* Status badge */
+.angi-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+.angi-hero-badge-dot {
+  position: relative;
+  display: inline-flex;
+  width: 0.625rem;
+  height: 0.625rem;
+  flex-shrink: 0;
+}
+.angi-hero-badge-dot::before,
+.angi-hero-badge-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--hero-primary, #0875FF);
+}
+.angi-hero-badge-dot::after {
+  animation: hero-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes hero-ping {
+  0% { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Welcome label */
+.angi-hero-welcome {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Heading */
+.angi-hero-title {
+  margin: 0 0 1.25rem;
+  font-family: 'Sora', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(2.1rem, 7vw, 5.5rem);
+  text-wrap: balance;
+  color: #fff;
+}
+.angi-hero-title-highlight {
+  display: block;
+  background: linear-gradient(135deg, var(--hero-primary, #0875FF) 0%, var(--hero-secondary, #00AFFF) 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: 0 0 80px rgba(20, 184, 166, 0.3);
+}
+
+.angi-hero-subheadline {
+  margin: 0 0 1rem;
+  font-size: clamp(1rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.angi-hero-tagline {
+  max-width: 48rem;
+  margin: 0 auto 2.25rem;
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── CTAs ── */
+.angi-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+.angi-hero-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+.angi-hero-action--primary {
+  background: linear-gradient(135deg, var(--hero-primary, #0875FF) 0%, var(--hero-primary-dark, #0059CC) 100%);
+  box-shadow: 0 20px 40px color-mix(in srgb, var(--hero-primary, #0875FF) 25%, transparent);
+}
+.angi-hero-action--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+.angi-hero-action:hover {
+  transform: translateY(-2px);
+}
+.angi-hero-action:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.angi-hero-action-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.angi-hero-action-arrow {
+  font-size: 0.95rem;
+}
+
+.angi-hero-showreel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+.angi-hero-showreel:hover {
+  color: #fff;
+}
+.angi-hero-showreel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease;
+}
+.angi-hero-showreel:hover .angi-hero-showreel-icon {
+  transform: scale(1.08);
+}
+
+/* ── Stats ── */
+.angi-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+@media (min-width: 768px) {
+  .angi-hero-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.125rem;
+  }
+}
+
+.angi-hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+.angi-hero-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--hero-primary, #0875FF) 20%, transparent) 0%,
+    color-mix(in srgb, var(--hero-secondary, #00AFFF) 14%, transparent) 100%);
+  color: var(--hero-primary, #0875FF);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.angi-hero-stat-value {
+  margin: 0 0 0.25rem;
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--hero-primary, #0875FF) 0%, var(--hero-secondary, #00AFFF) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.angi-hero-stat-label {
+  margin: 0;
+  font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* ── Scroll indicator ── */
+.angi-hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.2s ease;
+  animation: hero-bounce 2s ease-in-out infinite;
+}
+.angi-hero-scroll:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+.angi-hero-scroll-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+
+@keyframes hero-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 7px); }
+}
+
+/* ── Loading fallback (no disruptive blank screen) ── */
+.angi-hero-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100svh - var(--site-header-height, 72px));
+}
+.angi-hero-loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom-color: #fff;
+  animation: hero-spin 0.8s linear infinite;
+}
+@keyframes hero-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tablet / desktop refinements ── */
+@media (min-width: 768px) {
+  .angi-hero-tagline {
+    margin-bottom: 2.75rem;
+  }
+  .angi-hero-stats {
+    margin-top: 3.75rem;
+    padding-top: 1.625rem;
+  }
+}
+
+/* ── Very small phones (<380) ── */
+@media (max-width: 379px) {
+  .angi-hero-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .angi-hero-action {
+    width: 100%;
+    max-width: 20rem;
+  }
+}
+
+/* ── Short-height viewports: allow natural scroll, hide scroll indicator ── */
+@media (max-height: 700px) {
+  .angi-hero {
+    min-height: 0;
+  }
+  .angi-hero-scroll {
+    display: none;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .angi-hero,
+  .angi-hero-action,
+  .angi-hero-showreel-icon,
+  .angi-hero-orb,
+  .angi-hero-badge-dot::after,
+  .angi-hero-scroll {
+    animation: none !important;
+    transition: none !important;
+  }
+  .angi-hero-orb {
+    opacity: 0.85;
+  }
+  .angi-hero-scroll {
+    display: none;
+  }
+}

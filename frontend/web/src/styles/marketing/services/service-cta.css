@@ -1,0 +1,193 @@
+/* Shared CSS for the supporting CTA sections:
+   engagement models, combination CTA, quick links, final CTA. */
+
+/* ---------- Engagement models ---------- */
+.service-models { margin-top: 4rem; }
+
+.service-models__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+}
+
+.service-models__item {
+    padding: 1.4rem;
+    border-radius: 1.1rem;
+    border: 1px solid rgba(0, 175, 255, 0.14);
+    background: rgba(11, 30, 61, 0.5);
+}
+
+.service-models__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.7rem;
+    background: rgba(39, 217, 75, 0.14);
+    color: #27D94B;
+    font-size: 1.15rem;
+    margin-bottom: 0.7rem;
+}
+
+.service-models__title { margin: 0 0 0.4rem; font-size: 1.05rem; color: #F5F7FA; }
+.service-models__text { margin: 0; font-size: 0.85rem; line-height: 1.5; color: #94A3B8; }
+
+/* ---------- Combination CTA ---------- */
+.service-combination {
+    margin-top: 4rem;
+    padding: 2rem;
+    border-radius: 1.25rem;
+    border: 1px dashed rgba(0, 175, 255, 0.4);
+    background: rgba(11, 30, 61, 0.45);
+}
+
+.service-combination__text { margin: 0.5rem 0 1rem; color: #CBD5E1; max-width: 620px; }
+
+.service-combination__list {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.service-combination__item {
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 175, 255, 0.25);
+    background: rgba(7, 20, 43, 0.6);
+    font-size: 0.85rem;
+    color: #CBD5E1;
+}
+
+.service-combination__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 999px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #07142B;
+    background: linear-gradient(120deg, #18D8FF, #27D94B);
+}
+.service-combination__cta svg { transition: transform 0.2s ease; }
+.service-combination__cta:hover svg { transform: translateX(3px); }
+
+/* ---------- Quick links ---------- */
+.services-quicklinks { margin-top: 4rem; }
+
+.services-quicklinks__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.services-quicklinks__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.3rem 1.4rem;
+    border-radius: 1.1rem;
+    border: 1px solid rgba(0, 175, 255, 0.16);
+    background: rgba(11, 30, 61, 0.5);
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.services-quicklinks__card:hover {
+    border-color: rgba(0, 175, 255, 0.45);
+    transform: translateY(-3px);
+}
+
+.services-quicklinks__label {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #F5F7FA;
+}
+
+.services-quicklinks__text { font-size: 0.84rem; color: #94A3B8; line-height: 1.45; }
+
+.services-quicklinks__arrow {
+    margin-top: 0.3rem;
+    color: #18D8FF;
+    transition: transform 0.2s ease;
+}
+.services-quicklinks__card:hover .services-quicklinks__arrow { transform: translateX(3px); }
+
+/* ---------- Final CTA ---------- */
+.services-final-cta {
+    margin-top: 4rem;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(0, 175, 255, 0.25);
+    background:
+        radial-gradient(700px 360px at 50% -10%, rgba(0, 175, 255, 0.18), transparent 60%),
+        linear-gradient(160deg, rgba(13, 34, 67, 0.96), rgba(7, 20, 43, 0.96));
+}
+
+.services-final-cta__title {
+    margin: 0 0 0.6rem;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.4rem, 3.5vw, 2.1rem);
+    color: #F5F7FA;
+}
+
+.services-final-cta__text {
+    max-width: 560px;
+    margin: 0 auto 1.4rem;
+    color: #CBD5E1;
+    line-height: 1.55;
+}
+
+.services-final-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1rem;
+}
+
+.services-final-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.services-final-cta__btn--primary {
+    background: linear-gradient(120deg, #0875FF, #00AFFF);
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.3);
+}
+.services-final-cta__btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0, 175, 255, 0.42); }
+
+.services-final-cta__btn--ghost {
+    border: 1px solid rgba(0, 175, 255, 0.45);
+    color: #F5F7FA;
+}
+.services-final-cta__btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+
+.services-final-cta__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #94A3B8;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+.services-final-cta__link:hover { color: #18D8FF; }
+
+@media (max-width: 639px) {
+    .services-final-cta__actions { flex-direction: column; align-items: stretch; }
+    .services-final-cta__btn { justify-content: center; }
+    .services-final-cta__link { justify-content: center; }
+}

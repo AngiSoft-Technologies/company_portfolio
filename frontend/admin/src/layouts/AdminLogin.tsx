@@ -28,7 +28,7 @@ export function AdminLogin() {
         setError((json.error as string) || (json.message as string) || 'Login failed');
         return;
       }
-      navigate('/admin', { replace: true });
+      navigate('/', { replace: true });
     } catch {
       setError('Network error. Please try again.');
     } finally {

@@ -1,0 +1,655 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "AngiSoft Technologies" [ref=e8]
+      - navigation [ref=e9]:
+        - link "Home" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - button "About" [ref=e131] [cursor=pointer]
+        - button "Services" [ref=e135] [cursor=pointer]
+        - button "Industries" [ref=e139] [cursor=pointer]
+        - button "Solutions" [ref=e143] [cursor=pointer]
+        - link "Pricing" [ref=e146] [cursor=pointer]:
+          - /url: /pricing
+        - link "Learning" [ref=e147] [cursor=pointer]:
+          - /url: /blog
+      - generic [ref=e11]:
+        - link "Contact" [ref=e148] [cursor=pointer]:
+          - /url: /contact
+        - button "Switch to dark theme" [active] [pressed] [ref=e1018] [cursor=pointer]
+        - button "Search" [ref=e15] [cursor=pointer]
+  - main [ref=e18]:
+    - main [ref=e19]:
+      - region "AngiSoft highlights" [ref=e149]:
+        - generic [ref=e153]:
+          - generic [ref=e154]:
+            - generic [ref=e155]: AngiSoft Technologies
+            - generic [ref=e157]: Innovate. Build. Empower.
+            - heading "Technology That Moves Businesses" [level=1] [ref=e1021]:
+              - text: Technology That
+              - generic [ref=e159]: Moves Businesses
+            - paragraph [ref=e160]: From fuel stations to property management — our platforms power industries across East Africa.
+            - generic [ref=e161]:
+              - link "Book a Consultation" [ref=e1022] [cursor=pointer]:
+                - /url: /book
+              - link "View Projects" [ref=e1023] [cursor=pointer]:
+                - /url: /projects
+            - tablist "Hero slides" [ref=e166]:
+              - tab "Show highlight 1" [ref=e167] [cursor=pointer]
+              - tab "Show highlight 2" [ref=e169] [cursor=pointer]
+              - tab "Show highlight 3" [selected] [ref=e171] [cursor=pointer]
+              - tab "Show highlight 4" [ref=e173] [cursor=pointer]
+              - tab "Show highlight 5" [ref=e175] [cursor=pointer]
+              - tab "Show highlight 6" [ref=e177] [cursor=pointer]
+              - tab "Show highlight 7" [ref=e179] [cursor=pointer]
+              - tab "Show highlight 8" [ref=e181] [cursor=pointer]
+              - tab "Show highlight 9" [ref=e183] [cursor=pointer]
+              - tab "Show highlight 10" [ref=e185] [cursor=pointer]
+              - tab "Show highlight 11" [ref=e187] [cursor=pointer]
+              - tab "Show highlight 12" [ref=e189] [cursor=pointer]
+              - tab "Show highlight 13" [ref=e191] [cursor=pointer]
+          - complementary [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: Live context
+              - generic [ref=e196]: 3 / 13
+            - generic [ref=e197]:
+              - generic [ref=e198]: Focus
+              - strong [ref=e199]: Innovate. Build. Empower.
+            - generic [ref=e200]:
+              - generic [ref=e201]: Outcome
+              - strong [ref=e202]: Technology That Moves Businesses
+            - generic [ref=e203]:
+              - generic [ref=e204]: Next step
+              - strong [ref=e205]: Book a Consultation
+            - generic [ref=e206]:
+              - generic [ref=e207]: Supporting path
+              - strong [ref=e208]: View Projects
+        - button "Previous highlight" [ref=e209] [cursor=pointer]
+        - button "Next highlight" [ref=e212] [cursor=pointer]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Our Services
+          - heading "Explore Our Offering" [level=2] [ref=e25]
+        - tablist "Service categories" [ref=e216]:
+          - tab "Digital and Creative Services" [selected] [ref=e217] [cursor=pointer]
+          - tab "Data and Systems" [ref=e218] [cursor=pointer]
+          - tab "Technical Support" [ref=e219] [cursor=pointer]
+          - tab "Software Development" [ref=e220] [cursor=pointer]
+        - tabpanel [ref=e221]:
+          - generic [ref=e222]:
+            - heading "Digital and Creative Services" [level=3] [ref=e223]
+            - paragraph [ref=e224]: Document editing, graphic design, and online application support handled with care and confidentiality.
+            - img "Digital and Creative Services" [ref=e226]
+          - generic [ref=e227]:
+            - list [ref=e228]:
+              - listitem [ref=e229]:
+                - generic [ref=e231]: Online Applications
+              - listitem [ref=e232]:
+                - generic [ref=e234]: Graphic Design
+              - listitem [ref=e235]:
+                - generic [ref=e237]: Document Editing
+            - link "View All Services" [ref=e238] [cursor=pointer]:
+              - /url: /services
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: Industries We Serve
+          - heading "Digital systems for real industry workflows" [level=2] [ref=e241]
+          - paragraph [ref=e242]: AngiSoft applies software, data, automation, and platform thinking to the sectors where practical technology can improve operations.
+        - tablist "Industries" [ref=e243]:
+          - tab "Retail and SMEs" [selected] [ref=e244] [cursor=pointer]
+          - tab "Education" [ref=e245] [cursor=pointer]
+          - tab "Real Estate" [ref=e246] [cursor=pointer]
+          - tab "Fuel & Energy" [ref=e247] [cursor=pointer]
+          - tab "Healthcare" [ref=e248] [cursor=pointer]
+          - tab "Telecommunications" [ref=e249] [cursor=pointer]
+          - tab "Finance" [ref=e250] [cursor=pointer]
+          - tab "eCommerce" [ref=e251] [cursor=pointer]
+          - tab "Creative Industries" [ref=e252] [cursor=pointer]
+          - tab "Professional Services" [ref=e253] [cursor=pointer]
+          - tab "Hospitality" [ref=e254] [cursor=pointer]
+          - tab "Transport & Logistics" [ref=e255] [cursor=pointer]
+        - tabpanel "Retail and SMEs" [ref=e256]:
+          - generic [ref=e259]:
+            - heading "Retail and SMEs" [level=3] [ref=e264]
+            - list [ref=e265]:
+              - listitem [ref=e266]:
+                - generic [ref=e270]: POS Systems
+              - listitem [ref=e271]:
+                - generic [ref=e275]: Online Stores
+              - listitem [ref=e276]:
+                - generic [ref=e280]: Inventory Management
+              - listitem [ref=e281]:
+                - generic [ref=e285]: Loyalty Programs
+              - listitem [ref=e286]:
+                - generic [ref=e290]: Sales Analytics
+              - listitem [ref=e291]:
+                - generic [ref=e295]: Order Fulfillment
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: Solutions
+          - heading "Solutions We Deliver" [level=2] [ref=e36]
+        - generic [ref=e296]:
+          - article [ref=e297]:
+            - generic [ref=e300]:
+              - heading "Enterprise Solutions" [level=3] [ref=e303]
+              - list [ref=e304]:
+                - listitem [ref=e305]:
+                  - generic [ref=e309]: Enterprise Applications
+                - listitem [ref=e310]:
+                  - generic [ref=e314]: ERP Systems
+                - listitem [ref=e315]:
+                  - generic [ref=e319]: CRM Platforms
+                - listitem [ref=e320]:
+                  - generic [ref=e324]: HR Management Systems
+                - listitem [ref=e325]:
+                  - generic [ref=e329]: Document Management
+                - listitem [ref=e330]:
+                  - generic [ref=e334]: Invoicing & Billing
+          - article [ref=e335]:
+            - generic [ref=e338]:
+              - heading "Web & Mobile" [level=3] [ref=e341]
+              - list [ref=e342]:
+                - listitem [ref=e343]:
+                  - generic [ref=e347]: Web Portals
+                - listitem [ref=e348]:
+                  - generic [ref=e352]: Mobile Applications
+                - listitem [ref=e353]:
+                  - generic [ref=e357]: SaaS Platforms
+                - listitem [ref=e358]:
+                  - generic [ref=e362]: Progressive Web Apps
+                - listitem [ref=e363]:
+                  - generic [ref=e367]: API & Microservices
+                - listitem [ref=e368]:
+                  - generic [ref=e372]: AI-Powered Interfaces
+          - article [ref=e373]:
+            - generic [ref=e376]:
+              - heading "Industry Solutions" [level=3] [ref=e379]
+              - list [ref=e380]:
+                - listitem [ref=e381]:
+                  - generic [ref=e385]: ISP Billing & Portals
+                - listitem [ref=e386]:
+                  - generic [ref=e390]: School Management Systems
+                - listitem [ref=e391]:
+                  - generic [ref=e395]: Analytics Dashboards
+                - listitem [ref=e396]:
+                  - generic [ref=e400]: AngiMusic Platform
+                - listitem [ref=e401]:
+                  - generic [ref=e405]: Property Management
+                - listitem [ref=e406]:
+                  - generic [ref=e410]: Security Platforms
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]: Technology
+          - heading "Tech Trends We Build With" [level=2] [ref=e42]
+        - tablist "Technology trends" [ref=e412]:
+          - tab "Artificial Intelligence" [selected] [ref=e413] [cursor=pointer]
+          - tab "Cloud" [ref=e416] [cursor=pointer]
+          - tab "Big Data" [ref=e419] [cursor=pointer]
+          - tab "Automation" [ref=e422] [cursor=pointer]
+          - tab "Cybersecurity" [ref=e425] [cursor=pointer]
+        - tabpanel [ref=e428]:
+          - generic [ref=e431]:
+            - generic [ref=e432]:
+              - heading "Artificial Intelligence" [level=3] [ref=e436]
+              - paragraph
+            - generic [ref=e437]:
+              - generic [ref=e438]: What this includes
+              - list [ref=e439]:
+                - listitem [ref=e440]: AI Chatbot Development
+                - listitem [ref=e442]: Predictive Analytics & Forecasting
+                - listitem [ref=e444]: Natural Language Processing
+                - listitem [ref=e446]: Computer Vision & Image Recognition
+                - listitem [ref=e448]: AI-Powered Document Processing
+                - listitem [ref=e450]: Recommendation Engines
+        - link "See How We Work" [ref=e45] [cursor=pointer]:
+          - /url: /services
+      - generic [ref=e49]:
+        - generic [ref=e452]:
+          - generic [ref=e453]:
+            - paragraph [ref=e454]: Platform Directions
+            - heading "Digital platform directions" [level=2] [ref=e455]
+          - paragraph [ref=e456]: Operational software directions for industry workflows, commerce, property, creators, and growing teams.
+        - generic [ref=e457]:
+          - article [ref=e458]:
+            - img "PetroFlow visual" [ref=e460]
+            - generic [ref=e461]:
+              - generic [ref=e462]:
+                - generic [ref=e463]: Fuel & Energy
+                - generic [ref=e464]: DEVELOPMENT
+              - heading "Fuel & Energy" [level=3] [ref=e465]
+              - paragraph [ref=e466]: Fuel Station Operations Platform
+              - paragraph [ref=e467]: A petroleum management direction for stock, shifts, sales, reporting, and station workflows.
+              - list [ref=e468]:
+                - listitem [ref=e469]: Pump and shift records
+                - listitem [ref=e470]: Fuel stock tracking
+                - listitem [ref=e471]: Sales reconciliation
+                - listitem [ref=e472]: Staff workflow support
+              - link "View direction" [ref=e473] [cursor=pointer]:
+                - /url: /products/petroflow
+          - tablist "Product directions" [ref=e476]:
+            - tab "Fuel & Energy DEVELOPMENT" [selected] [ref=e477] [cursor=pointer]:
+              - generic [ref=e478]:
+                - strong [ref=e479]: Fuel & Energy
+                - generic [ref=e480]: DEVELOPMENT
+            - tab "Retail & Commerce DEVELOPMENT" [ref=e481] [cursor=pointer]:
+              - generic [ref=e482]:
+                - strong [ref=e483]: Retail & Commerce
+                - generic [ref=e484]: DEVELOPMENT
+            - tab "Property & Housing PLANNED" [ref=e485] [cursor=pointer]:
+              - generic [ref=e486]:
+                - strong [ref=e487]: Property & Housing
+                - generic [ref=e488]: PLANNED
+            - tab "Entertainment & Music PLANNED" [ref=e489] [cursor=pointer]:
+              - generic [ref=e490]:
+                - strong [ref=e491]: Entertainment & Music
+                - generic [ref=e492]: PLANNED
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - paragraph [ref=e493]: Innovate • Build • Empower
+          - heading "Let’s Build Your Next Digital Solution" [level=2] [ref=e494]
+          - paragraph [ref=e495]: Whether you need custom software, a digital product, data automation, an existing-system upgrade or dependable technical support, AngiSoft will help turn the requirement into a practical working solution.
+          - paragraph [ref=e496]: Clear communication • Practical solutions • Responsible delivery
+          - generic [ref=e497]:
+            - link "Start a Project" [ref=e498] [cursor=pointer]:
+              - /url: /booking
+            - link "Talk to AngiSoft" [ref=e501] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e53]:
+          - img "AngiSoft Envelop Design.png" [ref=e1024]
+          - tablist "AngiSoft media" [ref=e506]:
+            - tab "Show AngiSoft Personal Contacts.png" [ref=e507] [cursor=pointer]
+            - tab "Show AngiSoft Business Card Front View.png" [ref=e508] [cursor=pointer]
+            - tab "Show AngiSoft Business Card Back View.png" [ref=e509] [cursor=pointer]
+            - tab "Show AngiSoft Watermsrk.png" [ref=e510] [cursor=pointer]
+            - tab "Show AngiSoft T-Shirts Design.png" [ref=e511] [cursor=pointer]
+            - tab "Show AngiSoft Stickers Design.png" [ref=e512] [cursor=pointer]
+            - tab "Show AngiSoft Pens Design.png" [ref=e513] [cursor=pointer]
+            - tab "Show AngiSoft NoteBooks Design.png" [ref=e514] [cursor=pointer]
+          - button "Previous media" [ref=e515] [cursor=pointer]
+          - button "Next media" [ref=e518] [cursor=pointer]
+      - generic [ref=e521]:
+        - generic [ref=e522]:
+          - generic [ref=e523]:
+            - paragraph [ref=e524]: Our Blog
+            - heading "Latest Insights" [level=2] [ref=e525]
+            - paragraph [ref=e526]: Thoughts, tutorials, and updates from our team.
+          - generic [ref=e527]:
+            - button "Previous articles" [ref=e528] [cursor=pointer]
+            - button "Next articles" [ref=e531] [cursor=pointer]
+        - generic "Featured articles" [ref=e534]:
+          - article [ref=e535]:
+            - link [ref=e536] [cursor=pointer]:
+              - /url: /blog/building-a-local-dev-stack-you-keep
+              - img "Building a Local Dev Stack You Will Actually Keep" [ref=e537]
+            - generic [ref=e538]:
+              - generic [ref=e539]:
+                - time [ref=e540]: 19 Jul 2026
+                - generic [ref=e541]: Super Admin
+              - heading "Building a Local Dev Stack You Will Actually Keep" [level=3] [ref=e542]
+              - paragraph [ref=e543]: A reproducible local stack that is fast to spin up and easy to tear down.
+              - generic [ref=e544]:
+                - generic [ref=e545]: devops
+                - generic [ref=e546]: workflow
+              - link "Read" [ref=e547] [cursor=pointer]:
+                - /url: /blog/building-a-local-dev-stack-you-keep
+          - article [ref=e550]:
+            - link [ref=e551] [cursor=pointer]:
+              - /url: /blog/hiring-junior-flutter-developer
+              - 'img "Hiring: Junior Flutter Developer (Remote, Kenya)" [ref=e552]'
+            - generic [ref=e553]:
+              - generic [ref=e554]:
+                - time [ref=e555]: 19 Jul 2026
+                - generic [ref=e556]: Super Admin
+              - 'heading "Hiring: Junior Flutter Developer (Remote, Kenya)" [level=3] [ref=e557]'
+              - paragraph [ref=e558]: AngiSoft is hiring a Junior Flutter Developer. Apply through the posting link before the visibility window closes.
+              - generic [ref=e559]:
+                - generic [ref=e560]: careers
+                - generic [ref=e561]: hiring
+              - link "Read" [ref=e562] [cursor=pointer]:
+                - /url: /blog/hiring-junior-flutter-developer
+          - article [ref=e565]:
+            - link [ref=e566] [cursor=pointer]:
+              - /url: /blog/local-stack-3-commands
+              - img "Spin Up the Local Stack in 3 Commands" [ref=e567]
+            - generic [ref=e568]:
+              - generic [ref=e569]:
+                - time [ref=e570]: 19 Jul 2026
+                - generic [ref=e571]: Super Admin
+              - heading "Spin Up the Local Stack in 3 Commands" [level=3] [ref=e572]
+              - paragraph [ref=e573]: The three commands that install deps, sync the schema, and start the dev servers for the AngiSoft stack.
+              - generic [ref=e574]:
+                - generic [ref=e575]: commands
+                - generic [ref=e576]: setup
+              - link "Read" [ref=e577] [cursor=pointer]:
+                - /url: /blog/local-stack-3-commands
+          - article [ref=e580]:
+            - link [ref=e581] [cursor=pointer]:
+              - /url: /blog/daily-backup-bash-snippet
+              - 'img "Reusable Bash: Daily Project Backup Snippet" [ref=e582]'
+            - generic [ref=e583]:
+              - generic [ref=e584]:
+                - time [ref=e585]: 19 Jul 2026
+                - generic [ref=e586]: Super Admin
+              - 'heading "Reusable Bash: Daily Project Backup Snippet" [level=3] [ref=e587]'
+              - paragraph [ref=e588]: A safe, idempotent Bash snippet that snapshots a project directory to dated archives with rotation.
+              - generic [ref=e589]:
+                - generic [ref=e590]: bash
+                - generic [ref=e591]: automation
+              - link "Read" [ref=e592] [cursor=pointer]:
+                - /url: /blog/daily-backup-bash-snippet
+          - article [ref=e595]:
+            - link [ref=e596] [cursor=pointer]:
+              - /url: /blog/kejalink-onboarding-guide
+              - img "KejaLink Property Onboarding Guide (PDF)" [ref=e597]
+            - generic [ref=e598]:
+              - generic [ref=e599]:
+                - time [ref=e600]: 19 Jul 2026
+                - generic [ref=e601]: Super Admin
+              - heading "KejaLink Property Onboarding Guide (PDF)" [level=3] [ref=e602]
+              - paragraph [ref=e603]: "Step-by-step onboarding for KejaLink: units, tenants, billing, and reports. Includes a checklist for the first 30 days."
+              - generic [ref=e604]:
+                - generic [ref=e605]: kejalink
+                - generic [ref=e606]: document
+              - link "Read" [ref=e607] [cursor=pointer]:
+                - /url: /blog/kejalink-onboarding-guide
+          - article [ref=e610]:
+            - link [ref=e611] [cursor=pointer]:
+              - /url: /blog/angitunes-offline-playlist-podcast
+              - 'img "AngiTunes Demo: Building a Playlist Offline" [ref=e612]'
+            - generic [ref=e613]:
+              - generic [ref=e614]:
+                - time [ref=e615]: 19 Jul 2026
+                - generic [ref=e616]: Super Admin
+              - 'heading "AngiTunes Demo: Building a Playlist Offline" [level=3] [ref=e617]'
+              - paragraph [ref=e618]: Listen to how AngiTunes handles offline caching, sync, and playback resumption on flaky networks.
+              - generic [ref=e619]:
+                - generic [ref=e620]: angitunes
+                - generic [ref=e621]: audio
+              - link "Read" [ref=e622] [cursor=pointer]:
+                - /url: /blog/angitunes-offline-playlist-podcast
+        - link "View All Articles" [ref=e626] [cursor=pointer]:
+          - /url: /blog
+      - region "Client testimonials" [ref=e629]:
+        - generic [ref=e630]:
+          - generic [ref=e631]:
+            - generic [ref=e632]:
+              - paragraph [ref=e633]: Testimonials
+              - heading "What Our Clients Say" [level=2] [ref=e634]
+            - generic [ref=e635]:
+              - button "Previous testimonial" [ref=e636] [cursor=pointer]
+              - button "Next testimonial" [ref=e639] [cursor=pointer]
+          - generic [ref=e642]:
+            - figure "Sharon Kundu Community Support Client, Education & Digital Services" [ref=e1025]:
+              - generic "5 out of 5 stars" [ref=e644]
+              - blockquote [ref=e655]: AngiSoft combines technology with empowerment. Beyond software, there is a strong focus on helping people learn, grow, and access digital opportunities.
+              - generic [ref=e656]:
+                - generic [aria-hidden] [ref=e657]: S
+                - generic [ref=e658]:
+                  - strong [ref=e659]: Sharon Kundu
+                  - generic [ref=e660]: Community Support Client, Education & Digital Services
+            - tablist "Testimonial clients" [ref=e661]:
+              - tab "Sharon Kundu Education & Digital Services" [selected] [ref=e662] [cursor=pointer]:
+                - strong [ref=e663]: Sharon Kundu
+                - generic [ref=e664]: Education & Digital Services
+              - tab "DJ Cosmic Star Entertainment Industry" [ref=e665] [cursor=pointer]:
+                - strong [ref=e666]: DJ Cosmic Star
+                - generic [ref=e667]: Entertainment Industry
+              - tab "Sharif Agoi Community Client" [ref=e668] [cursor=pointer]:
+                - strong [ref=e669]: Sharif Agoi
+                - generic [ref=e670]: Community Client
+              - tab "Prof Angera AngiSoft Technologies" [ref=e671] [cursor=pointer]:
+                - strong [ref=e672]: Prof Angera
+                - generic [ref=e673]: AngiSoft Technologies
+              - tab "Emmanuel Rotich Business Client" [ref=e674] [cursor=pointer]:
+                - strong [ref=e675]: Emmanuel Rotich
+                - generic [ref=e676]: Business Client
+              - tab "Lex Mureithi Technology Community" [ref=e677] [cursor=pointer]:
+                - strong [ref=e678]: Lex Mureithi
+                - generic [ref=e679]: Technology Community
+          - paragraph [ref=e680]: Trusted by businesses across the region
+          - link "View all testimonials" [ref=e681] [cursor=pointer]:
+            - /url: /testimonials
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]: Technology Stack
+          - heading "Technologies we use and teach We Work With" [level=2] [ref=e684]
+          - paragraph [ref=e685]: AngiSoft works across frontend, backend, mobile, databases, cloud, DevOps, AI, and data tooling depending on the product or service need.
+        - generic [ref=e686]:
+          - generic [ref=e687]:
+            - heading "Frontend" [level=3] [ref=e688]
+            - generic [ref=e689]:
+              - generic [ref=e690]: React
+              - generic [ref=e694]: Vue.js
+              - generic [ref=e698]: Angular
+              - generic [ref=e702]: Next.js
+              - generic [ref=e706]: TypeScript
+              - generic [ref=e710]: JavaScript
+              - generic [ref=e714]: HTML5
+              - generic [ref=e718]: Tailwind CSS
+          - generic [ref=e722]:
+            - heading "Backend" [level=3] [ref=e723]
+            - generic [ref=e724]:
+              - generic [ref=e725]: Node.js
+              - generic [ref=e729]: Python
+              - generic [ref=e733]: Laravel
+              - generic [ref=e737]: Django
+              - generic [ref=e741]: Spring Boot
+              - generic [ref=e745]: PHP
+              - generic [ref=e749]: GraphQL
+              - generic [ref=e753]: Java
+          - generic [ref=e757]:
+            - heading "Mobile Development" [level=3] [ref=e758]
+            - generic [ref=e759]:
+              - generic [ref=e760]: Flutter
+              - generic [ref=e764]: React Native
+              - generic [ref=e768]: Kotlin
+              - generic [ref=e772]: Android
+              - generic [ref=e776]: iOS
+          - generic [ref=e780]:
+            - heading "Databases" [level=3] [ref=e781]
+            - generic [ref=e782]:
+              - generic [ref=e783]: PostgreSQL
+              - generic [ref=e787]: MongoDB
+              - generic [ref=e791]: MySQL
+              - generic [ref=e795]: Firebase
+              - generic [ref=e799]: Redis
+          - generic [ref=e803]:
+            - heading "Cloud & DevOps" [level=3] [ref=e804]
+            - generic [ref=e805]:
+              - generic [ref=e806]: AWS
+              - generic [ref=e810]: Docker
+              - generic [ref=e814]: Kubernetes
+              - generic [ref=e818]: Linux
+              - generic [ref=e822]: Nginx
+              - generic [ref=e826]: Terraform
+              - generic [ref=e830]: Git
+          - generic [ref=e834]:
+            - heading "AI & Data" [level=3] [ref=e835]
+            - generic [ref=e836]:
+              - generic [ref=e837]: TensorFlow
+              - generic [ref=e841]: OpenAI
+              - generic [ref=e845]: Python
+              - generic [ref=e849]: Power BI
+              - generic [ref=e853]: Stripe
+              - generic [ref=e857]: Azure
+      - generic [ref=e862]:
+        - generic [ref=e863]:
+          - generic [ref=e864]: FAQs
+          - heading "Frequently Asked Questions" [level=2] [ref=e867]
+          - paragraph [ref=e868]: Quick answers to common questions about our services
+        - tablist "FAQ categories" [ref=e870]:
+          - tab "All" [selected] [ref=e871] [cursor=pointer]
+          - tab "Education & Empowerment" [ref=e872] [cursor=pointer]
+          - tab "Future Vision" [ref=e873] [cursor=pointer]
+          - tab "General" [ref=e874] [cursor=pointer]
+          - tab "Our Story" [ref=e875] [cursor=pointer]
+          - tab "Products" [ref=e876] [cursor=pointer]
+          - tab "Projects & Bookings" [ref=e877] [cursor=pointer]
+          - tab "Technology" [ref=e878] [cursor=pointer]
+        - generic [ref=e879]:
+          - article [ref=e880]:
+            - button "Does AngiSoft teach technology skills?" [ref=e881] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e882]: "01"
+          - article [ref=e886]:
+            - button "Will AngiSoft publish educational blogs and tutorials?" [ref=e887] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e888]: "02"
+          - article [ref=e892]:
+            - button "How does AngiSoft empower people?" [ref=e893] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e894]: "03"
+          - article [ref=e898]:
+            - button "What is the future vision of AngiSoft?" [ref=e899] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e900]: "04"
+          - article [ref=e904]:
+            - button "Will AngiSoft employ developers and creators in future?" [ref=e905] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e906]: "05"
+          - article [ref=e910]:
+            - button "What is AngiSoft Technologies?" [ref=e911] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e912]: "06"
+          - article [ref=e916]:
+            - button "What does “Innovate • Build • Empower” mean?" [ref=e917] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e918]: "07"
+          - article [ref=e922]:
+            - button "What services does AngiSoft Technologies offer?" [ref=e923] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e924]: "08"
+        - button "Show More Questions" [ref=e928] [cursor=pointer]
+        - generic [ref=e929]:
+          - paragraph [ref=e930]: Still have questions?
+          - generic [ref=e931]:
+            - link "WhatsApp Us" [ref=e932] [cursor=pointer]:
+              - /url: https://wa.me/+254710398690
+            - link "Email Support" [ref=e935] [cursor=pointer]:
+              - /url: mailto:info@angisoft.co.ke
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]: Get In Touch
+          - heading "Tell Us What You Are Building" [level=2] [ref=e936]
+          - paragraph [ref=e937]: Whether it is a business system, mobile app, SaaS product, dashboard, automation workflow, networking setup, creator platform, or digital transformation idea, AngiSoft can help you map the next step.
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "Send us a message" [level=3] [ref=e69]
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]:
+                  - generic [ref=e73]: Full Name *
+                  - textbox "Full Name" [ref=e74]
+                - generic [ref=e75]:
+                  - generic [ref=e76]: Email *
+                  - textbox "Email" [ref=e77]
+              - generic [ref=e78]:
+                - generic [ref=e79]: Phone
+                - textbox "Phone" [ref=e80]
+              - generic [ref=e81]:
+                - generic [ref=e82]: Message *
+                - textbox "Message" [ref=e83]
+              - group "Preferred Communication" [ref=e84]:
+                - radiogroup "Preferred Communication" [ref=e86]:
+                  - radio "email" [checked] [ref=e87] [cursor=pointer]
+                  - radio "phone" [ref=e88] [cursor=pointer]
+                  - radio "whatsapp" [ref=e89] [cursor=pointer]
+              - generic [ref=e90] [cursor=pointer]:
+                - checkbox "I'd like to discuss an NDA before sharing details" [ref=e91]
+                - generic [ref=e92]: I'd like to discuss an NDA before sharing details
+              - button "Send Message" [ref=e93] [cursor=pointer]
+          - generic [ref=e94]:
+            - heading "AngiSoft Technologies" [level=3] [ref=e938]
+            - paragraph [ref=e96]: Send a message and the team will respond using your preferred channel.
+            - list [ref=e939]:
+              - listitem [ref=e940]:
+                - generic [ref=e944]:
+                  - generic [ref=e945]: Email
+                  - link "info@angisoft.co.ke" [ref=e946] [cursor=pointer]:
+                    - /url: mailto:info@angisoft.co.ke
+              - listitem [ref=e947]:
+                - generic [ref=e951]:
+                  - generic [ref=e952]: Phone
+                  - link "+254710398690" [ref=e953] [cursor=pointer]:
+                    - /url: tel:+254710398690
+              - listitem [ref=e954]:
+                - generic [ref=e958]:
+                  - generic [ref=e959]: WhatsApp
+                  - link "+254710398690" [ref=e960] [cursor=pointer]:
+                    - /url: https://wa.me/+254710398690
+            - generic [ref=e961]:
+              - heading "Need help getting started?" [level=4] [ref=e962]
+              - paragraph [ref=e963]: Tell us what you're trying to achieve and we'll point you the right way.
+              - link "Chat on WhatsApp" [ref=e964] [cursor=pointer]:
+                - /url: https://wa.me/+254710398690
+  - generic [ref=e97]:
+    - generic [ref=e98]:
+      - generic [ref=e99]:
+        - link [ref=e100] [cursor=pointer]:
+          - /url: /
+          - img "AngiSoft Technologies" [ref=e103]
+        - paragraph [ref=e967]: AngiSoft Technologies is a Kenyan-rooted technology ecosystem growing from practical grassroots support into scalable software products, SaaS platforms, and digital empowerment solutions.
+      - generic [ref=e968]:
+        - generic [ref=e969]: Company
+        - link "About AngiSoft" [ref=e970] [cursor=pointer]:
+          - /url: /about
+        - link "Careers" [ref=e971] [cursor=pointer]:
+          - /url: /careers
+        - link "Blog" [ref=e972] [cursor=pointer]:
+          - /url: /blog
+        - link "Contact" [ref=e973] [cursor=pointer]:
+          - /url: /contact
+      - generic [ref=e974]:
+        - generic [ref=e975]: Services
+        - link "Custom Software" [ref=e976] [cursor=pointer]:
+          - /url: /services
+        - link "Data & Reports" [ref=e977] [cursor=pointer]:
+          - /url: /services
+        - link "Automation" [ref=e978] [cursor=pointer]:
+          - /url: /services
+        - link "Digital Services" [ref=e979] [cursor=pointer]:
+          - /url: /services
+      - generic [ref=e980]:
+        - generic [ref=e981]: Products
+        - link "PetroFlow" [ref=e982] [cursor=pointer]:
+          - /url: /products/petroflow
+        - link "DukaFlow" [ref=e983] [cursor=pointer]:
+          - /url: /products/dukaflow
+        - link "KejaLink" [ref=e984] [cursor=pointer]:
+          - /url: /products/kejalink
+        - link "AngiTunes" [ref=e985] [cursor=pointer]:
+          - /url: /products/angitunes
+      - generic [ref=e986]:
+        - generic [ref=e987]: Contact
+        - generic [ref=e988]:
+          - link "info@angisoft.co.ke" [ref=e989] [cursor=pointer]:
+            - /url: mailto:info@angisoft.co.ke
+          - link "+254710398690" [ref=e992] [cursor=pointer]:
+            - /url: tel:+254710398690
+          - link "+254710398690" [ref=e995] [cursor=pointer]:
+            - /url: https://wa.me/+254710398690
+          - link "Nairobi, Kenya" [ref=e998] [cursor=pointer]:
+            - /url: /contact
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - generic [ref=e106]: Social Handles
+        - generic [ref=e1001]:
+          - link "github" [ref=e1002] [cursor=pointer]:
+            - /url: https://github.com/angisoft-technologies
+          - link "twitter" [ref=e1005] [cursor=pointer]:
+            - /url: https://x.com/angisofttech
+          - link "facebook" [ref=e1008] [cursor=pointer]:
+            - /url: https://facebook.com/angisoft.technologies
+          - link "linkedin" [ref=e1011] [cursor=pointer]:
+            - /url: https://linkedin.com/company/angisoft-technologies
+      - generic [ref=e107]:
+        - generic [ref=e108]: Learn and build with AngiSoft
+        - paragraph [ref=e1014]: Get practical updates on software, data, automation, creator tools, and digital transformation.
+        - generic [ref=e109]:
+          - textbox "Your email address" [ref=e110]
+          - button [ref=e111] [cursor=pointer]
+    - contentinfo [ref=e114]:
+      - generic [ref=e121]:
+        - generic [ref=e1015]: © 2026 AngiSoft Technologies. Innovate • Build • Empower.
+        - generic [ref=e122]:
+          - link "Privacy Policy" [ref=e1016] [cursor=pointer]:
+            - /url: /privacy
+          - link "Terms of Service" [ref=e1017] [cursor=pointer]:
+            - /url: /terms
+          - link "Staff Login" [ref=e123] [cursor=pointer]:
+            - /url: https://admin.angisoft.co.ke/login
+  - button "Open chat" [ref=e126] [cursor=pointer]

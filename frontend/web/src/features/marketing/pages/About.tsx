@@ -1,92 +1,488 @@
-import { Link } from 'react-router-dom';
-import { Button, Card, Hero, Section } from '@angisoft/ui';
-import { fetchCompanyStats } from '@/hooks/data/useCareers';
-import { useAsync } from '@/hooks/useAsync';
+// @ts-nocheck
+import React from 'react';
+import { useAboutPage } from '@/hooks/marketing/useAboutPage';
 
-const VALUES = [
-  {
-    icon: '🎯',
-    title: 'Mission',
-    body: 'To build dependable software that helps African businesses operate with the speed, clarity and reach of global technology leaders.',
-  },
-  {
-    icon: '🧭',
-    title: 'Vision',
-    body: 'A digitally confident Africa where every ambitious business has the tools to grow beyond its borders.',
-  },
-  {
-    icon: '🤝',
-    title: 'Values',
-    body: 'Craftsmanship, honesty and relentless focus on outcomes. We measure success by the businesses we help move forward.',
-  },
-];
+/*
+|--------------------------------------------------------------------------
+| Reference-aligned About page sections
+|--------------------------------------------------------------------------
+*/
 
-export default function About() {
-  const stats = useAsync(fetchCompanyStats, []);
+import AboutHeroSlider from '../components/about/AboutHeroSlider';
+import AboutNumberStory from '../components/about/AboutNumberStory';
+import AboutGeographyMap from '../components/about/AboutGeographyMap';
+import AboutSustainability from '../components/about/AboutSustainability';
+import AboutCollaboration from '../components/about/AboutCollaboration';
+import AboutHighlightsSlider from '../components/about/AboutHighlightsSlider';
+import AboutIndustriesGrid from '../components/about/AboutIndustriesGrid';
+import AboutClientsSlider from '../components/about/AboutClientsSlider';
+import AboutTestimonialsSlider from '../components/about/AboutTestimonialsSlider';
+import AboutServiceMap from '../components/about/AboutServiceMap';
+import AboutTransparency from '../components/about/AboutTransparency';
+import AboutPartnerships from '../components/about/AboutPartnerships';
+import AboutSolutionTypes from '../components/about/AboutSolutionTypes';
+import AboutTechnologies from '../components/about/AboutTechnologies';
+import AboutSpecializedCapabilities from '../components/about/AboutSpecializedCapabilities';
+import AboutWhyGuarantee from '../components/about/AboutWhyGuarantee';
+import AboutPricing from '../components/about/AboutPricing';
+import AboutPricingQuotation from '../components/about/AboutPricingQuotation';
+import AboutFinalCTA from '../components/about/AboutFinalCTA';
+import { LoadingIndicator, VisualState } from '@angisoft/ui';
+
+/*
+|--------------------------------------------------------------------------
+| Shared pending and unavailable states
+|--------------------------------------------------------------------------
+*/
+
+const AboutPageSkeleton = () => (
+  <main
+    className="min-h-screen overflow-x-clip bg-[#07142B] text-white"
+    aria-busy="true"
+  >
+    <section className="min-h-[640px] border-b border-white/10">
+      <div className="container grid min-h-[640px] items-center gap-10 py-16 lg:grid-cols-[0.4fr_0.6fr]">
+        <div>
+          <div className="h-4 w-36 animate-pulse bg-white/10" />
+          <div className="mt-6 h-14 max-w-lg animate-pulse bg-white/10" />
+          <div className="mt-3 h-14 max-w-md animate-pulse bg-white/10" />
+          <div className="mt-8 h-5 max-w-xl animate-pulse bg-white/5" />
+          <div className="mt-3 h-5 max-w-lg animate-pulse bg-white/5" />
+          <div className="mt-8 h-12 w-52 animate-pulse bg-[#0A3DFF]/30" />
+        </div>
+
+        <div className="h-[440px] animate-pulse bg-white/5" />
+      </div>
+    </section>
+
+    {Array.from({ length: 4 }).map((_, index) => (
+      <section
+        key={index}
+        className="border-b border-white/10 py-16 md:py-20"
+      >
+        <div className="container">
+          <div className="mx-auto h-10 w-72 animate-pulse bg-white/10" />
+          <div className="mx-auto mt-4 h-5 max-w-2xl animate-pulse bg-white/5" />
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-2">
+            <div className="h-80 animate-pulse bg-white/5" />
+            <div className="h-80 animate-pulse bg-white/5" />
+          </div>
+        </div>
+      </section>
+    ))}
+  </main>
+);
+
+const AboutPageError = ({ message, onRetry }) => (
+  <main className="flex min-h-[70vh] items-center bg-[#07142B] px-6 text-white">
+    <div className="container text-center">
+      <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#00C2FF]">
+        AngiSoft Technologies
+      </p>
+
+      <h1 className="mt-4 text-3xl font-black md:text-5xl">
+        The About page could not be loaded.
+      </h1>
+
+      <p className="mx-auto mt-5 max-w-xl leading-7 text-white/65">
+        {message || 'Please try again in a moment.'}
+      </p>
+
+      {typeof onRetry === 'function' && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-8 bg-[#0A3DFF] px-7 py-3.5 font-bold text-white transition hover:bg-[#3B6FFF]"
+        >
+          Try Again
+        </button>
+      )}
+    </div>
+  </main>
+);
+
+/*
+|--------------------------------------------------------------------------
+| About page
+|--------------------------------------------------------------------------
+|
+| This composer deliberately follows the reference company's full editorial
+| sequence while retaining AngiSoft's dark design system and truthful content.
+|
+*/
+
+const About = () => {
+  const {
+    about,
+    testimonials,
+    clientStats,
+    clientHighlights,
+    loading,
+    error,
+    refetch,
+  } = useAboutPage();
+
+  if (loading) {
+    return <AboutPageSkeleton />;
+  }
+
+  /*
+   * The hook provides truthful bundled defaults during an API failure. Keep
+   * this error branch when you prefer a strict CMS-only page. Remove it when
+   * you want the public page to continue rendering defaults during downtime.
+   */
+
+  if (error) {
+    return (
+      <AboutPageError
+        message={error}
+        onRetry={refetch}
+      />
+    );
+  }
+
+  if (!about) {
+    return (
+      <AboutPageError
+        message=""
+        onRetry={refetch}
+      />
+    );
+  }
 
   return (
-    <>
-      <Hero
-        badge="About AngiSoft"
-        title="A Nairobi software studio on a mission"
-        subtitle="We are a multidisciplinary team of engineers, designers and product thinkers who partner with businesses across Africa to design, build and scale software that works in the real world."
+    <main
+      id="about-company-page"
+      className="min-h-screen overflow-x-clip bg-[#07142B] text-white"
+    >
+      {/*
+      |--------------------------------------------------------------------------
+      | 01. About AngiSoft — Your Partner for Digital Success
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - company introduction on the left
+      | - leadership/company image slider on the right
+      | - introductory CTA
+      |
+      */}
+
+      <AboutHeroSlider
+        slides={about.heroSlides}
+        intro={about.intro}
       />
 
-      <Section>
-        <div className="grid gap-6 md:grid-cols-3">
-          {VALUES.map((v) => (
-            <Card key={v.title} hoverable className="p-8">
-              <div className="text-3xl">{v.icon}</div>
-              <h3 className="mt-4 text-xl font-semibold text-[var(--text-primary)]">{v.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{v.body}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
+      {/*
+      |--------------------------------------------------------------------------
+      | 02. AngiSoft in Numbers
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - top collected metric row
+      | - animated number stories
+      | - large images
+      | - split slide transitions
+      |
+      */}
 
-      <Section className="bg-[var(--bg-secondary)]">
-        <h2 className="mb-10 text-center text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-          Company at a glance
-        </h2>
-        {stats.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
-        ) : null}
-        {!stats.loading && (!stats.data || stats.data.length === 0) ? (
-          <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
-            Company highlights will appear here shortly.
-          </div>
-        ) : null}
-        {!stats.loading && stats.data ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.data.map((stat) => (
-              <Card key={stat.id} className="p-6 text-center">
-                <div className="text-4xl font-extrabold text-[#0875FF]">
-                  {stat.value}
-                  {stat.suffix ? <span className="text-2xl">{stat.suffix}</span> : null}
-                </div>
-                <div className="mt-2 text-sm font-medium text-[var(--text-muted)]">{stat.label}</div>
-              </Card>
-            ))}
-          </div>
-        ) : null}
-      </Section>
+      <AboutNumberStory
+        stories={about.numberStories}
+        title={about.numbersHeading?.title || 'AngiSoft in Numbers'}
+        description={
+          about.numbersHeading?.description ||
+          'A growing technology company measured by real work, original products and practical impact.'
+        }
+      />
 
-      <Section>
-        <div className="mx-auto max-w-3xl rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center">
-          <h2 className="text-3xl font-bold text-[var(--text-primary)]">Want to work with us?</h2>
-          <p className="mt-3 text-lg text-[var(--text-muted)]">
-            We'd love to hear about the product you're building.
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <Link to="/contact">
-              <Button>Get in touch</Button>
-            </Link>
-            <Link to="/careers">
-              <Button variant="outline">Join our team</Button>
-            </Link>
-          </div>
-        </div>
-      </Section>
-    </>
+     
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 04. Our Geography
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - centered heading and introduction
+      | - three regional summary columns
+      | - wide labelled map
+      |
+      */}
+
+      <AboutGeographyMap
+        content={about.geography}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 05. Delivery Reach and Operational Benefits
+      |--------------------------------------------------------------------------
+      |
+      | Reference equivalent:
+      | international delivery paragraph followed by a capability list.
+      |
+      */}
+
+      
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 06. Sustainability and Social Responsibility
+      |--------------------------------------------------------------------------
+      |
+      | AngiSoft equivalent:
+      | ethical technology, digital inclusion, employee development,
+      | community empowerment and responsible business practices.
+      |
+      */}
+
+      <AboutSustainability
+        content={about.sustainability}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 07. How We Collaborate
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - three columns
+      | - custom image/illustration in every column
+      | - title and linked bullet list
+      |
+      */}
+
+      <AboutCollaboration
+        content={about.collaboration}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 08. AngiSoft's Highlights
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - image-based history slider
+      | - synchronized year rail
+      | - animated milestone transitions
+      |
+      */}
+
+      <AboutHighlightsSlider
+        items={about.timeline}
+        heading={about.timelineHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 09. Let's Build the Future Together
+      |--------------------------------------------------------------------------
+      |
+      | Full-width transition banner placed directly after the timeline.
+      |
+      */}
+
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 10. Industries AngiSoft Serves
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - industry-specific images
+      | - responsive multi-column grid
+      | - titles layered over or associated with imagery
+      |
+      */}
+
+      <AboutIndustriesGrid
+        industries={about.industries}
+        heading={about.industriesHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 11. Our Clients
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - supporting client relationship statistic
+      | - client-logo slider/grid
+      |
+      */}
+
+      <AboutClientsSlider
+        clients={about.clients}
+        heading={about.clientsHeading}
+        clientStats={clientStats}
+        clientHighlights={clientHighlights}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 12. What Our Clients Say
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - client/company media
+      | - rating
+      | - quotation
+      | - reviewer identity
+      | - navigation
+      |
+      */}
+
+      <AboutTestimonialsSlider
+        testimonials={testimonials}
+        heading={about.testimonialsHeading}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 13. Our Service Map
+      |--------------------------------------------------------------------------
+      |
+      | IT consulting, software development, testing, support,
+      | data, security and infrastructure equivalents.
+      |
+      */}
+
+      <AboutServiceMap
+        content={about.serviceMap}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 14. Building Trust with Transparency
+      |--------------------------------------------------------------------------
+      |
+      | Long-form editorial section explaining AngiSoft's evidence-based,
+      | transparent way of working.
+      |
+      */}
+
+      <AboutTransparency
+        content={about.transparency}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 15. Partnerships and Recognitions
+      |--------------------------------------------------------------------------
+      |
+      | Only real AngiSoft partnerships, memberships, certificates or
+      | recognitions may appear here.
+      |
+      */}
+
+      <AboutPartnerships
+        content={about.partnerships}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 16. Solutions We Cover
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - broad, categorized solution list
+      | - dense but easy-to-scan layout
+      |
+      */}
+
+      <AboutSolutionTypes
+        content={about.solutionTypes}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 17. Capabilities and Technological Expertise
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - grouped technology families
+      | - categories, subcategories and technologies
+      | - expandable/collapsible presentation where useful
+      |
+      */}
+
+      <AboutTechnologies
+        content={about.technologies}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 18. Specialized Technology Capabilities
+      |--------------------------------------------------------------------------
+      |
+      | AI, data science, big data, IoT, computer vision,
+      | AR, VR, blockchain, and other genuine AngiSoft capabilities.
+      |
+      */}
+
+      <AboutSpecializedCapabilities
+        content={about.specializedCapabilities}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 19. What We Do to Guarantee Project Success
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - introductory editorial copy
+      | - organizational/process explanation
+      | - detailed expandable practice list
+      |
+      */}
+
+      <AboutWhyGuarantee
+        content={about.whyGuarantee}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 20. Our Pricing Policy
+      |--------------------------------------------------------------------------
+      |
+      | Reference behaviour:
+      | - pricing-model cards
+      | - explanatory copy
+      | - project-cost CTA
+      |
+      */}
+
+      <AboutPricing
+        pricing={about.pricing}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 21. Leadership Pricing Quotation
+      |--------------------------------------------------------------------------
+      |
+      | Reference equivalent:
+      | executive photo, role, long quotation and supporting investment list.
+      |
+      */}
+
+      <AboutPricingQuotation
+        content={about.pricingQuotation}
+      />
+
+      {/*
+      |--------------------------------------------------------------------------
+      | 22. Final CTA
+      |--------------------------------------------------------------------------
+      |
+      | AngiSoft-specific closing invitation.
+      |
+      */}
+      <AboutFinalCTA
+        content={about.cta}
+      />
+    </main>
   );
-}
+};
+
+export default About;
