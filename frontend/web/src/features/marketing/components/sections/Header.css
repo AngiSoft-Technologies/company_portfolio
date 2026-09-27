@@ -1,6 +1,37 @@
 /* Icon controls in the bar are borderless and transparent: the bar itself
    carries the surface, so a filled pill here reads as a second competing chip.
    Only the hover/focus state adds a brand tint. */
+:root {
+  --header-ink: #EAF2FF;
+  --header-ink-hover: #FFFFFF;
+  --header-ink-muted: rgba(214, 232, 255, 0.7);
+  --header-ink-accent: #18D8FF;
+}
+html[data-theme='light'] {
+  --header-ink: #07142B;
+  --header-ink-hover: #003BCE;
+  --header-ink-muted: #334A6B;
+  --header-ink-accent: #003BCE;
+}
+html[data-theme='light'][data-hero-media-tone='dark'] {
+  --header-ink: #EAF2FF;
+  --header-ink-hover: #FFFFFF;
+  --header-ink-muted: rgba(214, 232, 255, 0.78);
+  --header-ink-accent: #18D8FF;
+}
+html[data-theme='light'][data-header-surface='dark'] {
+  --header-ink: #EAF2FF;
+  --header-ink-hover: #FFFFFF;
+  --header-ink-muted: rgba(214, 232, 255, 0.78);
+  --header-ink-accent: #18D8FF;
+}
+html[data-theme='light'][data-header-surface='light'] {
+  --header-ink: #07142B;
+  --header-ink-hover: #003BCE;
+  --header-ink-muted: #334A6B;
+  --header-ink-accent: #003BCE;
+}
+
 .angi-header-control {
   display: inline-flex;
   align-items: center;
@@ -31,4 +62,3 @@
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
-

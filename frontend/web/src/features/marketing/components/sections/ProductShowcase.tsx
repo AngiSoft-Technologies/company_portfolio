@@ -4,6 +4,7 @@ import { FaArrowRight } from 'react-icons/fa';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 import { apiGet } from '@/lib/httpClient';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
+import { BACKGROUND_ASSETS } from '@/lib/marketing/backgroundAssets';
 import './ProductShowcase.css';
 
 type ShowcaseStory = {
@@ -105,7 +106,12 @@ const ProductShowcase = () => {
   const previewFeatures = active?.features.slice(0, 4) || [];
 
   return (
-    <section id="products" className="product-showcase" data-state={status}>
+    <section
+      id="products"
+      className="product-showcase"
+      data-state={status}
+      style={{ '--band-media': `url(${resolveAssetUrl(BACKGROUND_ASSETS.desktopWallpaper)})` } as React.CSSProperties}
+    >
       <div className="product-showcase__container">
         <header className="product-showcase__header">
           <div>

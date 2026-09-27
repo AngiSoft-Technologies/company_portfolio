@@ -358,6 +358,60 @@
   background: color-mix(in srgb, var(--color-primary) 8%, var(--surface));
 }
 
+/* Product showcase is a media band on the homepage. In light mode the
+   surrounding controls are glass so the wallpaper remains part of the story;
+   the inner system preview stays an intentionally legible product mockup. */
+html[data-theme='light'] .angi-home .product-showcase__feature {
+  background: rgba(7, 20, 43, 0.18);
+  border-color: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(16px) saturate(1.12);
+  box-shadow: 0 18px 44px rgba(6, 19, 36, 0.28);
+}
+html[data-theme='light'] .angi-home .product-showcase__option {
+  background: rgba(7, 20, 43, 0.2);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #F5F7FA;
+  backdrop-filter: blur(14px) saturate(1.12);
+}
+html[data-theme='light'] .angi-home .product-showcase__option:hover {
+  background: rgba(0, 175, 255, 0.24);
+  border-color: rgba(0, 175, 255, 0.72);
+}
+html[data-theme='light'] .angi-home .product-showcase__option.is-active {
+  background: rgba(39, 217, 75, 0.16);
+  border-color: #27D94B;
+  box-shadow: 0 0 0 1px rgba(39, 217, 75, 0.22), 0 10px 26px rgba(39, 217, 75, 0.16);
+}
+html[data-theme='light'] .angi-home .product-showcase__option small {
+  color: rgba(226, 240, 255, 0.82);
+}
+html[data-theme='light'] .angi-home .product-showcase__system-status {
+  color: #1B8A38;
+  background: rgba(39, 217, 75, 0.14);
+  border-color: rgba(39, 217, 75, 0.52);
+}
+html[data-theme='light'] .angi-home .product-showcase__system-rows span:last-child {
+  background: linear-gradient(90deg, #0875FF 0%, #00AFFF 54%, #27D94B 100%);
+}
+html[data-theme='light'] .angi-home .product-showcase__feature-content {
+  color: #F5F7FA;
+}
+html[data-theme='light'] .angi-home .product-showcase__feature-content h3 {
+  color: #F5F7FA;
+  text-shadow: 0 2px 16px rgba(6, 19, 36, 0.62);
+}
+html[data-theme='light'] .angi-home .product-showcase__feature-content .product-showcase__tagline {
+  color: #18D8FF;
+}
+html[data-theme='light'] .angi-home .product-showcase__feature-content .product-showcase__description {
+  color: rgba(226, 240, 255, 0.86);
+}
+html[data-theme='light'] .angi-home .product-showcase__meta span {
+  color: rgba(226, 240, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(7, 20, 43, 0.18);
+}
+
 @media (max-width: 900px) {
   .product-showcase__layout {
     grid-template-columns: 1fr;

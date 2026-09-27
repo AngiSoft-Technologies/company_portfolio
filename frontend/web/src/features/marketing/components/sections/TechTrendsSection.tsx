@@ -5,7 +5,6 @@ import { FaArrowRight } from 'react-icons/fa';
 import { apiGet } from '@/lib/httpClient';
 import { resolveIcon } from '@/lib/marketing/iconRegistry';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
-import { BACKGROUND_ASSETS } from '@/lib/marketing/backgroundAssets';
 import '@/styles/marketing/TechTrendsSection.css';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
@@ -55,15 +54,7 @@ const TechTrendsSection = () => {
   const trend = normalized[Math.min(active, Math.max(normalized.length - 1, 0))];
 
   return (
-    <section
-      id="trends"
-      className="angi-trends-section"
-      style={{
-        // Full-bleed media for the whole band, so the section header is not
-        // sitting on a flat colour while only the tab panel has a photo.
-        '--band-media': `url(${resolveAssetUrl(BACKGROUND_ASSETS.heroStudio)})`,
-      } as React.CSSProperties}
-    >
+    <section id="trends" className="angi-trends-section">
       <div className="angi-container">
         <div className="angi-section-header">
           <div className="angi-section-badge">Technology</div>

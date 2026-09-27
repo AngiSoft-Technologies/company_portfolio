@@ -5,7 +5,9 @@ export const BACKGROUND_ASSETS = {
   webDevelopment: '/uploads/public/images/web-development.jpg',
   softwareCompany: '/uploads/public/images/Software-Development-Company.jpg',
   desktopWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Desktop-Wallpaper.png',
-  landingWallpaper: '/uploads/public/images/Wallpapers/AngiSoft-Website-Landing-sr-Design.png',
+  /** BANNED: this asset is a 64px square-grid overlay, not a photograph.
+   *  Do not use it as a section background. Kept only for reference. */
+  landingWallpaper_GRID_DO_NOT_USE: '/uploads/public/images/Wallpapers/AngiSoft-Website-Landing-sr-Design.png',
   campaignBanner: '/uploads/public/images/Posters-Campaigns/AngiSoft-Campaign-Banner.png',
   thankYouPoster: '/uploads/public/images/Posters-Campaigns/AngiSoft-Thank-You.png',
   watermark: '/uploads/public/images/Branding/AngiSoft-Watermsrk.png',
@@ -34,7 +36,7 @@ export const BACKGROUND_VARIANTS = {
   },
   product: {
     background: '#07142B',
-    image: BACKGROUND_ASSETS.landingWallpaper,
+    image: BACKGROUND_ASSETS.developerPanel,
     overlay: 'rgba(6, 19, 36, 0.72)',
     position: 'center',
   },

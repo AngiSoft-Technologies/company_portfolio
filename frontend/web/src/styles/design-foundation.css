@@ -56,6 +56,7 @@
 }
 
 html[data-theme='light'] {
+  --band-services: #D3E7F8;
   color-scheme: light;
   --bg-primary: #F2F6FD;
   --bg-secondary: #FFFFFF;
@@ -78,16 +79,16 @@ html[data-theme='light'] {
   --section-tint-blue: #E7F0FF;
   /* Navy IS a brand colour (tokens: navy/navyLight/navyLighter), so the footer
      band stays navy in both themes and only its ink ladder flips. */
-  --footer-surface: #07142B;
-  --footer-surface-2: rgba(255, 255, 255, 0.07);
-  --footer-text: #EAF2FF;
-  --footer-muted: rgba(214, 232, 255, 0.68);
-  --footer-border: rgba(0, 175, 255, 0.2);
-  --footer-link: rgba(226, 240, 255, 0.82);
-  --footer-ink: #EAF2FF;
-  --footer-ink-soft: rgba(214, 232, 255, 0.72);
-  --footer-ink-strong: #18D8FF;
-  --footer-hairline: rgba(0, 175, 255, 0.22);
+  --footer-surface: #E7F0FF;
+  --footer-surface-2: rgba(255, 255, 255, 0.72);
+  --footer-text: #07142B;
+  --footer-muted: #4A6385;
+  --footer-border: rgba(8, 117, 255, 0.18);
+  --footer-link: #334A6B;
+  --footer-ink: #07142B;
+  --footer-ink-soft: #4A6385;
+  --footer-ink-strong: #003BCE;
+  --footer-hairline: rgba(8, 117, 255, 0.24);
   /* Light CTA band: pale brand tint (blue -> azure -> green) with navy ink, so
      it is unmistakably a different surface from the navy footer below it. */
   --band-ink: #07142B;
@@ -111,6 +112,7 @@ html[data-theme='light'] {
 }
 
 html:not([data-theme='light']) {
+  --band-services: #0B1E3D;
   --section-tint: #0B1E3D;
   --section-tint-cyan: #0A2340;
   --section-tint-green: #0B2A2F;
@@ -230,8 +232,7 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 .angi-home > .hero-slider { background: var(--color-navy); }
 .angi-home > .angi-services-section,
 .angi-home > .product-showcase { background: var(--section-tint); }
-.angi-home > .angi-industry { background: var(--section-tint-cyan); }
-.angi-home > .angi-solutions { background: var(--bg-primary); }
+/* Industries + Solutions share one surface; see the paired rule below. */
 /* Trends continues the Solutions surface instead of starting a green band. */
 .angi-home > .angi-trends-section { background: var(--bg-primary); }
 .angi-home > .engagement-cta {
@@ -587,12 +588,14 @@ html .featured-insights__item {
 
 
 /* ── Full-bleed media sections ──────────────────────────────────────────────
-   REVAMP_PLAN called for imagery on every band. These two sit directly on a
+   Only these bands sit on a
    CDN photo with a brand-navy scrim, so neither reads as a flat colour block.
    Cards over them use backdrop-filter only (no fill) so the photo stays
    visible through the glass. */
-.angi-home > .angi-trends-section,
-.angi-home > .angi-tech {
+/* Imagery is STRATEGIC, not per-band. Only the projects band carries a photo;
+   every other section is a brand-tinted surface. Adding a photo everywhere
+   flattens the page into a slideshow and gives the eye no rest. */
+.angi-home > .product-showcase {
   position: relative;
   isolation: isolate;
   background-image: var(--band-media, none);
@@ -603,52 +606,35 @@ html .featured-insights__item {
 
 /* Copy on a media band is light in BOTH themes — the scrim guarantees it, so
    the navy body ink from --text-primary would be invisible here. */
-.angi-home > .angi-trends-section .angi-section-title,
-.angi-home > .angi-trends-section .angi-section-title-gradient,
-.angi-home > .angi-tech .angi-section-title,
-.angi-home > .angi-tech .angi-section-title-gradient {
-  color: #F5F7FA;
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: currentColor;
-}
-
-.angi-home > .angi-trends-section .angi-section-subtitle,
-.angi-home > .angi-trends-section .angi-section-header p,
-.angi-home > .angi-tech .angi-section-subtitle,
-.angi-home > .angi-tech .angi-section-header p {
-  color: rgba(226, 240, 255, 0.82);
-}
-
-.angi-home > .angi-trends-section .angi-section-badge,
-.angi-home > .angi-tech .angi-section-badge {
-  color: #02CCFC;
-  background: rgba(0, 175, 255, 0.14);
-  border-color: rgba(0, 175, 255, 0.36);
-}
-
-.angi-home > .angi-trends-section::before,
-.angi-home > .angi-tech::before {
+.angi-home > .product-showcase::before,
+.angi-home > .featured-insights::before {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: -1;
+  /* z-index 0, NOT -1: a negative value pushes the scrim behind the section's
+     own background-image, so the photo showed through completely unfiltered. */
+  z-index: 0;
+  pointer-events: none;
   background: var(--band-scrim);
 }
 
-.angi-home > .angi-trends-section > .angi-container,
-.angi-home > .angi-tech > .angi-container {
+.angi-home > .product-showcase > .angi-container,
+.angi-home > .product-showcase > [class*='__container'],
+.angi-home > .featured-insights > [class*='__container'],
+.angi-home > .featured-insights > .angi-container {
   position: relative;
   z-index: 1;
 }
 
+/* Kept deliberately light (WCAG 1.4.11 / F83): at 0.88 the wash erased the
+   photo entirely. The copy side is darker than the media side, and the cards
+   over the image are glass, so contrast comes from the blur not the opacity. */
 html[data-theme='light'] {
-  --band-scrim: linear-gradient(150deg, rgb(6 19 36 / 0.88) 0%, rgb(7 20 43 / 0.78) 48%, rgb(0 82 148 / 0.68) 100%);
+  --band-scrim: linear-gradient(150deg, rgb(6 19 36 / 0.62) 0%, rgb(7 20 43 / 0.44) 46%, rgb(0 82 148 / 0.3) 100%);
 }
 
 html:not([data-theme='light']) {
-  --band-scrim: linear-gradient(150deg, rgb(6 19 36 / 0.9) 0%, rgb(7 20 43 / 0.8) 48%, rgb(0 60 110 / 0.72) 100%);
+  --band-scrim: linear-gradient(150deg, rgb(6 19 36 / 0.66) 0%, rgb(7 20 43 / 0.5) 46%, rgb(0 60 110 / 0.34) 100%);
 }
 
 /* ── Brand colour roles ────────────────────────────────────────────────────
@@ -696,15 +682,62 @@ html .angi-btn-primary:hover {
   background: var(--brand-progress);
 }
 
-/* Section washes carry a faint brand hue so light mode is not white-on-white. */
-.angi-home > .angi-services-section { background: var(--brand-tint-royal); }
-.angi-home > .angi-industry { background: var(--brand-tint-azure); }
-.angi-home > .angi-trends-section,
-.angi-home > .angi-solutions { background: var(--brand-tint-cyan); }
-.angi-home > .product-showcase { background: var(--brand-tint-royal); }
-.angi-home > .featured-insights { background: var(--brand-tint-cyan); }
-.angi-home > .testimonial-slider { background: var(--brand-tint-azure); }
-.angi-home > .angi-contact-section { background: var(--brand-tint-royal); }
+/* Section washes carry a faint brand hue so light mode is not white-on-white.
+   These MUST use background-color, not the `background` shorthand — the
+   shorthand resets background-image to none and would erase the band photo. */
+/* Services sits directly under the navy hero slider, so it is the DARKEST
+   light-theme band — that keeps the transition off a hard edge. */
+.angi-home > .angi-services-section { background-color: var(--band-services); }
+/* Industries, Solutions and Trends are one continuous run of the same kind of
+   section, so they share one surface. A colour change between them reads as a
+   mistake rather than as rhythm. */
+.angi-home > .angi-industry,
+.angi-home > .angi-solutions,
+.angi-home > .angi-trends-section { background-color: var(--brand-tint-azure); }
+.angi-home > .product-showcase { background-color: transparent; }
+.angi-home > .featured-insights { background-color: var(--brand-tint-cyan); }
+.angi-home > .testimonial-slider { background-color: var(--brand-tint-azure); }
+.angi-home > .angi-contact-section { background-color: var(--brand-tint-royal); }
+.angi-home > .angi-tech { background-color: var(--brand-tint-cyan); }
+
+/* ── Blends between adjacent bands ──────────────────────────────────────────
+   A hard edge between two different surfaces is what makes a page feel
+   stitched together. These two ramps are the only places that need one:
+   services fades down from the navy hero, trends fades down into the navy
+   scrim of the projects photo directly beneath it. */
+.angi-home > .angi-services-section,
+.angi-home > .angi-trends-section {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Top of services: brand navy -> the services tint, inside the hero's own
+   bottom padding so the slider still reads as one block. */
+.angi-home > .angi-services-section::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: clamp(112px, 14vw, 200px);
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(180deg, var(--color-navy) 0%, var(--band-services) 100%);
+}
+html[data-theme='light'] .angi-home > .angi-services-section::before {
+  background: linear-gradient(180deg, #E2F7FF 0%, var(--band-services) 100%) !important;
+}
+/* Bottom of trends: the solutions tint -> the same navy the projects scrim
+   starts at, so the seam into the photo band disappears. */
+.angi-home > .angi-trends-section::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(88px, 11vw, 156px);
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(0deg, rgb(6 19 36 / 0.82) 0%, var(--brand-tint-azure) 100%);
+}
+.angi-home > .angi-services-section > *,
+.angi-home > .angi-trends-section > * { position: relative; z-index: 1; }
 
 /* ── Vertical rhythm ────────────────────────────────────────────────────────
    Section padding + the header gap were stacking to ~208px of dead space
@@ -722,4 +755,87 @@ html .angi-btn-primary:hover {
 .angi-home > .angi-trends-panel,
 .angi-trends-panel {
   margin-top: 0;
+}
+
+/* Services / Products / Insights are media bands now, so their headings are
+   light in both themes and their cards are glass rather than filled. */
+.angi-home > .angi-services-section .angi-section-title,
+.angi-home > .product-showcase .angi-section-title,
+.angi-home > .product-showcase [class*='__title'],
+.angi-home > .featured-insights [class*='__title'] {
+  color: #F5F7FA;
+  text-shadow: 0 2px 18px rgba(6, 19, 36, 0.55);
+}
+.angi-home > .angi-services-section .angi-section-subtitle,
+.angi-home > .product-showcase [class*='__subtitle'],
+.angi-home > .featured-insights [class*='__subtitle'],
+.angi-home > .featured-insights [class*='__description'] {
+  color: rgba(226, 240, 255, 0.86);
+  text-shadow: 0 1px 12px rgba(6, 19, 36, 0.7);
+}
+.angi-home > .angi-services-section .angi-card,
+.angi-home > .product-showcase .angi-card,
+.angi-home > .featured-insights .angi-card {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow: 0 18px 44px rgba(6, 19, 36, 0.32);
+  color: #F5F7FA;
+}
+.angi-home > .angi-services-section .angi-card p,
+.angi-home > .product-showcase .angi-card p,
+.angi-home > .featured-insights .angi-card p {
+  color: rgba(226, 240, 255, 0.82);
+}
+
+/* The services content sits on the same image-led band as the hero. Keep its
+   secondary heading, copy, feature list, and tabs on the same light ink ladder
+   in both themes; the blend supplies the contrast instead of white cards. */
+.angi-home > .angi-services-section .angi-services-title,
+.angi-home > .angi-services-section .angi-services-description,
+.angi-home > .angi-services-section .angi-services-item-text {
+  color: #F5F7FA;
+  text-shadow: 0 1px 12px rgba(6, 19, 36, 0.62);
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-section-title {
+  color: #07142B;
+  text-shadow: none;
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-section-subtitle {
+  color: #334A6B;
+  text-shadow: none;
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-section-title-gradient {
+  color: #003BCE;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-services-title {
+  color: #07142B;
+  text-shadow: none;
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-services-description,
+html[data-theme='light'] .angi-home > .angi-services-section .angi-services-item-text {
+  color: #334A6B;
+  text-shadow: none;
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-services-tab {
+  color: #334A6B;
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(8, 117, 255, 0.18);
+}
+html[data-theme='light'] .angi-home > .angi-services-section .angi-services-tab:hover {
+  color: #07142B;
+  background: #FFFFFF;
+}
+.angi-home > .angi-services-section .angi-services-tab {
+  color: rgba(226, 240, 255, 0.9);
+  background: rgba(7, 20, 43, 0.22);
+  border-color: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(10px);
+}
+.angi-home > .angi-services-section .angi-services-tab.is-active {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: transparent;
 }

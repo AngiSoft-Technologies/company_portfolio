@@ -54,7 +54,7 @@
 }
 .angi-industry-tab:hover {
   background: var(--surface-hover);
-  color: var(--industry-card-ink);
+  color: var(--text-primary);
 }
 .angi-industry-tab:focus-visible {
   outline: 2px solid var(--primary);
@@ -242,7 +242,7 @@ html[data-theme='light'] {
   --industry-panel-brightness: 0.72;
   --industry-card-surface: transparent;
   --industry-card-border: rgb(255 255 255 / 0.6);
-  --industry-card-ink: #07142B;
+  --industry-card-ink: #F5F7FA;
 }
 
 html:not([data-theme='light']) {

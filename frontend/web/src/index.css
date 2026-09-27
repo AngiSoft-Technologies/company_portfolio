@@ -9282,12 +9282,14 @@ h1, h2, h3, h4, h5, h6 {
 /* ==========================================================================
    Global Header icon + search visibility (scoped)
    ========================================================================== */
+/* These are peer icon controls, not micro-buttons: keep them at the same 48px
+   hit area as the theme toggle so they are usable and visually balanced. */
 .angi-header-search-button,
 .angi-header-mobile-menu-button {
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
+  width: 3rem;
+  height: 3rem;
+  min-width: 3rem;
+  min-height: 3rem;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -9299,11 +9301,11 @@ h1, h2, h3, h4, h5, h6 {
 .angi-header-mobile-menu-icon,
 .angi-header-sidebar-close-icon {
   display: block;
-  width: 1rem;
-  height: 1rem;
-  min-width: 1rem;
-  min-height: 1rem;
-  flex: 0 0 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+  flex: 0 0 1.25rem;
   color: currentColor;
   fill: currentColor;
   opacity: 1;

@@ -16,8 +16,6 @@ import {
   SiStripe, SiAngular,
 } from 'react-icons/si';
 import { apiGet } from '@/lib/httpClient';
-import { resolveAssetUrl } from '@/lib/marketing/constants';
-import { BACKGROUND_ASSETS } from '@/lib/marketing/backgroundAssets';
 import '@/styles/marketing/TechPlatforms.css';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
@@ -118,14 +116,7 @@ const TechPlatforms = () => {
   const categories = cms?.categories || [];
 
   return (
-    <section
-      className="angi-tech"
-      id="tech"
-      style={{
-        // Full-bleed branded media so this band is not a flat colour block.
-        '--band-media': `url(${resolveAssetUrl(BACKGROUND_ASSETS.landingWallpaper)})`,
-      } as React.CSSProperties}
-    >
+    <section className="angi-tech" id="tech">
       <div className="angi-container">
         <div className="angi-section-header">
           <div className="angi-section-badge">{cms?.badge || 'Technology Stack'}</div>

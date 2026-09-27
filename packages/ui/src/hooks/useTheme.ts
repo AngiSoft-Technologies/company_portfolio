@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { getThemeMode, setThemeMode, themeSurfaces, type ThemeSurfaceColors } from '../themes';
 
 export type ThemeMode = 'light' | 'dark';
@@ -17,9 +17,19 @@ export function useTheme(): {
 } {
   const [mode, setModeState] = useState<ThemeMode>(() => getThemeMode());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    localStorage.setItem('angisoft-theme-mode', mode);
     setThemeMode(mode);
   }, [mode]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'angisoft-theme-mode') return;
+      setModeState(event.newValue === 'light' ? 'light' : 'dark');
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const value = useMemo(
     () => ({

@@ -77,7 +77,10 @@ const ServicesSection = () => {
   );
 
   return (
-    <section id="services" className="angi-services-section">
+    <section
+      id="services"
+      className="angi-services-section"
+    >
       <div className="angi-container">
         <div className="angi-section-header">
           <div className="angi-section-badge">Our Services</div>

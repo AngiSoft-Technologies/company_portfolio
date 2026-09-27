@@ -22,16 +22,43 @@ const megaMenus = navigation?.megaMenus?.length? navigation.megaMenus.map((menu)
 
 useEffect(() => {const handle = () => setScrolled(window.scrollY > 20);window.addEventListener("scroll", handle);return () => window.removeEventListener("scroll", handle);}, []);
 
+useEffect(() => {
+  const updateHeaderSurface = () => {
+    const probeY = 84;
+    const section = Array.from(document.querySelectorAll('main section, body > section, section'))
+      .find((candidate) => {
+        const rect = candidate.getBoundingClientRect();
+        return rect.top <= probeY && rect.bottom > probeY;
+      });
+    const className = typeof section?.className === 'string' ? section.className : '';
+    const isHero = className.includes('hero-slider');
+    const isImageBand = className.includes('product-showcase') || className.includes('featured-insights');
+    const heroTone = document.documentElement.getAttribute('data-hero-media-tone');
+    const surface = isImageBand || (isHero && heroTone === 'dark') ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-header-surface', surface);
+  };
+  updateHeaderSurface();
+  window.addEventListener('scroll', updateHeaderSurface, { passive: true });
+  window.addEventListener('resize', updateHeaderSurface);
+  const observer = new MutationObserver(updateHeaderSurface);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-hero-media-tone'] });
+  return () => {
+    window.removeEventListener('scroll', updateHeaderSurface);
+    window.removeEventListener('resize', updateHeaderSurface);
+    observer.disconnect();
+  };
+}, []);
+
 // Header behaves the way Vercel/Stripe do: fully transparent while it sits over
 // the hero image (the hero's navy scrim guarantees contrast, so copy stays
 // light), then becomes a frosted glass panel in the CURRENT theme once the page
 // scrolls — so it dissolves into the light sections instead of dropping a navy
 // bar onto a white page. `panel*` values are for overlays (mega menu, mobile
 // drawer, search) which are always theme-coloured, never transparent.
-const barInk = scrolled && !isDark ? '#07142B' : '#EAF2FF';
-const barInkHover = scrolled && !isDark ? '#003BCE' : '#FFFFFF';
-const barInkMuted = scrolled && !isDark ? '#334A6B' : 'rgba(214, 232, 255, 0.7)';
-const barAccent = scrolled && !isDark ? '#003BCE' : '#18D8FF';
+const barInk = 'var(--header-ink)';
+const barInkHover = 'var(--header-ink-hover)';
+const barInkMuted = 'var(--header-ink-muted)';
+const barAccent = 'var(--header-ink-accent)';
 const panelSurface = isDark ? 'rgba(9, 26, 52, 0.98)' : 'rgba(255, 255, 255, 0.98)';
 const panelInk = isDark ? '#EAF2FF' : '#07142B';
 const panelInkMuted = isDark ? 'rgba(214, 232, 255, 0.7)' : '#334A6B';
@@ -405,6 +432,7 @@ return (<>
           type="button"
           className="angi-header-control angi-header-theme-toggle"
           onClick={toggleMode}
+          style={{ color: barInk }}
           aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           aria-pressed={!isDark}
         >
@@ -416,6 +444,7 @@ return (<>
           type="button"
           className="angi-header-control angi-header-search-button"
           onClick={() => { setSearchOpen(true); setSearchQuery(''); setSearchResults([]); }}
+          style={{ color: barInk }}
           aria-label="Search"
         >
           <FaSearch

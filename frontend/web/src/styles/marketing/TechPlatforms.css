@@ -120,3 +120,22 @@
     background: color-mix(in srgb, var(--color-cyan-bright) 14%, transparent);
     border-color: color-mix(in srgb, var(--color-cyan-bright) 40%, transparent);
 }
+
+/* This section is a quiet, light surface rather than a media stage. Its
+   labels therefore use the light-theme ink ramp, while the icons retain their
+   brand colors from CMS data. */
+html[data-theme='light'] .angi-tech .angi-tech-name,
+html[data-theme='light'] .angi-tech .angi-tech-category-heading {
+  color: var(--text-primary);
+  text-shadow: none;
+}
+html[data-theme='light'] .angi-tech .angi-tech-tile {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(8, 117, 255, 0.16);
+  box-shadow: 0 8px 22px rgba(7, 20, 43, 0.06);
+}
+html[data-theme='light'] .angi-tech .angi-tech-tile:hover,
+html[data-theme='light'] .angi-tech .angi-tech-tile:focus-within {
+  background: #FFFFFF;
+  border-color: rgba(8, 117, 255, 0.36);
+}

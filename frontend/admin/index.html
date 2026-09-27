@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>AngiSoft Admin</title>
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem('angisoft-theme-mode') === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', mode);
+          document.documentElement.classList.toggle('dark', mode === 'dark');
+          document.documentElement.style.colorScheme = mode;
+        } catch (_) {}
+      }());
+    </script>
   </head>
   <body>
     <div id="root"></div>

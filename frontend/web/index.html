@@ -12,6 +12,16 @@
       content="AngiSoft Technologies — software products and services for African businesses. Web, mobile, ERP, IoT and AI solutions built in Nairobi."
     />
     <title>AngiSoft Technologies</title>
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem('angisoft-theme-mode') === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', mode);
+          document.documentElement.classList.toggle('dark', mode === 'dark');
+          document.documentElement.style.colorScheme = mode;
+        } catch (_) {}
+      }());
+    </script>
   </head>
   <body>
     <div id="root"></div>

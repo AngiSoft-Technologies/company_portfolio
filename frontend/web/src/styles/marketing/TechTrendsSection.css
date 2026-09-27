@@ -256,3 +256,15 @@ html:not([data-theme='light']) {
     background: var(--color-cyan-bright);
     border-color: var(--color-cyan-bright);
 }
+
+html[data-theme='light'] .angi-trends-tab {
+  color: #334A6B;
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(8, 117, 255, 0.18);
+  backdrop-filter: blur(10px);
+}
+html[data-theme='light'] .angi-trends-tab:hover {
+  color: #07142B;
+  background: #FFFFFF;
+  border-color: rgba(8, 117, 255, 0.34);
+}

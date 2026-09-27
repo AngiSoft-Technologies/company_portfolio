@@ -43,6 +43,34 @@ type HeroContent = {
   tagline?: string;
 };
 
+type MediaTone = 'light' | 'dark';
+
+function detectMediaTone(source: string, onTone: (tone: MediaTone) => void): void {
+  if (!source) return;
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = () => {
+    try {
+      const size = 24;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) return;
+      context.drawImage(image, 0, 0, size, size);
+      const pixels = context.getImageData(0, 0, size, size).data;
+      let luminance = 0;
+      for (let index = 0; index < pixels.length; index += 4) {
+        luminance += (0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2]) / 255;
+      }
+      onTone(luminance / (pixels.length / 4) > 0.56 ? 'light' : 'dark');
+    } catch {
+      // Cross-origin media without CORS headers keeps the safe default.
+    }
+  };
+  image.src = source;
+}
+
 const normalizeCta = (cta: HeroCta | null | undefined, label?: string, url?: string) => {
   if (!cta && !label) return null;
   return {
@@ -57,6 +85,7 @@ const HeroSlider = () => {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [mediaTone, setMediaTone] = useState<MediaTone>('dark');
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -135,6 +164,15 @@ const HeroSlider = () => {
   const stats = useMemo(() => (hero?.stats || []).slice(0, 4), [hero]);
 
   useEffect(() => {
+    if (!slide) return;
+    detectMediaTone(slide.poster || slide.image, setMediaTone);
+  }, [slide]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-hero-media-tone', mediaTone);
+  }, [mediaTone]);
+
+  useEffect(() => {
     if (!slide || slide.type !== 'video' || reduceMotion) return;
     videoRef.current?.play().catch(() => undefined);
   }, [reduceMotion, slide]);
@@ -158,6 +196,8 @@ const HeroSlider = () => {
   return (
     <section
       className="hero-slider"
+      data-media-tone={mediaTone}
+      data-slide-id={String(slide.id)}
       aria-roledescription="carousel"
       aria-label="AngiSoft highlights"
       onMouseEnter={() => setPaused(true)}

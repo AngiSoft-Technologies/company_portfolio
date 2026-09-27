@@ -201,7 +201,7 @@ html[data-theme='light'] {
   --solutions-item-surface-hover: color-mix(in srgb, var(--color-cyan-bright) 14%, transparent);
   --solutions-item-border: rgb(255 255 255 / 0.6);
   --solutions-item-border-hover: rgba(8, 117, 255, 0.42);
-  --solutions-item-ink: #07142B;
+  --solutions-item-ink: #F5F7FA;
   --solutions-item-icon-bg: rgba(8, 117, 255, 0.12);
 }
 
