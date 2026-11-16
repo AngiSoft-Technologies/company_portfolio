@@ -1,5 +1,8 @@
 # Netlify Deployment
 
+> **🛠 OPERATIONAL** — Current deployment reference; update admin proxy config per Phase 0.7.<br>
+> **Required change (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` Phase 0.7):** Admin `netlify.toml` must add `[[redirects]]` for `/api/*` → `https://api.angisoft.co.ke/api/:splat` before SPA fallback.
+
 The web and admin applications are separate Vite sites built from the pnpm workspace. Dependency installation and build commands run from the repository root.
 
 ## Production domains
@@ -22,7 +25,7 @@ Create or update two Netlify sites linked to this repository. Leave **Base direc
 
 The corresponding configuration files are `frontend/web/netlify.toml` and `frontend/admin/netlify.toml`. Netlify searches the package directory first, so these files apply to the corresponding site. The infrastructure copies are in `infrastructure/netlify/`.
 
-Both sites use Node.js 24. The app configurations set `VITE_API_BASE_URL` and `VITE_SOCKET_URL` to `https://api.angisoft.co.ke`, so both frontends use the shared backend. These are public browser configuration values, not secrets.
+Both sites use Node.js 24. `VITE_SOCKET_URL` is set to `https://api.angisoft.co.ke` so both frontends reach the shared backend over Socket.IO. `VITE_CDN_BASE_URL` points the web site at `https://cdn.angisoft.co.ke`. **`VITE_API_BASE_URL` is deliberately not set** — see §Routing below for why that matters. These are public browser configuration values, not secrets.
 
 ## Backend and CDN
 
@@ -50,4 +53,20 @@ pnpm --filter angisoft-admin build
 
 ## Routing
 
-Both app configurations proxy `/uploads/*` to the API before applying the SPA fallback. Do not add a catch-all rule before the uploads rule.
+Both app configurations proxy `/uploads/*` **and `/api/*`** to the API before applying the SPA fallback. Do not add a catch-all rule before the uploads rule.
+
+### Why `/api/*` must be proxied
+
+The backend issues the refresh token as a **host-only, `SameSite=Strict`** cookie (`backend/src/shared/middleware/auth.ts`). A browser will not send a `SameSite=Strict` cookie on a cross-site request, so an app calling `https://api.angisoft.co.ke/api/...` directly from `admin.angisoft.co.ke` never transmits it — silent refresh fails and staff sessions die on every reload.
+
+Proxying `/api/*` makes API traffic **first-party**, which fixes cookie delivery and removes the CORS preflight entirely:
+
+```toml
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.angisoft.co.ke/api/:splat"
+  status = 200
+  force = true
+```
+
+**Consequence — neither app sets `VITE_API_BASE_URL`.** `@angisoft/api-client` only resolves an absolute base when that variable is explicitly set; otherwise it uses same-origin relative URLs. Setting it reintroduces the broken cross-origin cookie behaviour. `VITE_SOCKET_URL` remains `https://api.angisoft.co.ke` because Socket.IO connects cross-origin by design and does not depend on the refresh cookie.

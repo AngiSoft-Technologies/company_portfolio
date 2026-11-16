@@ -1,5 +1,8 @@
 # ✅ FINAL VERIFICATION CHECKLIST
 
+> **✅ COMPLETE** — Verification checklist frozen; do not update status fields.<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §14 (Success Metrics) defines current Definition of Done.
+
 ## 🎯 Session Completion Verification
 
 ### Code Implementation

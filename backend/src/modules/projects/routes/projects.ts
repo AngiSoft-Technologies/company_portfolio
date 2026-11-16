@@ -36,6 +36,40 @@ export default function projectsRouter(prisma: Db = db) {
         }
     });
 
+    // ── Staff-scoped project routes (assigned team members) ──
+    router.get('/staff', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
+        const projects = await prisma.orm.public.Project
+            .where((p: any) => p.projectEmployees.some((e: any) => e.employeeId.eq(req.user!.sub)))
+            .orderBy((p: any) => p.createdAt.desc())
+            .all();
+        res.json(projects.map((p: any) => {
+            const { _type, ...rest } = p;
+            return { ...rest, type: _type };
+        }));
+    });
+
+    router.get('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
+        const member = await prisma.orm.public.ProjectEmployee
+            .where({ projectId: req.params.id, employeeId: req.user!.sub })
+            .first();
+        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
+        const project = await prisma.orm.public.Project.where({ id: req.params.id }).first();
+        if (!project) return res.status(404).json({ error: 'Not found' });
+        const { _type, ...rest } = project as any;
+        res.json({ ...rest, type: _type });
+    });
+
+    router.put('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
+        const member = await prisma.orm.public.ProjectEmployee
+            .where({ projectId: req.params.id, employeeId: req.user!.sub })
+            .first();
+        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
+        const parsed = updateSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        const updated = await projectsController.update(req.params.id, parsed.data, req.user);
+        res.json(updated);
+    });
+
     router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
         try {
             const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
@@ -148,40 +182,6 @@ export default function projectsRouter(prisma: Db = db) {
             });
         });
         res.status(201).json(assignment);
-    });
-
-    // ── Staff-scoped project routes (assigned team members) ──
-    router.get('/staff', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
-        const projects = await prisma.orm.public.Project
-            .where((p: any) => p.projectEmployees.some((e: any) => e.employeeId.eq(req.user!.sub)))
-            .orderBy((p: any) => p.createdAt.desc())
-            .all();
-        res.json(projects.map((p: any) => {
-            const { _type, ...rest } = p;
-            return { ...rest, type: _type };
-        }));
-    });
-
-    router.get('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProjectEmployee
-            .where({ projectId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
-        const project = await prisma.orm.public.Project.where({ id: req.params.id }).first();
-        if (!project) return res.status(404).json({ error: 'Not found' });
-        const { _type, ...rest } = project as any;
-        res.json({ ...rest, type: _type });
-    });
-
-    router.put('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProjectEmployee
-            .where({ projectId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
-        const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-        const updated = await projectsController.update(req.params.id, parsed.data, req.user);
-        res.json(updated);
     });
 
     return router;

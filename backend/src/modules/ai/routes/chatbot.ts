@@ -5,6 +5,9 @@ import { or, and } from '@prisma/orm-postgres/orm-client';
 import { param } from '@prisma/orm-postgres/relational-core/expression';
 import { z } from 'zod';
 import { validateRequest } from '../../../shared/middleware/validation';
+import { requireAuth } from '../../../shared/middleware/auth';
+import { requirePermission } from '../../../shared/middleware/roles';
+import type { AuthRequest } from '../../../shared/middleware/auth';
 import { sendMail } from '../../../shared/services/email';
 import { loadAIConfig, aiComplete } from '../../../modules/ai/services/aiProvider';
 
@@ -1075,7 +1078,7 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
   });
 
   // Get conversation (for admin dashboard)
-  router.get('/conversations/:id', async (req: Request, res: Response) => {
+  router.get('/conversations/:id', requireAuth, requirePermission('chatbot.view_all'), async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -1097,7 +1100,7 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
   });
 
   // List conversations (admin only)
-  router.get('/conversations', async (req: Request, res: Response) => {
+  router.get('/conversations', requireAuth, requirePermission('chatbot.view_all'), async (req: AuthRequest, res: Response) => {
     try {
       const { status = 'open', page = 1, limit = 20 } = req.query;
 
@@ -1134,7 +1137,7 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
   });
 
   // Update conversation status
-  router.put('/conversations/:id', async (req: Request, res: Response) => {
+  router.put('/conversations/:id', requireAuth, requirePermission('chatbot.view_all'), async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
       const { status, notes, quality } = req.body;

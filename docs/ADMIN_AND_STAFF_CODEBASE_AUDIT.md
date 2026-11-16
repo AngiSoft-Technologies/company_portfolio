@@ -1,5 +1,15 @@
 # Admin & Staff Codebase Audit
 
+> **📜 HISTORICAL** — Read-only baseline dated 2026-07-19; pre-restructure paths and premises obsolete.<br>
+> **Do not cite for current status.** Retain for why reconstruction was needed.<br>
+> **Obsolete premises (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §11, §12):**
+> - Every scanned path is from pre-restructure structure.
+> - "No direct grants, presets, departments, positions, assignment joins" — all now exist.
+> - "43 admin pages" count and JSX inventory obsolete.
+> - Some security gaps partly fixed; role/permission drift and scope consistency remain.
+> - References to "§24/§25 of Final Report" broken — no such report in repo.
+> Replace §§2–6 with current audit before using as live status. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §2 (Current Reality), §4 (Phase 0–1).
+
 **Scope:** Read-only inspection of the AngiSoft platform before any Admin/Staff Portal reconstruction.
 **Method:** Scan first → map → document. **No schema changes, seeds, or dashboard rewrites were made.**
 **Date:** 2026-07-19

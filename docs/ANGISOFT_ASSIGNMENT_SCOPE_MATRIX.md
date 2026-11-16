@@ -1,5 +1,15 @@
 # AngiSoft Assignment Scope Matrix
 
+> **🎯 TARGET** — Normative scope enforcement model; partially implemented.<br>
+> **Updates from canonical plan (`ANGISOFT_DIGITAL_HQ_PLAN.md` §5):**
+> - `ProductTeamMember` and `ContactEnquiry.assigneeId` **now exist** (seeded). Update "NO — must add" → "YES".
+> - `services.update_assigned` requires `ServiceTeamMember` (not yet modeled) — gate behind Phase 2.
+> - Consolidate `assigneeId` (canonical) vs `assignedStaffId` (deprecated) on `ContactEnquiry`.
+> - Resolve `BlogPost.authorId` vs `StaffBlog.employeeId` — separate publication models.
+> - File ownership: `File.uploadedById` not current; verify against live schema.
+> - Review-queue assignment for publications: not yet modeled.
+> Security invariant: **frontend visibility ≠ authorization**; every scoped mutation needs capability + ownership check via canonical resolver.
+
 Shows which permissions must be **limited to assigned records** and the DB mechanism that enforces them.
 "Frontend hiding is not security" — every scoped permission requires a backend ownership/assignment check via the canonical `effectivePermissions` service.
 

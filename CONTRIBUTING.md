@@ -1,36 +1,52 @@
 # Contributing to AngiSoft Technologies
 
+> **🛠 OPERATIONAL** — Update setup commands to monorepo (pnpm, turbo).<br>
+> **Canonical plan:** `docs/ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery), §13 (Immediate Next Actions).
+
 Thank you for your interest in contributing! This guide will help you get started.
 
-## Getting Started
+## Getting Started (Monorepo)
 
 1. **Fork** the repository and clone your fork locally.
-2. **Install dependencies** for both frontend and backend:
+2. **Install dependencies** (single command for all workspaces):
 
    ```bash
-   cd frontend && npm install
-   cd ../backend && npm install
+   pnpm install
    ```
 
-3. **Set up environment variables** — copy `.env.example` to `.env` in the backend directory and configure your database connection.
+3. **Set up environment variables** — edit `backend/.env` (gitignored, no `.env.example`) and configure your database connection.
 
 4. **Run migrations and seed** (backend):
 
    ```bash
+   cd backend
    npx prisma generate
    npx prisma migrate dev
    npm run prisma:seed
    ```
 
-5. **Start dev servers**:
+5. **Start dev servers** (from repo root):
 
    ```bash
-   # Terminal 1 — backend
-   cd backend && npm run dev
+   # All dev servers (web:5173, admin:5174, backend:5000)
+   pnpm dev
 
-   # Terminal 2 — frontend
-   cd frontend && npm run dev
+   # Or individually:
+   pnpm dev:web
+   pnpm dev:admin
+   pnpm dev:backend
    ```
+
+## Code Quality Gates (run before PR)
+
+```bash
+pnpm lint       # ESLint across all packages
+pnpm typecheck  # TypeScript across all packages
+pnpm test       # Vitest (backend only currently)
+pnpm build      # Production build verification
+```
+
+CI will run these automatically; PRs failing any gate will be blocked.
 
 ## How to Contribute
 

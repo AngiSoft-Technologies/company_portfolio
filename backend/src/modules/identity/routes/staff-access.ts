@@ -18,7 +18,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import prisma from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { and } from '@prisma/orm-postgres/orm-client';
@@ -158,16 +158,19 @@ const presetSchema = z.object({
 });
 
 // ─── Guard helpers ──────────────────────────────────────────────────────────
-// Reads: prefer requirePermission('staff.view') but fall back to ADMIN/SUPER_ADMIN.
-const readGuard = [requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), requirePermission('staff.view')];
+// Each guard accepts the canonical permission OR one of the fallback system
+// roles. Stacking requireRoles + requirePermission would block any role that
+// has not yet been granted the migrated key (see ANGISOFT_DIGITAL_HQ_PLAN.md
+// Phase 1.2 — single permission registry).
+const readGuard = [requireAuth, requireAccess('staff.view', ['ADMIN', 'SUPER_ADMIN'])];
 // Writes for access: prefer assign_permissions but fall back to ADMIN/SUPER_ADMIN.
-const writeAccessGuard = [requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), requirePermission('staff.assign_permissions')];
+const writeAccessGuard = [requireAuth, requireAccess('staff.assign_permissions', ['ADMIN', 'SUPER_ADMIN'])];
 // Department write
-const deptWriteGuard = [requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), requirePermission('staff.assign_department')];
+const deptWriteGuard = [requireAuth, requireAccess('staff.assign_department', ['ADMIN', 'SUPER_ADMIN'])];
 // Position write
-const positionWriteGuard = [requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), requirePermission('staff.assign_position')];
+const positionWriteGuard = [requireAuth, requireAccess('staff.assign_position', ['ADMIN', 'SUPER_ADMIN'])];
 // Preset write
-const presetWriteGuard = [requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), requirePermission('administration.roles')];
+const presetWriteGuard = [requireAuth, requireAccess('administration.roles', ['ADMIN', 'SUPER_ADMIN'])];
 
 const asyncHandler =
     (fn: (req: AuthRequest, res: any, next: any) => Promise<any>) =>

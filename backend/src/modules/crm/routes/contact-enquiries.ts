@@ -214,6 +214,16 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
         res.json({ total, new: newCount, inReview });
     });
 
+    // Public-scoped admin list: ADMIN + SUPER_ADMIN only (raw ContactEnquiry rows, no
+    // service/product includes). Used by the enquiry admin dashboard's raw view.
+    router.get('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (_req: AuthRequest, res) => {
+        const enquiries = await prisma.orm.public.ContactEnquiry
+            .select('id', 'name', 'email', 'subject', 'message', 'enquiryType', 'status', 'assigneeId', 'createdAt')
+            .orderBy((e: any) => e.createdAt.desc())
+            .all();
+        res.json(enquiries);
+    });
+
     // Admin: single + update
     router.get('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (req: AuthRequest, res) => {
         const enquiry = await prisma.orm.public.ContactEnquiry
@@ -223,16 +233,6 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
             .first();
         if (!enquiry) return res.status(404).json({ error: 'Not found' });
         res.json(enquiry);
-    });
-
-    // Public-scoped admin list: ADMIN + SUPER_ADMIN only (raw ContactEnquiry rows, no
-    // service/product includes). Used by the enquiry admin dashboard's raw view.
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (_req: AuthRequest, res) => {
-        const enquiries = await prisma.orm.public.ContactEnquiry
-            .select('id', 'name', 'email', 'subject', 'message', 'enquiryType', 'status', 'assigneeId', 'createdAt')
-            .orderBy((e: any) => e.createdAt.desc())
-            .all();
-        res.json(enquiries);
     });
 
     const adminUpdateSchema = z.object({

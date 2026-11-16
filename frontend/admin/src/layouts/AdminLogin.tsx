@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setAccessToken, apiRequest } from '@angisoft/api-client';
 
 export function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -17,20 +18,25 @@ export function AdminLogin() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-      const json = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) {
-        setError((json.error as string) || (json.message as string) || 'Login failed');
-        return;
-      }
+      // Route the login through the shared client so the request gets the
+      // absolute API origin, the CSRF double-submit header, and — critically —
+      // an `Authorization` header convention identical to every other call.
+      const json = (await apiRequest('POST', '/auth/login', {
+        email,
+        password,
+      })) as Record<string, unknown>;
+
+      // Keep the access token in memory. It is never persisted to
+      // localStorage; a page reload rehydrates it via the httpOnly refresh
+      // cookie. Discarding it here was why every subsequent admin request
+      // came back anonymous.
+      const accessToken =
+        (json.accessToken as string | undefined) ?? (json.token as string | undefined);
+      if (accessToken) setAccessToken(accessToken);
+
       navigate('/', { replace: true });
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err) {
+      setError((err as Error)?.message || 'Login failed');
     } finally {
       setLoading(false);
     }

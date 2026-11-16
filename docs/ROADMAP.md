@@ -1,5 +1,8 @@
 # Production-Readiness & Growth Roadmap
 
+> **📜 HISTORICAL** — Superseded by `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery).<br>
+> Do not execute phases from this document. Keep for reference on environment-gating principle.
+
 Status of this document: **live**. Phases are executed in order; each phase is
 environment-gated (a missing env key must never crash the app or silently
 weaken security). Mark items `[x]` only when verified (build/tests/deployed).

@@ -1,5 +1,8 @@
 # 🎯 QUICK ACTION GUIDE: NEXT STEPS
 
+> **🛠 OPERATIONAL** — Align to Phase 1 tasks in canonical plan (`ANGISOFT_DIGITAL_HQ_PLAN.md` §4).<br>
+> Phase 3 in this document ≠ Phase 3 in canonical plan. This guide's "Phase 3" ≈ canonical Phase 1 (RBAC UI, Staff Access, workspace shell).
+
 ## Your Command Checklist (Copy & Paste Ready)
 
 ### ✅ READY NOW (Do This First)

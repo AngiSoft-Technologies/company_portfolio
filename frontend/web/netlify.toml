@@ -5,10 +5,11 @@
 
 [build.environment]
   NODE_VERSION = "24"
-  VITE_API_BASE_URL = "https://api.angisoft.co.ke"
+  # Intentionally NO VITE_API_BASE_URL: the app calls the API same-origin
+  # (angisoft.co.ke/api/*) via the proxy below. A cross-origin absolute base
+  # would stop the browser sending the SameSite=Strict refresh cookie.
   VITE_CDN_BASE_URL = "https://cdn.angisoft.co.ke"
   VITE_SOCKET_URL = "https://api.angisoft.co.ke"
-  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
 
 [functions]
   node_bundler = "esbuild"
@@ -16,6 +17,15 @@
 [[redirects]]
   from = "/uploads/*"
   to = "https://api.angisoft.co.ke/uploads/:splat"
+  status = 200
+  force = true
+
+# Same-origin proxy for any remaining relative `/api/*` call. Guarantees the
+# API is reached instead of the SPA fallback, and makes requests first-party so
+# the SameSite=Strict refresh cookie is sent.
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.angisoft.co.ke/api/:splat"
   status = 200
   force = true
 

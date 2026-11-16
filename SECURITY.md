@@ -1,5 +1,8 @@
 # Security Policy
 
+> **🛠 OPERATIONAL** — Current security contacts and policy.<br>
+> **Active P0 findings (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §2, §13):** CSRF not mounted, chatbot admin endpoints unguarded, privileged cache poisoning, SUPER_ADMIN bypasses DENY, tests hit production DB, route shadowing, admin API/auth broken. Phase 0 addresses all.
+
 ## Reporting a vulnerability
 If you discover a security vulnerability in this project, please report it privately by emailing **security@angisoft.co.ke** with the subject line "[angisoft.co.ke] Security vulnerability" and include as much detail as possible (steps to reproduce, affected versions, and any suggested fixes).
 

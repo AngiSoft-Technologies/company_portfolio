@@ -546,6 +546,24 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
+    // ─── Admin workflow endpoints ──────────────────────────────
+    // GET /api/bookings/admin - all bookings (admin/marketing)
+    router.get('/admin', requireAuth, async (req, res) => {
+        try {
+            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
+                return res.status(403).json({ error: 'Not authorized' });
+            }
+            const bookings = await prisma.orm.public.Booking
+                .orderBy((b) => b.createdAt.desc())
+                .include('client', (c) => c.select('id', 'name', 'email'))
+                .include('bookingEvents', (e) => e.orderBy((e2) => e2.createdAt.asc()))
+                .all();
+            res.json(bookings.map((b: any) => withEvents(b)));
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // GET /api/bookings/:id - legacy public lookup by internal id + email (kept for backward compatibility)
     router.get('/:id', async (req, res) => {
         try {
@@ -636,24 +654,6 @@ export default function bookingsRouter(prisma: Db) {
 
             (updated as any).clientProject = (updated as any).clientProject?.[0] ?? null;
             res.json(updated);
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
-
-    // ─── Admin workflow endpoints ──────────────────────────────
-    // GET /api/bookings/admin - all bookings (admin/marketing)
-    router.get('/admin', requireAuth, async (req, res) => {
-        try {
-            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
-                return res.status(403).json({ error: 'Not authorized' });
-            }
-            const bookings = await prisma.orm.public.Booking
-                .orderBy((b) => b.createdAt.desc())
-                .include('client', (c) => c.select('id', 'name', 'email'))
-                .include('bookingEvents', (e) => e.orderBy((e2) => e2.createdAt.asc()))
-                .all();
-            res.json(bookings.map((b: any) => withEvents(b)));
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }

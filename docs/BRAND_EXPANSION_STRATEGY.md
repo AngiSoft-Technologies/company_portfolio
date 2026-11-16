@@ -1,5 +1,16 @@
 # 🚀 ANGISOFT TECHNOLOGIES - BRAND EXPANSION STRATEGY
 
+> **💡 HYPOTHESIS** — Commercial ideation / content backlog only; **not current strategy**.<br>
+> **Obsolete/conflicting content (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §10, §11):**
+> - Roadmap dates (Q2–Q4 2024) and "This Week/Next Week" checklists obsolete.
+> - Services marked as offered without proof of platform/delivery capability.
+> - Cyber, DevOps, cloud, pentesting, learning-platform, 24/7 claims conflict with operational evidence (§7, §10).
+> - Testimonial examples contain unverified claims/metrics — **must not be published/seeded without approval**.
+> - USD tiers conflict with KES/booking-driven model.
+> - "Complete Tech Services Platform for Everyone" broader than current software-engineering/product-ecosystem positioning.
+> - Mixes customer audiences with internal departments/staff job families.
+> **Use as:** Owner-approved positioning source and CMS content briefs only. Separate customer-facing service categories from internal departments. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §10.
+
 ## Vision: The Complete Tech Services Platform for Everyone
 
 **Mission:** Empower developers, designers, students, businesses, and individuals with world-class tech services that solve real problems and accelerate growth.

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { apiFetch } from '@/lib/adminApi';
 
 export function formatDate(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
@@ -63,20 +64,20 @@ export function ModalShell({
   );
 }
 
+/**
+ * Persists a CMS record.
+ *
+ * Delegates to the shared `apiFetch` so every write carries the in-memory
+ * Bearer token and the CSRF double-submit header. A raw `fetch` here produced
+ * anonymous requests that every guarded CMS route rejects.
+ */
 export async function saveJson(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'PATCH',
   endpoint: string,
   body: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(`/api${endpoint}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  });
-  const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new Error(String(json.error ?? json.message ?? 'Save failed'));
-  return json;
+  const json = (await apiFetch(`/api${endpoint}`, { method, body })) as Record<string, unknown> | null;
+  return json ?? {};
 }
 
 export function SaveStatus({ error, success }: { error: string | null; success: boolean }) {

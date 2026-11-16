@@ -91,9 +91,15 @@ export function ClientProjectsManagement() {
         endDate: form.endDate || undefined,
       };
       if (editing) {
-        await apiFetch(`/api/client-projects/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        // The client-projects router updates with PATCH, not PUT.
+        await apiFetch(`/api/client-projects/${encodeURIComponent(editing.id)}`, { method: 'PATCH', body: payload });
       } else {
-        await apiFetch('/api/client-projects', { method: 'POST', body: payload });
+        // Client projects are derived from an accepted booking
+        // (createClientProjectFromBooking) — there is no standalone POST.
+        // Direct operators here to the booking workflow instead of 404ing.
+        throw new Error(
+          'Client projects are created from accepted bookings. Accept a booking in Bookings to create one.',
+        );
       }
       setModalOpen(false);
       await refresh();

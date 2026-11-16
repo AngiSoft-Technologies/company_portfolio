@@ -1,5 +1,10 @@
 # AngiSoft Technologies — Production Architecture
 
+> **📜 HISTORICAL** — Proposed architecture from earlier phase; references Cloudflare Pages, Railway, Supabase/Neon/RDS as options.<br>
+> **Current deployment:** Fly.io (backend), Netlify (web + admin), Neon (Postgres), Tigris (S3), Upstash (Redis).<br>
+> **Do not cite for current deployment.** See `NETLIFY.md`, `infrastructure/docker/Dockerfile`, `backend/fly.toml`, `AGENTS.md` §Deployment Quirks.<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §3 (Target Architecture).
+
 This document describes the proposed production architecture for the AngiSoft Technologies web platform, including component choices, data model summary, sequence diagrams for core flows (Invite and Booking+Payment), security and operational considerations, and deployment recommendations.
 
 ## Goals

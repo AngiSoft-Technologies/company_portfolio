@@ -43,7 +43,8 @@ export function SystemPanel() {
       let h: HealthData = {};
       let env: EnvEntry[] = [];
       try {
-        const json = ((await apiFetch('/api/health')) ?? {}) as Record<string, unknown>;
+        // The health router is mounted at `/health` (not `/api/health`).
+        const json = ((await apiFetch('/health')) ?? {}) as Record<string, unknown>;
         h = {
           status: json.status ?? json.health,
           uptime: json.uptime ?? json.uptimeSeconds,

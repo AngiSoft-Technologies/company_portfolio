@@ -1,5 +1,9 @@
 # 📋 ANGISOFT SERVICES DATABASE - INITIAL DATA
 
+> **💡 HYPOTHESIS** — Content backlog for service seeding; **verify each service against current platform capability before publishing**.<br>
+> **Canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §10:** Service claims must be deliverable by current team/platform. Owner approval required.<br>
+> Current admin UI: `frontend/admin/src/features/cms/ServicesAdmin.tsx` edits `Service` model (JSON pricing). No dedicated pricing-package model yet.
+
 ## How to Use This Data
 
 **In the admin panel** (/admin/services):

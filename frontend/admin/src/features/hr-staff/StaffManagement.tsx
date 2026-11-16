@@ -25,7 +25,7 @@ const EMPTY_FORM = {
 
 export function StaffManagement() {
   const { rows, loading, error, refresh, remove } = useCrud<StaffRow, CrudConfig<StaffRow>>({
-    endpoint: '/staff',
+    endpoint: '/admin/employees',
     transform: (data: unknown) => {
       const list = Array.isArray(data)
         ? data
@@ -85,9 +85,20 @@ export function StaffManagement() {
         avatarUrl: form.avatarUrl || undefined,
       };
       if (editing) {
-        await apiFetch(`/api/staff/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        // `/api/staff` is the public profile router (GET only). Employee
+        // administration lives on the admin router.
+        await apiFetch(`/api/admin/employees/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
       } else {
-        await apiFetch('/api/staff', { method: 'POST', body: payload });
+        // No direct-create route exists by design — new staff are invited and
+        // accept an emailed token, which sets their password and acceptedAt.
+        await apiFetch('/api/invite', {
+          method: 'POST',
+          body: { firstName: form.name, email: form.email, role: form.role },
+        });
+        setModalOpen(false);
+        setSaveError(null);
+        await refresh();
+        return;
       }
       setModalOpen(false);
       await refresh();

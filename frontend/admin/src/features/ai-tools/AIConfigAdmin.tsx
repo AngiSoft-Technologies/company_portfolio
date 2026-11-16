@@ -25,7 +25,7 @@ const EMPTY_FORM = {
 
 export function AIConfigAdmin() {
   const { rows, loading, error, refresh, remove } = useCrud<AIConfigRow, CrudConfig<AIConfigRow>>({
-    endpoint: '/ai-config',
+    endpoint: '/admin/ai-config',
     transform: (data: unknown) => {
       const list = Array.isArray(data)
         ? data
@@ -90,9 +90,9 @@ export function AIConfigAdmin() {
         active: form.active,
       };
       if (editing) {
-        await apiFetch(`/api/ai-config/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        await apiFetch(`/api/admin/ai-config/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
       } else {
-        await apiFetch('/api/ai-config', { method: 'POST', body: payload });
+        await apiFetch('/api/admin/ai-config', { method: 'POST', body: payload });
       }
       setModalOpen(false);
       await refresh();

@@ -1,5 +1,8 @@
 # 📝 CHANGELOG - February 1, 2026
 
+> **✅ COMPLETE** — Historical milestone summary frozen. "85% complete" claim obsolete (see `ANGISOFT_DIGITAL_HQ_PLAN.md` §2).<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery).
+
 ## Session Summary: Admin CMS Architecture Completion
 
 **Duration:** Full session

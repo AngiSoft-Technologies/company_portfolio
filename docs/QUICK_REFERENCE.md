@@ -1,5 +1,7 @@
 # 📌 QUICK REFERENCE - ANGISOFT ADMIN CMS
 
+> **🛠 OPERATIONAL** — Update URLs to current monorepo structure.
+
 ## 🔗 Important URLs
 
 ### Development (Local)

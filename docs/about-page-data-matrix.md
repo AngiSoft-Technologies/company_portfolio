@@ -1,5 +1,8 @@
 # About Page — Data Matrix
 
+> **🛠 OPERATIONAL** — Feature-specific data contract for About page (uncommitted About-page work in progress).<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §6 (Content Coverage Ledger → About row).
+
 The canonical Read contract between `frontend/src/hooks/useAboutPage.js`
 (`defaultAbout` / `ABOUT_SECTION_KEYS`) and the `AboutSection` table.
 

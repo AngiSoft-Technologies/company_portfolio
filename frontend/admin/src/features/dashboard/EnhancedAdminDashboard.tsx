@@ -31,19 +31,14 @@ export function EnhancedAdminDashboard() {
       setError(null);
       let rec: Rec = {};
       try {
-        const json = await apiFetch('/api/admin/dashboard/overview');
+        const json = await apiFetch('/api/admin/dashboard/stats');
         rec = (json ?? {}) as Rec;
-      } catch {
-        try {
-          const fallback = await apiFetch('/api/admin/staff-dashboard');
-          rec = (fallback ?? {}) as Rec;
-        } catch (e) {
-          if (!cancelled) {
-            setError((e as Error).message || 'Failed to load dashboard');
-            setLoading(false);
-          }
-          return;
+      } catch (e) {
+        if (!cancelled) {
+          setError((e as Error).message || 'Failed to load dashboard');
+          setLoading(false);
         }
+        return;
       }
 
       const kpiDefs: { label: string; keys: string[] }[] = [

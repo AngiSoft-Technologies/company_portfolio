@@ -1,5 +1,7 @@
 # Contributor Covenant Code of Conduct
 
+> **🛠 OPERATIONAL** — Standard Contributor Covenant v2.1; not project-specific.
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our

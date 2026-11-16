@@ -25,3 +25,35 @@ export function requirePermission(permission: string) {
         return res.status(403).json({ error: 'Not authorized' });
     };
 }
+
+/**
+ * Access control that accepts EITHER the granular permission OR one of the
+ * fallback system roles.
+ *
+ * The repository is mid-migration from hardcoded `requireRoles(...)` to the
+ * canonical effective-permission resolver (`ANGISOFT_DIGITAL_HQ_PLAN.md`
+ * Phase 1.2). Stacking `requireRoles(...)` **and** `requirePermission(...)`
+ * on the same route locks out every role that has not yet been granted the
+ * migrated key — e.g. an `ADMIN` whose seeded rows predate `staff.view`.
+ * This helper keeps the migration safe: migrated users pass by permission,
+ * everyone else passes by role until the registry catches up.
+ */
+export function requireAccess(permission: string, fallbackRoles: string[] = []) {
+    return async (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
+
+        // SUPER_ADMIN's wildcard already evaluates to true below; keep the
+        // explicit check so a SUPER_ADMIN with an explicit DENY is still
+        // blocked (that is the documented precedence).
+        const hasPerm = await hasEffectivePermission(
+            { employeeId: req.user.sub, systemRole: req.user.role },
+            permission
+        );
+        if (hasPerm) return next();
+
+        const role = req.user?.role;
+        if (role && fallbackRoles.includes(role)) return next();
+
+        return res.status(403).json({ error: 'Not authorized' });
+    };
+}

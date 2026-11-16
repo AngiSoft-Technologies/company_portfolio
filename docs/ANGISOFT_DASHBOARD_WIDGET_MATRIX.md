@@ -1,5 +1,14 @@
 # AngiSoft Dashboard Widget Matrix
 
+> **🎯 TARGET** — Normative dashboard acceptance spec; not yet implemented in current admin.<br>
+> **Gaps from canonical plan (`ANGISOFT_DIGITAL_HQ_PLAN.md` §8):**
+> - Current staff dashboard calls `/api/admin/staff-dashboard`; backend mounts at `/api/staff-dashboard` → standardize.
+> - Admin dashboard calls `/api/admin/dashboard/overview`; backend exposes `/api/admin/dashboard/stats` → align.
+> - Permission keys in this matrix (`analytics.view_dashboard`, `publications.review`, `audit.view`) don't match current catalogue → migrate to canonical registry.
+> - Effective-permission response must include scoped counts (`assignmentCounts`) for widget logic.
+> - Empty-widget rule: permission held but zero assignments → show empty state with "Create first [record]" CTA.
+> Widget generation: filter catalogue by `permissions` + `assignmentCounts > 0` from versioned payload (§8).
+
 Widgets are **generated from effective access**, never from `if role === 'STAFF'`.
 Each widget appears only if the employee holds the enabling permission AND (for assigned scopes) has at least one assigned record.
 

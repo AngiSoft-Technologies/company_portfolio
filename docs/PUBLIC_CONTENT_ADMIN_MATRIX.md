@@ -1,5 +1,16 @@
 # Public Content ↔ Admin Matrix
 
+> **🔄 REGENERATE** — Template structure is correct; all paths, files, and "missing CRUD" conclusions must be regenerated against current routes.<br>
+> **Obsolete assumptions (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §6, §12):**
+> - All admin file/route paths are from deleted legacy frontend (`frontend/src/admin/...`).
+> - `IndustriesAdmin`, `SolutionsAdmin`, `PricingAdmin` **now exist** in `frontend/admin/src/features/cms/`.
+> - Pricing still lacks dedicated pricing-package model (edits JSON on Service).
+> - `CompanyStatsAdmin` and `AnnouncementsAdmin` absent from current admin route set → regression.
+> - Omits current public surfaces: industry/solution details, newsletter, privacy, terms, booking status/history, client portal, AI chatbot.
+> - Security-gate debt valid: many routes use hardcoded `requireRoles(...)`; route keys ≠ catalogue keys.
+> - Separate "missing UI" vs "missing domain model" columns.
+> Regenerate using canonical ledger structure (§6) with current route, model, API, admin UI, permission key, workflow state, publish/review owner, migration status.
+
 Maps every public page (data-driven from `/api/*`) to its model, public endpoint, admin CRUD, and the permission that should gate the admin side.
 "Missing CRUD" = public page exists but no complete admin editor.
 

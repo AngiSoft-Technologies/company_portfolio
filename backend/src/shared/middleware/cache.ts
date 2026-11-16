@@ -32,6 +32,13 @@ const PUBLIC_CACHE_ROUTES = [
 
 function isCacheable(req: Request): boolean {
     if (req.method !== 'GET') return false;
+    // Cache-poisoning guard: never cache a response computed for an
+    // authenticated context. Several allowlisted content routes run behind
+    // `optionalAuth`, so a Bearer token (or a staff/admin refresh session)
+    // must disable the cache entirely — otherwise an authenticated,
+    // unpublished response could be served to anonymous visitors.
+    if (req.headers.authorization) return false;
+    if (req.cookies?.refreshToken || req.cookies?.accessToken || req.cookies?.adminToken) return false;
     const path = req.path;
     return PUBLIC_CACHE_ROUTES.some((route) => path === route || path.startsWith(`${route}/`));
 }

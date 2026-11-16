@@ -1,30 +1,97 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import app from '../src/app';
-import prisma from '../src/db';
+
+/**
+ * DB-backed integration specs.
+ *
+ * These tests delete and rewrite data, so they must only ever run against a
+ * disposable database. Three independent guards:
+ *
+ *   1. `src/db.ts` → `src/connectionUrl.ts` refuses to resolve any URL other
+ *      than TEST_DATABASE_URL while NODE_ENV=test (set by vitest.config.ts).
+ *   2. `assertDisposableTestDatabase()` fails the suite when the configured URL
+ *      does not look like a test database (name must contain "test").
+ *   3. Both suites are skipped when TEST_DATABASE_URL is absent, so
+ *      `pnpm test` still runs the mocked unit specs (auth.spec.ts).
+ *
+ * `app` and `prisma` are imported lazily so that collecting this file without
+ * a test database never opens a connection to a real one.
+ */
+
+const TEST_DATABASE_URL = (process.env.TEST_DATABASE_URL ?? '').trim();
+const hasTestDatabase = Boolean(TEST_DATABASE_URL);
+
+function assertDisposableTestDatabase() {
+    const url = TEST_DATABASE_URL || process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || '';
+    const databaseName = url.split('/').pop()?.split('?')[0] ?? '';
+    if (!databaseName || !/test/i.test(databaseName)) {
+        throw new Error(
+            `Refusing to run integration tests: resolved database "${databaseName}" does not look like a test database. ` +
+                'Set TEST_DATABASE_URL to a disposable database whose name contains "test".'
+        );
+    }
+}
+
+async function loadApp() {
+    const mod = await import('../src/app');
+    return mod.default;
+}
+
+async function loadDb() {
+    const mod = await import('../src/db');
+    return mod.default;
+}
+
+/** Test-owned emails. Cleanup is scoped to these so no live row is touched. */
+const TEST_CLIENT_EMAILS = ['test@example.com', 'test2@example.com'];
+const TEST_EMPLOYEE_EMAILS = ['jane@angisoft.com', 'john@angisoft.com'];
 
 afterAll(async () => {
+    if (!hasTestDatabase) return;
+    const prisma = await loadDb();
     await prisma.close();
 });
 
-describe('Integration: booking -> payment flow', () => {
+describe.skipIf(!hasTestDatabase)('Integration: booking -> payment flow', () => {
+    let app: any;
+    let prisma: any;
+
     beforeAll(async () => {
-        // reset only test-owned data so seeded/live Neon content is not damaged
+        assertDisposableTestDatabase();
+        app = await loadApp();
+        prisma = await loadDb();
+
+        // Reset only test-owned data so seeded/live content is not damaged.
         const testClients = await prisma.orm.public.Client
-            .where((c) => c.email.in(['test@example.com', 'test2@example.com']))
+            .where((c: any) => c.email.in(TEST_CLIENT_EMAILS))
             .select('id')
             .all();
-        const testClientIds = testClients.map((client) => client.id);
+        const testClientIds = testClients.map((client: any) => client.id);
 
-        await prisma.orm.public.Payment
-            .where((p) => p.clientId.in(testClientIds))
-            .delete();
-        await prisma.orm.public.Booking
-            .where((b) => b.clientId.in(testClientIds))
-            .delete();
-        await prisma.orm.public.Client
-            .where((c) => c.id.in(testClientIds))
-            .delete();
+        // Scoped cleanup: refresh tokens belonging only to the test employees.
+        const testEmployees = await prisma.orm.public.Employee
+            .where((e: any) => e.email.in(TEST_EMPLOYEE_EMAILS))
+            .select('id')
+            .all();
+        const testEmployeeIds = testEmployees.map((e: any) => e.id);
+
+        if (testEmployeeIds.length) {
+            await prisma.orm.public.RefreshToken
+                .where((t: any) => t.employeeId.in(testEmployeeIds))
+                .delete();
+        }
+
+        if (testClientIds.length) {
+            await prisma.orm.public.Payment
+                .where((p: any) => p.clientId.in(testClientIds))
+                .delete();
+            await prisma.orm.public.Booking
+                .where((b: any) => b.clientId.in(testClientIds))
+                .delete();
+            await prisma.orm.public.Client
+                .where((c: any) => c.id.in(testClientIds))
+                .delete();
+        }
     });
 
     it('POST /api/bookings creates booking and optionally PaymentIntent', async () => {
@@ -68,14 +135,31 @@ describe('Integration: booking -> payment flow', () => {
     });
 });
 
-describe('Integration: invite -> accept -> login', () => {
+describe.skipIf(!hasTestDatabase)('Integration: invite -> accept -> login', () => {
+    let app: any;
+    let prisma: any;
+
     beforeAll(async () => {
-        // predicate delete: RefreshToken has no default-safe bulk form
-        await prisma.orm.public.RefreshToken
-            .where((t) => t.id.isNotNull())
-            .delete();
+        assertDisposableTestDatabase();
+        app = await loadApp();
+        prisma = await loadDb();
+
+        // Scoped cleanup: only the test employees' refresh tokens. Never a
+        // blanket `where(t => t.id.isNotNull()).delete()` — that would wipe
+        // every live session in the database.
+        const testEmployees = await prisma.orm.public.Employee
+            .where((e: any) => e.email.in(TEST_EMPLOYEE_EMAILS))
+            .select('id')
+            .all();
+        const testEmployeeIds = testEmployees.map((e: any) => e.id);
+
+        if (testEmployeeIds.length) {
+            await prisma.orm.public.RefreshToken
+                .where((t: any) => t.employeeId.in(testEmployeeIds))
+                .delete();
+        }
         await prisma.orm.public.Employee
-            .where((e) => e.email.in(['jane@angisoft.com', 'john@angisoft.com']))
+            .where((e: any) => e.email.in(TEST_EMPLOYEE_EMAILS))
             .delete();
     });
 

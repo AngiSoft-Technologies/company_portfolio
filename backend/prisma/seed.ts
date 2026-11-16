@@ -66,12 +66,34 @@ async function main() {
     const admin = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
     const overwritePublicContent = process.env.SEED_OVERWRITE_PUBLIC_CONTENT === 'true';
 
+    // Keys used by route guards today. The legacy `content.*` / `*.manage`
+    // vocabulary and the granular `effectivePermissions` keys coexist during
+    // the single-registry migration (ANGISOFT_DIGITAL_HQ_PLAN.md §5.2, §12);
+    // both are seeded so a route can migrate without breaking role grants.
     const permissionKeys = [
+        // ── Legacy vocabulary (kept for existing guards + UI) ──
         'content.view', 'content.manage', 'content.publish', 'content.delete',
         'settings.view', 'settings.manage',
         'roles.view', 'roles.manage',
         'staff.view', 'staff.manage', 'staff.profile.manage',
-        'products.manage', 'services.manage', 'blog.manage', 'careers.manage', 'analytics.view'
+        'products.manage', 'services.manage', 'blog.manage', 'careers.manage', 'analytics.view',
+        // ── Granular keys used by effectivePermissions guards ──
+        'chatbot.view_all', 'chatbot.respond',
+        'staff.assign_permissions', 'staff.assign_department', 'staff.assign_position',
+        'administration.roles', 'administration.settings', 'administration.audit', 'administration.impersonate',
+        'enquiries.view_all', 'enquiries.view_assigned', 'enquiries.respond', 'enquiries.close',
+        'bookings.view_all', 'bookings.view_assigned', 'bookings.update_assigned',
+        'bookings.change_stage', 'bookings.add_progress', 'bookings.message_customer', 'bookings.assign',
+        'projects.view', 'projects.view_assigned', 'projects.update_assigned', 'projects.manage',
+        'projects.add_progress', 'projects.assign_team',
+        'products.view_assigned', 'products.update_assigned',
+        'publications.create', 'publications.review', 'publications.publish',
+        'publications.view_own', 'publications.update_own',
+        'media.upload',
+        'pages.update_home', 'pages.update_about', 'pages.update_contact',
+        'pages.update_industries', 'pages.update_solutions', 'pages.update_announcements',
+        'reviews.moderate',
+        'profile.view_own', 'profile.update_own', 'profile.manage_visibility_own', 'profile.manage_gallery_own',
     ];
 
     for (const key of permissionKeys) {

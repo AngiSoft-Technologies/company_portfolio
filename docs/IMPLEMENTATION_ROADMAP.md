@@ -1,5 +1,8 @@
 # 🚀 ANGISOFT IMPLEMENTATION ROADMAP
 
+> **📜 HISTORICAL** — Superseded by `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery).<br>
+> Phase taxonomy here (Admin CMS Foundation → Service Categorization → Population → Multi-domain) **does not match** canonical plan phases. Do not execute.
+
 ## Phase Summary
 
 ```

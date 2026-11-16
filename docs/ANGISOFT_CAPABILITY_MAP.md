@@ -1,5 +1,18 @@
 # AngiSoft Capability Map
 
+> **🔄 REGENERATE** — Useful structure; must be regenerated against current code, Prisma contract, and admin routes.<br>
+> **Obsolete derivation paths:** pre-restructure `backend/src/routes/`, `frontend/src/pages/**`, `frontend/src/admin/**`.<br>
+> **Current structure per `AGENTS.md`:** `backend/src/modules/**/routes`, `frontend/web/src/features/**`, `frontend/admin/src/features/**`.<br>
+> **False status claims to correct:**
+> - Product assignment (`ProductTeamMember`) exists
+> - Enquiry assignment (`ContactEnquiry.assigneeId`) exists
+> - Departments & Positions are relational entities (seeded)
+> - Industries, Solutions, Pricing admin UIs exist in `frontend/admin/src/app.tsx`
+> - Billing, Notifications, AI, Realtime, Files modules exist
+> - `BlogPost` and `StaffBlog` are separate publication models
+> Regenerate with explicit states: `Live`, `Partial`, `Legacy`, `Planned`, `Removed`. Preserve gap analysis as backlog input.<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §6 (Content Coverage Ledger) and §4 (Phased Delivery).
+
 Every platform capability, mapped to real pages, models, endpoints, and current UI.
 Derived from `backend/src/routes/*.ts`, `backend/prisma/schema.prisma`, `frontend/src/pages/**`, `frontend/src/admin/**`.
 

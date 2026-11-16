@@ -4,8 +4,10 @@ const normalizeOrigin = (origin?: string) => {
   return origin.replace(/\/+$/, '').replace(/\/api$/, '');
 };
 
-const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) ||
-  (import.meta.env.PROD ? 'https://api.angisoft.co.ke' : '');
+// Same-origin by default: /api/* and /uploads/* are proxied by Netlify, which
+// also lets the SameSite=Strict refresh cookie be sent. Legacy upload URLs keep
+// resolving through the CDN.
+const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 const CDN_ORIGIN = normalizeOrigin(import.meta.env.VITE_CDN_BASE_URL as string) ||
   (import.meta.env.PROD ? 'https://cdn.angisoft.co.ke' : API_ORIGIN);
 

@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AdminThemeContext } from '@/styles/theme';
+import { apiFetch } from '@/lib/adminApi';
 
 const NAV_GROUPS: { title: string; links: { to: string; label: string }[] }[] = [
   {
@@ -62,7 +63,7 @@ export function AdminLayout() {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await apiFetch('/auth/logout', { method: 'POST' });
     } catch {
       /* ignore */
     }

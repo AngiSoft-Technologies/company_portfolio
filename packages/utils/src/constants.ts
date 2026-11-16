@@ -10,9 +10,12 @@ const normalizeOrigin = (origin?: string): string => {
   return origin.replace(/\/+$/, '').replace(/\/api$/, '');
 };
 
+// Same-origin by default: API traffic goes through the app's own Netlify
+// `/api/*` proxy, so the host-only SameSite=Strict refresh cookie is sent.
+// An explicit VITE_API_BASE_URL opts into cross-origin (no cookie auth).
+// Public uploads stay on the CDN via VITE_ASSET_BASE_URL.
 const API_ORIGIN =
-  normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) ||
-  (import.meta.env.PROD ? 'https://api.angisoft.co.ke' : '');
+  normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/api` : '/api';
 export const ASSET_BASE_URL = normalizeOrigin(import.meta.env.VITE_ASSET_BASE_URL as string) || API_ORIGIN;
 

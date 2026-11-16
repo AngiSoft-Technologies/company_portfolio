@@ -66,6 +66,18 @@ vi.mock('../src/db', () => {
     };
 });
 
+// `src/prisma/db.ts` resolves the connection URL at import time, which trips
+// the production-DB guard in `src/connectionUrl.ts` (NODE_ENV=test without
+// TEST_DATABASE_URL). Stub it out — only `ts`/`newId` are imported from that
+// module outside `src/db.ts`, so no data needs to be shared.
+vi.mock('../src/prisma/db', () => ({
+    db: {},
+    default: {},
+    ts: (value?: any) =>
+        typeof value === 'string' ? value : new Date(value ?? Date.now()).toISOString(),
+    newId: () => `test_${Math.random().toString(36).slice(2)}`,
+}));
+
 vi.mock('../src/shared/services/email', () => ({
     sendMail: vi.fn(async () => true),
     verifyTransporter: vi.fn(async () => true)

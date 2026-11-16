@@ -1,5 +1,8 @@
 # 🎉 ANGISOFT ADMIN CMS - PROJECT STATUS SUMMARY
 
+> **✅ COMPLETE** — Status summary frozen; "85% complete" claim **obsolete and inaccurate** (see `SYSTEM_REVIEW_AND_ROADMAP.md`, `ANGISOFT_DIGITAL_HQ_PLAN.md` §2).<br>
+> Current reality: ~45% admin, ~55% backend, ~50% public site. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §2, §14.
+
 ## 📊 Current Status: **85% COMPLETE & READY FOR TESTING**
 
 ---

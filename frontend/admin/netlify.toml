@@ -4,13 +4,24 @@
 
 [build.environment]
   NODE_VERSION = "24"
-  VITE_API_BASE_URL = "https://api.angisoft.co.ke"
+  # Intentionally NO VITE_API_BASE_URL: the admin app calls the API
+  # same-origin (admin.angisoft.co.ke/api/*) and relies on the proxy below.
+  # A cross-origin https://api.angisoft.co.ke base would stop the browser from
+  # sending the SameSite=Strict refresh cookie, silently breaking sessions.
   VITE_SOCKET_URL = "https://api.angisoft.co.ke"
-  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
 
 [[redirects]]
   from = "/uploads/*"
   to = "https://api.angisoft.co.ke/uploads/:splat"
+  status = 200
+  force = true
+
+# Proxy same-origin API calls to the backend. Without this, /api/* fell
+# through to the SPA fallback and returned index.html with a 200, making
+# every admin screen silently fail to parse its data.
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.angisoft.co.ke/api/:splat"
   status = 200
   force = true
 

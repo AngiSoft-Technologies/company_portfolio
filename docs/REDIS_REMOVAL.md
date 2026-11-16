@@ -1,5 +1,7 @@
 # ✅ REDIS REMOVAL - COMPLETE
 
+> **🛠 OPERATIONAL** — Historical note; **BullMQ/Redis restored for production** (Upstash `company-portfolio-redis`, `REDIS_URL` + `REDIS_FAMILY=6` secrets). In-memory queue remains dev fallback. See `AGENTS.md` §Deployment Quirks → Redis.
+
 ## Summary
 
 Successfully removed Redis dependency from AngiSoft backend and replaced it with an in-memory queue system. The application now runs without requiring external Redis infrastructure.

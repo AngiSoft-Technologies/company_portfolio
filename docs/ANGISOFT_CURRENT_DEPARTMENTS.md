@@ -1,5 +1,14 @@
 # AngiSoft Current Departments
 
+> **🔄 REGENERATE** — Rationale and "no unsupported departments" principle retained; seeded DB rows are now the live registry.<br>
+> **Obsolete premise:** `Department` and `Position` now exist as relational entities with `Employee.departmentId`/`positionId` (Prisma contract lines 78–85, 1266–1295). Five active departments seeded in `backend/prisma/seed-professional.ts` lines 62–93.<br>
+> **Conflicts to resolve:**
+> - `SALES` role enum claim obsolete — current `Role` enum has no `SALES` (schema lines 91–101).
+> - "No CI/CD or infra code" obsolete — infrastructure and deployment workflows exist.
+> - Cyber recommendation conflicts with `BRAND_EXPANSION_STRATEGY.md` commercial claims → canonical distinction: cyber may be a marketed service line without being an internal department (§10).
+> - Product Management remains future/unseeded.
+> Update future/deferred decisions as explicit roadmap gates. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §7.
+
 Derived from the **actual** services, products, and workflows — not generic tech-company org charts.
 Classification legend: **REQUIRED_NOW**, **USEFUL_NOW**, **FUTURE**, **NOT_CURRENTLY_JUSTIFIED**.
 

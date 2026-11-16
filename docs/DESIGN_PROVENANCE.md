@@ -1,5 +1,8 @@
 # AngiSoft Design Provenance Register
 
+> **🛠 OPERATIONAL** — Design provenance audit trail; referenced by `ANGISOFT_DESIGN_SYSTEM_RULES.md` §Provenance.<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §9 (Design Authority).
+
 This register records the design inspiration for every public page, admin screen, shared component, and component family. It is a standing requirement: any new or substantially redesigned page/component must be added here before it is considered complete.
 
 ## Provenance policy

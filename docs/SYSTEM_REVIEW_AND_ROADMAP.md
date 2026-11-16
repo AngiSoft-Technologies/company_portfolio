@@ -1,5 +1,26 @@
 # AngiSoft Platform — Real Findings & Production-Readiness Plan
 
+> **📜 HISTORICAL** — Strongest strategic critique; supersedes optimistic drafts. **Do not carry forward percentages, old paths, or completion claims.**<br>
+> **Superseded findings (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §2, §4, §12):**
+> - Monorepo and domain modules exist (Phases 0–4 complete per `AGENTS.md`).
+> - RBAC tables and `getEffectivePermissions` resolver exist.
+> - Industries, Solutions, Pricing admin UIs exist.
+> - JWT production fallback hardened; Stripe fails closed, authenticates intent, implements idempotency.
+> - `@angisoft/api-client` keeps access tokens in memory; refresh cookie is strict.
+> - BullMQ/Redis supported in production.
+> **Partly resolved (still need end-to-end):**
+> - CSRF middleware exists but not mounted in `app.ts`.
+> - Admin app's `apiFetch` doesn't attach Bearer token; AdminLogin discards access token.
+> - No 2FA frontend flow.
+> - Staff Access frontend not the intended per-person access editor.
+> - Dashboard endpoint mismatches remain.
+> - Client access remains magic-link based.
+> - Public testimonial submission absent.
+> - Money remains `Float` (blocker for Finance/ERP).
+> - Normalized CRM, commerce orders, ERP, hiring lifecycle models absent.
+> - Backend tests sparse; no dedicated backend CI workflow.
+> **Use as:** Functional roadmap taxonomy + unresolved-risk checklist. Merge sequence with `REVAMP_PLAN.md` per canonical plan §4.
+
 **Author:** Senior full-stack review (JS stack: React 19 + Vite, Express + TS, Prisma 7 + Postgres/Neon)
 **Date:** 2026-08-14 (verified by direct code inspection)
 **Owner's verdict that this document accepts as ground truth:** the system is **~3/10** — only the public pages in `frontend/src` are ~50% done (built by the owner); the CMS, CRM, ERP, e-commerce, and the internal "software company" operating system are far from production.

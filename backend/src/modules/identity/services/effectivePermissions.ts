@@ -261,13 +261,27 @@ async function loadAssignmentRows(
 // ─── Convenience helpers ────────────────────────────────────────────────────
 
 /**
- * Resolves the `*` wildcard (SUPER_ADMIN has everything). Returns true if the
+ * Resolves the `*` wildcard (SUPER_ADMIN has everything) and returns true if the
  * final effective effect for `key` is GRANT.
+ *
+ * Precedence fix: an explicit DENY always wins — even over the SUPER_ADMIN
+ * wildcard. A user can hold `*` and still be blocked from a specific key.
  */
 export async function has(ctx: EffectiveContext, key: string): Promise<boolean> {
   const perms = await getEffectivePermissions(ctx);
+
+  // 1. An explicit DENY on this exact key wins over everything, including
+  //    the SYSTEM wildcard granted to SUPER_ADMIN.
   const direct = perms.get(key);
-  if (perms.has('*')) return true;
+  if (direct?.effect === 'DENY') return false;
+
+  // 2. A global '*' DENY also blocks (defensive; not currently produced).
+  const wildcard = perms.get('*');
+  if (wildcard?.effect === 'DENY') return false;
+
+  // 3. The SUPER_ADMIN wildcard grants everything not explicitly denied.
+  if (wildcard?.effect === 'GRANT') return true;
+
   return direct?.effect === 'GRANT';
 }
 

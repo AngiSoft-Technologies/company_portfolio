@@ -1,5 +1,8 @@
 # AngiSoft Platform - Complete System Architecture
 
+> **📜 HISTORICAL** — Describes pre-restructure architecture (`frontend/src`, `backend/src/routes/`).<br>
+> **Do not cite for current structure.** Current architecture per `AGENTS.md` §Project Structure and `ANGISOFT_DIGITAL_HQ_PLAN.md` §3.
+
 ## 🏗️ System Overview
 
 ```

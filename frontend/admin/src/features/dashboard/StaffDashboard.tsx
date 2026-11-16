@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, EmptyState, PageHeader, Spinner } from '@/components';
 import { apiFetch } from '@/lib/adminApi';
-import { deepGet, toArr, type Rec } from '@/lib/records';
+import { toArr, type Rec } from '@/lib/records';
 import { asStr, formatDate } from '@/lib/format';
 
 export function StaffDashboard() {
@@ -18,14 +18,26 @@ export function StaffDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const json = await apiFetch('/api/admin/staff-dashboard');
-        const rec = (json ?? {}) as Rec;
-        const projects = toArr(deepGet(rec, ['assignedProjects', 'myProjects', 'projects']));
-        const leads = toArr(deepGet(rec, ['assignedLeads', 'myLeads', 'leads']));
-        const bookings = toArr(deepGet(rec, ['bookings', 'myBookings', 'schedule']));
-        const tickets = toArr(deepGet(rec, ['tickets', 'assignedTickets', 'supportTickets']));
+        // The staff-dashboard router has no aggregate root route; it exposes
+        // per-resource endpoints the dashboard assembles. Each slice loads
+        // independently so one failing call cannot blank the whole page.
+        const loadSlice = async (endpoint: string): Promise<Rec[]> => {
+          try {
+            return toArr(await apiFetch(endpoint));
+          } catch {
+            return [];
+          }
+        };
+
+        const [projects, bookings, posts, leads] = await Promise.all([
+          loadSlice('/api/staff-dashboard/projects'),
+          loadSlice('/api/staff-dashboard/bookings'),
+          loadSlice('/api/staff-dashboard/posts'),
+          loadSlice('/api/leads'),
+        ]);
+
         if (!cancelled) {
-          setWork([...projects, ...leads, ...tickets]);
+          setWork([...projects, ...leads, ...posts]);
           setSchedule(bookings);
         }
       } catch (e) {

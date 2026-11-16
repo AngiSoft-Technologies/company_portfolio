@@ -50,9 +50,20 @@ const normalizeOrigin = (origin?: string): string => {
   return origin.replace(/\/+$/, '').replace(/\/api$/, '');
 };
 
+/**
+ * API origin.
+ *
+ * Defaults to **same-origin (empty)** so requests go to the app's own domain and
+ * are forwarded by the Netlify `/api/*` proxy. This matters because the backend
+ * sets the refresh token as a host-only, `SameSite=Strict` cookie: a
+ * cross-origin call to `api.angisoft.co.ke` from `admin.angisoft.co.ke` would
+ * never send it, so silent refresh would fail and sessions would die on reload.
+ *
+ * An app that genuinely must call the API cross-origin sets
+ * `VITE_API_BASE_URL` explicitly — and then lives without cookie-based auth.
+ */
 const API_ORIGIN: string =
-  normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) ||
-  (import.meta.env.PROD ? 'https://api.angisoft.co.ke' : '');
+  normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 
 const buildApiUrl = (endpoint: string): string => {
   if (endpoint.startsWith('http')) return endpoint;

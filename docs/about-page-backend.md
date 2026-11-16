@@ -1,5 +1,8 @@
 # About Page — Backend Architecture
 
+> **🛠 OPERATIONAL** — Feature-specific backend contract for About page (uncommitted About-page work in progress).<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §6 (Content Coverage Ledger → About row).
+
 How the public **About Us** page is backed by PostgreSQL + Prisma, served over
 `GET /api/about-sections`, and edited from the admin CMS.
 

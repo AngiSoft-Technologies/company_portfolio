@@ -1,5 +1,13 @@
 # AngiSoft Position Requirements
 
+> **🔄 REGENERATE** — Job architecture and public-title rationale retained; rebuild suggested permissions against canonical registry.<br>
+> **Obsolete assumptions (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §7, §12):**
+> - Current seeded positions differ: `Technical Support Engineer` → `Support Specialist`; `Operations Administrator` → `Client Operations Coordinator`; `Customer Relations Officer` unseeded; `Product Manager` future.
+> - Many suggested permission keys don't exist in current catalogue or route guards: `services.update_assigned`, `products.manage_media_assigned`, `pages.update_*`, `analytics.view_*`, `bookings.assign`, `settings.manage`.
+> - Public profile type now driven by `Position.displayTitleTemplate`, `Employee.publicTitle`, `departmentId`, `positionId`.
+> - Evidence paths tied to older platform/portfolio.
+> Treat seeded positions as live catalogue; this document as rationale for additions/renames/future hiring. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §7.
+
 Positions derived from **real platform responsibilities**, not generic titles.
 Public profile type = what the Staff List (`pages/StaffList.jsx`) and `GET /api/staff` should show.
 System role (SUPER_ADMIN/ADMIN/STAFF) is **separate** — never exposed publicly.

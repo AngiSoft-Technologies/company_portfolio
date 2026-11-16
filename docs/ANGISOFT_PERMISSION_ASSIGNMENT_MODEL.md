@@ -1,5 +1,12 @@
 # AngiSoft Permission Assignment Model
 
+> **🎯 TARGET** — Normative target access model; partially implemented in `backend/src/modules/identity/services/effectivePermissions.ts`.<br>
+> **Amendments from canonical plan (`ANGISOFT_DIGITAL_HQ_PLAN.md` §5.3):**
+> 1. `SUPER_ADMIN` wildcard precedence (60) **does not override explicit DENY** (50). DENY always wins. Test required.
+> 2. `PermissionPreset` rows are not read by the resolver; only `Position.defaultPermissionKeys` acts as a preset. Decide one authoritative preset mechanism.
+> 3. Publication-review assignment remains proposed; not yet implemented.
+> Canonical precedence (highest wins): SYSTEM(60) → DENY(50) → GRANT(40) → ASSIGNMENT(30) → PRESET(20) → ROLE(10). DENY always beats any grant.
+
 How the Admin assigns access, and how effective permissions are calculated.
 Replaces the current single-mechanism `EmployeeRoleAssignment → AppRole → Permission`.
 

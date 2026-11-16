@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { toast } from '@angisoft/utils';
+import { apiFetch } from '@/lib/adminApi';
 
 /**
  * Shared admin primitives — data fetching + tailwind UI building blocks.
@@ -29,6 +30,12 @@ export function normalizeRows<T>(data: unknown, transform?: (rows: unknown) => T
   return [];
 }
 
+/**
+ * All admin data access goes through `apiFetch`, which adds the absolute API
+ * origin, the in-memory Bearer token, the CSRF double-submit header, and the
+ * 401 refresh retry. A raw `fetch` here silently produced anonymous requests
+ * that every guarded endpoint rejected.
+ */
 export function adminHeaders(): Record<string, string> {
   return { 'Content-Type': 'application/json' };
 }
@@ -41,11 +48,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
   const refresh = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api${config.endpoint}`, { headers: adminHeaders(), credentials: 'include' });
-      const json = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) {
-        throw new Error((json.error as string) || (json.message as string) || 'Failed to load');
-      }
+      const json = await apiFetch(`/api${config.endpoint}`);
       setRows(normalizeRows<T>(json, config.transform));
       setError(null);
     } catch (e) {
@@ -58,12 +61,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
 
   const remove = async (id: string): Promise<boolean> => {
     try {
-      const res = await fetch(`/api${config.endpoint}/${id}`, {
-        method: 'DELETE',
-        headers: adminHeaders(),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Delete failed');
+      await apiFetch(`/api${config.endpoint}/${id}`, { method: 'DELETE' });
       toast.success('Deleted successfully');
       await refresh();
       return true;
@@ -75,6 +73,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
 
   useEffect(() => {
     void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { rows, loading, error, refresh, remove };

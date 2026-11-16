@@ -1,5 +1,22 @@
 # Copilot Instructions for AngiSoft Technologies
 
+> **📜 HISTORICAL** — Pre-restructure reference. Several file paths below no longer exist
+> after the monorepo restructuring; see the mapping in the "Current structure" note
+> before following any path literally.  
+> **Current paths:** `AGENTS.md` §Project Structure · **Canonical plan:** `docs/ANGISOFT_DIGITAL_HQ_PLAN.md`
+
+**Path mapping (old → current):**
+
+| Obsolete path | Current path |
+|---|---|
+| `backend/src/routes/*.ts` | `backend/src/modules/<domain>/routes/*.ts` (or `backend/src/shared/routes/`) |
+| `backend/src/middleware/*.ts` | `backend/src/shared/middleware/*.ts` |
+| `backend/src/services/permissions.ts` | `backend/src/modules/identity/services/effectivePermissions.ts` |
+| `backend/src/utils/token.ts` | `backend/src/modules/identity/utils/token.ts` |
+| `frontend/src/admin/**` | `frontend/admin/src/features/**` |
+| `frontend/src/pages/**`, `frontend/src/components/**` | `frontend/web/src/features/**` |
+| `frontend/src/hooks/useAboutPage.js` | `frontend/web/src/features/marketing/pages/About.tsx` |
+
 ## Architecture Overview
 
 **Full-stack monorepo**: Frontend (React + Vite) and Backend (Node.js + Express + TypeScript + Prisma ORM on Postgres).

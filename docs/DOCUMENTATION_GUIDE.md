@@ -1,5 +1,8 @@
 # 📚 COMPLETE DOCUMENTATION INDEX - AngiSoft Platform
 
+> **🛠 OPERATIONAL** — Restructure navigation to point to `ANGISOFT_DIGITAL_HQ_PLAN.md` as canonical plan.<br>
+> Current "Quick Navigation" points to obsolete phase documents.
+
 ## 🎯 Quick Navigation by Use Case
 
 ### I Want to...

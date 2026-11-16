@@ -7,9 +7,6 @@ on:
 jobs:
     build-and-deploy:
         runs-on: ubuntu-latest
-        env:
-            VITE_API_BASE_URL: https://api.angisoft.co.ke
-            VITE_SOCKET_URL: https://api.angisoft.co.ke
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -25,11 +22,33 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            # Quality gates — a broken build must never reach production.
+            # See docs/ANGISOFT_DIGITAL_HQ_PLAN.md §13 and §14.
+            - name: Lint
+              run: pnpm lint
+
+            - name: Typecheck
+              run: pnpm typecheck
+
+            # DB-backed specs skip themselves when TEST_DATABASE_URL is unset,
+            # so this never touches the production database.
+            - name: Test
+              run: CI=true pnpm test
+              env:
+                  TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+            # Neither app sets VITE_API_BASE_URL — both call /api/* same-origin
+            # through their Netlify proxy so the SameSite=Strict refresh cookie
+            # is actually sent. See docs/NETLIFY.md §Routing.
             - name: Build web
               run: pnpm --filter angisoft-web build
+              env:
+                  VITE_SOCKET_URL: https://api.angisoft.co.ke
 
             - name: Build admin
               run: pnpm --filter angisoft-admin build
+              env:
+                  VITE_SOCKET_URL: https://api.angisoft.co.ke
 
             - name: Deploy web
               uses: netlify/actions/cli@master

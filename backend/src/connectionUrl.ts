@@ -26,6 +26,22 @@ function sanitizeUrl(value: string): string {
 
 /** Resolve the raw DATABASE_URL (Neon fallback supported). */
 export function getRawDatabaseUrl(): string {
+  // Test runs must never resolve to the development/production database.
+  // Vitest sets NODE_ENV=test by default, so the presence of either marker
+  // means "a spec is running" and TEST_DATABASE_URL becomes mandatory.
+  const isTestRun = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+  if (isTestRun) {
+    const testUrl = process.env.TEST_DATABASE_URL;
+    if (testUrl && testUrl.trim()) {
+      return sanitizeUrl(testUrl);
+    }
+    throw new Error(
+      '[connectionUrl] TEST_DATABASE_URL is required when running tests. ' +
+        'Refusing to run test specs against the development/production database. ' +
+        'Set TEST_DATABASE_URL to a disposable database (e.g. a Neon branch named "test").'
+    );
+  }
+
   const candidates = [process.env.DATABASE_URL, process.env.NEON_DATABASE_URL];
   for (const url of candidates) {
     if (url && url.trim()) {

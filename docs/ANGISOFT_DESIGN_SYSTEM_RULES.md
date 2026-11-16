@@ -1,5 +1,10 @@
 # AngiSoft Design System Rules
 
+> **🟢 CANONICAL** — Normative design law for the AngiSoft Digital Headquarters.<br>
+> Numeric token values in `packages/ui/src/tokens/` override prose where they conflict.<br>
+> Supersedes: `BRAND_EXPANSION_STRATEGY.md`, `DESIGN_PROVENANCE.md` (provenance only).<br>
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §9.
+
 These rules are the executable subset of `REVAMP_PLAN.md`. Every public, client-portal, and admin UI change must follow them.
 
 ## Brand

@@ -1,5 +1,14 @@
 # AngiSoft Permission Catalogue
 
+> **🔄 REGENERATE** — Desired semantic inventory; not the live registry.<br>
+> **Three conflicting vocabularies to reconcile (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §5.2, §12):**
+> 1. **Seed keys** (`backend/prisma/seed.ts` lines 69–99): `'content.view'`, `'staff.manage'`, etc.
+> 2. **Hardcoded UI catalogue** (`backend/src/modules/identity/routes/staff-access.ts` lines 28–114): `'staff.view'`, `'staff.assign_permissions'`, etc.
+> 3. **Route guard keys** (scattered): `'services.create'`, `'projects.update_assigned'`, `'products.update'`, etc.
+> **Required:** One DB-backed `Permission` registry with metadata (`group`, `risk`, `scope`, `model`, `endpoint`, `adminSurface`, `defaultRole`, `scopeRequired`) from which all guards, UI, presets, and seeds derive.<br>
+> Create a documented key migration map before using this as a seed source.<br>
+> Scope definitions: `global` = any record; `assigned` = only assigned records via join; `own` = only authored/owned records.
+
 Every permission grounded in an **existing model/route/endpoint**. Permissions with no current implementation are marked *[FUTURE]*.
 Scope: `global` = any record; `assigned` = only records the employee is assigned to; `own` = only records they authored/own.
 

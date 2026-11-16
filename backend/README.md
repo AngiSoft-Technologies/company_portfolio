@@ -1,5 +1,8 @@
 # AngiSoft Backend
 
+> **🛠 OPERATIONAL** — Update to current module structure.<br>
+> **Canonical plan:** `docs/ANGISOFT_DIGITAL_HQ_PLAN.md`
+
 Express + TypeScript API powering the AngiSoft Technologies platform, with PostgreSQL via Prisma ORM.
 
 ## Tech Stack
@@ -7,31 +10,43 @@ Express + TypeScript API powering the AngiSoft Technologies platform, with Postg
 - **Runtime**: Node.js >= 24
 - **Framework**: Express 4
 - **Language**: TypeScript
-- **Database**: PostgreSQL (Neon) with Prisma ORM
-- **Auth**: JWT + bcrypt + 2FA (otplib)
-- **Payments**: Stripe
-- **Storage**: S3-compatible (AWS S3 / Cloudflare R2)
-- **Queue**: BullMQ + Redis (ioredis)
+- **Database**: PostgreSQL (Neon) with Prisma 8 ORM (contract at `src/prisma/contract.prisma`)
+- **Auth**: JWT + bcrypt + 2FA (otplib) — access tokens in memory, refresh in httpOnly+SameSite=Strict cookies
+- **Payments**: Stripe + Paystack
+- **Storage**: Tigris (S3-compatible) via `@aws-sdk/client-s3`
+- **Queue**: BullMQ + Upstash Redis (ioredis)
 - **Email**: Nodemailer (Zoho SMTP)
-- **AI**: OpenAI / Hugging Face chatbot
+- **AI**: Neon AI Gateway (OpenAI, Anthropic, Google, Meta, Alibaba via single API)
 - **Logging**: Winston
-- **Testing**: Vitest + Supertest
+- **Testing**: Vitest + Supertest (requires `TEST_DATABASE_URL`)
 
 ## Project Structure
 
 ```
 backend/
 ├── prisma/
-│   ├── schema.prisma      Database models
-│   └── seed.ts            Sample data seeder
+│   ├── contract.prisma       Prisma 8 contract (source of truth)
+│   ├── schema.prisma         Legacy schema (not used for generate)
+│   ├── seed.ts               Sample data seeder
+│   └── seed-professional.ts  Professional departments/positions seed
 ├── src/
-│   ├── index.ts           Server entry point
-│   ├── routes/            API route handlers
-│   ├── middleware/         Auth, RBAC, rate limiting
-│   └── ...                Controllers, services, utils
-├── test/                  Vitest + Supertest specs
-├── scripts/               Migration and utility scripts
-├── Dockerfile             Production container build
+│   ├── index.ts              Server entry (bootstrap, realtime, workers)
+│   ├── app.ts                Express app + middleware stack + router mounting
+│   ├── modules/              10 domain modules (identity, crm, projects, bookings, cms, billing, files, notifications, ai, analytics)
+│   │   └── <domain>/
+│   │       ├── routes/       Route factories (receive shared Prisma client)
+│   │       ├── services/     Business logic
+│   │       └── (controllers|middleware|utils)/
+│   ├── shared/               Cross-cutting: middleware, services, utils, config, routes, types
+│   ├── db.ts                 Singleton Prisma client with Neon adapter
+│   ├── worker.ts             Background worker entry
+│   ├── mcp/                  MCP-over-HTTP endpoint
+│   └── queue/                BullMQ queue definitions
+├── test/                     Vitest + Supertest specs (use TEST_DATABASE_URL)
+├── scripts/                  Migration and utility scripts
+├── Dockerfile                Fly.io build (context: backend/)
+└── fly.toml                  Fly.io deployment config
+```             Production container build
 └── .env                   Runtime config + secrets (gitignored; no .env.example)
 ```
 

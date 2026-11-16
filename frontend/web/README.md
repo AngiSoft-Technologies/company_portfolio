@@ -1,35 +1,44 @@
-# AngiSoft Frontend
+# AngiSoft Frontend (Web)
 
-React + Vite single-page application for the AngiSoft Technologies website.
+> **🛠 OPERATIONAL** — Update to `angisoft-web` monorepo structure.<br>
+> **Canonical plan:** `docs/ANGISOFT_DIGITAL_HQ_PLAN.md`
+
+React + Vite single-page application for the AngiSoft Technologies public website + client portal.
 
 ## Tech Stack
 
 - **React 19** with React Router v7
 - **Vite 7** for build and dev server
-- **Tailwind CSS 4** + RippleUI + MUI components
-- **Redux Toolkit** for state management
-- **Axios** for API calls (proxied to backend in dev)
-- **Nivo + Chart.js** for data visualizations
+- **Tailwind CSS 4** via `@tailwindcss/postcss` (CSS-first; `@import "tailwindcss"`)
+- **MUI 7** available for complex forms
+- **@angisoft/api-client** for API calls (in-memory tokens, refresh cookie flow, CSRF)
+- **@angisoft/ui** for design tokens, themes, components
+- **@angisoft/realtime** for live queries
+- **@angisoft/offline** for service worker
 - **Formik + Yup** for forms and validation
 
 ## Project Structure
 
 ```
-frontend/
-├── public/              Static assets
-├── netlify/             Netlify functions
+frontend/web/
+├── public/              Static assets (sw.js registered via @angisoft/offline)
+├── netlify/             Netlify functions (if any)
 ├── src/
-│   ├── admin/           Admin CMS pages
-│   ├── components/
-│   │   ├── cards/       Reusable card components
-│   │   ├── landing/     Homepage sections
-│   │   ├── modern/      Styled UI components
-│   │   └── sections/    Page sections (Staff, Projects, etc.)
-│   ├── pages/           Route-level page components
-│   └── assets/          Images and static files
+│   ├── features/        Feature-based modules
+│   │   ├── marketing/   Public marketing pages (components/pages)
+│   │   ├── auth/        Client portal auth (request/access)
+│   │   ├── bookings/    Public booking flow
+│   │   ├── client-portal/  Client project tracking
+│   │   └── ai-assistant/   ChatBot component
+│   ├── router/          routes.tsx + prerender.ts (route/meta list for SSG)
+│   ├── lib/             httpClient (legacy), marketing constants, detail paths
+│   ├── styles/          Global CSS + per-feature CSS
+│   ├── main.tsx         Entry point
+│   └── index.css        Tailwind import + CSS variables
 ├── index.html           Entry point
-├── vite.config.js       Vite + proxy config
-└── tailwind.config.js   Tailwind theme
+├── vite.config.ts       Vite + proxy (/api, /uploads, /socket.io → :5000)
+├── netlify.toml         Netlify config (redirects: /uploads/* → API, SPA fallback)
+└── package.json         angisoft-web
 ```
 
 ## Development
@@ -51,13 +60,17 @@ npm run dev          # http://localhost:5173 (proxies /api → localhost:5000)
 
 ### Environment Variables
 
-Create a `.env` file in this directory:
+Optional — create a `.env` file in this directory to point the Vite dev proxy at
+a non-default backend:
 
 ```
 VITE_API_BASE_URL=http://localhost:5000
 ```
 
-In production (Netlify), set this to your Railway backend URL.
+**Production hosting leaves this unset.** Netlify proxies `/api/*` and
+`/uploads/*` to the API, so API traffic is same-origin and the browser sends the
+`SameSite=Strict` refresh cookie. Setting an absolute base reintroduces
+cross-origin cookie breakage — see `docs/NETLIFY.md` §Routing.
 
 ## Deployment
 

@@ -24,7 +24,9 @@ export function BookingsManagement() {
     setLoading(true);
     setError(null);
     try {
-      const arr = toArr(await apiFetch('/api/bookings'));
+      // `/api/bookings` has no public list route (it only accepts POST); the
+      // admin listing lives at `/api/bookings/admin`.
+      const arr = toArr(await apiFetch('/api/bookings/admin'));
       setRows(arr.map((r) => ({ ...r, id: rowId(r) })));
     } catch (e) {
       setError((e as Error).message || 'Failed to load bookings');
@@ -44,7 +46,9 @@ export function BookingsManagement() {
     setDetailError(null);
     setDetail(null);
     try {
-      const json = await apiFetch(`/api/bookings/${encodeURIComponent(ref)}`);
+      // `/api/bookings/:id` requires an email proof-of-possession query param,
+      // so admins read detail through the admin router instead.
+      const json = await apiFetch(`/api/admin/bookings/${encodeURIComponent(ref)}`);
       setDetail((json ?? {}) as Rec);
     } catch (e) {
       setDetailError((e as Error).message || 'Failed to load booking detail');
@@ -59,7 +63,7 @@ export function BookingsManagement() {
     setBusyRef(ref);
     setError(null);
     try {
-      await apiFetch(`/api/bookings/${encodeURIComponent(ref)}/status`, { method: 'PATCH', body: { status } });
+      await apiFetch(`/api/bookings/admin/${encodeURIComponent(ref)}/status`, { method: 'PATCH', body: { status } });
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
       setDetail((prev) => (prev && String(prev.reference) === ref ? { ...prev, status } : prev));
     } catch (e) {
@@ -81,10 +85,15 @@ export function BookingsManagement() {
     setBusyRef(ref);
     setError(null);
     try {
-      await apiFetch(`/api/bookings/${encodeURIComponent(ref)}`, { method: 'DELETE' });
+      // There is no DELETE for bookings — the workflow expresses removal as a
+      // terminal stage transition, which preserves the audit trail.
+      await apiFetch(`/api/bookings/admin/${encodeURIComponent(ref)}/stage`, {
+        method: 'PATCH',
+        body: { stage: 'cancelled' },
+      });
       await load();
     } catch (e) {
-      setError((e as Error).message || 'Failed to delete booking');
+      setError((e as Error).message || 'Failed to cancel booking');
     } finally {
       setBusyRef(null);
     }

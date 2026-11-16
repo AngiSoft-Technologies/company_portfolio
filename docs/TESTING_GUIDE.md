@@ -1,5 +1,8 @@
 # 🧪 Testing Guide - AngiSoft Admin CMS System
 
+> **🛠 OPERATIONAL** — Update for test DB isolation (Phase 0.5).<br>
+> **Required (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` Phase 0.5):** `TEST_DATABASE_URL` env; integration tests rewritten to use isolated test DB; `pnpm test` never touches production Neon.
+
 ## ✅ What's Been Completed
 
 ### Backend (Express + Prisma)

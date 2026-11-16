@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/lib/theme';
 import { FaTimes, FaPaperPlane, FaHeadset } from 'react-icons/fa';
+import { apiPost } from '@/lib/httpClient';
 
 const ChatBot = () => {
   const { colors } = useTheme();
@@ -130,24 +131,17 @@ const ChatBot = () => {
     historyLoadedRef.current = true;
 
     try {
-      const response = await fetch('/api/chatbot/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: conversationId || undefined,
-          deviceFingerprint: deviceFingerprint || undefined,
-          visitorName: visitorInfo.name || undefined,
-          visitorEmail: visitorInfo.email || undefined,
-          visitorPhone: visitorInfo.phone || undefined,
-          limit: 3
-        })
+      // Route through the shared client so the request gets the absolute API
+      // origin. A relative `/api/...` URL lands on the Netlify SPA fallback in
+      // production and silently returns HTML.
+      const data = await apiPost('/api/chatbot/history', {
+        conversationId: conversationId || undefined,
+        deviceFingerprint: deviceFingerprint || undefined,
+        visitorName: visitorInfo.name || undefined,
+        visitorEmail: visitorInfo.email || undefined,
+        visitorPhone: visitorInfo.phone || undefined,
+        limit: 3
       });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = await response.json();
       if (data.latestConversationId && !conversationId) {
         setConversationId(data.latestConversationId);
       }
@@ -267,24 +261,14 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chatbot/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: conversationId || undefined,
-          visitorName: visitorInfo.name,
-          visitorEmail: visitorInfo.email,
-          visitorPhone: visitorInfo.phone,
-          deviceFingerprint: deviceFingerprint || undefined,
-          message: input
-        })
+      const data = await apiPost('/api/chatbot/chat', {
+        conversationId: conversationId || undefined,
+        visitorName: visitorInfo.name,
+        visitorEmail: visitorInfo.email,
+        visitorPhone: visitorInfo.phone,
+        deviceFingerprint: deviceFingerprint || undefined,
+        message: input
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
       
       // Update conversation ID if new
       if (!conversationId) {

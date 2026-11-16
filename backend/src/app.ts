@@ -40,6 +40,7 @@ import { authRateLimiter } from './shared/middleware/rateLimiter';
 import { requireAuth } from './shared/middleware/auth';
 import { sanitizeMiddleware } from './shared/middleware/validation';
 import { publicJsonCache } from './shared/middleware/cache';
+import { csrfInit, csrfProtect } from './shared/middleware/csrf';
 import { errorHandler, notFoundHandler, asyncHandler } from './shared/middleware/errorHandler';
 import { initSentry } from './shared/services/monitoring/sentry';
 import { toPublicUrl } from './modules/files/services/storage/s3';
@@ -121,6 +122,13 @@ app.get("/uploads/public/*", (req, res) => {
     res.redirect(302, toPublicUrl(key));
 });
 app.use(sanitizeMiddleware);
+
+// CSRF protection (double-submit). `csrfInit` guarantees every response
+// carries a readable `csrfToken` cookie; `csrfProtect` enforces it on all
+// state-changing requests except the explicitly carved-out public/anonymous
+// paths (booking, contact, newsletter, invite, webhooks, chatbot).
+app.use(csrfInit);
+app.use(csrfProtect);
 
 // Public JSON caching for unauthenticated GET content endpoints (Redis when
 // REDIS_URL is set, in-memory otherwise). Must sit before the API routers so
@@ -296,7 +304,7 @@ app.use('/api/leads', leadsRouter());
 app.use('/api/support-tickets', supportTicketsRouter());
 app.use('/api/products', productsRouter());
 app.use('/api/roles', rolesRouter());
-app.use('/api/admin/staff', staffAccessRouter());
+app.use('/api/admin', staffAccessRouter());
 app.use('/api/employee-profiles', employeeProfilesRouter());
 app.use('/api/careers', careersRouter());
 app.use('/api/company-stats', companyStatsRouter());
@@ -310,6 +318,10 @@ app.use('/api/contact-enquiries', contactEnquiriesRouter());
 app.use('/api/industries', industriesRouter());
 app.use('/api/solutions', solutionsRouter());
 app.use('/health', healthRouter(prisma));
+// Compatibility alias: the health check was historically referenced as
+// `/api/health` (and Netlify's SPA fallback answered it with HTML, masking the
+// 404). Keep both paths live so monitors using either URL keep working.
+app.use('/api/health', healthRouter(prisma));
 
 // Analytics middleware
 app.use((req, res, next) => {
