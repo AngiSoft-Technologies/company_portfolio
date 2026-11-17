@@ -55,7 +55,7 @@ answers "where are we?" without reading code.
 |-------|--------|-----------|
 | **Phase 0 — Security Foundation** | ✅ Implemented | Deploy, then verify in production (§17) |
 | **Phase 1 — Unified Identity & Workspace Shell** | ✅ Implemented (1.7 deferred) | User preferences need an `Employee` preferences column |
-| Phase 2 — Department Workspaces | ⬜ Not started | Sales/CRM first |
+| Phase 2 — Department Workspaces | 🔄 In progress (design) | §5.5 data-model delta written; schema + money migration to follow |
 | Phase 3 — Portfolio Studio | ⬜ Not started | Persistent portfolio config model |
 | Phase 4 — Automation & Intelligence | ⬜ Not started | — |
 | Phase 5 — Production Hardening | 🔄 Partial | CI gate added; perf/SEO/E2E remain |
@@ -246,6 +246,129 @@ All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrat
 - **PermissionPreset** = reusable grant template applied by admin (writes `EmployeePermission` GRANT rows)
 - Both are **additive**; neither overrides explicit DENY/GRANT.
 
+### 5.5 Phase 2 data-model delta (2026-11-17) — **DESIGNED, NOT YET MIGRATED**
+
+Phase 2 builds the Sales/CRM department workspace: **lead → opportunity → quotation → booking → project → invoice → support**.
+The pipeline already exists in pieces (`Lead`, `Booking` with a 9-stage machine, `Payment`, `ClientProject`,
+`ContactEnquiry`, `SupportTicket`). What is missing are the two commercial documents between a
+qualified lead and a paid invoice — **Opportunity**, **Quote** and **Invoice** — and a money type
+that cannot silently lose a cent.
+
+This section is the reviewable design that precedes the migration. It is **additive only**: every
+change is a `CREATE TABLE` / `ADD COLUMN` / type widening, never a destructive rewrite.
+
+#### 5.5.1 New models
+
+| Model | Purpose | Key fields |
+|-------|---------|------------|
+| `Opportunity` | A qualified lead moving through the commercial pipeline | `id`, `publicReference` (unique), `title`, `leadId?`, `clientId?`, `bookingId?`, `stage`, `value` **Numeric(18,2)**, `currency`, `probability` (Int 0–100), `expectedCloseDate?`, `assignedToId?`, `lostReason?`, `notes?`, `source?`, `createdAt`, `updatedAt` |
+| `Quote` | A priced proposal sent to a client | `id`, `publicReference` (unique), `number` (unique), `opportunityId?`, `bookingId?`, `clientId?`, `status`, `subtotal`/`discount`/`tax`/`total` **Numeric(18,2)**, `currency`, `validUntil?`, `issuedAt?`, `acceptedAt?`, `notes?`, `createdById?`, `createdAt`, `updatedAt` |
+| `QuoteLineItem` | One priced line on a quote | `id`, `quoteId`, `description`, `quantity` (Int), `unitPrice` **Numeric(18,2)**, `lineTotal` **Numeric(18,2)**, `serviceId?`, `productId?`, `sortOrder` (Int) |
+| `Invoice` | A demand for payment against accepted work | `id`, `publicReference` (unique), `number` (unique), `quoteId?`, `bookingId?`, `clientProjectId?`, `clientId?`, `status`, `subtotal`/`tax`/`total`/`amountPaid`/`balanceDue` **Numeric(18,2)**, `currency`, `issuedAt?`, `dueAt?`, `paidAt?`, `notes?`, `createdAt`, `updatedAt` |
+| `InvoiceLineItem` | One billed line on an invoice | `id`, `invoiceId`, `description`, `quantity` (Int), `unitPrice` **Numeric(18,2)**, `lineTotal` **Numeric(18,2)**, `sortOrder` (Int) |
+
+`Lead` gains `stage`, `value` **Numeric(18,2)**, `currency`, `qualificationNotes`, `lostReason`
+so a lead can be qualified before it becomes an opportunity. The `Lead → Opportunity` link is one-way
+(`Opportunity.leadId`) so a lead can have several opportunities without a join table.
+
+**Stage vocabularies** are plain `String` columns with values enforced by the backend, matching how
+`Booking.currentStage` and `BookingEvent.type` already work — the catalog can grow without a migration:
+
+- `Opportunity.stage` — `new → qualified → proposal_sent → negotiation → won | lost`
+- `Quote.status` — `draft → sent → accepted | declined | expired | superseded`
+- `Invoice.status` — `draft → issued → partially_paid → paid | overdue | void`
+
+#### 5.5.2 Money: `Float` → `Numeric(18,2)`
+
+Seven money columns are `Float` today. They become `numeric(18,2)`.
+
+| Table | Column | Current | New |
+|-------|--------|---------|-----|
+| `Booking` | `priceEstimate` | `Float?` | `Numeric(18,2)?` |
+| `Booking` | `budgetAmount` | `Float?` | `Numeric(18,2)?` |
+| `Booking` | `quotedAmount` | `Float?` | `Numeric(18,2)?` |
+| `Payment` | `amount` | `Float` | `Numeric(18,2)` |
+| `PaymentWallet` | `balance` | `Float` | `Numeric(18,2)` |
+| `Payout` | `amount` | `Float` | `Numeric(18,2)` |
+| `Service` | `priceFrom` | `Float?` | `Numeric(18,2)?` |
+
+**The runtime type changes from `number` to a branded string.** The Prisma 8 `pg/numeric@1` codec
+decodes a numeric column to canonical decimal **text** (`"1234.50"`), not a JS number — the type is
+`Numeric<18, 2>` = `BrandedString<{ __numericPrecision: 18; __numericScale: 2 }>`. The contract source
+syntax for this dialect is `Numeric(18, 2)`; bare `Decimal` and `Decimal(precision: …, scale: …)`
+are rejected by the rc.15 parser, and a numeric column **without** `typeParams` fails at runtime with
+`CODEC_PARAMETERIZATION_MISMATCH`, so precision and scale are mandatory.
+
+Consequences, all of them deliberate:
+
+1. **Arithmetic must be exact.** Float money drifts (`0.1 + 0.2 !== 0.3`); a `numeric` column does not.
+2. **Reads that feed arithmetic need an explicit conversion.** The backend gets a single money helper
+   module rather than ad-hoc `Number(...)` calls:
+   - `toMoney(value: number | string): string` — canonical 2-decimal string for writes.
+   - `fromMoney(value: string | null): number` — for display and legacy paths that still need a number.
+   - `sumMoney(values): string`, `addMoney(a, b): string` — computed in **integer minor units**
+     (cents), never in floats.
+3. **The TypeScript compiler enforces the change.** A `numeric` field is a branded string, so every
+   arithmetic site that keeps treating it as a number becomes a compile error rather than a silent
+   rounding bug.
+
+**Blast radius** (all sites must be converted in the same commit as the type change):
+
+| Site | Current | Required after |
+|------|---------|----------------|
+| `billing/services/payments/index.ts` — `amount: payment.amount` (write) | `number` | `toMoney(payment.amount)` |
+| `billing/services/payments/payheroService.ts` — `balance: Number(...)` (write) | `number` | `toMoney(...)` |
+| `billing/routes/payment-console.ts` — `balance: w.balance` (write) | `number` | `toMoney(w.balance)` |
+| `cms/controllers/servicesController.ts` — `priceFrom` (write) | `number` | `toMoney(data.priceFrom)` |
+| `cms/routes/services.ts` — `priceFrom` zod schema | `z.coerce.number()` | coerce to string on write, keep number at the API edge |
+| `bookings/routes/bookings.ts` — `budgetAmount`, `quotedAmount`, `priceEstimate` | `Number(...)` | `toMoney(...)` on write |
+| `workers/reconciliationWorker.ts` — provider amounts | `/ 100` float math | `toMoney(...)` after the cent conversion |
+| `ai/routes/chatbot.ts` — price in prompt text | string interpolation | unchanged (a string renders correctly) |
+
+#### 5.5.3 Migration order (safe, reversible, one concern per commit)
+
+1. **Commit A — additive schema.** `CREATE TABLE` for `Opportunity`, `Quote`, `QuoteLineItem`,
+   `Invoice`, `InvoiceLineItem`; `ALTER TABLE "Lead" ADD COLUMN …`. Money columns are **left as
+   `Float`** in this commit, so the new pipeline can be built and exercised against the existing type.
+2. **Commit B — money helper + contract.** Add the money helper module, change the seven columns in
+   `src/prisma/contract.prisma` to `Numeric(18, 2)`, re-emit the contract artifacts
+   (`npx prisma contract emit` — offline, it never touches the database), and convert every site in
+   the blast-radius table. **The database is still `float8` at this point**, so the contract and the
+   live schema disagree.
+3. **Commit C — the actual type change.** Hand-written SQL migration
+   (`ALTER TABLE … ALTER COLUMN … TYPE numeric(18,2) USING round(<col>::numeric, 2)`) applied to
+   Neon, followed by the same `prisma contract emit`. The `USING round(…, 2)` clause is what makes
+   the conversion safe: it rounds to cents in the database instead of truncating, and it is the only
+   way Postgres will convert `float8 → numeric` without an explicit cast for every row.
+4. **Commit D — verification.** Re-run the totals check (§17) and the payment round-trip tests
+   against a disposable database, then re-seed.
+
+**Safety rules for Commit C:**
+- `numeric` widening never loses precision beyond the 2-decimal rounding, and the rounding is
+  explicit and auditable — but the pre- and post-migration column totals are compared before the
+  migration is accepted. A mismatch of more than one cent on any table is a **rollback**, not a
+  rounding to be accepted silently.
+- The migration is **additive in effect**: the previous `float8` values remain recoverable from a
+  pre-migration dump, and the whole change is a single reversible `ALTER` per table.
+- `PaymentWallet.balance` is the one column where a mismatch is expected and meaningful — it is a
+  *cached provider balance*, refreshed on every sync, so it is snapshotted before the migration and
+  compared after, not treated as authoritative.
+
+#### 5.5.4 Permissions required by Phase 2
+
+New canonical keys, added to `permissionRegistry.ts` in the same commit as the routes that use them:
+
+| Key | Guards |
+|-----|--------|
+| `opportunities.view` / `.create` / `.update` / `.delete` | The pipeline board |
+| `quotes.view` / `.create` / `.update` / `.send` / `.accept` / `.delete` | Quotation authoring and sending |
+| `invoices.view` / `.create` / `.update` / `.issue` / `.void` | Invoice lifecycle |
+| `sales.pipeline.view` | The department-wide pipeline dashboard |
+
+`ROLE_DEFAULT_PERMISSIONS` gains the matching entries for `ADMIN` (all keys) and `MARKETING`
+(the whole sales chain), so the seeded roles match the access they had under the old `requireRoles`
+guards.
+
 ---
 
 ## 6. Content Coverage Ledger (Regenerated from Current Routes)
@@ -405,20 +528,24 @@ Every document in the repository must carry one of these status badges at the to
 
 ---
 
-## 13. Immediate Next Actions — **Phase 2 (starts here)**
+## 13. Immediate Next Actions — **Phase 2 (in progress)**
 
-Phase 0 (§2.2) and Phase 1 (§2.3) are complete. Remaining Phase 1 follow-ups are
-listed first, then the Phase 2 backlog.
+Phase 0 (§2.2) and Phase 1 (§2.3) are complete. Phase 2's data-model delta is designed (§5.5);
+the implementation follows the four-commit order in §5.5.3 so the money type change is never
+mixed into the additive schema change.
 
 | Priority | Action | Owner | Gate |
 |----------|--------|-------|------|
+| **P1 (2.1)** | Commit A — additive schema: `Opportunity`, `Quote`, `QuoteLineItem`, `Invoice`, `InvoiceLineItem`, `Lead` extension | Backend | Migration is additive only; existing routes unaffected |
+| **P1 (2.2)** | Commit B — money helper + contract `Numeric(18,2)` + convert the §5.5.2 blast radius | Backend | `tsc` clean; contract emits offline; DB still `float8` |
+| **P1 (2.3)** | Commit C — the `float8 → numeric(18,2)` migration on Neon | Backend + Ops | Pre/post column totals match within one cent |
+| **P1 (2.4)** | Commit D — verification: totals check, payment round-trip, re-seed | Backend | §17 checklist green |
+| P2 (2.5) | Sales pipeline routes + permissions (`opportunities.*`, `quotes.*`, `invoices.*`, `sales.pipeline.view`) | Backend | Each route has a 401/403 spec |
+| P2 (2.6) | Sales workspace UI on the `/workspace` shell (pipeline board, quote editor, invoice list) | Frontend (admin) | Widgets driven by `effective-access` only |
 | P1 (1.7) | Add `Employee.preferences` JSON column and persist `theme` / `layout` from `effective-access` | Backend + Frontend (admin) | Preference survives reload |
 | P2 | Regenerate `PUBLIC_CONTENT_ADMIN_MATRIX.md` + `ANGISOFT_CAPABILITY_MAP.md` against live routes | Docs | No stale `frontend/src/**` paths remain |
 | P2 | Replace `isRole(req, [...])` response shaping and the inline `req.user?.role !== 'ADMIN'` checks in `bookings/routes/bookings.ts` with permission checks | Backend | Grep for `isRole(` / `role !== 'ADMIN'` only in helper definitions |
 | P3 | Add DB-mock route specs to the previously-unguarded routers (`bookings/staff`, `bookings/admin`, `client-projects`, `notifications`, `files/uploads`) | Backend | Each has at least one 401/403 spec |
-| **P2–Phase 2** | Sales/CRM department workspace: lead → opportunity → quotation → booking → project → invoice → support | Full stack | §14 Phase 2 metric |
-| **P2–Phase 2** | `Money` `Float` → `Decimal` migration (+ backfill) | Backend | Finance/ERP unblocked |
-| **P3–Phase 2** | Second department workspace (Delivery/Projects) reusing the workspace shell | Full stack | Widgets driven by `effective-access` only |
 
 ---
 
