@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import prisma from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { clearPermissionCache } from '../../../modules/identity/services/permissions';
 import { clearEffectiveCache } from '../../../modules/identity/services/effectivePermissions';
+import { PERMISSIONS, canonicalKey, groupedPermissions, validateRegistryIntegrity } from '../../../modules/identity/services/permissionRegistry';
 
 const roleSchema = z.object({
     key: z.string().min(2),
@@ -14,6 +15,17 @@ const roleSchema = z.object({
     permissionKeys: z.array(z.string()).default([])
 });
 
+/**
+ * Normalises incoming keys to the canonical registry vocabulary and drops
+ * duplicates, so `RolePermission` rows converge instead of storing aliases.
+ * Unknown keys are kept: `Permission.where({ key: { in: … } })` simply matches
+ * nothing, which keeps a half-migrated client from silently losing a grant it
+ * did send.
+ */
+function canonicalKeys(keys: string[]): string[] {
+    return [...new Set(keys.map(canonicalKey))];
+}
+
 const assignmentSchema = z.object({
     employeeId: z.string().min(1),
     roleId: z.string().min(1)
@@ -21,9 +33,9 @@ const assignmentSchema = z.object({
 
 export default function rolesRouter() {
     const router = Router();
-    const requireRoleAdmin = [requireAuth, requireRoles('ADMIN')];
-    const requireRoleManage = [requireAuth, requireRoles('ADMIN'), requirePermission('roles.manage')];
-    const requireStaffAssign = [requireAuth, requireRoles('ADMIN'), requirePermission('staff.assign_permissions')];
+    const requireRoleAdmin = [requireAuth, requireAccess('administration.roles', ['ADMIN'])];
+    const requireRoleManage = [requireAuth, requireAccess('administration.roles', ['ADMIN'])];
+    const requireStaffAssign = [requireAuth, requireAccess('staff.assign_permissions', ['ADMIN'])];
 
     const audit = async (req: AuthRequest, action: string, entity: string, entityId?: string) => {
         await prisma.orm.public.AuditLog.create({
@@ -39,6 +51,22 @@ export default function rolesRouter() {
     router.get('/permissions', ...requireRoleAdmin, async (_req: AuthRequest, res) => {
         const permissions = await prisma.orm.public.Permission.orderBy((p) => p.key.asc()).all();
         res.json(permissions);
+    });
+
+    /**
+     * Registry metadata for the Role & Permissions screen: display name, group,
+     * risk and ordering all live in code (the `Permission` table has no metadata
+     * columns yet — see the plan §5.2). Grouped so the UI needs no local copy of
+     * the permission list.
+     */
+    router.get('/catalogue', ...requireRoleAdmin, async (_req: AuthRequest, res) => {
+        const integrity = validateRegistryIntegrity();
+        res.json({
+            ok: integrity.ok,
+            problems: integrity.problems,
+            groups: groupedPermissions(),
+            counts: { permissions: PERMISSIONS.length },
+        });
     });
 
     router.get('/', ...requireRoleAdmin, async (_req: AuthRequest, res) => {
@@ -72,7 +100,7 @@ export default function rolesRouter() {
             description: data.description ?? null,
         });
         const permissions = await prisma.orm.public.Permission
-            .where((p) => p.key.in(permissionKeys))
+            .where((p) => p.key.in(canonicalKeys(permissionKeys)))
             .all();
         await prisma.transaction(async (tx) => {
             for (const permission of permissions) {
@@ -81,6 +109,8 @@ export default function rolesRouter() {
                 } catch { /* skipDuplicates */ }
             }
         });
+        clearPermissionCache();
+        clearEffectiveCache();
         await audit(req, 'role.create', 'AppRole', role.id);
         res.status(201).json(role);
     });
@@ -97,7 +127,7 @@ export default function rolesRouter() {
         if (permissionKeys) {
             await prisma.orm.public.RolePermission.where({ roleId: (role as any).id }).deleteAndCount();
             const permissions = await prisma.orm.public.Permission
-                .where((p) => p.key.in(permissionKeys))
+                .where((p) => p.key.in(canonicalKeys(permissionKeys)))
                 .all();
             await prisma.transaction(async (tx) => {
                 for (const permission of permissions) {

@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { AuthRequest, requireAuth, setRefreshCookie } from '../../../shared/middleware/auth';
 import rateLimit from 'express-rate-limit';
 import { generateSecret, generateOtpAuthUrl, verifyToken, generateBackupCodes, hashBackupCodes } from '../../../modules/identity/services/twofactor';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import zxcvbn from 'zxcvbn';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
 
@@ -120,7 +120,7 @@ router.post('/logout', async (req, res) => {
     res.json({ ok: true });
 });
 
-router.post('/revoke/:employeeId', requireAuth, requireRoles('ADMIN'), async (req, res) => {
+router.post('/revoke/:employeeId', requireAuth, requireAccess('staff.suspend', ['ADMIN']), async (req, res) => {
     const { employeeId } = req.params;
     await prisma.orm.public.RefreshToken.where({ employeeId }).updateAll({ revoked: true });
     await logAudit({ action: 'revoke_tokens', entity: 'Employee', entityId: employeeId, actorId: req.user?.sub || null, actorRole: req.user?.role || null });

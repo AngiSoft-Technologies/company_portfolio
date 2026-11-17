@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import type { Db } from '../../../db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { z } from 'zod';
 import { logAudit } from '../../../shared/services/audit';
 import {
@@ -34,13 +35,6 @@ export default function aiConfigRouter(prisma: Db) {
   const router = Router();
 
   router.use(requireAuth);
-
-  const requireAdmin = (req: AuthRequest, res: any, next: any) => {
-    if (req.user?.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-    next();
-  };
 
   const readCandidateConfig = async (
     req: Request,
@@ -78,7 +72,7 @@ export default function aiConfigRouter(prisma: Db) {
   };
 
   // ─── Current config + available provider presets ─────────────────────────
-  router.get('/ai-config', requireAdmin, async (req: Request, res: Response) => {
+  router.get('/ai-config', requireAccess('ai_config.view', ['ADMIN']), async (req: Request, res: Response) => {
     try {
       const { config, source } = await loadAIConfig(prisma as any);
       res.json({ config, source, presets: AI_PROVIDER_PRESETS });
@@ -89,7 +83,7 @@ export default function aiConfigRouter(prisma: Db) {
   });
 
   // ─── Save configuration ──────────────────────────────────────────────────
-  router.put('/ai-config', requireAdmin, async (req: AuthRequest, res: Response) => {
+  router.put('/ai-config', requireAccess('ai_config.update', ['ADMIN']), async (req: AuthRequest, res: Response) => {
     try {
       const { config: saved } = await loadAIConfig(prisma as any);
       const { config, error } = await readCandidateConfig(req, saved);
@@ -117,7 +111,7 @@ export default function aiConfigRouter(prisma: Db) {
   });
 
   // ─── Test connection ─────────────────────────────────────────────────────
-  router.post('/ai-config/test', requireAdmin, async (req: Request, res: Response) => {
+  router.post('/ai-config/test', requireAccess('ai_config.update', ['ADMIN']), async (req: Request, res: Response) => {
     try {
       const { config: saved } = await loadAIConfig(prisma as any);
       const { config, error } = await readCandidateConfig(req, saved);
@@ -155,7 +149,7 @@ export default function aiConfigRouter(prisma: Db) {
   });
 
   // ─── Fetch available models ──────────────────────────────────────────────
-  router.post('/ai-config/models', requireAdmin, async (req: Request, res: Response) => {
+  router.post('/ai-config/models', requireAccess('ai_config.view', ['ADMIN']), async (req: Request, res: Response) => {
     try {
       const { config: saved } = await loadAIConfig(prisma as any);
       const { config, error } = await readCandidateConfig(req, saved);

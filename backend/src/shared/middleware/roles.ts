@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
-import { has as hasEffectivePermission } from '../../modules/identity/services/effectivePermissions';
+import { has as hasEffectivePermission, isDenied } from '../../modules/identity/services/effectivePermissions';
 
 export function requireRoles(...roles: string[]) {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -42,14 +42,18 @@ export function requireAccess(permission: string, fallbackRoles: string[] = []) 
     return async (req: AuthRequest, res: Response, next: NextFunction) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
 
-        // SUPER_ADMIN's wildcard already evaluates to true below; keep the
-        // explicit check so a SUPER_ADMIN with an explicit DENY is still
-        // blocked (that is the documented precedence).
-        const hasPerm = await hasEffectivePermission(
-            { employeeId: req.user.sub, systemRole: req.user.role },
-            permission
-        );
-        if (hasPerm) return next();
+        const ctx = { employeeId: req.user.sub, systemRole: req.user.role };
+
+        // An explicit DENY is final. It must not be rescued by the role
+        // fallback below, or "DENY always wins" (plan §5.3) would be a lie for
+        // every route that still carries a fallback role.
+        if (await isDenied(ctx, permission)) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        // SUPER_ADMIN's wildcard already evaluates to true here; the explicit
+        // check above is what stops a SUPER_ADMIN who has been denied the key.
+        if (await hasEffectivePermission(ctx, permission)) return next();
 
         const role = req.user?.role;
         if (role && fallbackRoles.includes(role)) return next();

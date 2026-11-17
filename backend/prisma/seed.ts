@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 // truth for the database connection) plus its write helpers.
 import prisma from '../src/db';
 import { ts, newId } from '../src/prisma/db';
+import { PERMISSION_KEYS, PERMISSION_BY_KEY, ROLE_DEFAULT_PERMISSIONS, validateRegistryIntegrity } from '../src/modules/identity/services/permissionRegistry';
 
 // Optional pre-generated About-page default content. When present, it seeds the
 // canonical 26-key contract described by the frontend hook. Regenerate with:
@@ -66,35 +67,17 @@ async function main() {
     const admin = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
     const overwritePublicContent = process.env.SEED_OVERWRITE_PUBLIC_CONTENT === 'true';
 
-    // Keys used by route guards today. The legacy `content.*` / `*.manage`
-    // vocabulary and the granular `effectivePermissions` keys coexist during
-    // the single-registry migration (ANGISOFT_DIGITAL_HQ_PLAN.md §5.2, §12);
-    // both are seeded so a route can migrate without breaking role grants.
-    const permissionKeys = [
-        // ── Legacy vocabulary (kept for existing guards + UI) ──
-        'content.view', 'content.manage', 'content.publish', 'content.delete',
-        'settings.view', 'settings.manage',
-        'roles.view', 'roles.manage',
-        'staff.view', 'staff.manage', 'staff.profile.manage',
-        'products.manage', 'services.manage', 'blog.manage', 'careers.manage', 'analytics.view',
-        // ── Granular keys used by effectivePermissions guards ──
-        'chatbot.view_all', 'chatbot.respond',
-        'staff.assign_permissions', 'staff.assign_department', 'staff.assign_position',
-        'administration.roles', 'administration.settings', 'administration.audit', 'administration.impersonate',
-        'enquiries.view_all', 'enquiries.view_assigned', 'enquiries.respond', 'enquiries.close',
-        'bookings.view_all', 'bookings.view_assigned', 'bookings.update_assigned',
-        'bookings.change_stage', 'bookings.add_progress', 'bookings.message_customer', 'bookings.assign',
-        'projects.view', 'projects.view_assigned', 'projects.update_assigned', 'projects.manage',
-        'projects.add_progress', 'projects.assign_team',
-        'products.view_assigned', 'products.update_assigned',
-        'publications.create', 'publications.review', 'publications.publish',
-        'publications.view_own', 'publications.update_own',
-        'media.upload',
-        'pages.update_home', 'pages.update_about', 'pages.update_contact',
-        'pages.update_industries', 'pages.update_solutions', 'pages.update_announcements',
-        'reviews.moderate',
-        'profile.view_own', 'profile.update_own', 'profile.manage_visibility_own', 'profile.manage_gallery_own',
-    ];
+    // Canonical permission registry — the single source of truth.
+    // See `src/modules/identity/services/permissionRegistry.ts`.
+    // Legacy keys that predate the registry are not seeded as `Permission` rows;
+    // they are resolved to canonical keys at check time by `LEGACY_KEY_ALIASES`,
+    // so existing grants keep working without duplicate rows.
+    const integrity = validateRegistryIntegrity();
+    if (!integrity.ok) {
+        throw new Error(`Permission registry is inconsistent:\n  ${integrity.problems.join('\n  ')}`);
+    }
+
+    const permissionKeys = PERMISSION_KEYS;
 
     for (const key of permissionKeys) {
         await prisma.transaction(async (tx) => {
@@ -103,22 +86,24 @@ async function main() {
                 await tx.orm.public.Permission.create({
                     id: newId(),
                     key,
-                    description: key.replace(/\./g, ' '),
+                    description: PERMISSION_BY_KEY.get(key)?.description ?? key.replace(/\./g, ' '),
                     updatedAt: ts()
                 });
             }
         });
     }
 
+    // Role → permission grants come from the canonical registry, so the seed and
+    // the resolver can never disagree about what a role may do.
     const roleDefinitions = [
-        { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Full platform ownership', permissions: permissionKeys },
-        { key: 'ADMIN', name: 'Admin', description: 'Manage public content and operations', permissions: permissionKeys.filter((key) => key !== 'roles.manage') },
-        { key: 'MARKETING', name: 'Marketing', description: 'Manage public marketing content', permissions: ['content.view', 'content.manage', 'content.publish', 'settings.view', 'products.manage', 'services.manage', 'blog.manage', 'analytics.view'] },
-        { key: 'CONTENT_CREATOR', name: 'Content Creator', description: 'Create and update public content drafts', permissions: ['content.view', 'content.manage', 'settings.view', 'blog.manage'] },
-        { key: 'BLOG_MANAGER', name: 'Blog Manager', description: 'Manage blog and learning content', permissions: ['content.view', 'blog.manage', 'content.publish'] },
-        { key: 'HR', name: 'HR', description: 'Manage careers and staff public profiles', permissions: ['staff.view', 'staff.manage', 'staff.profile.manage', 'careers.manage'] },
-        { key: 'DEVELOPER', name: 'Developer', description: 'Manage assigned technical content and portfolio', permissions: ['content.view', 'staff.profile.manage'] },
-        { key: 'STAFF', name: 'Staff', description: 'Manage own public staff profile and portfolio', permissions: ['staff.profile.manage'] }
+        { key: 'SUPER_ADMIN', name: 'Super Admin', description: 'Full platform ownership', permissions: ROLE_DEFAULT_PERMISSIONS.ADMIN },
+        { key: 'ADMIN', name: 'Admin', description: 'Manage public content and operations', permissions: ROLE_DEFAULT_PERMISSIONS.ADMIN },
+        { key: 'MARKETING', name: 'Marketing', description: 'Manage public marketing content', permissions: ROLE_DEFAULT_PERMISSIONS.MARKETING },
+        { key: 'CONTENT_CREATOR', name: 'Content Creator', description: 'Create and update public content drafts', permissions: ROLE_DEFAULT_PERMISSIONS.CONTENT_CREATOR },
+        { key: 'BLOG_MANAGER', name: 'Blog Manager', description: 'Manage blog and learning content', permissions: ROLE_DEFAULT_PERMISSIONS.BLOG_MANAGER },
+        { key: 'HR', name: 'HR', description: 'Manage careers and staff public profiles', permissions: ROLE_DEFAULT_PERMISSIONS.HR },
+        { key: 'DEVELOPER', name: 'Developer', description: 'Manage assigned technical content and portfolio', permissions: ROLE_DEFAULT_PERMISSIONS.DEVELOPER },
+        { key: 'STAFF', name: 'Staff', description: 'Manage own public staff profile and portfolio', permissions: ROLE_DEFAULT_PERMISSIONS.STAFF }
     ];
 
     for (const definition of roleDefinitions) {

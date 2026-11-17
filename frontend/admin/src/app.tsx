@@ -3,7 +3,7 @@ import { AdminLogin } from '@/layouts/AdminLogin';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { NotFoundAdmin } from '@/layouts/NotFoundAdmin';
 import { AdminProtectedLayout } from '@angisoft/auth';
-import { EnhancedAdminDashboard, StaffDashboard } from '@/features/dashboard';
+import { EnhancedAdminDashboard, StaffDashboard, Workspace } from '@/features/dashboard';
 import { ContactsAdmin, ChatConversationsAdmin } from '@/features/crm';
 import { ClientProjectsManagement, ProjectsAdmin } from '@/features/projects';
 import { BookingsManagement } from '@/features/bookings';
@@ -11,7 +11,7 @@ import { BlogAdmin, ProductsAdmin, ServicesAdmin, ServiceCategoriesAdmin, HomeSe
 import { PaymentsAdmin } from '@/features/finance';
 import { StaffManagement, StaffAccess } from '@/features/hr-staff';
 import { AIConfigAdmin } from '@/features/ai-tools';
-import { SystemPanel, FileUploadManager } from '@/features/settings';
+import { SystemPanel, FileUploadManager, RolesAdmin } from '@/features/settings';
 
 function LegacyAdminRedirect() {
   const location = useLocation();
@@ -32,6 +32,7 @@ export default function App() {
       >
         <Route path="/" element={<EnhancedAdminDashboard />} />
         <Route path="dashboard" element={<EnhancedAdminDashboard />} />
+        <Route path="workspace" element={<Workspace />} />
         <Route path="staff-dashboard" element={<StaffDashboard />} />
         <Route path="contacts" element={<ContactsAdmin />} />
         <Route path="chat" element={<ChatConversationsAdmin />} />
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="service-categories" element={<ServiceCategoriesAdmin />} />
         <Route path="sections" element={<HomeSectionsAdmin />} />
         <Route path="settings" element={<SiteSettingsAdmin />} />
+        <Route path="settings/roles" element={<RolesAdmin />} />
         <Route path="faqs" element={<FaqsAdmin />} />
         <Route path="careers" element={<CareersAdmin />} />
         <Route path="testimonials" element={<TestimonialsAdmin />} />

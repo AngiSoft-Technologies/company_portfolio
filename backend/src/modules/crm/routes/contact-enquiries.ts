@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import { gContactLimiter } from '../../../shared/middleware/rateLimiter';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
@@ -183,7 +183,7 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
     });
 
     // Admin: list enquiries
-    router.get('/', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (req: AuthRequest, res) => {
+    router.get('/', requireAuth, requireAccess('enquiries.view_all', ['ADMIN', 'MARKETING', 'SALES']), async (req: AuthRequest, res) => {
         const { status, search } = req.query;
         let query: any = prisma.orm.public.ContactEnquiry;
         if (status) query = query.where({ status: String(status) });
@@ -205,7 +205,7 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
     });
 
     // Admin: stats
-    router.get('/stats', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (_req: AuthRequest, res) => {
+    router.get('/stats', requireAuth, requireAccess('enquiries.view_all', ['ADMIN', 'MARKETING', 'SALES']), async (_req: AuthRequest, res) => {
         const [total, newCount, inReview] = await Promise.all([
             countOf(prisma.orm.public.ContactEnquiry),
             countOf(prisma.orm.public.ContactEnquiry.where({ status: 'new' })),
@@ -216,7 +216,7 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
 
     // Public-scoped admin list: ADMIN + SUPER_ADMIN only (raw ContactEnquiry rows, no
     // service/product includes). Used by the enquiry admin dashboard's raw view.
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('enquiries.view_all', ['ADMIN']), async (_req: AuthRequest, res) => {
         const enquiries = await prisma.orm.public.ContactEnquiry
             .select('id', 'name', 'email', 'subject', 'message', 'enquiryType', 'status', 'assigneeId', 'createdAt')
             .orderBy((e: any) => e.createdAt.desc())
@@ -225,7 +225,7 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
     });
 
     // Admin: single + update
-    router.get('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (req: AuthRequest, res) => {
+    router.get('/:id', requireAuth, requireAccess('enquiries.view_all', ['ADMIN', 'MARKETING', 'SALES']), async (req: AuthRequest, res) => {
         const enquiry = await prisma.orm.public.ContactEnquiry
             .where({ id: req.params.id })
             .include('service', (sv: any) => sv.select('id', 'title', 'slug'))

@@ -54,8 +54,7 @@ answers "where are we?" without reading code.
 | Phase | Status | Remaining |
 |-------|--------|-----------|
 | **Phase 0 — Security Foundation** | ✅ Implemented | Deploy, then verify in production (§17) |
-|-------|--------|-----------|
-| Phase 1 — Unified Identity & Workspace Shell | ⬜ Not started | Permission registry, access UI, `/workspace` shell |
+| **Phase 1 — Unified Identity & Workspace Shell** | ✅ Implemented (1.7 deferred) | User preferences need an `Employee` preferences column |
 | Phase 2 — Department Workspaces | ⬜ Not started | Sales/CRM first |
 | Phase 3 — Portfolio Studio | ⬜ Not started | Persistent portfolio config model |
 | Phase 4 — Automation & Intelligence | ⬜ Not started | — |
@@ -92,23 +91,23 @@ Every P0 blocker is closed in code. Each row names the file that proves it.
 | + | Guards no longer lock out roles | `requireAccess(permission, fallbackRoles)` replaces stacked role+permission guards | `shared/middleware/roles.ts` |
 | + | CI quality gate | lint → typecheck → test before build/deploy | `.github/workflows/netlify-deploy.yml` |
 
-### 17. Production verification checklist (after next deploy)
+## 2.3 Phase 1 implementation record (2026-11-17)
 
-```bash
-# 1. Admin API is the API, not the SPA (must be JSON, not HTML)
-curl -sI https://admin.angisoft.co.ke/api/health | head -1
-curl -s  https://admin.angisoft.co.ke/api/chatbot/conversations | head -c 200   # expect 401 JSON
+Phase 1 replaces three incompatible permission vocabularies with one registry and
+makes access decisions visible in the admin app instead of hardcoded in routes.
 
-# 2. Web chatbot reaches the API too
-curl -sI https://www.angisoft.co.ke/api/health | head -1
-
-# 3. Cache isolation (public read still cacheable, authenticated read not)
-curl -sI https://api.angisoft.co.ke/api/faqs | grep -i cache-control
-curl -sI -H 'Authorization: Bearer x' https://api.angisoft.co.ke/api/faqs | grep -ci cache-control  # expect 0
-
-# 4. Run the suite against a disposable database
-TEST_DATABASE_URL='postgresql://…/angisoft_test' pnpm test
-```
+| # | Task | Implementation | Proof |
+|---|------|----------------|-------|
+| 1.1 | One canonical permission registry | `modules/identity/services/permissionRegistry.ts` holds **123** typed definitions (group / risk / scope / order), `PERMISSION_GROUPS`, `groupedPermissions()`, `validateRegistryIntegrity()`. `prisma/seed.ts` seeds `Permission` rows and role grants from it, and aborts if the registry is inconsistent. | `test/permission-registry.spec.ts` (14 specs) |
+| 1.2 | All route guards migrated | Every `requireRoles(...)` call removed from route files; guards now use `requireAccess(permission, fallbackRoles)`. Includes bespoke gates in `ai-config.ts` (local `requireAdmin`), `payment-console.ts` (local `allow(roles)`) and `site.ts` (per-section permissions). `/api/roles/catalogue` exposes the grouped registry to the UI. | `test/route-guards.spec.ts` (5 specs: no `requireRoles`, every guard key canonical, no retired key reused) |
+| 1.3 | Role & Permissions admin UI | `frontend/admin/src/features/settings/RolesAdmin.tsx` at `/settings/roles`: create/rename roles, grant permissions from the registry (grouped, filterable, risk-badged), see assignment counts. Writes `RolePermission` rows and clears both permission caches. | Plan §14 Phase 1 metric |
+| 1.4 | Staff Access screen complete | `StaffAccess.tsx` now renders the **full registry catalogue** with tri-state `Inherit / Grant / Deny` per permission, plus identity (department, position, seniority, public title) and assignment scopes. | Plan §14 Phase 1 metric |
+| 1.5 | Nav + guards wired to effective permissions | `lib/permissions.tsx` provides `EffectiveAccessProvider` / `useCan()` over `/api/staff-dashboard/effective-access`. `AdminLayout` nav links declare the permission they need; empty groups disappear. `can()` treats unknown as allowed but DENY as final, so the shell never blanks out. | `AdminLayout.tsx`, `permissions.tsx` |
+| 1.6 | Unified `/workspace` shell | `features/dashboard/Workspace.tsx` renders server-provided widgets with real assignment counts; a granted permission with zero records shows an empty state + CTA instead of hiding the module (plan §8). | `Workspace.tsx` |
+| 1.7 | Preferences & theme persistence | ⏳ **Deferred.** The payload already returns `preferences`, and the theme toggle works, but persistence needs an `Employee.preferences` (JSON) column. Tracked in §13. | — |
+| + | Legacy grants keep working during migration | `canonicalKey()` is applied on both sides of the resolver (`effectivePermissions.ts`, legacy `permissions.ts`), so a grant stored as `content.manage` still satisfies a guard checking `publications.review`. | `permissionRegistry.spec.ts` alias specs |
+| + | Role fallback cannot bypass DENY | `requireAccess` checks `isDenied()` **before** the role fallback, so an explicit DENY blocks even a fallback role and even `SUPER_ADMIN`. Precedence is now true for every route, migrated or not. | `test/require-access.spec.ts` (7 specs) |
+| + | Dashboard contract | `/api/staff-dashboard/permissions` now returns `assignmentCounts`; new `/api/staff-dashboard/effective-access` returns the versioned §8 payload (permissions with source/scope, counts, widgets, preferences). | `staff-dashboard.ts` |
 
 ---
 
@@ -209,8 +208,18 @@ Key models for the Digital HQ:
 - **Files/Realtime/AI**: `File`, `Notification`, `AnalyticsEvent`, `AiConfig`
 
 ### 5.2 Canonical Permission Registry
-Single source: `Permission` table + metadata columns (`group`, `risk`, `scope`, `model`, `endpoint`, `adminSurface`, `defaultRole`, `scopeRequired`).  
-All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrated to this registry** with a documented key map.
+Single source of truth: `backend/src/modules/identity/services/permissionRegistry.ts` — **123 typed definitions across 28 groups**.
+
+Metadata (`display`, `description`, `group`, `risk`, `scopeRequiresAssignment`, `order`) lives **in code**, because the `Permission` table currently has only `id`, `key` and `description`. `prisma/seed.ts` writes `Permission` rows and role grants from the registry and aborts if `validateRegistryIntegrity()` reports a problem, so the DB stays a projection of the code rather than a second source of truth. Adding metadata columns is a Phase 2 migration and changes nothing downstream.
+
+All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrated to this registry** with a documented key map:
+
+| Mechanism | Purpose |
+|-----------|---------|
+| `LEGACY_KEY_ALIASES` | Old key → canonical key. Applied by `canonicalKey()` on both sides of the resolver and on write, so a grant stored as `content.manage` still satisfies a guard checking `publications.review`. |
+| `ROLE_DEFAULT_PERMISSIONS` | Starter bundle per system role, seeded into `RolePermission`. Preserves the access each role had under the old `requireRoles(...)` guards. |
+| `requireAccess(permission, fallbackRoles)` | Route guard: permission **or** a fallback system role, with **explicit DENY checked first** so the fallback can never resurrect a denied key. |
+| `GET /api/roles/catalogue` | Grouped registry for the admin UI, so the screen can never drift from the keys the guards enforce. |
 
 | Scope | Meaning |
 |-------|---------|
@@ -396,19 +405,20 @@ Every document in the repository must carry one of these status badges at the to
 
 ---
 
-## 13. Immediate Next Actions — **Phase 1 (starts here)**
+## 13. Immediate Next Actions — **Phase 2 (starts here)**
 
-Phase 0 is complete (§2.2). The workQueue below is the Phase 1 backlog.
+Phase 0 (§2.2) and Phase 1 (§2.3) are complete. Remaining Phase 1 follow-ups are
+listed first, then the Phase 2 backlog.
 
 | Priority | Action | Owner | Gate |
 |----------|--------|-------|------|
-| P1 | Build the permission key migration map (3 vocabularies → 1 registry) | Backend + Docs | Every existing key has exactly one canonical target |
-| P1 | Seed the canonical `Permission` registry + role defaults | Backend | `npx prisma db seed` produces the map's keys |
-| P1 | Migrate `requireRoles(...)` guards to `requireAccess`/`requirePermission` | Backend | Each migrated route has a spec |
-| P1 | Regenerate `PUBLIC_CONTENT_ADMIN_MATRIX.md` + `ANGISOFT_CAPABILITY_MAP.md` against live routes | Docs | No stale `frontend/src/**` paths remain |
-| P1 | Return `assignmentCounts` from `/api/staff-dashboard/permissions` | Backend | Dashboard widget spec (§8) is satisfiable |
-| P2 | Build Role & Permissions admin UI (`/admin/settings/roles`) | Frontend (admin) | Phase 1.3 |
-| P2 | Unified `/workspace` shell + permission-driven nav | Frontend (admin) | Phase 1.6 |
+| P1 (1.7) | Add `Employee.preferences` JSON column and persist `theme` / `layout` from `effective-access` | Backend + Frontend (admin) | Preference survives reload |
+| P2 | Regenerate `PUBLIC_CONTENT_ADMIN_MATRIX.md` + `ANGISOFT_CAPABILITY_MAP.md` against live routes | Docs | No stale `frontend/src/**` paths remain |
+| P2 | Replace `isRole(req, [...])` response shaping and the inline `req.user?.role !== 'ADMIN'` checks in `bookings/routes/bookings.ts` with permission checks | Backend | Grep for `isRole(` / `role !== 'ADMIN'` only in helper definitions |
+| P3 | Add DB-mock route specs to the previously-unguarded routers (`bookings/staff`, `bookings/admin`, `client-projects`, `notifications`, `files/uploads`) | Backend | Each has at least one 401/403 spec |
+| **P2–Phase 2** | Sales/CRM department workspace: lead → opportunity → quotation → booking → project → invoice → support | Full stack | §14 Phase 2 metric |
+| **P2–Phase 2** | `Money` `Float` → `Decimal` migration (+ backfill) | Backend | Finance/ERP unblocked |
+| **P3–Phase 2** | Second department workspace (Delivery/Projects) reusing the workspace shell | Full stack | Widgets driven by `effective-access` only |
 
 ---
 
@@ -469,3 +479,35 @@ Phase 0 is complete (§2.2). The workQueue below is the Phase 1 backlog.
 
 **End of Canonical Plan.**  
 All implementation work proceeds from this document. Document updates follow the migration checklist above. No other document carries authoritative status for current or target state.
+
+---
+
+## 17. Production verification checklist (after next deploy)
+
+```bash
+# 1. Admin API is the API, not the SPA (must be JSON, not HTML)
+curl -sI https://admin.angisoft.co.ke/api/health | head -1
+curl -s  https://admin.angisoft.co.ke/api/chatbot/conversations | head -c 200   # expect 401 JSON
+
+# 2. Web chatbot reaches the API too
+curl -sI https://www.angisoft.co.ke/api/health | head -1
+
+# 3. Cache isolation (public read still cacheable, authenticated read not)
+curl -sI https://api.angisoft.co.ke/api/faqs | grep -i cache-control
+curl -sI -H 'Authorization: Bearer x' https://api.angisoft.co.ke/api/faqs | grep -ci cache-control  # expect 0
+
+# 4. Run the suite against a disposable database
+TEST_DATABASE_URL='postgresql://…/angisoft_test' pnpm test
+```
+
+After deploying, re-run the seed so `Permission` rows and role grants match the
+canonical registry (`prisma/seed.ts` is idempotent and aborts on an inconsistent
+registry):
+
+```bash
+cd backend && npx prisma db seed
+```
+
+Without it, roles keep the old coarse grants. They still resolve — `canonicalKey()`
+maps them — but new keys added in Phase 1 (e.g. `careers.applications.respond`,
+`ai_config.update`) stay ungranted until the seed runs.

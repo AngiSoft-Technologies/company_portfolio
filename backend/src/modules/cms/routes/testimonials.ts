@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles, isRole } from '../../../shared/middleware/roles';
+import { isRole, requireAccess } from '../../../shared/middleware/roles';
 import { testimonialsController } from '../controllers/testimonialsController';
 import db, { type Db } from '../../../db';
 import { newId } from '../../../prisma/db';
@@ -60,7 +60,7 @@ export default function testimonialsRouter(prisma: Db = db) {
         }
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -71,7 +71,7 @@ export default function testimonialsRouter(prisma: Db = db) {
         }
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -82,7 +82,7 @@ export default function testimonialsRouter(prisma: Db = db) {
         }
     });
 
-    router.patch('/:id/feature', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/feature', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const testimonial = await prisma.orm.public.Testimonial.where({ id: req.params.id }).first();
         if (!testimonial) return res.status(404).json({ error: 'Not found' });
         const updated = await prisma.orm.public.Testimonial.where({ id: req.params.id })
@@ -90,20 +90,20 @@ export default function testimonialsRouter(prisma: Db = db) {
         res.json(updated);
     });
 
-    router.patch('/:id/approve', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/approve', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const updated = await prisma.orm.public.Testimonial.where({ id: req.params.id })
             .update({ confirmed: true, rejected: false, rejectionReason: null });
         res.json(updated);
     });
 
-    router.patch('/:id/reject', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/reject', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const { reason } = req.body;
         const updated = await prisma.orm.public.Testimonial.where({ id: req.params.id })
             .update({ confirmed: false, rejected: true, rejectionReason: reason || 'Rejected by admin' });
         res.json(updated);
     });
 
-    router.patch('/:id/reply', requireAuth, requirePermission('reviews.moderate'), requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.patch('/:id/reply', requireAuth, requireAccess('reviews.moderate', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const { reply } = req.body;
         if (!reply) return res.status(400).json({ error: 'Reply required' });
         const updated = await prisma.orm.public.Testimonial.where({ id: req.params.id })
@@ -134,7 +134,7 @@ export default function testimonialsRouter(prisma: Db = db) {
         }
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('reviews.moderate', ['ADMIN']), async (req: AuthRequest, res) => {
         try {
             await testimonialsController.delete(req.params.id, req.user);
             res.json({ ok: true });

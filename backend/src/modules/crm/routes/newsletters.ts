@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -19,16 +19,16 @@ const countOf = (query: any) => query.aggregate((a: any) => ({ n: a.count() })).
 
 export default function newslettersRouter(prisma: Db = db) {
     const router = Router();
-    router.use(requireAuth, requireRoles('ADMIN', 'MARKETING'));
+    router.use(requireAuth);
 
-    router.get('/', async (req: AuthRequest, res) => {
+    router.get('/', requireAccess('newsletters.view', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const newsletters = await prisma.orm.public.Newsletter
             .orderBy((n: any) => n.createdAt.desc())
             .all();
         res.json(newsletters);
     });
 
-    router.get('/stats', async (req: AuthRequest, res) => {
+    router.get('/stats', requireAccess('newsletters.view', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const total = await countOf(prisma.orm.public.Newsletter);
         const sent = await countOf(prisma.orm.public.Newsletter.where({ status: 'sent' }));
         const totalSubscribers = await countOf(
@@ -37,7 +37,7 @@ export default function newslettersRouter(prisma: Db = db) {
         res.json({ total, sent, totalSubscribers });
     });
 
-    router.post('/', async (req: AuthRequest, res) => {
+    router.post('/', requireAccess('newsletters.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const newsletter = await prisma.orm.public.Newsletter.create({
@@ -52,7 +52,7 @@ export default function newslettersRouter(prisma: Db = db) {
         res.status(201).json(newsletter);
     });
 
-    router.put('/:id', async (req: AuthRequest, res) => {
+    router.put('/:id', requireAccess('newsletters.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -64,7 +64,7 @@ export default function newslettersRouter(prisma: Db = db) {
         res.json(newsletter);
     });
 
-    router.post('/:id/send', async (req: AuthRequest, res) => {
+    router.post('/:id/send', requireAccess('newsletters.send', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const newsletter = await prisma.orm.public.Newsletter.where({ id: req.params.id }).first();
         if (!newsletter) return res.status(404).json({ error: 'Not found' });
         const subscribers = await prisma.orm.public.Subscriber
@@ -79,7 +79,7 @@ export default function newslettersRouter(prisma: Db = db) {
         res.json({ newsletter: updated, recipientCount: subscribers.length });
     });
 
-    router.delete('/:id', async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAccess('newsletters.delete', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         await prisma.orm.public.Newsletter.where({ id: req.params.id }).delete();
         res.json({ ok: true });
     });

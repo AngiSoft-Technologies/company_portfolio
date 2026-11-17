@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 
 const updateSchema = z.object({
@@ -24,14 +24,14 @@ export default function homeSectionsRouter(prisma: Db = db) {
         res.json(sections);
     });
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING', 'CONTENT_CREATOR'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('pages.update_home', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR']), async (_req: AuthRequest, res) => {
         const sections = await prisma.orm.public.HomePageSection
             .orderBy((s: any) => s.order.asc())
             .all();
         res.json(sections);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('pages.update_home', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};

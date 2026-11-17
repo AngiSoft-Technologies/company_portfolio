@@ -3,6 +3,7 @@ import { and } from '@prisma/orm-postgres/orm-client';
 import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { generateReference, withScopeLock, applyPaymentOutcome, PaymentProviderError } from '../services/payments';
 import * as payhero from '../services/payments/payheroService';
 import * as paystack from '../services/payments/paystackService';
@@ -25,11 +26,6 @@ const WRITE_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MARKETING'];
 export default function paymentConsoleRouter(prisma: Db) {
     const router = Router();
     router.use(requireAuth);
-
-    const allow = (roles: string[]) => (req: AuthRequest, res: any, next: any) => {
-        if (!roles.includes(req.user?.role ?? '')) return res.status(403).json({ error: 'Access denied' });
-        next();
-    };
 
     const handleErr = (res: any, err: any) => {
         if (err instanceof PaymentProviderError || (err?.name && ['PayHeroError'].includes(err.name))) {
@@ -69,7 +65,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     }
 
     // ─── Overview ────────────────────────────────────────────────────────────
-    router.get('/summary', allow(READ_ROLES), async (req, res) => {
+    router.get('/summary', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const dayAgo = ts(Date.now() - 24 * 60 * 60 * 1000);
             const [channels, wallets, pending, succeededToday, recentPayments] = await Promise.all([
@@ -98,7 +94,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // ─── PayHero channels (the "accounts" customers pay into) ────────────────
-    router.get('/channels', allow(READ_ROLES), async (req, res) => {
+    router.get('/channels', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const data = await payhero.listChannels();
             if (data.payment_channels.length) {
@@ -116,13 +112,13 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.get('/bank-paybills', allow(READ_ROLES), async (req, res) => {
+    router.get('/bank-paybills', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try { res.json({ bank_paybills: await payhero.getBankPaybills() }); }
         catch (err) { handleErr(res, err); }
     });
 
     // POST /channels — register, idempotent by (channelType, shortCode, accountNumber) + idempotencyKey.
-    router.post('/channels', allow(WRITE_ROLES), async (req: AuthRequest, res) => {
+    router.post('/channels', requireAccess('payments.reconcile', WRITE_ROLES), async (req: AuthRequest, res) => {
         const { channelType, shortCode, accountNumber, transactionType, description, idempotencyKey } = req.body || {};
         if (!channelType || !['paybill', 'till', 'bank'].includes(channelType)) {
             return res.status(400).json({ error: 'channelType must be paybill | till | bank' });
@@ -200,7 +196,7 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.patch('/channels/:id', allow(WRITE_ROLES), async (req, res) => {
+    router.patch('/channels/:id', requireAccess('payments.reconcile', WRITE_ROLES), async (req, res) => {
         try {
             const { isActive } = req.body || {};
             const channel = await prisma.orm.public.PaymentChannel.where({ id: req.params.id }).first();
@@ -215,7 +211,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // ─── Wallets ─────────────────────────────────────────────────────────────
-    router.get('/wallets', allow(READ_ROLES), async (req, res) => {
+    router.get('/wallets', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const [service, payment] = await Promise.all([
                 payhero.getWallet('service_wallet'),
@@ -251,7 +247,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // POST /wallets/topup — idempotent via unique Payout.reference (channel 'topup').
-    router.post('/wallets/topup', allow(WRITE_ROLES), async (req: AuthRequest, res) => {
+    router.post('/wallets/topup', requireAccess('payments.reconcile', WRITE_ROLES), async (req: AuthRequest, res) => {
         const { amount, phone, reference } = req.body || {};
         if (!amount || !phone) return res.status(400).json({ error: 'amount and phone required' });
         try {
@@ -290,7 +286,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // ─── Payouts ─────────────────────────────────────────────────────────────
-    router.post('/payouts', allow(WRITE_ROLES), async (req: AuthRequest, res) => {
+    router.post('/payouts', requireAccess('payments.reconcile', WRITE_ROLES), async (req: AuthRequest, res) => {
         const { amount, channel, phone, accountNumber, networkCode, reference } = req.body || {};
         if (!amount || !networkCode) return res.status(400).json({ error: 'amount and networkCode required' });
         if (!['mobile', 'bank'].includes(channel)) return res.status(400).json({ error: 'channel must be mobile | bank' });
@@ -337,7 +333,7 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.get('/payouts', allow(READ_ROLES), async (req, res) => {
+    router.get('/payouts', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const status = String(req.query.status || '');
             const query = status
@@ -349,7 +345,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // ─── Transactions / status ───────────────────────────────────────────────
-    router.get('/transactions', allow(READ_ROLES), async (req, res) => {
+    router.get('/transactions', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const page = Math.max(1, Number(req.query.page) || 1);
             const perPage = Math.min(200, Math.max(1, Number(req.query.perPage) || 50));
@@ -377,7 +373,7 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.get('/status', allow(READ_ROLES), async (req, res) => {
+    router.get('/status', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const reference = String(req.query.reference || '');
             if (!reference) return res.status(400).json({ error: 'reference required' });
@@ -387,7 +383,7 @@ export default function paymentConsoleRouter(prisma: Db) {
     });
 
     // ─── Paystack (cards for now; subaccounts power the future partner split) ─
-    router.get('/paystack/transactions', allow(READ_ROLES), async (req, res) => {
+    router.get('/paystack/transactions', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try {
             const page = Math.max(1, Number(req.query.page) || 1);
             const perPage = Math.min(100, Math.max(1, Number(req.query.perPage) || 50));
@@ -395,7 +391,7 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.get('/paystack/verify/:reference', allow(READ_ROLES), async (req: AuthRequest, res) => {
+    router.get('/paystack/verify/:reference', requireAccess('payments.view_all', READ_ROLES), async (req: AuthRequest, res) => {
         try {
             const reference = String(req.params.reference || '');
             const txn = await paystack.verifyTransaction(reference);
@@ -412,12 +408,12 @@ export default function paymentConsoleRouter(prisma: Db) {
         } catch (err) { handleErr(res, err); }
     });
 
-    router.get('/paystack/subaccounts', allow(READ_ROLES), async (req, res) => {
+    router.get('/paystack/subaccounts', requireAccess('payments.view_all', READ_ROLES), async (req, res) => {
         try { res.json({ subaccounts: await paystack.listSubaccounts() }); }
         catch (err) { handleErr(res, err); }
     });
 
-    router.post('/paystack/subaccounts', allow(WRITE_ROLES), async (req: AuthRequest, res) => {
+    router.post('/paystack/subaccounts', requireAccess('payments.reconcile', WRITE_ROLES), async (req: AuthRequest, res) => {
         const { businessName, accountNumber, settlementBank, percentageCharge, description, idempotencyKey } = req.body || {};
         if (!businessName || !accountNumber || !settlementBank) {
             return res.status(400).json({ error: 'businessName, accountNumber and settlementBank required' });

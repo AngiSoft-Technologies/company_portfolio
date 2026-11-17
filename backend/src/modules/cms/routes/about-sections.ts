@@ -4,7 +4,7 @@ import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { asyncHandler } from '../../../shared/middleware/errorHandler';
 import { requireAuth } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 
 /*
 |--------------------------------------------------------------------------
@@ -103,7 +103,7 @@ export const aboutSectionsRouter = (prisma: Db = db) => {
   */
 
   const admin = Router();
-  admin.use(requireAuth, requireRoles('ADMIN', 'MARKETING', 'CONTENT_CREATOR'));
+  admin.use(requireAuth, requireAccess('pages.update_about', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR']));
 
   // List all sections (including disabled) for the CMS.
   admin.get(

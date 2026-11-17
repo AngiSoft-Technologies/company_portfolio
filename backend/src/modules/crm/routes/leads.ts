@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { or } from '@prisma/orm-postgres/orm-client';
@@ -23,9 +23,9 @@ const countOf = (query: any) => query.aggregate((a: any) => ({ n: a.count() })).
 
 export default function leadsRouter(prisma: Db = db) {
     const router = Router();
-    router.use(requireAuth, requireRoles('ADMIN', 'MARKETING'));
+    router.use(requireAuth);
 
-    router.get('/', async (req: AuthRequest, res) => {
+    router.get('/', requireAccess('leads.view', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const { status, search } = req.query;
         let query: any = prisma.orm.public.Lead;
         if (status) query = query.where({ status: String(status) });
@@ -42,14 +42,14 @@ export default function leadsRouter(prisma: Db = db) {
         res.json(leads);
     });
 
-    router.get('/stats', async (req: AuthRequest, res) => {
+    router.get('/stats', requireAccess('leads.view', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const total = await countOf(prisma.orm.public.Lead);
         const newCount = await countOf(prisma.orm.public.Lead.where({ status: 'new' }));
         const converted = await countOf(prisma.orm.public.Lead.where({ status: 'converted' }));
         res.json({ total, new: newCount, converted });
     });
 
-    router.post('/', async (req: AuthRequest, res) => {
+    router.post('/', requireAccess('leads.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const lead = await prisma.orm.public.Lead.create({
@@ -65,7 +65,7 @@ export default function leadsRouter(prisma: Db = db) {
         res.status(201).json(lead);
     });
 
-    router.put('/:id', async (req: AuthRequest, res) => {
+    router.put('/:id', requireAccess('leads.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -74,7 +74,7 @@ export default function leadsRouter(prisma: Db = db) {
         res.json(lead);
     });
 
-    router.delete('/:id', async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAccess('leads.delete', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         await prisma.orm.public.Lead.where({ id: req.params.id }).delete();
         res.json({ ok: true });
     });

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles, isRole } from '../../../shared/middleware/roles';
+import { isRole, requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import { projectsController } from '../../cms/controllers/projectsController';
 
 const createSchema = z.object({
@@ -86,7 +86,7 @@ export default function projectsRouter(prisma: Db = db) {
         }
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING', 'DEVELOPER'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('projects.manage', ['ADMIN', 'MARKETING', 'DEVELOPER']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { sendMail } from '../../../shared/services/email';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 
 const subscribeSchema = z.object({
@@ -112,9 +113,7 @@ export default function newsletterRouter(prisma: Db) {
     });
 
     // ─── Admin: List subscribers ────────────────────────────────────
-    router.get('/subscribers', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
-
+    router.get('/subscribers', requireAuth, requireAccess('newsletters.view', ['ADMIN', 'MARKETING']), async (req: any, res) => {
         const subscribers = await prisma.orm.public.Subscriber
             .where({ confirmed: true })
             .where((s: any) => s.unsubscribedAt.isNull())
@@ -124,9 +123,7 @@ export default function newsletterRouter(prisma: Db) {
     });
 
     // ─── Admin: Broadcast to all confirmed subscribers ──────────────
-    router.post('/broadcast', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
-
+    router.post('/broadcast', requireAuth, requireAccess('newsletters.send', ['ADMIN', 'MARKETING']), async (req: any, res) => {
         const parsed = broadcastSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
 

@@ -9,10 +9,11 @@
  *   - PUT  /api/admin/staff/:id/access   (full assignment write)
  *   - CRUD for Department, Position, PermissionPreset under /api/admin/*
  *
- * All endpoints require admin-level access: reads use `requirePermission`
- * (staff.view) and writes use staff.assign_permissions / staff.assign_department
- * / staff.assign_position, with a `requireRoles('ADMIN','SUPER_ADMIN')` fallback
- * so admins can operate during the permission-key transition.
+ * All endpoints require admin-level access through `requireAccess`: reads need
+ * `staff.view`, writes need `staff.assign_permissions` /
+ * `staff.assign_department` / `staff.assign_position`. Each call passes a
+ * `['ADMIN', 'SUPER_ADMIN']` fallback so admins keep working while older
+ * installs catch up with the canonical registry.
  */
 
 import { Router } from 'express';
@@ -24,8 +25,9 @@ import { ts, newId } from '../../../prisma/db';
 import { and } from '@prisma/orm-postgres/orm-client';
 import { clearPermissionCache } from '../../../modules/identity/services/permissions';
 import { clearEffectiveCache, getEffectivePermissions } from '../../../modules/identity/services/effectivePermissions';
+import { PERMISSIONS, canonicalKey } from '../../../modules/identity/services/permissionRegistry';
 
-// ─── Permission catalogue (hardcoded; mirrors the Phase 3 audit) ───────────
+// ─── Permission catalogue ──────────────────────────────────────────────────
 interface CatalogueEntry {
     key: string;
     display: string;
@@ -34,84 +36,16 @@ interface CatalogueEntry {
     risk: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
-export const PERMISSION_CATALOGUE: CatalogueEntry[] = [
-    // Profile
-    { key: 'profile.view', display: 'View Profile', description: 'View personal staff profile', group: 'Profile', risk: 'LOW' },
-    { key: 'profile.edit', display: 'Edit Profile', description: 'Edit own staff profile', group: 'Profile', risk: 'LOW' },
-    { key: 'profile.manage', display: 'Manage Profiles', description: 'Manage all staff profiles', group: 'Profile', risk: 'MEDIUM' },
-
-    // Staff
-    { key: 'staff.view', display: 'View Staff', description: 'View staff directory', group: 'Staff', risk: 'LOW' },
-    { key: 'staff.invite', display: 'Invite Staff', description: 'Invite new staff members', group: 'Staff', risk: 'HIGH' },
-    { key: 'staff.assign_permissions', display: 'Assign Permissions', description: 'Assign permissions/departments/positions', group: 'Staff', risk: 'HIGH' },
-    { key: 'staff.assign_department', display: 'Assign Department', description: 'Assign staff department', group: 'Staff', risk: 'HIGH' },
-    { key: 'staff.assign_position', display: 'Assign Position', description: 'Assign staff position', group: 'Staff', risk: 'HIGH' },
-    { key: 'staff.suspend', display: 'Suspend Staff', description: 'Suspend/revoke staff access', group: 'Staff', risk: 'HIGH' },
-
-    // Publications
-    { key: 'publications.view_own', display: 'View Own Publications', description: 'View own blog/publications', group: 'Publications', risk: 'LOW' },
-    { key: 'publications.update_own', display: 'Edit Own Publications', description: 'Edit own blog/publications', group: 'Publications', risk: 'LOW' },
-    { key: 'publications.view', display: 'View Publications', description: 'View all publications', group: 'Publications', risk: 'LOW' },
-    { key: 'publications.manage', display: 'Manage Publications', description: 'Create/edit/delete any publication', group: 'Publications', risk: 'MEDIUM' },
-    { key: 'publications.publish', display: 'Publish Publications', description: 'Publish/unpublish publications', group: 'Publications', risk: 'MEDIUM' },
-
-    // Services
-    { key: 'services.view', display: 'View Services', description: 'View services', group: 'Services', risk: 'LOW' },
-    { key: 'services.manage', display: 'Manage Services', description: 'Create/edit/delete services', group: 'Services', risk: 'MEDIUM' },
-
-    // Products
-    { key: 'products.view', display: 'View Products', description: 'View products', group: 'Products', risk: 'LOW' },
-    { key: 'products.view_assigned', display: 'View Assigned Products', description: 'View assigned products', group: 'Products', risk: 'LOW' },
-    { key: 'products.update_assigned', display: 'Update Assigned Products', description: 'Update assigned products', group: 'Products', risk: 'MEDIUM' },
-    { key: 'products.manage', display: 'Manage Products', description: 'Full product management', group: 'Products', risk: 'MEDIUM' },
-
-    // Pricing
-    { key: 'pricing.view', display: 'View Pricing', description: 'View pricing', group: 'Pricing', risk: 'LOW' },
-    { key: 'pricing.manage', display: 'Manage Pricing', description: 'Edit pricing', group: 'Pricing', risk: 'MEDIUM' },
-
-    // Bookings
-    { key: 'bookings.view', display: 'View Bookings', description: 'View all bookings', group: 'Bookings', risk: 'LOW' },
-    { key: 'bookings.view_assigned', display: 'View Assigned Bookings', description: 'View assigned bookings', group: 'Bookings', risk: 'LOW' },
-    { key: 'bookings.update_assigned', display: 'Update Assigned Bookings', description: 'Update assigned bookings', group: 'Bookings', risk: 'MEDIUM' },
-    { key: 'bookings.add_progress', display: 'Add Booking Progress', description: 'Add progress to assigned bookings', group: 'Bookings', risk: 'MEDIUM' },
-    { key: 'bookings.message_customer', display: 'Message Customer', description: 'Message customers on bookings', group: 'Bookings', risk: 'MEDIUM' },
-    { key: 'bookings.manage', display: 'Manage Bookings', description: 'Full booking management', group: 'Bookings', risk: 'MEDIUM' },
-
-    // Enquiries
-    { key: 'enquiries.view', display: 'View Enquiries', description: 'View all enquiries', group: 'Enquiries', risk: 'LOW' },
-    { key: 'enquiries.view_assigned', display: 'View Assigned Enquiries', description: 'View assigned enquiries', group: 'Enquiries', risk: 'LOW' },
-    { key: 'enquiries.respond', display: 'Respond to Enquiries', description: 'Respond to assigned enquiries', group: 'Enquiries', risk: 'MEDIUM' },
-    { key: 'enquiries.close', display: 'Close Enquiries', description: 'Close assigned enquiries', group: 'Enquiries', risk: 'MEDIUM' },
-    { key: 'enquiries.manage', display: 'Manage Enquiries', description: 'Full enquiry management', group: 'Enquiries', risk: 'MEDIUM' },
-
-    // Reviews
-    { key: 'reviews.view', display: 'View Reviews', description: 'View testimonials/reviews', group: 'Reviews', risk: 'LOW' },
-    { key: 'reviews.manage', display: 'Manage Reviews', description: 'Moderate reviews/testimonials', group: 'Reviews', risk: 'MEDIUM' },
-
-    // Media
-    { key: 'media.view', display: 'View Media', description: 'View media library', group: 'Media', risk: 'LOW' },
-    { key: 'media.upload', display: 'Upload Media', description: 'Upload media', group: 'Media', risk: 'LOW' },
-    { key: 'media.manage', display: 'Manage Media', description: 'Manage media library', group: 'Media', risk: 'MEDIUM' },
-
-    // Page Content
-    { key: 'page_content.view', display: 'View Page Content', description: 'View page content', group: 'Page Content', risk: 'LOW' },
-    { key: 'page_content.manage', display: 'Manage Page Content', description: 'Edit page content/sections', group: 'Page Content', risk: 'MEDIUM' },
-
-    // Projects
-    { key: 'projects.view', display: 'View Projects', description: 'View all projects', group: 'Projects', risk: 'LOW' },
-    { key: 'projects.view_assigned', display: 'View Assigned Projects', description: 'View assigned projects', group: 'Projects', risk: 'LOW' },
-    { key: 'projects.update_assigned', display: 'Update Assigned Projects', description: 'Update assigned projects', group: 'Projects', risk: 'MEDIUM' },
-    { key: 'projects.manage', display: 'Manage Projects', description: 'Full project management', group: 'Projects', risk: 'MEDIUM' },
-
-    // Analytics
-    { key: 'analytics.view', display: 'View Analytics', description: 'View analytics dashboards', group: 'Analytics', risk: 'LOW' },
-
-    // Administration
-    { key: 'administration.settings', display: 'Edit Settings', description: 'Edit site/administration settings', group: 'Administration', risk: 'HIGH' },
-    { key: 'administration.audit', display: 'View Audit Logs', description: 'View audit logs', group: 'Administration', risk: 'MEDIUM' },
-    { key: 'administration.roles', display: 'Manage Roles', description: 'Manage roles/presets', group: 'Administration', risk: 'HIGH' },
-    { key: 'administration.impersonate', display: 'Impersonate Users', description: 'Impersonate users', group: 'Administration', risk: 'HIGH' },
-];
+// Derived from the canonical permission registry — the single source of
+// truth. Previously this was a hand-maintained 49-entry copy that had
+// already drifted from the keys the route guards actually check.
+export const PERMISSION_CATALOGUE: CatalogueEntry[] = PERMISSIONS.map((p) => ({
+    key: p.key,
+    display: p.display,
+    description: p.description,
+    group: p.group,
+    risk: p.risk,
+}));
 
 // ─── Validation schemas ────────────────────────────────────────────────────
 const directPermissionSchema = z.object({
@@ -336,15 +270,22 @@ export default function staffAccessRouter() {
         });
 
         // ── Direct permissions: replace ──
+        // Keys are canonicalised on write so the table converges on the registry
+        // vocabulary instead of accumulating aliases forever (legacy rows are
+        // still readable via `canonicalKey()` in the resolver).
         const effect = (e: string): 'GRANT' | 'DENY' => (e === 'DENY' ? 'DENY' : 'GRANT');
         await prisma.orm.public.EmployeePermission.where({ employeeId }).deleteAndCount();
+        const written = new Set<string>();
         if (body.directPermissions.length) {
             for (const dp of body.directPermissions) {
+                const permissionKey = canonicalKey(dp.key);
+                if (written.has(permissionKey)) continue;
+                written.add(permissionKey);
                 try {
                     await prisma.orm.public.EmployeePermission.create({
                         id: newId(),
                         employeeId,
-                        permissionKey: dp.key,
+                        permissionKey,
                         effect: effect(dp.effect),
                         grantedById: req.user?.sub ?? null
                     });

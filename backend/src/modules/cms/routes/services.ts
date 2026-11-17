@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles, isRole } from '../../../shared/middleware/roles';
+import { isRole, requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import { servicesController } from '../controllers/servicesController';
 
 const createSchema = z.object({
@@ -120,7 +120,7 @@ export default function servicesRouter(prisma: Db = db) {
     // ── Pricing admin (Service.pricing JSON) ──
     // Least-invasive gap fix: no dedicated PricingPackage table. Expose the
     // existing Service.pricing JSON for admin viewing/editing.
-    router.get('/admin/pricing', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (_req: AuthRequest, res) => {
+    router.get('/admin/pricing', requireAuth, requireAccess('services.manage_pricing', ['ADMIN', 'MARKETING']), async (_req: AuthRequest, res) => {
         try {
             const services = await prisma.orm.public.Service
                 .select('id', 'title', 'slug', 'category', 'priceFrom', 'pricing')

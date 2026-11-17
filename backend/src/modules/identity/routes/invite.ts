@@ -8,7 +8,7 @@ import { sendMail } from '../../../shared/services/email';
 import { logAudit } from '../../../shared/services/audit';
 import { z } from 'zod';
 import { AuthRequest, requireAuth, setRefreshCookie } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
 
 // Mirrors the P7 `Role` enum (Employee.role values).
@@ -30,7 +30,7 @@ const acceptSchema = z.object({ token: z.string(), password: z.string().min(8), 
 export default function inviteRouter(prisma: Db) {
     const router = Router();
 
-    router.post('/', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('staff.invite', ['ADMIN']), async (req: AuthRequest, res) => {
         const parsed = inviteSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const { firstName, lastName, email, role, phone } = parsed.data;

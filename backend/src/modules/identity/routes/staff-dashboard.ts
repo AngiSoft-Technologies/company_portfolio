@@ -109,6 +109,46 @@ export default function staffDashboardRouter(prisma: Db) {
 
     router.use(requireAuth);
 
+    /** Assignment counts for the dashboard widget contract (plan §8). */
+    const loadAssignmentCounts = async (employeeId: string) => {
+        const count = (query: any) =>
+            query.aggregate((a: any) => ({ n: a.count() })).then((r: any) => r.n);
+
+        const [products, projects, bookings, enquiries, publications] = await Promise.all([
+            count(prisma.orm.public.ProductTeamMember.where({ employeeId })),
+            count(prisma.orm.public.ProjectEmployee.where({ employeeId })),
+            count(prisma.orm.public.Booking.where({ assignedToId: employeeId })),
+            count(prisma.orm.public.ContactEnquiry.where({ assigneeId: employeeId })),
+            count(prisma.orm.public.BlogPost.where({ authorId: employeeId })),
+        ]);
+
+        return { products, projects, bookings, enquiries, publications };
+    };
+
+    /**
+     * Widget catalogue (plan §8). A widget is shown when its permission is
+     * granted; a granted permission with zero assignments renders the empty
+     * state with a "Create first …" CTA — it is never silently hidden.
+     */
+    const WIDGET_CATALOGUE: { id: string; permission: string }[] = [
+        { id: 'my-products', permission: 'products.view_assigned' },
+        { id: 'my-projects', permission: 'projects.view_assigned' },
+        { id: 'assigned-bookings', permission: 'bookings.view_assigned' },
+        { id: 'customer-messages', permission: 'bookings.message_customer' },
+        { id: 'assigned-enquiries', permission: 'enquiries.view_assigned' },
+        { id: 'my-publications', permission: 'publications.view_own' },
+        { id: 'lead-pipeline', permission: 'leads.view' },
+        { id: 'support-inbox', permission: 'support_tickets.view' },
+        { id: 'careers-applications', permission: 'careers.applications.view' },
+        { id: 'revenue-overview', permission: 'payments.view_all' },
+        { id: 'analytics', permission: 'analytics.view' },
+    ];
+
+    const deriveWidgets = (granted: Set<string>, isSuperAdmin: boolean) =>
+        WIDGET_CATALOGUE
+            .filter((widget) => isSuperAdmin || granted.has(widget.permission))
+            .map((widget) => widget.id);
+
     // Effective permissions projection for the staff dashboard widget matrix.
     router.get('/permissions', async (req: AuthRequest, res) => {
         try {
@@ -125,7 +165,56 @@ export default function staffDashboardRouter(prisma: Db) {
             const permissions = isSuperAdmin
                 ? PERMISSION_CATALOGUE.map((entry) => entry.key)
                 : granted.filter((key) => key !== '*');
-            res.json({ permissions, isSuperAdmin });
+            const assignmentCounts = await loadAssignmentCounts(employeeId);
+            res.json({ permissions, isSuperAdmin, assignmentCounts });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    /**
+     * Versioned effective-access payload (plan §8). This is the single call the
+     * admin shell makes to decide which modules, widgets and actions to render.
+     */
+    router.get('/effective-access', async (req: AuthRequest, res) => {
+        try {
+            const employeeId = req.user?.sub;
+            if (!employeeId) return res.status(401).json({ error: 'Not authenticated' });
+
+            const [result, assignmentCounts, employee] = await Promise.all([
+                getEffectivePermissions({ employeeId, systemRole: req.user?.role }),
+                loadAssignmentCounts(employeeId),
+                prisma.orm.public.Employee
+                    .where({ id: employeeId })
+                    .select('departmentId', 'positionId')
+                    .first(),
+            ]);
+
+            const permissions = [...result.values()].map((perm) => ({
+                key: perm.key,
+                effect: perm.effect,
+                source: perm.source,
+                ...(perm.assignedScope ? { assignedScope: perm.assignedScope } : {}),
+            }));
+
+            const granted = new Set(
+                permissions.filter((p) => p.effect === 'GRANT').map((p) => p.key),
+            );
+            const isSuperAdmin = req.user?.role === 'SUPER_ADMIN' || granted.has('*');
+
+            res.json({
+                version: 1,
+                employeeId,
+                systemRole: req.user?.role ?? 'STAFF',
+                departmentId: employee?.departmentId ?? undefined,
+                positionId: employee?.positionId ?? undefined,
+                permissions,
+                assignmentCounts,
+                widgets: deriveWidgets(granted, isSuperAdmin),
+                // Per-user preferences persist in Phase 1.7 (needs an Employee
+                // preferences column); these are the documented defaults.
+                preferences: { theme: 'system', layout: 'default' },
+            });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }

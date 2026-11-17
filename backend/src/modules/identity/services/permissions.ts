@@ -1,5 +1,6 @@
 import prisma from '../../../db';
 import { AuthRequest } from '../../../shared/middleware/auth';
+import { canonicalKey } from './permissionRegistry';
 
 const permissionCache = new Map<string, { permissions: Set<string>; expiresAt: number }>();
 const CACHE_TTL_MS = 60_000;
@@ -19,7 +20,10 @@ export async function getEmployeePermissions(employeeId: string, enumRole?: stri
     const permissions = new Set<string>();
     for (const assignment of assignments as any[]) {
         for (const rolePermission of assignment.role?.rolePermissions ?? []) {
-            permissions.add(rolePermission.permission.key);
+            // Canonicalise so a grant stored under a legacy key (e.g.
+            // `content.manage`) satisfies a guard using the canonical key
+            // (e.g. `publications.review`) during the migration window.
+            permissions.add(canonicalKey(rolePermission.permission.key));
         }
     }
 
@@ -30,7 +34,7 @@ export async function getEmployeePermissions(employeeId: string, enumRole?: stri
 
 export async function hasPermission(employeeId: string, permission: string, enumRole?: string) {
     const permissions = await getEmployeePermissions(employeeId, enumRole);
-    return permissions.has('*') || permissions.has(permission);
+    return permissions.has('*') || permissions.has(canonicalKey(permission));
 }
 
 export function requirePermission(permission: string) {

@@ -2,25 +2,25 @@ import { Router } from 'express';
 import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 
 const SITE_SECTIONS = [
-    { slug: 'about', key: 'site_about', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'hero', key: 'site_hero', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'contact', key: 'site_contact', roles: ['ADMIN'] },
-    { slug: 'footer', key: 'site_footer', roles: ['ADMIN'] },
-    { slug: 'ui', key: 'site_ui', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'booking', key: 'site_booking', roles: ['ADMIN', 'MARKETING'] },
-    { slug: 'branding', key: 'site_branding', roles: ['ADMIN'] },
-    { slug: 'navigation', key: 'site_navigation', roles: ['ADMIN'] },
-    { slug: 'home-content', key: 'site_home_content', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'industries', key: 'site_industries', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'tech-platforms', key: 'site_tech_platforms', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'success-stories', key: 'site_success_stories', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'pricing', key: 'site_pricing', roles: ['ADMIN', 'MARKETING'] },
-    { slug: 'products-page', key: 'site_products_page', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'services-page', key: 'site_services_page', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'careers_content', key: 'careers_content', roles: ['ADMIN', 'HR', 'MARKETING'] }
+    { slug: 'about', key: 'site_about', permission: 'pages.update_about', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'hero', key: 'site_hero', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'contact', key: 'site_contact', permission: 'pages.update_contact', roles: ['ADMIN'] },
+    { slug: 'footer', key: 'site_footer', permission: 'pages.update_site_chrome', roles: ['ADMIN'] },
+    { slug: 'ui', key: 'site_ui', permission: 'pages.update_site_chrome', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'booking', key: 'site_booking', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING'] },
+    { slug: 'branding', key: 'site_branding', permission: 'pages.update_site_chrome', roles: ['ADMIN'] },
+    { slug: 'navigation', key: 'site_navigation', permission: 'pages.update_site_chrome', roles: ['ADMIN'] },
+    { slug: 'home-content', key: 'site_home_content', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'industries', key: 'site_industries', permission: 'pages.update_industries', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'tech-platforms', key: 'site_tech_platforms', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'success-stories', key: 'site_success_stories', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'pricing', key: 'site_pricing', permission: 'services.manage_pricing', roles: ['ADMIN', 'MARKETING'] },
+    { slug: 'products-page', key: 'site_products_page', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'services-page', key: 'site_services_page', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
+    { slug: 'careers_content', key: 'careers_content', permission: 'careers.update_content', roles: ['ADMIN', 'HR', 'MARKETING'] }
 ] as const;
 
 /**
@@ -65,7 +65,7 @@ export default function siteRouter(prisma: Db) {
             }
         });
 
-        router.put(`/${section.slug}`, requireAuth, requireRoles(...section.roles), async (req: AuthRequest, res) => {
+        router.put(`/${section.slug}`, requireAuth, requireAccess(section.permission, [...section.roles]), async (req: AuthRequest, res) => {
             try {
                 const result = await upsertSetting(section.key, req.body, req);
                 res.json((result as any).value);

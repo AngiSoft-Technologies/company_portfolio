@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -48,7 +48,7 @@ export default function productsRouter(prisma: Db = db) {
         res.json(products);
     });
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('products.view', ['ADMIN', 'MARKETING']), async (_req: AuthRequest, res) => {
         const products = await prisma.orm.public.Product
             .orderBy((p: any) => p.sortOrder.asc())
             .include('productFaqs', (f: any) => f.count())
@@ -140,7 +140,7 @@ export default function productsRouter(prisma: Db = db) {
         res.json(product);
     });
 
-    router.delete('/:id', requireAuth, requirePermission('products.archive'), requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('products.archive', ['ADMIN']), async (req: AuthRequest, res) => {
         await prisma.orm.public.Product.where({ id: req.params.id }).delete();
         await auditProduct(req, 'product.delete', req.params.id);
         res.json({ ok: true });

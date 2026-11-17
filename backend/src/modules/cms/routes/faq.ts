@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { z } from 'zod';
 
 const faqSchema = z.object({
@@ -29,10 +30,7 @@ export default function faqRouter(prisma: Db) {
     });
 
     // ─── Admin: List all FAQs (including unpublished) ───────────────
-    router.get('/all', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
-            return res.status(403).json({ error: 'Not allowed' });
-        }
+    router.get('/all', requireAuth, requireAccess('faqs.view', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'BLOG_MANAGER']), async (_req: any, res) => {
         try {
             const faqs = await prisma.orm.public.Faq
                 .orderBy([(f: any) => f.category.asc(), (f: any) => f.order.asc()])
@@ -44,10 +42,7 @@ export default function faqRouter(prisma: Db) {
     });
 
     // ─── Admin: Create FAQ ──────────────────────────────────────────
-    router.post('/', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
-            return res.status(403).json({ error: 'Not allowed' });
-        }
+    router.post('/', requireAuth, requireAccess('faqs.create', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'BLOG_MANAGER']), async (req: any, res) => {
         const parsed = faqSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
 
@@ -68,10 +63,7 @@ export default function faqRouter(prisma: Db) {
     });
 
     // ─── Admin: Update FAQ ──────────────────────────────────────────
-    router.put('/:id', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MARKETING') {
-            return res.status(403).json({ error: 'Not allowed' });
-        }
+    router.put('/:id', requireAuth, requireAccess('faqs.update', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'BLOG_MANAGER']), async (req: any, res) => {
         const parsed = faqSchema.partial().safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
 
@@ -87,10 +79,7 @@ export default function faqRouter(prisma: Db) {
     });
 
     // ─── Admin: Delete FAQ ──────────────────────────────────────────
-    router.delete('/:id', requireAuth, async (req: any, res) => {
-        if (req.user?.role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Admin only' });
-        }
+    router.delete('/:id', requireAuth, requireAccess('faqs.delete', ['ADMIN']), async (req: any, res) => {
         try {
             const deleted = await prisma.orm.public.Faq.where({ id: req.params.id }).delete();
             if (!deleted) return res.status(404).json({ error: 'FAQ not found' });

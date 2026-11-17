@@ -7,19 +7,20 @@
  * Precedence (highest first wins). A key's final effect is the highest-
  * precedence source that mentions it. DENY always overrides any grant.
  *
- *   1. SYSTEM   — SUPER_ADMIN grants the `*` wildcard (all keys).
- *   2. ROLE     — EmployeeRoleAssignment → AppRole → RolePermission → Permission.key
- *   3. PRESET   — Employee.positionId → Position.defaultPermissionKeys
+ *   1. SYSTEM     — SUPER_ADMIN grants the `*` wildcard (all keys)
+ *   2. DENY       — EmployeePermission rows with effect = 'DENY' (not expired)
+ *   3. GRANT      — EmployeePermission rows with effect = 'GRANT' (not expired)
  *   4. ASSIGNMENT — scoped grants from ProductTeamMember / ProjectEmployee /
  *                   Booking(assignedToId) / ContactEnquiry(assigneeId)
- *   5. GRANT    — EmployeePermission rows with effect = 'GRANT' (not expired)
- *   6. DENY     — EmployeePermission rows with effect = 'DENY'  (not expired)
+ *   5. PRESET     — Employee.positionId → Position.defaultPermissionKeys
+ *   6. ROLE       — EmployeeRoleAssignment → AppRole → RolePermission → Permission.key
  *
  * NOTE: This module does NOT modify the legacy `permissions.ts` service; that
  * file is preserved for existing callers. Middleware wiring happens in Phase 2.
  */
 
 import prisma from '../../../db';
+import { canonicalKey } from './permissionRegistry';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -91,11 +92,16 @@ export async function getEffectivePermissions(
   const result = new Map<string, EffectivePerm>();
 
   const setPerm = (
-    key: string,
+    rawKey: string,
     effect: 'GRANT' | 'DENY',
     source: EffectiveSource,
     assignedScope?: EffectiveScope
   ) => {
+    // Legacy keys stored in the database (e.g. `content.manage`) are mapped to
+    // their canonical equivalent here, so a grant made under the old vocabulary
+    // still satisfies a guard that uses the new one — and vice versa. The `*`
+    // wildcard is never a legacy key, so it passes through untouched.
+    const key = canonicalKey(rawKey);
     const existing = result.get(key);
     // DENY always wins; otherwise higher numeric precedence wins.
     if (
@@ -269,10 +275,11 @@ async function loadAssignmentRows(
  */
 export async function has(ctx: EffectiveContext, key: string): Promise<boolean> {
   const perms = await getEffectivePermissions(ctx);
+  const canonical = canonicalKey(key);
 
   // 1. An explicit DENY on this exact key wins over everything, including
   //    the SYSTEM wildcard granted to SUPER_ADMIN.
-  const direct = perms.get(key);
+  const direct = perms.get(canonical);
   if (direct?.effect === 'DENY') return false;
 
   // 2. A global '*' DENY also blocks (defensive; not currently produced).
@@ -286,17 +293,32 @@ export async function has(ctx: EffectiveContext, key: string): Promise<boolean> 
 }
 
 /**
+ * True when the key is explicitly DENIED for this employee.
+ *
+ * This is separate from `has()` returning `false`, because `false` also covers
+ * "never granted". Route guards need the distinction: an explicit DENY must
+ * block even when the caller would otherwise pass a role fallback, whereas
+ * "never granted" is exactly the case the fallback exists to cover.
+ */
+export async function isDenied(ctx: EffectiveContext, key: string): Promise<boolean> {
+  const perms = await getEffectivePermissions(ctx);
+  const canonical = canonicalKey(key);
+  if (perms.get(canonical)?.effect === 'DENY') return true;
+  return perms.get('*')?.effect === 'DENY';
+}
+
+/**
  * Returns the assignedScope entries for a key (used by route guards for
  * ownership checks). Returns null if the key has no assigned scope.
- */
-export async function getAssignedScope(
+ */export async function getAssignedScope(
   ctx: EffectiveContext,
   key: string
 ): Promise<EffectiveScope[] | null> {
   const perms = await getEffectivePermissions(ctx);
+  const canonical = canonicalKey(key);
   const matches: EffectiveScope[] = [];
   for (const p of perms.values()) {
-    if (p.key === key && p.assignedScope) matches.push(p.assignedScope);
+    if (p.key === canonical && p.assignedScope) matches.push(p.assignedScope);
   }
   return matches.length ? matches : null;
 }

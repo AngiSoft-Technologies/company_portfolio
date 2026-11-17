@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -18,7 +18,7 @@ const updateSchema = z.object({ status: z.string().optional() });
 export default function productInquiriesRouter(prisma: Db = db) {
     const router = Router();
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING', 'SALES'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('product_inquiries.view', ['ADMIN', 'MARKETING', 'SALES']), async (_req: AuthRequest, res) => {
         const inquiries = await prisma.orm.public.ProductInquiry
             .include('product', (p: any) => p.select('name', 'slug'))
             .orderBy((i: any) => i.createdAt.desc())
@@ -42,7 +42,7 @@ export default function productInquiriesRouter(prisma: Db = db) {
         res.status(201).json(inquiry);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('product_inquiries.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};

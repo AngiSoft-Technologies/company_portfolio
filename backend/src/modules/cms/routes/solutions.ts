@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -47,7 +47,7 @@ export default function solutionsRouter(prisma: Db = db) {
     });
 
     // Admin: all solutions.
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('solutions.view', ['ADMIN']), async (_req: AuthRequest, res) => {
         try {
             const items = await prisma.orm.public.Solution
                 .orderBy([(s: any) => s.sortOrder.asc(), (s: any) => s.createdAt.desc()])
@@ -58,7 +58,7 @@ export default function solutionsRouter(prisma: Db = db) {
         }
     });
 
-    router.post('/admin', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+    router.post('/admin', requireAuth, requireAccess('solutions.create', ['ADMIN']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
         const data = parsed.data;
@@ -79,7 +79,7 @@ export default function solutionsRouter(prisma: Db = db) {
         }
     });
 
-    router.put('/admin/:id', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+    router.put('/admin/:id', requireAuth, requireAccess('solutions.update', ['ADMIN']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
         const data = parsed.data;
@@ -98,7 +98,7 @@ export default function solutionsRouter(prisma: Db = db) {
         }
     });
 
-    router.delete('/admin/:id', requireAuth, requireRoles('ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/admin/:id', requireAuth, requireAccess('solutions.delete', ['ADMIN']), async (req: AuthRequest, res) => {
         try {
             await prisma.orm.public.Solution.where({ id: req.params.id }).delete();
             res.status(204).end();

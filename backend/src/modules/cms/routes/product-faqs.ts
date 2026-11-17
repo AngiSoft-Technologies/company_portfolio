@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -29,7 +29,7 @@ export default function productFaqsRouter(prisma: Db = db) {
         }).catch(() => undefined);
     };
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING', 'CONTENT_CREATOR'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('product_faqs.view', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR']), async (_req: AuthRequest, res) => {
         const faqs = await prisma.orm.public.ProductFaq
             .include('product', (p: any) => p.select('id', 'name', 'slug'))
             .orderBy([(f: any) => f.productId.asc(), (f: any) => f.order.asc()])
@@ -45,7 +45,7 @@ export default function productFaqsRouter(prisma: Db = db) {
         res.json(faqs);
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING', 'CONTENT_CREATOR'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('product_faqs.create', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const faq = await prisma.orm.public.ProductFaq.create({
@@ -61,7 +61,7 @@ export default function productFaqsRouter(prisma: Db = db) {
         res.status(201).json(faq);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('product_faqs.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -71,7 +71,7 @@ export default function productFaqsRouter(prisma: Db = db) {
         res.json(faq);
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('product_faqs.delete', ['ADMIN']), async (req: AuthRequest, res) => {
         await prisma.orm.public.ProductFaq.where({ id: req.params.id }).delete();
         await auditFaq(req, 'productFaq.delete', req.params.id);
         res.json({ ok: true });

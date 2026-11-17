@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { or } from '@prisma/orm-postgres/orm-client';
@@ -30,14 +30,14 @@ export default function announcementsRouter(prisma: Db = db) {
         res.json(announcements);
     });
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('pages.update_announcements', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const announcements = await prisma.orm.public.Announcement
             .orderBy((a: any) => a.createdAt.desc())
             .all();
         res.json(announcements);
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('pages.update_announcements', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const data = parsed.data;
@@ -56,7 +56,7 @@ export default function announcementsRouter(prisma: Db = db) {
         res.status(201).json(announcement);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('pages.update_announcements', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -70,7 +70,7 @@ export default function announcementsRouter(prisma: Db = db) {
         res.json(announcement);
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('pages.update_announcements', ['ADMIN']), async (req: AuthRequest, res) => {
         await prisma.orm.public.Announcement.where({ id: req.params.id }).delete();
         res.json({ ok: true });
     });

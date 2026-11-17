@@ -2,64 +2,80 @@ import { useContext } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AdminThemeContext } from '@/styles/theme';
 import { apiFetch } from '@/lib/adminApi';
+import { EffectiveAccessProvider, useEffectiveAccess } from '@/lib/permissions';
 
-const NAV_GROUPS: { title: string; links: { to: string; label: string }[] }[] = [
+/**
+ * Navigation is permission-driven (plan Phase 1.5): each link names the
+ * permission that grants access, and groups with no visible link disappear
+ * entirely. A link with no permission is always shown (dashboards, workspace).
+ */
+type NavLinkSpec = { to: string; label: string; permission?: string };
+
+const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
   {
     title: 'Overview',
     links: [
       { to: '/', label: 'Dashboard' },
+      { to: '/workspace', label: 'My Workspace' },
       { to: '/staff-dashboard', label: 'Staff Dashboard' },
     ],
   },
   {
     title: 'CRM',
     links: [
-      { to: '/contacts', label: 'Contacts' },
-      { to: '/chat', label: 'Chat Conversations' },
+      { to: '/contacts', label: 'Contacts', permission: 'enquiries.view_all' },
+      { to: '/chat', label: 'Chat Conversations', permission: 'chatbot.view_all' },
     ],
   },
   {
     title: 'Operations',
     links: [
-      { to: '/projects', label: 'Projects' },
-      { to: '/client-projects', label: 'Client Projects' },
-      { to: '/bookings', label: 'Bookings' },
-      { to: '/payments', label: 'Payments' },
+      { to: '/projects', label: 'Projects', permission: 'projects.view' },
+      { to: '/client-projects', label: 'Client Projects', permission: 'client_projects.view_all' },
+      { to: '/bookings', label: 'Bookings', permission: 'bookings.view_all' },
+      { to: '/payments', label: 'Payments', permission: 'payments.view_all' },
     ],
   },
   {
     title: 'Content',
     links: [
-      { to: '/blogs', label: 'Blogs' },
-      { to: '/products', label: 'Products' },
-      { to: '/services', label: 'Services' },
-      { to: '/service-categories', label: 'Service Categories' },
-      { to: '/sections', label: 'Home Sections' },
-      { to: '/testimonials', label: 'Testimonials' },
-      { to: '/faqs', label: 'FAQs' },
-      { to: '/industries', label: 'Industries' },
-      { to: '/solutions', label: 'Solutions' },
-      { to: '/careers', label: 'Careers' },
-      { to: '/pricing', label: 'Pricing' },
-      { to: '/about', label: 'About Sections' },
+      { to: '/blogs', label: 'Blogs', permission: 'publications.create' },
+      { to: '/products', label: 'Products', permission: 'products.view' },
+      { to: '/services', label: 'Services', permission: 'services.view' },
+      { to: '/service-categories', label: 'Service Categories', permission: 'service_categories.view' },
+      { to: '/sections', label: 'Home Sections', permission: 'pages.update_home' },
+      { to: '/testimonials', label: 'Testimonials', permission: 'reviews.moderate' },
+      { to: '/faqs', label: 'FAQs', permission: 'faqs.view' },
+      { to: '/industries', label: 'Industries', permission: 'industries.view' },
+      { to: '/solutions', label: 'Solutions', permission: 'solutions.view' },
+      { to: '/careers', label: 'Careers', permission: 'careers.view' },
+      { to: '/pricing', label: 'Pricing', permission: 'services.manage_pricing' },
+      { to: '/about', label: 'About Sections', permission: 'pages.update_about' },
     ],
   },
   {
     title: 'People & System',
     links: [
-      { to: '/staff', label: 'Staff Management' },
-      { to: '/staff-access', label: 'Staff Access' },
-      { to: '/ai', label: 'AI Config' },
-      { to: '/uploads', label: 'File Uploads' },
-      { to: '/settings', label: 'Site Settings' },
-      { to: '/system', label: 'System Panel' },
+      { to: '/staff', label: 'Staff Management', permission: 'staff.view' },
+      { to: '/staff-access', label: 'Staff Access', permission: 'staff.assign_permissions' },
+      { to: '/settings/roles', label: 'Roles & Permissions', permission: 'administration.roles' },
+      { to: '/ai', label: 'AI Config', permission: 'ai_config.view' },
+      { to: '/uploads', label: 'File Uploads', permission: 'media.upload' },
+      { to: '/settings', label: 'Site Settings', permission: 'administration.settings' },
+      { to: '/system', label: 'System Panel', permission: 'administration.audit' },
     ],
   },
 ];
 
-export function AdminLayout() {
+function AdminShell() {
   const { mode, toggleMode } = useContext(AdminThemeContext);
+  const { can, access } = useEffectiveAccess();
   const location = useLocation();
+
+  const groups = NAV_GROUPS.map((group) => ({
+    title: group.title,
+    links: group.links.filter((l) => !l.permission || can(l.permission)),
+  })).filter((group) => group.links.length > 0);
 
   const logout = async () => {
     try {
@@ -83,7 +99,7 @@ export function AdminLayout() {
           </div>
         </div>
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-          {NAV_GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.title}>
               <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 {group.title}
@@ -110,6 +126,12 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="border-t border-slate-200 p-3">
+          {access ? (
+            <div className="mb-2 px-3 text-[11px] text-slate-400">
+              {access.systemRole}
+              {access.departmentId ? ` · dept` : ''}
+            </div>
+          ) : null}
           <button
             onClick={logout}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
@@ -142,6 +164,14 @@ export function AdminLayout() {
         </main>
       </div>
     </div>
+  );
+}
+
+export function AdminLayout() {
+  return (
+    <EffectiveAccessProvider>
+      <AdminShell />
+    </EffectiveAccessProvider>
   );
 }
 

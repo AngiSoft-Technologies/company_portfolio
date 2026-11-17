@@ -3,7 +3,7 @@ import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { or } from '@prisma/orm-postgres/orm-client';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles, isRole } from '../../../shared/middleware/roles';
+import { isRole, requireAccess } from '../../../shared/middleware/roles';
 import { serviceCategoriesController } from '../controllers/serviceCategoriesController';
 
 const createSchema = z.object({
@@ -56,7 +56,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
     });
 
     // Protected writes
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('service_categories.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -73,7 +73,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
         }
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('service_categories.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
@@ -99,7 +99,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
         }
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('service_categories.delete', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         try {
             await prisma.orm.public.Service
                 .where({ categoryId: req.params.id })

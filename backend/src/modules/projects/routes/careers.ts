@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -68,7 +68,7 @@ export default function careersRouter(prisma: Db = db) {
     res.json(jobs.map(remapJob));
   });
 
-  router.get('/admin', requireAuth, requireRoles('ADMIN', 'HR', 'MANAGER'), async (_req: AuthRequest, res) => {
+  router.get('/admin', requireAuth, requireAccess('careers.view', ['ADMIN', 'HR', 'MANAGER']), async (_req: AuthRequest, res) => {
     const jobs = await prisma.orm.public.JobPosting
       .orderBy([
         (j: any) => j.featured.desc(),
@@ -85,7 +85,7 @@ export default function careersRouter(prisma: Db = db) {
     res.json(remapJob(job));
   });
 
-  router.post('/', requireAuth, requireRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthRequest, res) => {
+  router.post('/', requireAuth, requireAccess('careers.create', ['ADMIN', 'HR', 'MANAGER']), async (req: AuthRequest, res) => {
     const parsed = createSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
     const data = parsed.data;
@@ -122,7 +122,7 @@ export default function careersRouter(prisma: Db = db) {
     res.status(201).json(remapJob(job));
   });
 
-  router.put('/:id', requireAuth, requireRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthRequest, res) => {
+  router.put('/:id', requireAuth, requireAccess('careers.update', ['ADMIN', 'HR', 'MANAGER']), async (req: AuthRequest, res) => {
     const parsed = updateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
     const data = parsed.data;
@@ -137,7 +137,7 @@ export default function careersRouter(prisma: Db = db) {
     res.json(job ? remapJob(job) : null);
   });
 
-  router.delete('/:id', requireAuth, requireRoles('ADMIN', 'HR'), async (req: AuthRequest, res) => {
+  router.delete('/:id', requireAuth, requireAccess('careers.delete', ['ADMIN', 'HR']), async (req: AuthRequest, res) => {
     await prisma.orm.public.JobPosting.where({ id: req.params.id }).delete();
     res.json({ ok: true });
   });

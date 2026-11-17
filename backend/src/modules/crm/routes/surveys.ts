@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -30,7 +30,7 @@ const toSurveyRow = (s: any) => {
 export default function surveysRouter(prisma: Db = db) {
     const router = Router();
 
-    router.get('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.get('/', requireAuth, requireAccess('surveys.view', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const surveys = await withResponseCount(prisma.orm.public.Survey)
             .orderBy((s: any) => s.createdAt.desc())
             .all();
@@ -51,7 +51,7 @@ export default function surveysRouter(prisma: Db = db) {
         res.json(toSurveyRow(survey));
     });
 
-    router.get('/:id/responses', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.get('/:id/responses', requireAuth, requireAccess('surveys.view_responses', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const responses = await prisma.orm.public.SurveyResponse
             .where({ surveyId: req.params.id })
             .orderBy((r: any) => r.createdAt.desc())
@@ -59,7 +59,7 @@ export default function surveysRouter(prisma: Db = db) {
         res.json(responses);
     });
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('surveys.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const survey = await prisma.orm.public.Survey.create({
@@ -73,7 +73,7 @@ export default function surveysRouter(prisma: Db = db) {
         res.status(201).json(survey);
     });
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('surveys.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.partial().safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -101,7 +101,7 @@ export default function surveysRouter(prisma: Db = db) {
         res.status(201).json(response);
     });
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('surveys.delete', ['ADMIN']), async (req: AuthRequest, res) => {
         await prisma.orm.public.Survey.where({ id: req.params.id }).delete();
         res.json({ ok: true });
     });

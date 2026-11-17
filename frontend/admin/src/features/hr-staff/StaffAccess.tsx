@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, EmptyState, Field, PageHeader, Spinner, Table, inputClass } from '@/components';
+import { Button, Card, EmptyState, Field, PageHeader, Spinner, inputClass } from '@/components';
 import { apiFetch } from '@/lib/adminApi';
 import { Badge } from '@/lib/Badge';
 import { toArr, type Rec } from '@/lib/records';
@@ -28,7 +28,19 @@ interface StaffRow {
 interface PermissionOption {
   key: string;
   display: string;
+  description?: string;
+  group?: string;
+  risk?: string;
 }
+
+interface AssignmentScopes {
+  products: string[];
+  projects: string[];
+  bookings: string[];
+  enquiries: string[];
+}
+
+const NO_SCOPES: AssignmentScopes = { products: [], projects: [], bookings: [], enquiries: [] };
 
 interface AccessState {
   employee: {
@@ -47,6 +59,10 @@ interface AccessState {
   directPermissions: { key: string; effect: 'GRANT' | 'DENY' }[];
   rolePermissions: string[];
   positionDefaults: string[];
+  /** Product / project / booking / enquiry ids this employee is assigned to. */
+  assignmentScopes: AssignmentScopes;
+  /** Canonical registry catalogue, so the editor can grant new permissions. */
+  catalogs?: PermissionOption[];
 }
 
 type Effect = 'GRANT' | 'DENY' | 'ROLE' | 'POSITION' | 'NONE';
@@ -65,6 +81,7 @@ interface PermissionRow {
   effect: Effect;
   direct?: 'GRANT' | 'DENY';
   display?: string;
+  group?: string;
 }
 
 /** Reads a string field, treating missing/empty/unknown as the em-dash sentinel. */
@@ -83,6 +100,77 @@ function staffName(rec: Rec): string {
   return joined || asStr(rec, 'email');
 }
 
+function inheritedNote(rows: PermissionRow[]): string {
+  const grants = rows.filter((r) => r.direct === 'GRANT').length;
+  const denies = rows.filter((r) => r.direct === 'DENY').length;
+  if (!grants && !denies) {
+    return 'No explicit overrides — every permission is inherited from role and position.';
+  }
+  return `${grants} explicit grant(s), ${denies} explicit denial(s). Everything else is inherited.`;
+}
+
+/**
+ * The API returns the access state in two halves — `current` (what is stored)
+ * and `effective` (what the resolver computes from it). Older builds returned a
+ * flat payload, so both shapes are accepted here; reading only one of them is
+ * what left the permission list empty.
+ */
+interface RawAccess {
+  employee?: AccessState['employee'];
+  departments?: unknown;
+  positions?: unknown;
+  presets?: unknown;
+  catalogs?: AccessState['catalogs'];
+  current?: {
+    identity?: Partial<{
+      departmentId: string | null;
+      positionId: string | null;
+      seniorityLevel: string | null;
+      publicTitle: string | null;
+    }>;
+    directPermissions?: AccessState['directPermissions'];
+    rolePermissions?: string[];
+    presetPermissions?: string[];
+    assignmentScopes?: Partial<AssignmentScopes>;
+  };
+  // Flat shape (kept for compatibility).
+  directPermissions?: AccessState['directPermissions'];
+  rolePermissions?: string[];
+  positionDefaults?: string[];
+}
+
+function flattenAccess(raw: RawAccess): AccessState {
+  const current = raw.current;
+  const scopes = (current?.assignmentScopes ?? {}) as Partial<AssignmentScopes>;
+  return {
+    employee: {
+      id: raw.employee?.id ?? '',
+      firstName: raw.employee?.firstName,
+      lastName: raw.employee?.lastName,
+      email: raw.employee?.email,
+      role: raw.employee?.role,
+      departmentId: current?.identity?.departmentId ?? raw.employee?.departmentId ?? null,
+      positionId: current?.identity?.positionId ?? raw.employee?.positionId ?? null,
+      seniorityLevel: current?.identity?.seniorityLevel ?? raw.employee?.seniorityLevel ?? null,
+      publicTitle: current?.identity?.publicTitle ?? raw.employee?.publicTitle ?? null,
+    },
+    departments: toArr(raw.departments),
+    positions: toArr(raw.positions),
+    directPermissions: current?.directPermissions ?? raw.directPermissions ?? [],
+    rolePermissions: current?.rolePermissions ?? raw.rolePermissions ?? [],
+    // The API calls it `presetPermissions`; the UI has always called the same
+    // thing `positionDefaults` (they are the position's default keys).
+    positionDefaults: current?.presetPermissions ?? raw.positionDefaults ?? [],
+    assignmentScopes: {
+      products: scopes.products ?? [],
+      projects: scopes.projects ?? [],
+      bookings: scopes.bookings ?? [],
+      enquiries: scopes.enquiries ?? [],
+    },
+    catalogs: raw.catalogs ?? [],
+  };
+}
+
 export function StaffAccess() {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [staffLoading, setStaffLoading] = useState(true);
@@ -93,6 +181,7 @@ export function StaffAccess() {
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [permFilter, setPermFilter] = useState('');
 
   const [departmentId, setDepartmentId] = useState('');
   const [positionId, setPositionId] = useState('');
@@ -123,19 +212,13 @@ export function StaffAccess() {
     setError(null);
     setSaved(false);
     try {
-      const json = (await apiFetch(`/api/admin/staff/${encodeURIComponent(employeeId)}/access`)) as AccessState;
-      setAccess({
-        ...json,
-        directPermissions: json.directPermissions ?? [],
-        rolePermissions: json.rolePermissions ?? [],
-        positionDefaults: json.positionDefaults ?? [],
-        departments: toArr(json.departments),
-        positions: toArr(json.positions),
-      });
-      setDepartmentId(json.employee?.departmentId ?? '');
-      setPositionId(json.employee?.positionId ?? '');
-      setSeniorityLevel(json.employee?.seniorityLevel ?? '');
-      setPublicTitle(json.employee?.publicTitle ?? '');
+      const raw = (await apiFetch(`/api/admin/staff/${encodeURIComponent(employeeId)}/access`)) as RawAccess;
+      const next = flattenAccess(raw);
+      setAccess(next);
+      setDepartmentId(next.employee.departmentId ?? '');
+      setPositionId(next.employee.positionId ?? '');
+      setSeniorityLevel(next.employee.seniorityLevel ?? '');
+      setPublicTitle(next.employee.publicTitle ?? '');
     } catch (e) {
       setError((e as Error).message || 'Failed to load access');
       setAccess(null);
@@ -165,34 +248,56 @@ export function StaffAccess() {
   );
 
   const rows = useMemo<PermissionRow[]>(() => {
-    const keys = new Set<string>();
+    const meta = new Map<string, { display?: string; group?: string }>();
+    for (const c of access?.catalogs ?? []) meta.set(c.key, { display: c.display, group: c.group });
+
+    // Keys that exist on the employee but not in the registry are surfaced too,
+    // so a retired/legacy grant cannot hide from the administrator.
+    const extra = new Set<string>();
     if (access) {
-      for (const d of access.directPermissions) keys.add(d.key);
-      for (const k of access.rolePermissions) keys.add(k);
-      for (const k of access.positionDefaults) keys.add(k);
+      for (const d of access.directPermissions) if (!meta.has(d.key)) extra.add(d.key);
+      for (const k of access.rolePermissions) if (!meta.has(k)) extra.add(k);
+      for (const k of access.positionDefaults) if (!meta.has(k)) extra.add(k);
     }
-    return [...keys]
-      .sort()
-      .map((key) => {
-        const { effect, direct } = effectFor(key);
-        return { id: key, key, effect, direct };
-      });
+
+    return [...meta.keys(), ...[...extra].sort()].map((key) => {
+      const { effect, direct } = effectFor(key);
+      const m = meta.get(key);
+      return { id: key, key, effect, direct, display: m?.display, group: m?.group };
+    });
   }, [access, effectFor]);
 
-  const toggle = (key: string) => {
+  const filteredRows = useMemo(() => {
+    const needle = permFilter.trim().toLowerCase();
+    if (!needle) return rows;
+    return rows.filter(
+      (r) =>
+        r.key.toLowerCase().includes(needle) ||
+        (r.display ?? '').toLowerCase().includes(needle) ||
+        (r.group ?? '').toLowerCase().includes(needle),
+    );
+  }, [rows, permFilter]);
+
+  const groupedRows = useMemo(() => {
+    const groups = new Map<string, PermissionRow[]>();
+    for (const row of filteredRows) {
+      const group = row.group ?? 'Other';
+      const bucket = groups.get(group);
+      if (bucket) bucket.push(row);
+      else groups.set(group, [row]);
+    }
+    return [...groups.entries()];
+  }, [filteredRows]);
+
+  /** Set an explicit override, or clear it to restore inheritance. */
+  const setDirect = (key: string, effect: 'GRANT' | 'DENY' | null) => {
     setAccess((prev) => {
       if (!prev) return prev;
-      const existing = prev.directPermissions.find((d) => d.key === key);
-      let next: { key: string; effect: 'GRANT' | 'DENY' }[];
-      if (!existing) {
-        // Inherited → the useful action is an explicit DENY.
-        next = [...prev.directPermissions, { key, effect: 'DENY' }];
-      } else if (existing.effect === 'DENY') {
-        next = prev.directPermissions.filter((d) => d.key !== key);
-      } else {
-        next = prev.directPermissions.map((d) => (d.key === key ? { ...d, effect: 'DENY' as const } : d));
-      }
-      return { ...prev, directPermissions: next };
+      const rest = prev.directPermissions.filter((d) => d.key !== key);
+      return {
+        ...prev,
+        directPermissions: effect ? [...rest, { key, effect }] : rest,
+      };
     });
     setSaved(false);
   };
@@ -211,7 +316,9 @@ export function StaffAccess() {
           seniorityLevel: seniorityLevel || null,
           publicTitle: publicTitle || null,
           directPermissions: access.directPermissions,
-          assignmentScopes: { products: [], projects: [], bookings: [], enquiries: [] },
+          // Send back what was loaded: the PUT replaces these rows, so an empty
+          // default here would silently unassign the employee from everything.
+          assignmentScopes: access.assignmentScopes,
         },
       });
       setSaved(true);
@@ -340,68 +447,140 @@ export function StaffAccess() {
               </Card>
 
               <Card>
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-1 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-slate-700">Assignments</h2>
+                  <Badge tone="slate">Preserved on save</Badge>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">
+                  Scoped work this employee is attached to. Saving this screen replaces
+                  direct permissions and identity only — these assignments are written
+                  back unchanged, so nothing is unassigned by accident.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-4">
+                  {(
+                    [
+                      ['Products', access.assignmentScopes.products],
+                      ['Projects', access.assignmentScopes.projects],
+                      ['Bookings', access.assignmentScopes.bookings],
+                      ['Enquiries', access.assignmentScopes.enquiries],
+                    ] as const
+                  ).map(([label, ids]) => (
+                    <div key={label} className="rounded-lg border border-slate-200 px-3 py-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        {label}
+                      </div>
+                      <div className="mt-1 text-lg font-semibold text-slate-800">{ids.length}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-sm font-semibold text-slate-700">Permissions</h2>
-                  {saved ? <Badge tone="green">Saved</Badge> : null}
+                  <div className="flex items-center gap-3">
+                    {saved ? <Badge tone="green">Saved</Badge> : null}
+                    <input
+                      className={`${inputClass} max-w-xs`}
+                      value={permFilter}
+                      onChange={(e) => setPermFilter(e.target.value)}
+                      placeholder="Filter permissions"
+                      disabled={saving}
+                    />
+                  </div>
                 </div>
                 <p className="mb-4 text-xs text-slate-500">
-                  Inherited permissions come from the assigned role and position defaults. Toggling adds an explicit{' '}
-                  <strong>DENY</strong>, which always wins — toggle again to remove the override and restore inheritance.
+                  <strong>Inherit</strong> uses the role and position defaults. <strong>Grant</strong> adds an explicit
+                  grant for this employee only. <strong>Deny</strong> always wins — even over SUPER_ADMIN.
                 </p>
                 {saveError ? (
                   <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{saveError}</div>
                 ) : null}
                 {rows.length === 0 ? (
-                  <EmptyState title="No permissions or assignments for this employee" />
+                  <EmptyState title="No permissions in the registry" />
                 ) : (
-                  <Table<PermissionRow>
-                    rows={rows}
-                    columns={[
-                      {
-                        key: 'key',
-                        header: 'Permission',
-                        render: (r) => <span className="font-mono text-xs text-slate-700">{r.key}</span>,
-                      },
-                      {
-                        key: 'effect',
-                        header: 'Effective',
-                        render: (r) => {
-                          const label =
-                            r.effect === 'DENY'
-                              ? 'DENY (explicit)'
-                              : r.effect === 'GRANT'
-                                ? 'GRANT (explicit)'
-                                : r.effect === 'ROLE'
-                                  ? 'Inherited — role'
-                                  : r.effect === 'POSITION'
-                                    ? 'Inherited — position'
-                                    : 'Not granted';
-                          return <Badge tone={EFFECT_TONE[r.effect]}>{label}</Badge>;
-                        },
-                      },
-                      {
-                        key: 'toggle',
-                        header: 'Override',
-                        render: (r) => {
-                          const isDenied = r.direct === 'DENY';
-                          return (
-                            <button
-                              onClick={() => toggle(r.key)}
-                              disabled={saving}
-                              className={`rounded px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
-                                isDenied
-                                  ? 'border border-emerald-200 text-emerald-600 hover:bg-emerald-50'
-                                  : 'border border-red-200 text-red-600 hover:bg-red-50'
-                              }`}
-                            >
-                              {isDenied ? 'Remove deny' : 'Deny'}
-                            </button>
-                          );
-                        },
-                      },
-                    ]}
-                  />
+                  <div className="space-y-6">
+                    {groupedRows.map(([group, groupRows]) => (
+                      <div key={group}>
+                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          {group}
+                        </h3>
+                        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                          {groupRows.map((r) => {
+                            return (
+                              <div
+                                key={r.key}
+                                className="flex flex-wrap items-center justify-between gap-3 px-3 py-2"
+                              >
+                                <div className="min-w-0">
+                                  <div className="text-sm text-slate-800">{r.display ?? r.key}</div>
+                                  <div className="font-mono text-[11px] text-slate-400">{r.key}</div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <Badge tone={EFFECT_TONE[r.effect]}>
+                                    {r.effect === 'DENY'
+                                      ? 'DENY'
+                                      : r.effect === 'GRANT'
+                                        ? 'GRANT · explicit'
+                                        : r.effect === 'ROLE'
+                                          ? 'role'
+                                          : r.effect === 'POSITION'
+                                            ? 'position'
+                                            : 'not granted'}
+                                  </Badge>
+
+                                  <div className="flex overflow-hidden rounded-md border border-slate-200 text-xs">
+                                    <button
+                                      onClick={() => setDirect(r.key, null)}
+                                      disabled={saving}
+                                      className={`px-2 py-1 disabled:opacity-50 ${
+                                        !r.direct ? 'bg-slate-100 font-medium text-slate-700' : 'text-slate-500 hover:bg-slate-50'
+                                      }`}
+                                      title="Use inherited permissions"
+                                    >
+                                      Inherit
+                                    </button>
+                                    <button
+                                      onClick={() => setDirect(r.key, 'GRANT')}
+                                      disabled={saving}
+                                      className={`border-l border-slate-200 px-2 py-1 disabled:opacity-50 ${
+                                        r.direct === 'GRANT'
+                                          ? 'bg-emerald-100 font-medium text-emerald-700'
+                                          : 'text-slate-500 hover:bg-slate-50'
+                                      }`}
+                                      title="Grant explicitly to this employee"
+                                    >
+                                      Grant
+                                    </button>
+                                    <button
+                                      onClick={() => setDirect(r.key, 'DENY')}
+                                      disabled={saving}
+                                      className={`border-l border-slate-200 px-2 py-1 disabled:opacity-50 ${
+                                        r.direct === 'DENY'
+                                          ? 'bg-red-100 font-medium text-red-700'
+                                          : 'text-slate-500 hover:bg-slate-50'
+                                      }`}
+                                      title="Deny this employee explicitly"
+                                    >
+                                      Deny
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    {groupedRows.length === 0 ? (
+                      <EmptyState title="No permissions match that filter" />
+                    ) : null}
+                  </div>
                 )}
+                <p className="mt-4 text-[11px] text-slate-400">
+                  {inheritedNote(rows)}
+                </p>
               </Card>
 
               <div className="flex items-center gap-3">

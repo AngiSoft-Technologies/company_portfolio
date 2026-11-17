@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { asyncHandler } from '../../../shared/middleware/errorHandler';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
@@ -32,14 +32,14 @@ export default function companyStatsRouter(prisma: Db = db) {
         res.json(stats);
     }));
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'MARKETING', 'MANAGER'), asyncHandler(async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('company_stats.view', ['ADMIN', 'MARKETING', 'MANAGER']), asyncHandler(async (_req: AuthRequest, res) => {
         const stats = await prisma.orm.public.CompanyStat
             .orderBy((s: any) => s.order.asc())
             .all();
         res.json(stats);
     }));
 
-    router.post('/', requireAuth, requireRoles('ADMIN', 'MARKETING'), asyncHandler(async (req: AuthRequest, res) => {
+    router.post('/', requireAuth, requireAccess('company_stats.update', ['ADMIN', 'MARKETING']), asyncHandler(async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const stat = await prisma.orm.public.CompanyStat.create({
@@ -59,7 +59,7 @@ export default function companyStatsRouter(prisma: Db = db) {
         res.status(201).json(stat);
     }));
 
-    router.put('/:id', requireAuth, requireRoles('ADMIN', 'MARKETING'), asyncHandler(async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, requireAccess('company_stats.update', ['ADMIN', 'MARKETING']), asyncHandler(async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
@@ -68,7 +68,7 @@ export default function companyStatsRouter(prisma: Db = db) {
         res.json(stat);
     }));
 
-    router.delete('/:id', requireAuth, requireRoles('ADMIN'), asyncHandler(async (req: AuthRequest, res) => {
+    router.delete('/:id', requireAuth, requireAccess('company_stats.delete', ['ADMIN']), asyncHandler(async (req: AuthRequest, res) => {
         await prisma.orm.public.CompanyStat.where({ id: req.params.id }).delete();
         res.json({ ok: true });
     }));

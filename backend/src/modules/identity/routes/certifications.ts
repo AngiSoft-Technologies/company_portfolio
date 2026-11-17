@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -29,7 +29,7 @@ export default function certificationsRouter(prisma: Db = db) {
         }).catch(() => undefined);
     };
 
-    router.get('/admin', requireAuth, requireRoles('ADMIN', 'HR', 'MANAGER'), async (_req: AuthRequest, res) => {
+    router.get('/admin', requireAuth, requireAccess('certifications.view', ['ADMIN', 'HR', 'MANAGER']), async (_req: AuthRequest, res) => {
         const certs = await prisma.orm.public.Certification
             .include('employee', (e: any) => e.select('id', 'firstName', 'lastName', 'username', 'email'))
             .orderBy((c: any) => c.createdAt.desc())

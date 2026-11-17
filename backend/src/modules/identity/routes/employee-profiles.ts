@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { requirePermission, requireRoles } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -48,7 +48,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
         }).catch(() => undefined);
     };
 
-    router.get('/portfolio/admin', requireAuth, requireRoles('ADMIN', 'HR', 'MANAGER'), async (_req: AuthRequest, res) => {
+    router.get('/portfolio/admin', requireAuth, requireAccess('staff.view', ['ADMIN', 'HR', 'MANAGER']), async (_req: AuthRequest, res) => {
         const items = await prisma.orm.public.EmployeePortfolioItem
             .include('employee', (e: any) => e.select('id', 'firstName', 'lastName', 'username', 'email'))
             .orderBy([(i: any) => i.employeeId.asc(), (i: any) => i.order.asc()])
