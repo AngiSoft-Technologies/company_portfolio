@@ -50,7 +50,7 @@ export function PaymentsAdmin() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No payments" />
         </div>
       ) : (

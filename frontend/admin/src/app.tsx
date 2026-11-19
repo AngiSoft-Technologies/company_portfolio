@@ -9,6 +9,7 @@ import { ClientProjectsManagement, ProjectsAdmin } from '@/features/projects';
 import { BookingsManagement } from '@/features/bookings';
 import { BlogAdmin, ProductsAdmin, ServicesAdmin, ServiceCategoriesAdmin, HomeSectionsAdmin, SiteSettingsAdmin, FaqsAdmin, CareersAdmin, TestimonialsAdmin, IndustriesAdmin, SolutionsAdmin, PricingAdmin, AboutAdmin } from '@/features/cms';
 import { PaymentsAdmin } from '@/features/finance';
+import { OpportunitiesAdmin, QuotesAdmin, InvoicesAdmin } from '@/features/sales';
 import { StaffManagement, StaffAccess } from '@/features/hr-staff';
 import { AIConfigAdmin } from '@/features/ai-tools';
 import { SystemPanel, FileUploadManager, RolesAdmin } from '@/features/settings';
@@ -36,6 +37,9 @@ export default function App() {
         <Route path="staff-dashboard" element={<StaffDashboard />} />
         <Route path="contacts" element={<ContactsAdmin />} />
         <Route path="chat" element={<ChatConversationsAdmin />} />
+        <Route path="opportunities" element={<OpportunitiesAdmin />} />
+        <Route path="quotes" element={<QuotesAdmin />} />
+        <Route path="invoices" element={<InvoicesAdmin />} />
         <Route path="projects" element={<ProjectsAdmin />} />
         <Route path="client-projects" element={<ClientProjectsManagement />} />
         <Route path="bookings" element={<BookingsManagement />} />

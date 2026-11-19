@@ -39,6 +39,7 @@ export default function staffRouter(prisma: Db) {
                 .where((e) => e.acceptedAt.isNotNull())
                 .where((e) => e.passwordHash.isNotNull())
                 .where((e) => e.profileVisibility.eq('PUBLIC'))
+                .where((e) => e.role.neq('SUPER_ADMIN'))
                 .select(...publicProfileFields)
                 .orderBy([(e) => e.profileOrder.asc(), (e) => e.createdAt.desc()])
                 .all();
@@ -56,6 +57,7 @@ export default function staffRouter(prisma: Db) {
                 .where((e) => e.acceptedAt.isNotNull())
                 .where((e) => e.passwordHash.isNotNull())
                 .where((e) => e.profileVisibility.eq('PUBLIC'))
+                .where((e) => e.role.neq('SUPER_ADMIN'))
                 .select(...publicProfileFields)
                 .include('blogPosts', (posts) => posts
                     .where({ published: true })

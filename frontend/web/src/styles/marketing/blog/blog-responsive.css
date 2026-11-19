@@ -28,7 +28,7 @@
 .blog-page-btn--active {
   background: var(--blog-primary);
   border-color: var(--blog-primary);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .blog-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }

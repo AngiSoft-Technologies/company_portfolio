@@ -11,23 +11,22 @@
     gap: 1.25rem;
     padding: 2rem 2.25rem;
     border-radius: 1.25rem;
-    border: 1px solid rgba(0, 175, 255, 0.25);
-    background:
-        radial-gradient(600px 300px at 90% 0%, rgba(0, 175, 255, 0.16), transparent 60%),
-        linear-gradient(160deg, rgba(13, 34, 67, 0.95), rgba(7, 20, 43, 0.95));
+    border: 1px solid var(--border);
+    background: radial-gradient(600px 300px at 90% 0%, color-mix(in srgb, var(--color-secondary) 16%, transparent), transparent 60%),
+        linear-gradient(160deg, var(--card-bg), color-mix(in srgb, var(--surface) 95%, transparent));
 }
 
 .service-pricing-banner__title {
     margin: 0 0 0.5rem;
     font-family: 'Sora', system-ui, sans-serif;
     font-size: clamp(1.3rem, 3vw, 1.8rem);
-    color: #F5F7FA;
+    color: var(--text-primary);
 }
 
 .service-pricing-banner__desc {
     margin: 0;
     max-width: 520px;
-    color: #CBD5E1;
+    color: var(--text-secondary);
     font-size: 0.92rem;
     line-height: 1.55;
 }
@@ -51,22 +50,29 @@
 }
 
 .service-pricing-banner__btn--primary {
-    background: linear-gradient(120deg, #0875FF, #00AFFF);
-    color: #fff;
-    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.28);
+    background: linear-gradient(120deg, var(--color-primary), var(--color-secondary));
+    color: var(--color-white);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--color-secondary) 28%, transparent);
 }
 
 .service-pricing-banner__btn--primary:hover { transform: translateY(-2px); }
 
 .service-pricing-banner__btn--ghost {
-    border: 1px solid rgba(0, 175, 255, 0.45);
-    color: #F5F7FA;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
 }
 
-.service-pricing-banner__btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+.service-pricing-banner__btn--ghost:hover { background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
 
 @media (max-width: 720px) {
     .service-pricing-banner__inner { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
     .service-pricing-banner__actions { width: 100%; }
     .service-pricing-banner__btn { flex: 1 1 auto; justify-content: center; }
 }
+
+/* ---------- Light theme ---------- */
+
+
+
+
+

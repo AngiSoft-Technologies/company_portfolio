@@ -15,7 +15,12 @@
     <script>
       (function () {
         try {
-          var mode = localStorage.getItem('angisoft-theme-mode') === 'light' ? 'light' : 'dark';
+          // No stored choice → follow the device/OS theme; the in-app toggle
+          // persists an explicit override to localStorage.
+          var stored = localStorage.getItem('angisoft-theme-mode');
+          var mode = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
           document.documentElement.setAttribute('data-theme', mode);
           document.documentElement.classList.toggle('dark', mode === 'dark');
           document.documentElement.style.colorScheme = mode;

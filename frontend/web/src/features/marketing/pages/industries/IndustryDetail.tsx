@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useParams } from 'react-router-dom';
+import { useTheme } from '@/lib/theme';
 import { useIndustryDetail } from '@/hooks/marketing/useIndustryDetail';
 import { useIndustries } from '@/hooks/marketing/useIndustries';
 
@@ -17,13 +18,14 @@ export default function IndustryDetail() {
     const { slug } = useParams();
     const { industry, loading, error, notFound, refetch } = useIndustryDetail(slug);
     const { industries } = useIndustries();
+    const { mode } = useTheme();
 
     if (loading) return <IndustryDetailSkeleton />;
     if (notFound) return <IndustryDetailNotFound />;
     if (error && !industry) return <IndustryDetailError error={error} onRetry={refetch} />;
 
     return (
-        <main className="industries-page">
+        <main className={`industries-page${mode === 'light' ? ' is-light' : ''}`}>
             <IndustryDetailHero industry={industry} />
             <div className="industries-container industries-detail__flow">
                 <IndustryCapabilities industry={industry} />

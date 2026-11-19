@@ -6,46 +6,35 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaBalanceScale,
-  FaCalculator,
-  FaClipboardCheck,
-  FaClock,
-  FaProjectDiagram,
-  FaSearchDollar,
-  FaTasks,
-  FaUserCheck,
-  FaUsersCog,
-} from 'react-icons/fa';
+import { LuArrowRight, LuScale, LuCalculator, LuClipboardCheck, LuClock, LuNetwork, LuSearch, LuListChecks, LuUserCheck, LuUserCog } from 'react-icons/lu';;
 
 const ICONS = {
   budget:
-    FaSearchDollar,
+    LuSearch,
 
   control:
-    FaBalanceScale,
+    LuScale,
 
   deadline:
-    FaClock,
+    LuClock,
 
   delivery:
-    FaTasks,
+    LuListChecks,
 
   estimate:
-    FaCalculator,
+    LuCalculator,
 
   requirements:
-    FaClipboardCheck,
+    LuClipboardCheck,
 
   risk:
-    FaProjectDiagram,
+    LuNetwork,
 
   scope:
-    FaUsersCog,
+    LuUserCog,
 
   team:
-    FaUserCheck,
+    LuUserCheck,
 };
 
 const normalizePractice = (
@@ -199,7 +188,7 @@ const AboutWhyGuarantee = ({
     <section
       ref={sectionRef}
       id="project-success-practices"
-      className="about-project-success bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-project-success bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-labelledby="project-success-heading"
     >
       <div className="container">
@@ -212,13 +201,13 @@ const AboutWhyGuarantee = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="project-success-heading"
-              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -237,7 +226,7 @@ const AboutWhyGuarantee = ({
                 ) => (
                   <p
                     key={index}
-                    className="text-sm leading-7 text-white/65 md:text-base"
+                    className="text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty"
                   >
                     {paragraph}
                   </p>
@@ -271,12 +260,12 @@ const ProjectSuccessCard = ({
 }) => {
   const Icon =
     ICONS[practice.icon] ||
-    FaClipboardCheck;
+    LuClipboardCheck;
 
   const content = (
-    <article className="about-project-success-card flex h-full min-h-[285px] flex-col border border-white/15 bg-[#0A1B38] px-6 py-7">
+    <article className="about-project-success-card flex h-full min-h-[285px] flex-col border border-[var(--border-light)] bg-[var(--card-bg)] px-6 py-7">
       <div className="flex justify-center">
-        <span className="flex h-14 w-14 items-center justify-center text-[#00C2FF]">
+        <span className="flex h-14 w-14 items-center justify-center text-[var(--brand-accent-ink)]">
           <Icon
             className="text-[34px]"
             aria-hidden="true"
@@ -284,22 +273,22 @@ const ProjectSuccessCard = ({
         </span>
       </div>
 
-      <h3 className="mt-5 text-center text-sm font-bold leading-6 text-white">
+      <h3 className="mt-5 text-center text-sm font-bold leading-6 text-[var(--text-primary)]">
         {practice.title}
       </h3>
 
       {practice.description && (
-        <p className="mt-5 text-sm leading-7 text-white/62">
+        <p className="mt-5 text-base leading-7 text-[var(--text-secondary)] text-pretty">
           {practice.description}
         </p>
       )}
 
       {practice.to && (
         <span className="mt-auto flex justify-end pt-6">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF]">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--brand-accent-ink)]">
             Details
 
-            <FaArrowRight className="text-[9px] transition-transform duration-300 group-hover:translate-x-1" />
+            <LuArrowRight className="text-[9px] transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </span>
       )}

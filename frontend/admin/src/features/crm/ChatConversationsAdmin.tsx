@@ -105,7 +105,7 @@ export function ChatConversationsAdmin() {
                     value={String(r.status ?? '')}
                     disabled={busyId === r.id}
                     onChange={(e) => void updateStatus(r, e.target.value)}
-                    className="rounded-lg border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#0875FF]"
+                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs outline-none focus:border-[var(--color-primary)]"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>

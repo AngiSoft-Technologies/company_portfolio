@@ -123,8 +123,8 @@ function CareerFormModal({ row, onClose, onSaved }: { row: Row; onClose: () => v
         <Field label="Description">
           <textarea className={inputClass} rows={6} value={String(form.description ?? '')} onChange={set('description')} />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={Boolean(form.active)} onChange={setChecked('active')} className="h-4 w-4 rounded border-slate-300" />
+        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <input type="checkbox" checked={Boolean(form.active)} onChange={setChecked('active')} className="h-4 w-4 rounded border-[var(--border)]" />
           Active
         </label>
         <SaveStatus error={error} success={success} />

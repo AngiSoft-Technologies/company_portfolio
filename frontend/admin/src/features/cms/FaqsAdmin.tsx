@@ -41,7 +41,7 @@ export function FaqsAdmin() {
           onDelete={handleDelete}
           columns={[
             { key: 'question', header: 'Question', render: (r) => <span className="font-medium">{truncate(r.question)}</span> },
-            { key: 'answer', header: 'Answer', render: (r) => <span className="text-slate-500">{truncate(r.answer, 80)}</span> },
+            { key: 'answer', header: 'Answer', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.answer, 80)}</span> },
           ]}
         />
       )}

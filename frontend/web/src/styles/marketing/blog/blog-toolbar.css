@@ -76,7 +76,7 @@
 .blog-tab--active {
   background: var(--blog-primary);
   border-color: var(--blog-primary);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .blog-toolbar__footer {
@@ -142,5 +142,5 @@
 
 .blog-toolbar__clear:hover {
   background: var(--blog-primary);
-  color: #fff;
+  color: var(--text-primary);
 }

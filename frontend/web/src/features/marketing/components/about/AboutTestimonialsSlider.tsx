@@ -15,14 +15,7 @@ import {
   Swiper,
   SwiperSlide,
 } from 'swiper/react';
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaExternalLinkAlt,
-  FaPlay,
-  FaShareAlt,
-  FaStar,
-} from 'react-icons/fa';
+import { LuArrowLeft, LuArrowRight, LuExternalLink, LuPlay, LuShare, LuStar } from 'react-icons/lu';;
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -262,7 +255,7 @@ const AboutTestimonialsSlider = ({
     <section
       ref={sectionRef}
       id="client-testimonials"
-      className="about-testimonials bg-[#07142B] py-14 md:py-16 lg:py-20"
+      className="about-testimonials py-14 md:py-16 lg:py-20"
       aria-labelledby="about-testimonials-heading"
     >
       <div className="container">
@@ -277,7 +270,7 @@ const AboutTestimonialsSlider = ({
               {headingData.title && (
                 <h3
                   id="about-testimonials-heading"
-                  className="text-3xl font-bold tracking-[-0.035em] text-white md:text-4xl"
+                  className="text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
                   style={{
                     fontFamily: 'Sora, sans-serif',
                   }}
@@ -287,7 +280,7 @@ const AboutTestimonialsSlider = ({
               )}
 
               {headingData.description && (
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+                <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
                   {headingData.description}
                 </p>
               )}
@@ -309,7 +302,7 @@ const AboutTestimonialsSlider = ({
               className="about-testimonial-prev absolute left-0 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center"
               aria-label="Previous testimonial"
             >
-              <FaArrowLeft className="text-xs" />
+              <LuArrowLeft className="text-xs" />
             </button>
           )}
 
@@ -402,7 +395,7 @@ const AboutTestimonialsSlider = ({
               className="about-testimonial-next absolute right-0 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center"
               aria-label="Next testimonial"
             >
-              <FaArrowRight className="text-xs" />
+              <LuArrowRight className="text-xs" />
             </button>
           )}
         </div>
@@ -414,7 +407,7 @@ const AboutTestimonialsSlider = ({
 const ReviewTestimonialCard = ({
   testimonial,
 }) => (
-  <article className="about-testimonial-card flex h-full min-h-[420px] flex-col bg-[#0A1B38] px-5 py-5 text-white">
+  <article className="about-testimonial-card flex h-full min-h-[420px] flex-col px-5 py-5 text-[var(--text-primary)]">
     <div className="flex min-h-[48px] items-start justify-between gap-4">
       <div className="flex min-h-[42px] items-center">
         {testimonial.logoUrl ? (
@@ -431,7 +424,7 @@ const ReviewTestimonialCard = ({
             className="about-testimonial-logo max-h-10 max-w-[145px] object-contain"
           />
         ) : (
-          <p className="text-sm font-black text-white">
+          <p className="text-sm font-black text-[var(--text-primary)]">
             {testimonial.company ||
               testimonial.clientName}
           </p>
@@ -444,7 +437,7 @@ const ReviewTestimonialCard = ({
     </div>
 
     {testimonial.companyDescription && (
-      <p className="mt-3 border-b border-white/10 pb-4 text-xs leading-5 text-white/58">
+      <p className="mt-3 border-b border-[var(--border-light)] pb-4 text-xs leading-5 text-[var(--text-muted)]">
         {testimonial.companyDescription}
       </p>
     )}
@@ -455,20 +448,20 @@ const ReviewTestimonialCard = ({
       />
 
       <blockquote className="min-w-0 flex-1">
-        <p className="text-sm leading-6 text-white/72">
+        <p className="text-sm leading-6 text-[var(--text-secondary)]">
           “{testimonial.quote}”
         </p>
       </blockquote>
     </div>
 
     <div className="mt-5 text-right">
-      <p className="text-xs font-bold text-white">
+      <p className="text-xs font-bold text-[var(--text-primary)]">
         {testimonial.clientName}
       </p>
 
       {(testimonial.clientRole ||
         testimonial.company) && (
-          <p className="mt-1 text-[11px] leading-5 text-white/48">
+          <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
             {[
               testimonial.clientRole,
               testimonial.company,
@@ -486,22 +479,22 @@ const ReviewTestimonialCard = ({
             href={testimonial.reviewUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00C2FF] no-underline"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--brand-accent-ink)] no-underline"
           >
             Read review
 
-            <FaExternalLinkAlt className="text-[7px]" />
+            <LuExternalLink className="text-[7px]" />
           </a>
         )}
 
         {testimonial.projectUrl && (
           <Link
             to={testimonial.projectUrl}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#00C2FF] no-underline"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--brand-accent-ink)] no-underline"
           >
             View project
 
-            <FaArrowRight className="text-[8px]" />
+            <LuArrowRight className="text-[8px]" />
           </Link>
         )}
       </div>
@@ -511,10 +504,10 @@ const ReviewTestimonialCard = ({
           href={testimonial.shareUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex h-7 w-7 items-center justify-center border-l border-white/10 text-[#00C2FF]"
+          className="flex h-7 w-7 items-center justify-center border-l border-[var(--border-light)] text-[var(--brand-accent-ink)]"
           aria-label="Share testimonial"
         >
-          <FaShareAlt className="text-[10px]" />
+          <LuShare2 className="text-[10px]" />
         </a>
       )}
     </div>
@@ -549,7 +542,7 @@ const VideoTestimonialCard = ({
     );
 
   return (
-    <article className="about-video-testimonial-card relative h-full min-h-[420px] overflow-hidden bg-[#0A1B38]">
+    <article className="about-video-testimonial-card relative h-full min-h-[420px] overflow-hidden">
       {playing &&
         youtubeEmbedUrl ? (
         <iframe
@@ -604,7 +597,7 @@ const VideoTestimonialCard = ({
               className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#FF0000] text-white shadow-xl transition hover:scale-110"
               aria-label={`Play ${testimonial.videoTitle}`}
             >
-              <FaPlay className="ml-1 text-xl" />
+              <LuPlay className="ml-1 text-xl" />
             </button>
           )}
 
@@ -638,7 +631,7 @@ const VideoTestimonialCard = ({
               >
                 Watch on YouTube
 
-                <FaExternalLinkAlt className="text-[8px]" />
+                <LuExternalLink className="text-[8px]" />
               </a>
             )}
           </div>
@@ -674,7 +667,7 @@ const ClientAvatar = ({
       .toUpperCase();
 
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[10px] font-bold text-[#00C2FF]">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--brand-accent-ink)_30%,transparent)] bg-[color-mix(in_srgb,var(--brand-accent-ink)_10%,transparent)] text-[10px] font-bold text-[var(--brand-accent-ink)]">
       {initials || 'AT'}
     </span>
   );
@@ -690,12 +683,12 @@ const Rating = ({
     {Array.from({
       length: 5,
     }).map((_, index) => (
-      <FaStar
+      <LuStar
         key={index}
         className={`text-[9px] ${index <
             Math.round(rating)
             ? 'text-[#F4B400]'
-            : 'text-white/15'
+            : 'text-[var(--border)]'
           }`}
       />
     ))}

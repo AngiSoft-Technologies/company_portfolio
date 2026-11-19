@@ -66,8 +66,7 @@
     text-align: center;
     border-radius: 1.5rem;
     border: 1px solid var(--sd-border-strong);
-    background:
-        radial-gradient(600px 300px at 50% -20%, rgba(0, 175, 255, 0.16), transparent 60%),
+    background: radial-gradient(600px 300px at 50% -20%, color-mix(in srgb, var(--color-secondary) 16%, transparent), transparent 60%),
         var(--sd-surface);
 }
 .service-contact-cta__title {

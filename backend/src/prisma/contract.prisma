@@ -181,6 +181,9 @@ namespace public {
     twoFactorBackupCodes    TwoFactorBackupCode[]
     departmentDepartment    Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_departmentId_fkey")
     position                Position?                  @relation(fields: [positionId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_positionId_fkey")
+    opportunities   Opportunity[]
+    quotesCreated   Quote[]
+    invoicesCreated Invoice[]
 
     @@index([departmentId], map: "Employee_departmentId_idx")
     @@index([email], map: "Employee_email_key", unique: true)
@@ -273,6 +276,9 @@ namespace public {
     clientProjects     ClientProject[]
     productInquiries   ProductInquiry[]
     supportTickets     SupportTicket[]
+    opportunities      Opportunity[]
+    quotes              Quote[]
+    invoices            Invoice[]
 
     @@index([email], map: "Client_email_key", unique: true)
   @@map("Client")
@@ -286,7 +292,7 @@ namespace public {
     projectType        pg.enum(ProjectType)
     details            Jsonb?
     status             pg.enum(BookingStatus) @default("SUBMITTED")
-    priceEstimate      Float?
+    priceEstimate      Numeric(18, 2) @default("0.00")
     assignedToId       String?
     termsAcceptedAt    TimestampString(3)?
     depositPaidAt      TimestampString(3)?
@@ -294,7 +300,7 @@ namespace public {
     updatedAt          TimestampString(3)
     publicReference    String
     trackingToken      String
-    budgetAmount       Float?
+    budgetAmount       Numeric(18, 2) @default("0.00")
     currency           String                 @default("KES")
     currentStage       String                 @default("submitted")
     desiredOutcome     String?
@@ -305,7 +311,7 @@ namespace public {
     pricingType        String?
     productSlug        String?
     productTitle       String?
-    quotedAmount       Float?
+    quotedAmount       Numeric(18, 2) @default("0.00")
     quotedCurrency     String?
     referrerEntityId   String?
     referrerEntityType String?
@@ -326,6 +332,9 @@ namespace public {
     payments           Payment[]
     assignedTo         Employee?              @relation(fields: [assignedToId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Booking_assignedToId_fkey", index: false)
     client             Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Booking_clientId_fkey", index: false)
+    opportunities      Opportunity[]
+    quotes              Quote[]
+    invoices            Invoice[]
 
     @@index([publicReference], map: "Booking_publicReference_key", unique: true)
     @@index([trackingToken], map: "Booking_trackingToken_key", unique: true)
@@ -444,6 +453,7 @@ namespace public {
     booking             Booking                      @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ClientProject_bookingId_fkey")
     client              Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ClientProject_clientId_fkey")
     owner               Employee?                    @relation(fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ClientProject_ownerId_fkey")
+    invoices            Invoice[]
 
     @@index([bookingId], map: "ClientProject_bookingId_key", unique: true)
     @@index([clientId], map: "ClientProject_clientId_idx")
@@ -494,6 +504,7 @@ namespace public {
     productFaqs        ProductFaq[]
     productInquiries   ProductInquiry[]
     productTeamMembers ProductTeamMember[]
+    quoteLineItems      QuoteLineItem[]
 
     @@index([slug], map: "Product_slug_key", unique: true)
   @@map("Product")
@@ -521,7 +532,7 @@ namespace public {
     title                   String
     slug                    String
     description             String
-    priceFrom               Float?
+    priceFrom               Numeric(18, 2) @default("0.00")
     images                  String[]?         @noCheck(elementNotNull)
     authorId                String?
     published               Boolean          @default(false)
@@ -540,6 +551,7 @@ namespace public {
     contactEnquiries        ContactEnquiry[]
     author                  Employee?        @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_authorId_fkey", index: false)
     categoryServiceCategory ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_categoryId_fkey", index: false)
+    quoteLineItems      QuoteLineItem[]
 
     @@index([slug], map: "Service_slug_key", unique: true)
   @@map("Service")
@@ -805,8 +817,175 @@ namespace public {
     assignedToId String?
     createdAt    TimestampString(3) @default(now())
     updatedAt    TimestampString(3)
+    // ── Phase 2 sales pipeline (additive) ──
+    // `stage` is the qualification funnel: new → qualified → proposal_sent →
+    // negotiation → won | lost. A plain text column, like Booking.currentStage,
+    // so the catalog can grow without a migration.
+    stage              String        @default("new")
+    value              Numeric(18, 2)?
+    currency           String        @default("KES")
+    qualificationNotes String?
+    lostReason         String?
+    opportunities      Opportunity[]
   @@map("Lead")
 }
+
+  // ── Phase 2 sales pipeline ──
+  // A qualified lead moving through the commercial funnel. `value` is the
+  // expected deal value; `probability` is the 0-100 confidence used for
+  // pipeline forecasting.
+  model Opportunity {
+    id                String              @id(map: "Opportunity_pkey")
+    publicReference   String
+    title             String
+    leadId            String?
+    clientId          String?
+    bookingId         String?
+    stage             String              @default("new")
+    value             Numeric(18, 2)?
+    currency          String              @default("KES")
+    probability       Int                 @default(0)
+    expectedCloseDate TimestampString(3)?
+    assignedToId      String?
+    lostReason        String?
+    notes             String?
+    source            String?
+    createdAt         TimestampString(3) @default(now())
+    updatedAt         TimestampString(3)
+    lead              Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Opportunity_leadId_fkey")
+    client            Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Opportunity_clientId_fkey")
+    booking           Booking?            @relation(fields: [bookingId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Opportunity_bookingId_fkey")
+    assignedTo        Employee?           @relation(fields: [assignedToId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Opportunity_assignedToId_fkey")
+    quotes            Quote[]
+
+    @@index([publicReference], map: "Opportunity_publicReference_key", unique: true)
+    @@index([leadId], map: "Opportunity_leadId_idx")
+    @@index([clientId], map: "Opportunity_clientId_idx")
+    @@index([bookingId], map: "Opportunity_bookingId_idx")
+    @@index([assignedToId], map: "Opportunity_assignedToId_idx")
+    @@index([stage], map: "Opportunity_stage_idx")
+    @@index([createdAt], map: "Opportunity_createdAt_idx")
+  @@map("Opportunity")
+  }
+
+  // A priced proposal. Totals are stored explicitly (not derived from the line
+  // items at read time) so an issued quote is immutable even if the catalogue
+  // changes underneath it.
+  model Quote {
+    id              String              @id(map: "Quote_pkey")
+    publicReference String
+    number          String
+    opportunityId   String?
+    bookingId       String?
+    clientId        String?
+    createdById     String?
+    status          String              @default("draft")
+    subtotal        Numeric(18, 2)      @default("0.00")
+    discount        Numeric(18, 2)      @default("0.00")
+    tax             Numeric(18, 2)      @default("0.00")
+    total           Numeric(18, 2)      @default("0.00")
+    currency        String              @default("KES")
+    validUntil      TimestampString(3)?
+    issuedAt        TimestampString(3)?
+    acceptedAt      TimestampString(3)?
+    notes           String?
+    createdAt       TimestampString(3) @default(now())
+    updatedAt       TimestampString(3)
+    opportunity     Opportunity?        @relation(fields: [opportunityId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Quote_opportunityId_fkey")
+    booking         Booking?            @relation(fields: [bookingId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Quote_bookingId_fkey")
+    client          Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Quote_clientId_fkey")
+    createdBy       Employee?           @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Quote_createdById_fkey")
+    lineItems       QuoteLineItem[]
+    invoices        Invoice[]
+
+    @@index([publicReference], map: "Quote_publicReference_key", unique: true)
+    @@index([number], map: "Quote_number_key", unique: true)
+    @@index([opportunityId], map: "Quote_opportunityId_idx")
+    @@index([bookingId], map: "Quote_bookingId_idx")
+    @@index([clientId], map: "Quote_clientId_idx")
+    @@index([createdById], map: "Quote_createdById_idx")
+    @@index([status], map: "Quote_status_idx")
+    @@index([createdAt], map: "Quote_createdAt_idx")
+  @@map("Quote")
+  }
+
+  model QuoteLineItem {
+    id          String         @id(map: "QuoteLineItem_pkey")
+    quoteId     String
+    description String
+    quantity    Int            @default(1)
+    unitPrice   Numeric(18, 2)
+    lineTotal   Numeric(18, 2)
+    serviceId   String?
+    productId   String?
+    sortOrder   Int            @default(0)
+    quote       Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "QuoteLineItem_quoteId_fkey")
+    service     Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "QuoteLineItem_serviceId_fkey")
+    product     Product?       @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "QuoteLineItem_productId_fkey")
+
+    @@index([quoteId], map: "QuoteLineItem_quoteId_idx")
+    @@index([serviceId], map: "QuoteLineItem_serviceId_idx")
+    @@index([productId], map: "QuoteLineItem_productId_idx")
+  @@map("QuoteLineItem")
+  }
+
+  // A demand for payment. `total` is what was invoiced; `amountPaid` and
+  // `balanceDue` track settlement so an invoice can be paid in instalments.
+  model Invoice {
+    id              String              @id(map: "Invoice_pkey")
+    publicReference String
+    number          String
+    quoteId         String?
+    bookingId       String?
+    clientProjectId String?
+    clientId        String?
+    createdById     String?
+    status          String              @default("draft")
+    subtotal        Numeric(18, 2)      @default("0.00")
+    tax             Numeric(18, 2)      @default("0.00")
+    total           Numeric(18, 2)      @default("0.00")
+    amountPaid      Numeric(18, 2)      @default("0.00")
+    balanceDue      Numeric(18, 2)      @default("0.00")
+    currency        String              @default("KES")
+    issuedAt        TimestampString(3)?
+    dueAt           TimestampString(3)?
+    paidAt          TimestampString(3)?
+    notes           String?
+    createdAt       TimestampString(3) @default(now())
+    updatedAt       TimestampString(3)
+    quote           Quote?              @relation(fields: [quoteId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Invoice_quoteId_fkey")
+    booking         Booking?            @relation(fields: [bookingId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Invoice_bookingId_fkey")
+    clientProject   ClientProject?      @relation(fields: [clientProjectId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Invoice_clientProjectId_fkey")
+    client          Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Invoice_clientId_fkey")
+    createdBy       Employee?           @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Invoice_createdById_fkey")
+    lineItems       InvoiceLineItem[]
+
+    @@index([publicReference], map: "Invoice_publicReference_key", unique: true)
+    @@index([number], map: "Invoice_number_key", unique: true)
+    @@index([quoteId], map: "Invoice_quoteId_idx")
+    @@index([bookingId], map: "Invoice_bookingId_idx")
+    @@index([clientProjectId], map: "Invoice_clientProjectId_idx")
+    @@index([clientId], map: "Invoice_clientId_idx")
+    @@index([createdById], map: "Invoice_createdById_idx")
+    @@index([status], map: "Invoice_status_idx")
+    @@index([dueAt], map: "Invoice_dueAt_idx")
+    @@index([createdAt], map: "Invoice_createdAt_idx")
+  @@map("Invoice")
+  }
+
+  model InvoiceLineItem {
+    id          String         @id(map: "InvoiceLineItem_pkey")
+    invoiceId   String
+    description String
+    quantity    Int            @default(1)
+    unitPrice   Numeric(18, 2)
+    lineTotal   Numeric(18, 2)
+    sortOrder   Int            @default(0)
+    invoice     Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "InvoiceLineItem_invoiceId_fkey")
+
+    @@index([invoiceId], map: "InvoiceLineItem_invoiceId_idx")
+  @@map("InvoiceLineItem")
+  }
 
   model Newsletter {
     id             String        @id(map: "Newsletter_pkey")
@@ -868,7 +1047,7 @@ namespace public {
     id         String                   @id(map: "Payment_pkey")
     bookingId  String?
     clientId   String?
-    amount     Float
+    amount     Numeric(18, 2) @default("0.00")
     currency   String                   @default("KES")
     provider   pg.enum(PaymentProvider)
     providerId String
@@ -918,7 +1097,7 @@ namespace public {
     id         String        @id(map: "PaymentWallet_pkey")
     provider   String        @default("PAYHERO")
     walletType String
-    balance    Float         @default(0)
+    balance    Numeric(18, 2) @default("0.00")
     name       String?
     meta       Jsonb?
     syncedAt   TimestampString(3)?
@@ -934,7 +1113,7 @@ namespace public {
     provider          String        @default("PAYHERO")
     reference         String
     providerReference String?
-    amount            Float
+    amount            Numeric(18, 2) @default("0.00")
     currency          String        @default("KES")
     channel           String
     phoneNumber       String?

@@ -25,7 +25,7 @@
   font-family: 'Sora', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-primary, #F5F7FA);
+  color: var(--text-primary, var(--text-primary));
   margin: 0 0 1rem;
   letter-spacing: -0.01em;
 }
@@ -55,14 +55,14 @@
   text-align: center;
   /* Tiles sit on the band photo -> glass, no fill. */
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--card-bg) 12%, transparent);
   backdrop-filter: blur(14px) saturate(1.15);
   transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 .angi-tech-tile:hover,
 .angi-tech-tile:focus-within {
   background: var(--surface-hover);
-  border-color: var(--tech-tile-border, rgba(255, 255, 255, 0.06));
+  border-color: var(--tech-tile-border, color-mix(in srgb, var(--card-bg) 6%, transparent));
   transform: translateY(-2px);
 }
 
@@ -111,10 +111,10 @@
 /* Platform-direction tiles and headings sit on the branded wallpaper. */
 .angi-tech .angi-tech-name,
 .angi-tech .angi-tech-category-heading {
-    color: #F5F7FA;
+    color: var(--text-primary);
 }
 .angi-tech .angi-tech-category {
-    border-color: rgba(255, 255, 255, 0.14);
+    border-color: color-mix(in srgb, var(--card-bg) 14%, transparent);
 }
 .angi-tech .angi-tech-tile:hover {
     background: color-mix(in srgb, var(--color-cyan-bright) 14%, transparent);
@@ -130,12 +130,12 @@ html[data-theme='light'] .angi-tech .angi-tech-category-heading {
   text-shadow: none;
 }
 html[data-theme='light'] .angi-tech .angi-tech-tile {
-  background: rgba(255, 255, 255, 0.62);
-  border-color: rgba(8, 117, 255, 0.16);
-  box-shadow: 0 8px 22px rgba(7, 20, 43, 0.06);
+  background: color-mix(in srgb, var(--card-bg) 62%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--surface) 6%, transparent);
 }
 html[data-theme='light'] .angi-tech .angi-tech-tile:hover,
 html[data-theme='light'] .angi-tech .angi-tech-tile:focus-within {
-  background: #FFFFFF;
-  border-color: rgba(8, 117, 255, 0.36);
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--color-primary) 36%, transparent);
 }

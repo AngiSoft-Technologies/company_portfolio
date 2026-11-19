@@ -348,7 +348,7 @@ export function StaffAccess() {
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Team members</h2>
+          <h2 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Team members</h2>
           {staffLoading ? (
             <Spinner />
           ) : staff.length === 0 ? (
@@ -360,7 +360,7 @@ export function StaffAccess() {
                   <button
                     onClick={() => setSelectedId(s.id)}
                     className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                      selectedId === s.id ? 'bg-[#0875FF] text-white' : 'text-slate-700 hover:bg-slate-100'
+                      selectedId === s.id ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
                     }`}
                   >
                     <span className="block font-medium">{s.name || s.id}</span>
@@ -384,7 +384,7 @@ export function StaffAccess() {
           ) : access ? (
             <>
               <Card>
-                <h2 className="mb-4 text-sm font-semibold text-slate-700">Identity</h2>
+                <h2 className="mb-4 text-sm font-semibold text-[var(--text-secondary)]">Identity</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Department">
                     <select
@@ -448,10 +448,10 @@ export function StaffAccess() {
 
               <Card>
                 <div className="mb-1 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-slate-700">Assignments</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Assignments</h2>
                   <Badge tone="slate">Preserved on save</Badge>
                 </div>
-                <p className="mb-3 text-xs text-slate-500">
+                <p className="mb-3 text-xs text-[var(--text-muted)]">
                   Scoped work this employee is attached to. Saving this screen replaces
                   direct permissions and identity only — these assignments are written
                   back unchanged, so nothing is unassigned by accident.
@@ -465,11 +465,11 @@ export function StaffAccess() {
                       ['Enquiries', access.assignmentScopes.enquiries],
                     ] as const
                   ).map(([label, ids]) => (
-                    <div key={label} className="rounded-lg border border-slate-200 px-3 py-2">
-                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <div key={label} className="rounded-lg border border-[var(--border)] px-3 py-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                         {label}
                       </div>
-                      <div className="mt-1 text-lg font-semibold text-slate-800">{ids.length}</div>
+                      <div className="mt-1 text-lg font-semibold text-[var(--text-primary)]">{ids.length}</div>
                     </div>
                   ))}
                 </div>
@@ -477,7 +477,7 @@ export function StaffAccess() {
 
               <Card>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-sm font-semibold text-slate-700">Permissions</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Permissions</h2>
                   <div className="flex items-center gap-3">
                     {saved ? <Badge tone="green">Saved</Badge> : null}
                     <input
@@ -489,7 +489,7 @@ export function StaffAccess() {
                     />
                   </div>
                 </div>
-                <p className="mb-4 text-xs text-slate-500">
+                <p className="mb-4 text-xs text-[var(--text-muted)]">
                   <strong>Inherit</strong> uses the role and position defaults. <strong>Grant</strong> adds an explicit
                   grant for this employee only. <strong>Deny</strong> always wins — even over SUPER_ADMIN.
                 </p>
@@ -502,10 +502,10 @@ export function StaffAccess() {
                   <div className="space-y-6">
                     {groupedRows.map(([group, groupRows]) => (
                       <div key={group}>
-                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                           {group}
                         </h3>
-                        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                        <div className="divide-y divide-[var(--border-light)] rounded-lg border border-[var(--border)]">
                           {groupRows.map((r) => {
                             return (
                               <div
@@ -513,8 +513,8 @@ export function StaffAccess() {
                                 className="flex flex-wrap items-center justify-between gap-3 px-3 py-2"
                               >
                                 <div className="min-w-0">
-                                  <div className="text-sm text-slate-800">{r.display ?? r.key}</div>
-                                  <div className="font-mono text-[11px] text-slate-400">{r.key}</div>
+                                  <div className="text-sm text-[var(--text-primary)]">{r.display ?? r.key}</div>
+                                  <div className="font-mono text-[11px] text-[var(--text-muted)]">{r.key}</div>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -530,12 +530,12 @@ export function StaffAccess() {
                                             : 'not granted'}
                                   </Badge>
 
-                                  <div className="flex overflow-hidden rounded-md border border-slate-200 text-xs">
+                                  <div className="flex overflow-hidden rounded-md border border-[var(--border)] text-xs">
                                     <button
                                       onClick={() => setDirect(r.key, null)}
                                       disabled={saving}
                                       className={`px-2 py-1 disabled:opacity-50 ${
-                                        !r.direct ? 'bg-slate-100 font-medium text-slate-700' : 'text-slate-500 hover:bg-slate-50'
+                                        !r.direct ? 'bg-[var(--surface-hover)] font-medium text-[var(--text-secondary)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-primary)]'
                                       }`}
                                       title="Use inherited permissions"
                                     >
@@ -544,10 +544,10 @@ export function StaffAccess() {
                                     <button
                                       onClick={() => setDirect(r.key, 'GRANT')}
                                       disabled={saving}
-                                      className={`border-l border-slate-200 px-2 py-1 disabled:opacity-50 ${
+                                      className={`border-l border-[var(--border)] px-2 py-1 disabled:opacity-50 ${
                                         r.direct === 'GRANT'
                                           ? 'bg-emerald-100 font-medium text-emerald-700'
-                                          : 'text-slate-500 hover:bg-slate-50'
+                                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-primary)]'
                                       }`}
                                       title="Grant explicitly to this employee"
                                     >
@@ -556,10 +556,10 @@ export function StaffAccess() {
                                     <button
                                       onClick={() => setDirect(r.key, 'DENY')}
                                       disabled={saving}
-                                      className={`border-l border-slate-200 px-2 py-1 disabled:opacity-50 ${
+                                      className={`border-l border-[var(--border)] px-2 py-1 disabled:opacity-50 ${
                                         r.direct === 'DENY'
                                           ? 'bg-red-100 font-medium text-red-700'
-                                          : 'text-slate-500 hover:bg-slate-50'
+                                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-primary)]'
                                       }`}
                                       title="Deny this employee explicitly"
                                     >
@@ -578,7 +578,7 @@ export function StaffAccess() {
                     ) : null}
                   </div>
                 )}
-                <p className="mt-4 text-[11px] text-slate-400">
+                <p className="mt-4 text-[11px] text-[var(--text-muted)]">
                   {inheritedNote(rows)}
                 </p>
               </Card>

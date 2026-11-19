@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { FaExternalLinkAlt } from 'react-icons/fa';
+import { LuExternalLink } from 'react-icons/lu';;
 
 import {
   resolveAssetUrl,
@@ -15,12 +15,7 @@ import {
 
 import SmartImage from './SmartImage';
 
-const YEAR_ACCENTS = [
-  '#0A3DFF',
-  '#00C2FF',
-  '#39FF6A',
-  '#8A2BE2',
-];
+const YEAR_ACCENTS = 'var(--color-primary)';
 
 const normalizeHighlight = (
   highlight,
@@ -450,7 +445,7 @@ const AboutHighlightsSlider = ({
     <section
       ref={sectionRef}
       id="angisoft-highlights"
-      className="about-highlights bg-[#0A1B38] py-16 md:py-20 lg:py-24"
+      className="about-highlights py-16 md:py-20 lg:py-24"
       aria-labelledby="about-highlights-heading"
     >
       <div className="container">
@@ -463,11 +458,7 @@ const AboutHighlightsSlider = ({
         >
           <h2
             id="about-highlights-heading"
-            className="text-2xl font-semibold text-white md:text-3xl"
-            style={{
-              fontFamily:
-                'Georgia, "Times New Roman", serif',
-            }}
+            className="text-balance"
           >
             {headingData.title}
           </h2>
@@ -681,7 +672,7 @@ const AboutHighlightsSlider = ({
                         .link.label
                     }
 
-                    <FaExternalLinkAlt />
+                    <LuExternalLink />
                   </Link>
                 )}
             </div>
@@ -702,10 +693,10 @@ const HighlightEntryFallback = ({
       color: accent,
 
       borderColor:
-        `${accent}55`,
+        'color-mix(in srgb, currentColor 33%, transparent)',
 
       backgroundColor:
-        `${accent}12`,
+        'color-mix(in srgb, currentColor 7%, transparent)',
     }}
     aria-hidden="true"
   >

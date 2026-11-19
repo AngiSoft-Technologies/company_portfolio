@@ -96,8 +96,8 @@ export function ContactsAdmin() {
             onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === f
-                ? 'bg-[#0875FF] text-white'
-                : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-[var(--color-primary)] text-white'
+                : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
             }`}
           >
             {f}
@@ -143,7 +143,7 @@ export function ContactsAdmin() {
                       .join(' ')}
                     disabled={busyId === r.id}
                     onChange={(e) => void updateStatus(r, e.target.value)}
-                    className="rounded-lg border border-slate-300 px-2 py-1 text-xs outline-none focus:border-[#0875FF]"
+                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs outline-none focus:border-[var(--color-primary)]"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>

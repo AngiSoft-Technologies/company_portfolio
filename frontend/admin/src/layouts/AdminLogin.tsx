@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setAccessToken, apiRequest } from '@angisoft/api-client';
 
+/**
+ * Staff sign-in. Styled entirely with the @angisoft/ui theme tokens (CSS
+ * custom properties set by ThemeProvider), so it follows the same light/dark
+ * surfaces and brand ramp as the rest of the admin shell.
+ */
 export function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,50 +47,98 @@ export function AdminLogin() {
     }
   };
 
+  const fieldClass =
+    'w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none transition-shadow placeholder:text-[var(--text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--focus-ring)]';
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+    <div
+      className="flex min-h-screen items-center justify-center px-4"
+      style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+    >
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00AFFF] to-[#0875FF] text-xl font-bold text-white">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span
+            className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-bold text-white shadow-lg"
+            style={{ background: 'var(--gradient-brand-sweep)' }}
+            aria-hidden="true"
+          >
             A
           </span>
-          <h1 className="mt-4 text-xl font-semibold text-slate-900">AngiSoft Admin</h1>
-          <p className="mt-1 text-sm text-slate-500">Sign in to the control center</p>
+          <h1
+            className="mt-4 text-xl font-semibold"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            AngiSoft Admin
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+            Sign in to the control center
+          </p>
         </div>
-        <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+        <form
+          onSubmit={submit}
+          className="rounded-2xl border p-6 shadow-md"
+          style={{
+            background: 'var(--surface)',
+            borderColor: 'var(--border)',
+            boxShadow: 'var(--elevation-lg)',
+          }}
+        >
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <div
+              className="mb-4 rounded-lg border px-3 py-2 text-sm"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--color-error) 30%, transparent)',
+                background: 'color-mix(in srgb, var(--color-error) 8%, transparent)',
+                color: 'var(--color-error)',
+              }}
+              role="alert"
+            >
               {error}
             </div>
           )}
+
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
+            <span className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Email
+            </span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="username"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0875FF] focus:ring-2 focus:ring-[#0875FF]/20"
+              required
+              className={fieldClass}
             />
           </label>
+
           <label className="mt-4 block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Password</span>
+            <span className="mb-1 block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Password
+            </span>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0875FF] focus:ring-2 focus:ring-[#0875FF]/20"
+              required
+              className={fieldClass}
             />
           </label>
+
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full rounded-lg bg-[#0875FF] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3B9AFF] disabled:opacity-60"
+            className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+            style={{ background: 'var(--color-primary)' }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+          AngiSoft Technologies · Staff access only
+        </p>
       </div>
     </div>
   );

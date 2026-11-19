@@ -8,6 +8,7 @@ import {
   Link,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 import {
   FaArrowLeft,
@@ -121,7 +122,15 @@ const StaffDetail = () => {
     usernameOrId,
   } = useParams();
 
+  const [searchParams] =
+    useSearchParams();
+
   const navigate = useNavigate();
+
+  const template =
+    searchParams.get('view') === 'spotlight'
+      ? 'spotlight'
+      : 'editorial';
 
   const [staff, setStaff] =
     useState(null);
@@ -327,21 +336,176 @@ const StaffDetail = () => {
     });
   };
 
+  const backButton = (
+    <button
+      type="button"
+      onClick={() =>
+        navigate('/staff')
+      }
+      className="staff-portfolio-back"
+    >
+      <FaArrowLeft />
+
+      Back to Team
+    </button>
+  );
+
+  const sectionNav = publicSections.length >
+    0 && (
+    <nav className="staff-portfolio-nav">
+      <div className="container staff-portfolio-nav-inner">
+        {publicSections.map(
+          (section) => (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() =>
+                scrollToSection(
+                  section.key
+                )
+              }
+              className={`staff-portfolio-nav-link ${
+                activeSection ===
+                section.key
+                  ? 'is-active'
+                  : ''
+              }`}
+            >
+              {section.customTitle ||
+                section.label}
+            </button>
+          )
+        )}
+      </div>
+    </nav>
+  );
+
+  const sectionList = publicSections.map(
+    (section, index) => (
+      <PortfolioSectionRenderer
+        key={section.key}
+        section={section}
+        index={index}
+        staff={staff}
+      />
+    )
+  );
+
+  if (template === 'spotlight') {
+    return (
+      <main className="staff-portfolio staff-portfolio--spotlight">
+        <section className="staff-spotlight-hero">
+          <div className="container">
+            <div className="staff-spotlight-hero-top">
+              {backButton}
+
+              <div
+                className="staff-template-switch"
+                role="group"
+                aria-label="Portfolio layout"
+              >
+                <Link
+                  to={`?view=editorial`}
+                  className={template === 'editorial' ? 'is-active' : ''}
+                >
+                  Editorial
+                </Link>
+                <Link
+                  to={`?view=spotlight`}
+                  className={template === 'spotlight' ? 'is-active' : ''}
+                >
+                  Spotlight
+                </Link>
+              </div>
+            </div>
+
+            <div className="staff-spotlight-hero-grid">
+              <div className="staff-spotlight-portrait">
+                <PortfolioPortrait
+                  staff={staff}
+                />
+              </div>
+
+              <div className="staff-spotlight-intro">
+                <p className="staff-portfolio-company">
+                  AngiSoft Team
+                </p>
+
+                <h1 className="staff-portfolio-name">
+                  {staff.fullName}
+                </h1>
+
+                {staff.publicTitle && (
+                  <p className="staff-portfolio-title">
+                    {staff.publicTitle}
+                  </p>
+                )}
+
+                {staff.publicSummary && (
+                  <p className="staff-portfolio-summary">
+                    {staff.publicSummary}
+                  </p>
+                )}
+
+                <PortfolioContactRow
+                  staff={staff}
+                />
+
+                <PortfolioSocials
+                  staff={staff}
+                />
+
+                {staff.availabilityStatus && (
+                  <p className="staff-portfolio-availability">
+                    <span />
+
+                    {staff.availabilityStatus}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {sectionNav}
+
+        <section className="staff-portfolio-body">
+          <div className="container">
+            <div className="staff-portfolio-content staff-portfolio-content--single">
+              {sectionList}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="staff-portfolio">
       <section className="staff-portfolio-hero">
         <div className="container">
-          <button
-            type="button"
-            onClick={() =>
-              navigate('/staff')
-            }
-            className="staff-portfolio-back"
-          >
-            <FaArrowLeft />
+          <div className="staff-portfolio-hero-top">
+            {backButton}
 
-            Back to Team
-          </button>
+            <div
+              className="staff-template-switch"
+              role="group"
+              aria-label="Portfolio layout"
+            >
+              <Link
+                to={`?view=editorial`}
+                className={template === 'editorial' ? 'is-active' : ''}
+              >
+                Editorial
+              </Link>
+              <Link
+                to={`?view=spotlight`}
+                className={template === 'spotlight' ? 'is-active' : ''}
+              >
+                Spotlight
+              </Link>
+            </div>
+          </div>
 
           <div className="staff-portfolio-hero-layout">
             <PortfolioPortrait
@@ -395,35 +559,7 @@ const StaffDetail = () => {
         </div>
       </section>
 
-      {publicSections.length >
-        0 && (
-        <nav className="staff-portfolio-nav">
-          <div className="container staff-portfolio-nav-inner">
-            {publicSections.map(
-              (section) => (
-                <button
-                  key={section.key}
-                  type="button"
-                  onClick={() =>
-                    scrollToSection(
-                      section.key
-                    )
-                  }
-                  className={`staff-portfolio-nav-link ${
-                    activeSection ===
-                    section.key
-                      ? 'is-active'
-                      : ''
-                  }`}
-                >
-                  {section.customTitle ||
-                    section.label}
-                </button>
-              )
-            )}
-          </div>
-        </nav>
-      )}
+      {sectionNav}
 
       <section className="staff-portfolio-body">
         <div className="container staff-portfolio-layout">
@@ -432,19 +568,7 @@ const StaffDetail = () => {
           />
 
           <div className="staff-portfolio-content">
-            {publicSections.map(
-              (
-                section,
-                index
-              ) => (
-                <PortfolioSectionRenderer
-                  key={section.key}
-                  section={section}
-                  index={index}
-                  staff={staff}
-                />
-              )
-            )}
+            {sectionList}
           </div>
         </div>
       </section>

@@ -46,9 +46,9 @@ export function TestimonialsAdmin() {
           onDelete={handleDelete}
           columns={[
             { key: 'name', header: 'Name', render: (r) => <span className="font-medium">{r.name || '—'}</span> },
-            { key: 'role', header: 'Role', render: (r) => <span className="text-slate-500">{truncate(r.role, 40)}</span> },
-            { key: 'company', header: 'Company', render: (r) => <span className="text-slate-500">{truncate(r.company, 40)}</span> },
-            { key: 'rating', header: 'Rating', render: (r) => <span className="text-slate-500">{r.rating ?? '—'}</span> },
+            { key: 'role', header: 'Role', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.role, 40)}</span> },
+            { key: 'company', header: 'Company', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.company, 40)}</span> },
+            { key: 'rating', header: 'Rating', render: (r) => <span className="text-[var(--text-muted)]">{r.rating ?? '—'}</span> },
             {
               key: 'approved',
               header: 'Status',
@@ -137,12 +137,12 @@ function TestimonialFormModal({ row, onClose, onSaved }: { row: Row; onClose: ()
           </Field>
         </div>
         <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={Boolean(form.featured)} onChange={setChecked('featured')} className="h-4 w-4 rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <input type="checkbox" checked={Boolean(form.featured)} onChange={setChecked('featured')} className="h-4 w-4 rounded border-[var(--border)]" />
             Featured
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={Boolean(form.approved)} onChange={setChecked('approved')} className="h-4 w-4 rounded border-slate-300" />
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <input type="checkbox" checked={Boolean(form.approved)} onChange={setChecked('approved')} className="h-4 w-4 rounded border-[var(--border)]" />
             Approved
           </label>
         </div>

@@ -2,25 +2,17 @@
 import React, {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
   Link,
-  useNavigate,
 } from 'react-router-dom';
 import {
-  FaArrowLeft,
   FaArrowRight,
   FaBriefcase,
   FaEnvelope,
-  FaGithub,
-  FaGlobe,
-  FaLinkedinIn,
   FaMapMarkerAlt,
   FaSearch,
-  FaTwitter,
-  FaUsers,
 } from 'react-icons/fa';
 
 import { apiGet } from '@/lib/httpClient';
@@ -29,15 +21,11 @@ import {
 } from '@/lib/marketing/constants';
 import { getStaffDetailPath } from '@/lib/marketing/detailPaths';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
+import { Badge } from '@/components/ui';
 
 import '@/styles/marketing/staff-list.css';
 
 const StaffList = () => {
-  const navigate = useNavigate();
-
-  const spotlightViewportRef =
-    useRef(null);
-
   const [staff, setStaff] =
     useState([]);
 
@@ -50,10 +38,8 @@ const StaffList = () => {
   const [searchTerm, setSearchTerm] =
     useState('');
 
-  const [
-    selectedDepartment,
-    setSelectedDepartment,
-  ] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] =
+    useState('all');
 
   useEffect(() => {
     let mounted = true;
@@ -133,233 +119,85 @@ const StaffList = () => {
         .trim()
         .toLowerCase();
 
-    return staff.filter((member) => {
-      const matchesDepartment =
-        selectedDepartment === 'all' ||
-        member.department ===
-          selectedDepartment;
+    return staff
+      .filter((member) => {
+        const matchesDepartment =
+          selectedDepartment === 'all' ||
+          member.department ===
+            selectedDepartment;
 
-      if (!matchesDepartment) {
-        return false;
-      }
+        if (!matchesDepartment) {
+          return false;
+        }
 
-      if (!query) {
-        return true;
-      }
+        if (!query) {
+          return true;
+        }
 
-      const searchableText = [
-        member.fullName,
-        member.publicTitle,
-        member.department,
-        member.location,
-        member.publicSummary,
-        ...member.skills,
-        ...member.specialties,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+        const searchableText = [
+          member.fullName,
+          member.publicTitle,
+          member.department,
+          member.location,
+          member.publicSummary,
+          ...member.skills,
+          ...member.specialties,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
 
-      return searchableText.includes(
-        query
+        return searchableText.includes(
+          query
+        );
+      })
+      .sort(
+        (first, second) =>
+          Number(second.isFeatured) -
+            Number(first.isFeatured) ||
+          first.directoryPriority -
+            second.directoryPriority ||
+          first.fullName.localeCompare(
+            second.fullName
+          )
       );
-    });
   }, [
     searchTerm,
     selectedDepartment,
     staff,
   ]);
 
-  const featuredMember = useMemo(() => {
-    const explicitlyFeatured =
-      filteredStaff
-        .filter(
-          (member) =>
-            member.isFeatured
-        )
-        .sort(
-          (
-            first,
-            second
-          ) =>
-            first.directoryPriority -
-            second.directoryPriority
-        )[0];
-
-    return (
-      explicitlyFeatured ||
-      filteredStaff[0] ||
-      null
-    );
-  }, [filteredStaff]);
-
-  const spotlightStaff = useMemo(
-    () =>
-      filteredStaff
-        .filter(
-          (member) =>
-            member.id !==
-            featuredMember?.id
-        )
-        .sort(
-          (
-            first,
-            second
-          ) =>
-            first.directoryPriority -
-            second.directoryPriority
-        )
-        .slice(0, 10),
-    [
-      filteredStaff,
-      featuredMember,
-    ]
-  );
-
-  const departmentGroups =
-    useMemo(() => {
-      const groups =
-        new Map();
-
-      filteredStaff.forEach(
-        (member) => {
-          const department =
-            member.department ||
-            'Other Team Members';
-
-          if (
-            !groups.has(
-              department
-            )
-          ) {
-            groups.set(
-              department,
-              []
-            );
-          }
-
-          groups
-            .get(department)
-            .push(member);
-        }
-      );
-
-      return Array.from(
-        groups.entries()
-      )
-        .map(
-          ([
-            department,
-            members,
-          ]) => ({
-            department,
-            members:
-              members.sort(
-                (
-                  first,
-                  second
-                ) =>
-                  first.directoryPriority -
-                    second.directoryPriority ||
-                  first.fullName.localeCompare(
-                    second.fullName
-                  ),
-              ),
-          })
-        )
-        .sort(
-          (
-            first,
-            second
-          ) =>
-            first.department.localeCompare(
-              second.department
-            ),
-        );
-    }, [filteredStaff]);
-
-  const scrollSpotlight = (
-    direction
-  ) => {
-    const viewport =
-      spotlightViewportRef.current;
-
-    if (!viewport) {
-      return;
-    }
-
-    const distance =
-      Math.max(
-        viewport.clientWidth *
-          0.78,
-        280
-      );
-
-    viewport.scrollBy({
-      left:
-        direction === 'next'
-          ? distance
-          : -distance,
-      behavior: 'smooth',
-    });
-  };
-
-  const openMember = (
-    member
-  ) => {
-    navigate(
-      getStaffDetailPath(member)
-    );
-  };
-
   return (
     <main className="staff-directory">
       <section className="staff-directory-hero">
         <div className="container">
-          <div className="staff-directory-hero-layout">
-            <div>
-              <p className="staff-directory-eyebrow">
-                Our People
+          <p className="staff-directory-eyebrow">
+            Our People
+          </p>
+
+          <h1 className="staff-directory-title">
+            The people behind
+            the work
+          </h1>
+
+          <p className="staff-directory-intro">
+            Developers, designers and
+            operators who design,
+            build and run the
+            products AngiSoft ships for
+            clients across East Africa.
+          </p>
+
+          {!loading &&
+            staff.length > 0 && (
+              <p className="staff-directory-count">
+                {staff.length}{' '}
+                {staff.length === 1
+                  ? 'person'
+                  : 'people'}{' '}
+                on the team
               </p>
-
-              <h1 className="staff-directory-title">
-                Meet the People
-                Building AngiSoft
-              </h1>
-
-              <p className="staff-directory-intro">
-                Discover the
-                developers, engineers,
-                designers, technology
-                professionals and
-                collaborators behind
-                AngiSoft’s products,
-                client projects and
-                digital services.
-              </p>
-            </div>
-
-            {!loading &&
-              staff.length > 0 && (
-                <div className="staff-directory-statistics">
-                  <DirectoryStatistic
-                    value={
-                      staff.length
-                    }
-                    label="Public profiles"
-                  />
-
-                  <DirectoryStatistic
-                    value={
-                      departments.length -
-                      1
-                    }
-                    label="Departments"
-                    bordered
-                  />
-                </div>
-              )}
-          </div>
+            )}
         </div>
       </section>
 
@@ -378,42 +216,44 @@ const StaffList = () => {
                   event.target.value
                 )
               }
-              placeholder="Search by name, skill, role or department"
+              placeholder="Search by name, skill or role"
               aria-label="Search team profiles"
             />
           </label>
 
-          <div
-            className="staff-role-filters"
-            aria-label="Filter staff by department"
-          >
-            {departments.map(
-              (department) => (
-                <button
-                  key={
-                    department
-                  }
-                  type="button"
-                  onClick={() =>
-                    setSelectedDepartment(
+          {departments.length > 2 && (
+            <div
+              className="staff-role-filters"
+              aria-label="Filter staff by department"
+            >
+              {departments.map(
+                (department) => (
+                  <button
+                    key={
                       department
-                    )
-                  }
-                  className={`staff-role-filter ${
-                    selectedDepartment ===
-                    department
-                      ? 'is-active'
-                      : ''
-                  }`}
-                >
-                  {department ===
-                  'all'
-                    ? 'All Team'
-                    : department}
-                </button>
-              )
-            )}
-          </div>
+                    }
+                    type="button"
+                    onClick={() =>
+                      setSelectedDepartment(
+                        department
+                      )
+                    }
+                    className={`staff-role-filter ${
+                      selectedDepartment ===
+                      department
+                        ? 'is-active'
+                        : ''
+                    }`}
+                  >
+                    {department ===
+                    'all'
+                      ? 'All'
+                      : department}
+                  </button>
+                )
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -423,9 +263,8 @@ const StaffList = () => {
 
       {!loading && error && (
         <DirectoryMessage
-          icon={FaUsers}
-          title=""
-          description=""
+          title="We couldn't load the team"
+          description="The directory is temporarily unavailable. Try again in a moment."
           visual="error"
         />
       )}
@@ -435,150 +274,44 @@ const StaffList = () => {
         filteredStaff.length ===
           0 && (
           <DirectoryMessage
-            icon={FaSearch}
-            title=""
-            description=""
+            title="No matching profiles"
+            description="Try a different name, skill or department."
             visual="unavailable"
           />
         )}
 
       {!loading &&
         !error &&
-        featuredMember && (
-          <>
-            <FeaturedStaffProfile
-              member={
-                featuredMember
-              }
-              onOpen={() =>
-                openMember(
-                  featuredMember
-                )
-              }
-            />
-
-            {spotlightStaff.length >
-              0 && (
-              <section className="staff-spotlight">
-                <div className="container">
-                  <div className="staff-section-heading">
-                    <div>
-                      <p className="staff-section-eyebrow">
-                        Team Spotlight
-                      </p>
-
-                      <h2>
-                        Explore More
-                        Profiles
-                      </h2>
-                    </div>
-
-                    <div className="staff-spotlight-controls">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          scrollSpotlight(
-                            'previous'
-                          )
-                        }
-                        aria-label="Scroll to previous staff profiles"
-                      >
-                        <FaArrowLeft />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          scrollSpotlight(
-                            'next'
-                          )
-                        }
-                        aria-label="Scroll to next staff profiles"
-                      >
-                        <FaArrowRight />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    ref={
-                      spotlightViewportRef
-                    }
-                    className="staff-spotlight-viewport"
-                  >
-                    <div className="staff-spotlight-track">
-                      {spotlightStaff.map(
-                        (member) => (
-                          <SpotlightStaffCard
-                            key={
-                              member.id
-                            }
-                            member={
-                              member
-                            }
-                            onOpen={() =>
-                              openMember(
-                                member
-                              )
-                            }
-                          />
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            <section className="staff-departments">
-              <div className="container">
-                <div className="staff-section-heading">
-                  <div>
-                    <p className="staff-section-eyebrow">
-                      Team Directory
-                    </p>
-
-                    <h2>
-                      Browse by
-                      Department
-                    </h2>
-                  </div>
-                </div>
-
-                {departmentGroups.map(
-                  (group) => (
-                    <DepartmentGroup
-                      key={
-                        group.department
-                      }
-                      group={group}
+        filteredStaff.length > 0 && (
+          <section className="staff-grid-section">
+            <div className="container">
+              <div className="staff-grid">
+                {filteredStaff.map(
+                  (member) => (
+                    <TeamCard
+                      key={member.id}
+                      member={member}
                     />
                   )
                 )}
               </div>
-            </section>
-          </>
+            </div>
+          </section>
         )}
 
       <section className="staff-careers">
         <div className="container staff-careers-layout">
           <div>
-            <p className="staff-section-eyebrow">
-              Careers at AngiSoft
-            </p>
-
             <h2>
-              Interested in Building
-              Technology With Us?
+              Want to work with
+              this team?
             </h2>
 
             <p>
-              Explore available
-              opportunities or contact
-              AngiSoft when you believe
-              your skills can contribute
-              to our products, projects
-              and long-term vision.
+              We hire people who
+              care about the work,
+              not just the title.
+              See what is open.
             </p>
           </div>
 
@@ -592,6 +325,8 @@ const StaffList = () => {
               <span>
                 View Open Roles
               </span>
+
+              <FaArrowRight />
             </Link>
 
             <a
@@ -611,215 +346,86 @@ const StaffList = () => {
   );
 };
 
-const FeaturedStaffProfile = ({
+const TeamCard = ({
   member,
-  onOpen,
-}) => (
-  <section className="staff-featured">
-    <div className="container">
-      <article className="staff-featured-card">
+}) => {
+  const skills = member.skills
+    .slice(0, 4);
+
+  return (
+    <Link
+      to={getStaffDetailPath(member)}
+      className="group block overflow-hidden rounded-(--radius-xl) border border-(--border) bg-(--card-bg) transition-all duration-(--duration-normal) ease-(--ease-standard) hover:-translate-y-1 hover:border-(--color-secondary)/50 hover:shadow-(--elevation-lg)"
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-(--surface)">
         <ProfileImage
           member={member}
-          className="staff-featured-media"
-          imageClassName=""
+          className="h-full w-full"
+          imageClassName="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        <div className="staff-featured-copy">
-          <p className="staff-featured-label">
-            Featured Profile
-          </p>
-
-          <h2 className="staff-featured-name">
-            {member.fullName}
-          </h2>
-
-          {member.publicTitle && (
-            <p className="staff-featured-role">
-              {
-                member.publicTitle
-              }
-            </p>
-          )}
-
-          {member.location && (
-            <p className="staff-featured-location">
-              <FaMapMarkerAlt />
-
-              {member.location}
-            </p>
-          )}
-
-          {member.publicSummary && (
-            <p className="staff-featured-summary">
-              {
-                member.publicSummary
-              }
-            </p>
-          )}
-
-          {member.skills.length >
-            0 && (
-            <div className="staff-featured-skills">
-              {member.skills
-                .slice(0, 6)
-                .map((skill) => (
-                  <span
-                    key={skill}
-                    className="staff-featured-skill"
-                  >
-                    {skill}
-                  </span>
-                ))}
-            </div>
-          )}
-
-          <div className="staff-featured-actions">
-            <button
-              type="button"
-              onClick={onOpen}
-              className="staff-profile-action"
-            >
-              View Full Portfolio
-
-              <FaArrowRight />
-            </button>
-
-            <SocialLinks
-              member={member}
-            />
-          </div>
-        </div>
-      </article>
-    </div>
-  </section>
-);
-
-const SpotlightStaffCard = ({
-  member,
-  onOpen,
-}) => (
-  <article
-    className="staff-spotlight-card"
-    role="button"
-    tabIndex={0}
-    onClick={onOpen}
-    onKeyDown={(event) => {
-      if (
-        event.key === 'Enter' ||
-        event.key === ' '
-      ) {
-        event.preventDefault();
-        onOpen();
-      }
-    }}
-  >
-    <ProfileImage
-      member={member}
-      className="staff-spotlight-image"
-      imageClassName=""
-    />
-
-    <div
-      className="staff-spotlight-shade"
-      aria-hidden="true"
-    />
-
-    <div className="staff-spotlight-copy">
-      <h3>
-        {member.fullName}
-      </h3>
-
-      {member.publicTitle && (
-        <p>
-          {member.publicTitle}
-        </p>
-      )}
-
-      {member.department && (
-        <span>
-          {member.department}
-        </span>
-      )}
-
-      <div className="staff-spotlight-link">
-        View Portfolio
-
-        <FaArrowRight />
+        {member.isFeatured && (
+          <Badge tone="brand" className="absolute left-3 top-3">
+            Featured
+          </Badge>
+        )}
       </div>
-    </div>
-  </article>
-);
 
-const DepartmentGroup = ({
-  group,
-}) => (
-  <section className="staff-department">
-    <div className="staff-department-title">
-      <h3>
-        {group.department}
-      </h3>
+      <div className="p-5">
+        <h2 className="text-lg font-bold text-(--text-primary) transition-colors group-hover:text-(--color-secondary)">
+          {member.fullName}
+        </h2>
 
-      <span>
-        {group.members.length}{' '}
-        {group.members.length ===
-        1
-          ? 'profile'
-          : 'profiles'}
-      </span>
-    </div>
+        <p className="mt-1 text-sm font-medium text-(--color-secondary)">
+          {member.publicTitle ||
+            'AngiSoft Team Member'}
+        </p>
 
-    <div>
-      {group.members.map(
-        (member) => (
-          <Link
-            key={member.id}
-            to={getStaffDetailPath(
-              member
+        {(member.department ||
+          member.location) && (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-(--text-muted)">
+            {member.department}
+            {member.department &&
+              member.location &&
+              ' · '}
+            {member.location && (
+              <>
+                <FaMapMarkerAlt
+                  aria-hidden="true"
+                />{' '}
+                {member.location}
+              </>
             )}
-            className="staff-directory-row"
-          >
-            <ProfileImage
-              member={member}
-              className="staff-directory-row-image"
-              imageClassName=""
-            />
+          </p>
+        )}
 
-            <div>
-              <p className="staff-directory-row-name">
-                {member.fullName}
-              </p>
+        {member.publicSummary && (
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-(--text-secondary)">
+            {member.publicSummary}
+          </p>
+        )}
 
-              {member.location && (
-                <p className="staff-directory-row-location">
-                  {member.location}
-                </p>
-              )}
-            </div>
+        {skills.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {skills.map((skill) => (
+              <Badge key={skill}>
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        )}
 
-            <p className="staff-directory-row-role">
-              {member.publicTitle ||
-                'AngiSoft Team Member'}
-            </p>
-
-            <div className="staff-directory-row-skills">
-              {member.skills
-                .slice(0, 2)
-                .map((skill) => (
-                  <span
-                    key={skill}
-                  >
-                    {skill}
-                  </span>
-                ))}
-            </div>
-
-            <FaArrowRight className="staff-directory-row-arrow" />
-          </Link>
-        )
-      )}
-    </div>
-  </section>
-);
+        <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-(--color-secondary)">
+          View profile
+          <FaArrowRight
+            aria-hidden="true"
+            className="transition-transform duration-(--duration-normal) group-hover:translate-x-1"
+          />
+        </span>
+      </div>
+    </Link>
+  );
+};
 
 const ProfileImage = ({
   member,
@@ -855,81 +461,6 @@ const ProfileImage = ({
   );
 };
 
-const SocialLinks = ({
-  member,
-}) => {
-  const links = [
-    {
-      label: 'LinkedIn',
-      href: member.linkedinUrl,
-      icon: FaLinkedinIn,
-    },
-    {
-      label: 'GitHub',
-      href: member.githubUrl,
-      icon: FaGithub,
-    },
-    {
-      label: 'Twitter',
-      href: member.twitterUrl,
-      icon: FaTwitter,
-    },
-    {
-      label: 'Website',
-      href: member.websiteUrl,
-      icon: FaGlobe,
-    },
-  ].filter(
-    (item) => item.href
-  );
-
-  if (!links.length) {
-    return null;
-  }
-
-  return (
-    <div className="staff-social-links">
-      {links.map((item) => {
-        const Icon = item.icon;
-
-        return (
-          <a
-            key={item.label}
-            href={item.href}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`${member.fullName} on ${item.label}`}
-          >
-            <Icon />
-          </a>
-        );
-      })}
-    </div>
-  );
-};
-
-const DirectoryStatistic = ({
-  value,
-  label,
-  bordered = false,
-}) => (
-  <div
-    className={`staff-directory-statistic ${
-      bordered
-        ? 'is-bordered'
-        : ''
-    }`}
-  >
-    <strong>
-      {value}
-    </strong>
-
-    <span>
-      {label}
-    </span>
-  </div>
-);
-
 const DirectoryLoading = () => (
   <section className="staff-directory-status">
     <LoadingIndicator variant="grid" size="lg" />
@@ -937,7 +468,6 @@ const DirectoryLoading = () => (
 );
 
 const DirectoryMessage = ({
-  icon: Icon,
   title,
   description,
   visual,
@@ -945,12 +475,10 @@ const DirectoryMessage = ({
   <section className="staff-directory-status">
     {visual ? (
       <VisualState variant={visual} />
-    ) : (
-      <Icon />
-    )}
+    ) : null}
 
-    {title ? <h2>{title}</h2> : null}
-    {description ? <p>{description}</p> : null}
+    <h2>{title}</h2>
+    <p>{description}</p>
   </section>
 );
 
@@ -1000,13 +528,13 @@ const normalizeStaffMember = (
     publicTitle:
       member?.publicTitle ||
       member?.title ||
-      formatRole(member?.role),
+      '',
 
     department:
       member?.department ||
       member?.team ||
       member?.division ||
-      'Other Team Members',
+      '',
 
     publicSummary:
       member?.publicSummary ||
@@ -1030,17 +558,21 @@ const normalizeStaffMember = (
       ),
 
     isFeatured:
+      member?.featured ===
+        true ||
       member?.isFeatured ===
         true,
 
     directoryPriority:
       Number.isFinite(
         Number(
-          member?.directoryPriority
+          member?.profileOrder ??
+            member?.directoryPriority
         )
       )
         ? Number(
-            member.directoryPriority
+            member?.profileOrder ??
+              member?.directoryPriority
           )
         : 999,
 
@@ -1076,21 +608,6 @@ const normalizeStringArray = (
   }
 
   return [];
-};
-
-const formatRole = (
-  role
-) => {
-  if (!role) {
-    return '';
-  }
-
-  return String(role)
-    .replaceAll('_', ' ')
-    .toLowerCase()
-    .replace(/\b\w/g, (letter) =>
-      letter.toUpperCase()
-    );
 };
 
 export default StaffList;

@@ -76,7 +76,7 @@ export function SystemPanel() {
 
   const healthRow = (label: string, value: unknown, tone?: string) => (
     <div key={label} className="flex items-center justify-between py-3">
-      <dt className="text-sm text-slate-500">{label}</dt>
+      <dt className="text-sm text-[var(--text-muted)]">{label}</dt>
       <dd className="text-sm font-medium">
         {tone ? <Badge tone={tone}>{value === undefined || value === null || value === '' ? '—' : String(value)}</Badge> : value === undefined || value === null || value === '' ? '—' : String(value)}
       </dd>
@@ -94,7 +94,7 @@ export function SystemPanel() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="mb-2 text-base font-semibold">API health</h2>
-          <dl className="divide-y divide-slate-100">
+          <dl className="divide-y divide-[var(--border-light)]">
             {healthRow('Status', health.status, String(health.status ?? '').toLowerCase().includes('ok') ? 'green' : 'amber')}
             {healthRow('Uptime', health.uptime === undefined ? '—' : `${Number(health.uptime).toFixed(1)}s`)}
             {healthRow('Database', health.db === undefined ? '—' : String(health.db))}
@@ -103,21 +103,21 @@ export function SystemPanel() {
 
         <Card>
           <h2 className="mb-2 text-base font-semibold">Connections</h2>
-          <dl className="divide-y divide-slate-100">
+          <dl className="divide-y divide-[var(--border-light)]">
             <div className="flex items-center justify-between py-3">
-              <dt className="text-sm text-slate-500">GitHub integration</dt>
+              <dt className="text-sm text-[var(--text-muted)]">GitHub integration</dt>
               <dd className="text-sm font-medium">
                 <Badge tone="slate">Not configured</Badge>
               </dd>
             </div>
             <div className="flex items-center justify-between py-3">
-              <dt className="text-sm text-slate-500">Socket.IO realtime</dt>
+              <dt className="text-sm text-[var(--text-muted)]">Socket.IO realtime</dt>
               <dd className="text-sm font-medium">
                 <Badge tone="amber">Placeholder</Badge>
               </dd>
             </div>
             <div className="flex items-center justify-between py-3">
-              <dt className="text-sm text-slate-500">Background workers</dt>
+              <dt className="text-sm text-[var(--text-muted)]">Background workers</dt>
               <dd className="text-sm font-medium">
                 <Badge tone="slate">Placeholder</Badge>
               </dd>
@@ -129,13 +129,13 @@ export function SystemPanel() {
           <Card>
             <h2 className="mb-4 text-base font-semibold">Environment (VITE_*)</h2>
             {envRows.length === 0 ? (
-              <p className="py-8 text-center text-sm text-slate-400">No VITE_* environment variables exposed.</p>
+              <p className="py-8 text-center text-sm text-[var(--text-muted)]">No VITE_* environment variables exposed.</p>
             ) : (
               <div className="grid grid-cols-1 gap-x-6 gap-y-2 md:grid-cols-2">
                 {envRows.map((e) => (
-                  <div key={e.key} className="flex items-center justify-between gap-4 rounded-lg border border-slate-100 px-3 py-2">
-                    <span className="text-sm font-medium text-slate-700">{e.key}</span>
-                    <span className="truncate font-mono text-xs text-slate-500" title={e.masked ? '' : e.display}>
+                  <div key={e.key} className="flex items-center justify-between gap-4 rounded-lg border border-[var(--border-light)] px-3 py-2">
+                    <span className="text-sm font-medium text-[var(--text-secondary)]">{e.key}</span>
+                    <span className="truncate font-mono text-xs text-[var(--text-muted)]" title={e.masked ? '' : e.display}>
                       {e.display}
                     </span>
                   </div>

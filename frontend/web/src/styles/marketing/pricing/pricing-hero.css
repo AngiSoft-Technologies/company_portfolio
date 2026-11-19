@@ -2,9 +2,8 @@
 .pricing-hero {
     position: relative;
     padding: clamp(4rem, 9vw, 7rem) 0 clamp(2.5rem, 5vw, 4rem);
-    background:
-        radial-gradient(900px 420px at 85% -5%, rgba(0, 175, 255, 0.12), transparent 60%),
-        radial-gradient(700px 380px at 5% 8%, rgba(39, 217, 75, 0.08), transparent 55%);
+    background: radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--color-secondary) 12%, transparent), transparent 60%),
+        radial-gradient(700px 380px at 5% 8%, color-mix(in srgb, var(--color-accent-2) 8%, transparent), transparent 55%);
 }
 .pricing-hero__inner { max-width: 820px; }
 .pricing-hero__title {

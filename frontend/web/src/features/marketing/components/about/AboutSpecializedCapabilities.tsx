@@ -6,27 +6,17 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowDown,
-  FaBrain,
-  FaChartBar,
-  FaCloud,
-  FaCodeBranch,
-  FaDatabase,
-  FaMobileAlt,
-  FaProjectDiagram,
-  FaRobot,
-} from 'react-icons/fa';
+import { LuArrowDown, LuBrain, LuChartColumn, LuCloud, LuGitBranch, LuDatabase, LuSmartphone, LuNetwork, LuBot } from 'react-icons/lu';;
 
 const ICONS = {
-  ai: FaBrain,
-  automation: FaRobot,
-  cloud: FaCloud,
-  data: FaChartBar,
-  integration: FaDatabase,
-  mobile: FaMobileAlt,
-  modernization: FaCodeBranch,
-  roles: FaProjectDiagram,
+  ai: LuBrain,
+  automation: LuBot,
+  cloud: LuCloud,
+  data: LuChartColumn,
+  integration: LuDatabase,
+  mobile: LuSmartphone,
+  modernization: LuGitBranch,
+  roles: LuNetwork,
 };
 
 const normalizeCapability = (
@@ -145,13 +135,13 @@ const AboutSpecializedCapabilities = ({
     <section
       ref={sectionRef}
       id="about-specialized-capabilities"
-      className="about-specialized-capabilities bg-[#07142B] py-14 md:py-16 lg:py-20"
+      className="about-specialized-capabilities bg-[var(--bg-primary)] py-14 md:py-16 lg:py-20"
       aria-labelledby="specialized-capabilities-heading"
     >
       <div className="container">
         <p
           id="specialized-capabilities-heading"
-          className={`text-sm font-medium leading-6 text-white/75 transition duration-700 ${
+          className={`text-sm font-medium leading-6 text-[var(--text-secondary)] transition duration-700 ${
             visible
               ? 'translate-y-0 opacity-100'
               : 'translate-y-4 opacity-0'
@@ -184,23 +174,23 @@ const CapabilityCard = ({
 }) => {
   const Icon =
     ICONS[capability.icon] ||
-    FaBrain;
+    LuBrain;
 
   const content = (
     <>
       <span
-        className="absolute right-3 top-3 text-[#00C2FF]"
+        className="absolute right-3 top-3 text-[var(--brand-accent-ink)]"
         aria-hidden="true"
       >
-        <FaArrowDown className="-rotate-45 text-[8px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        <LuArrowDown className="-rotate-45 text-[8px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </span>
 
       <Icon
-        className="text-[28px] text-[#00C2FF]"
+        className="text-[28px] text-[var(--brand-accent-ink)]"
         aria-hidden="true"
       />
 
-      <span className="mt-5 text-center text-sm font-semibold leading-5 text-white">
+      <span className="mt-5 text-center text-sm font-semibold leading-5 text-[var(--text-primary)]">
         {capability.title}
       </span>
     </>
@@ -210,11 +200,11 @@ const CapabilityCard = ({
     about-specialized-capability
     group relative flex min-h-[122px]
     flex-col items-center justify-center
-    border border-white/15 bg-[#0A1B38]
+    border border-[var(--border-light)] bg-[var(--card-bg)]
     px-5 py-5 text-center no-underline
     transition duration-500
     hover:border-[#00C2FF]/60
-    hover:bg-[#0C2142]
+    hover:bg-[var(--surface-hover)]
     focus-visible:outline-none
     focus-visible:ring-2
     focus-visible:ring-[#00C2FF]

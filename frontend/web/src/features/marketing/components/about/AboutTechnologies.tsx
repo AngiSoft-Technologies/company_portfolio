@@ -235,7 +235,7 @@ const AboutTechnologies = ({
     <section
       ref={sectionRef}
       id="about-technological-expertise"
-      className="about-technologies-matrix bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-technologies-matrix bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-labelledby="about-technologies-heading"
     >
       <div className="container">
@@ -247,13 +247,13 @@ const AboutTechnologies = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="about-technologies-heading"
-              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -313,8 +313,8 @@ const TechnologyColumn = ({
 const TechnologySection = ({
   section,
 }) => (
-  <article className="about-technology-section min-w-0 border border-white/12 bg-[#0A1B38] px-4 py-4 md:px-5 md:py-5">
-    <h3 className="text-sm font-bold leading-5 text-white">
+  <article className="about-technology-section min-w-0 border border-[var(--border-light)] bg-[var(--card-bg)] px-4 py-4 md:px-5 md:py-5">
+    <h3 className="text-sm font-bold leading-5 text-[var(--text-primary)]">
       {section.title}
     </h3>
 
@@ -336,7 +336,7 @@ const TechnologyGroup = ({
 }) => (
   <section>
     {group.title && (
-      <h4 className="mb-2 text-[11px] font-semibold text-white/72">
+      <h4 className="mb-2 text-[11px] font-semibold text-[var(--text-secondary)]">
         {group.title}
       </h4>
     )}

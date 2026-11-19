@@ -149,7 +149,7 @@ export function Workspace() {
           {widgets.length === 0 ? (
             <Card>
               <EmptyState title="No modules are enabled for your role yet" />
-              <p className="text-center text-xs text-slate-400">
+              <p className="text-center text-xs text-[var(--text-muted)]">
                 Ask an administrator to grant permissions on the Roles &amp; Permissions screen.
               </p>
             </Card>
@@ -169,23 +169,23 @@ export function Workspace() {
                   <Card key={id} className="flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-sm font-semibold text-slate-800">{meta.label}</h3>
+                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{meta.label}</h3>
                         {typeof count === 'number' ? (
                           <Badge tone={count > 0 ? 'blue' : 'slate'}>{count}</Badge>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">{meta.help}</p>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">{meta.help}</p>
                     </div>
 
                     <div className="mt-4">
                       {isEmpty ? (
-                        <div className="rounded-lg border border-dashed border-slate-200 p-3 text-center">
-                          <p className="text-xs text-slate-400">
+                        <div className="rounded-lg border border-dashed border-[var(--border)] p-3 text-center">
+                          <p className="text-xs text-[var(--text-muted)]">
                             No {meta.noun ?? 'record'} yet
                           </p>
                           <Link
                             to={meta.to}
-                            className="mt-1 inline-block text-xs font-medium text-[#0875FF] hover:underline"
+                            className="mt-1 inline-block text-xs font-medium text-[var(--color-primary)] hover:underline"
                           >
                             {meta.cta} →
                           </Link>
@@ -193,7 +193,7 @@ export function Workspace() {
                       ) : (
                         <Link
                           to={meta.to}
-                          className="inline-block text-xs font-medium text-[#0875FF] hover:underline"
+                          className="inline-block text-xs font-medium text-[var(--color-primary)] hover:underline"
                         >
                           {meta.cta} →
                         </Link>
@@ -213,8 +213,8 @@ export function Workspace() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <Card>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-slate-800">{value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">{value}</div>
     </Card>
   );
 }

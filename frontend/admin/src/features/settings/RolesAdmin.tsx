@@ -272,7 +272,7 @@ export function RolesAdmin() {
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Roles</h2>
+          <h2 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Roles</h2>
           {loading ? (
             <Spinner />
           ) : roles.length === 0 ? (
@@ -284,13 +284,13 @@ export function RolesAdmin() {
                   <button
                     onClick={() => selectRole(role)}
                     className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                      selectedId === role.id ? 'bg-[#0875FF] text-white' : 'text-slate-700 hover:bg-slate-100'
+                      selectedId === role.id ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
                     }`}
                   >
                     <span className="block font-medium">{role.name}</span>
                     <span
                       className={`block text-xs ${
-                        selectedId === role.id ? 'text-white/70' : 'text-slate-400'
+                        selectedId === role.id ? 'text-white/70' : 'text-[var(--text-muted)]'
                       }`}
                     >
                       {role.key} · {role.permissions.length} perms
@@ -312,7 +312,7 @@ export function RolesAdmin() {
             <>
               <Card>
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-slate-700">
+                  <h2 className="text-sm font-semibold text-[var(--text-secondary)]">
                     {creating ? 'New role' : 'Role details'}
                   </h2>
                   {saved ? <Badge tone="green">Saved</Badge> : null}
@@ -372,7 +372,7 @@ export function RolesAdmin() {
                   <Button variant="outline" onClick={startCreate} disabled={!canManage}>
                     Reset to new
                   </Button>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-[var(--text-muted)]">
                     {selectedKeys.size} of {totalPermissions} permissions selected
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export function RolesAdmin() {
 
               <Card>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-sm font-semibold text-slate-700">Permissions</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Permissions</h2>
                   <input
                     className={`${inputClass} max-w-xs`}
                     value={search}
@@ -395,13 +395,13 @@ export function RolesAdmin() {
                     return (
                       <div key={group.group}>
                         <div className="mb-2 flex items-center justify-between">
-                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                             {group.group}
                           </h3>
                           <button
                             onClick={() => toggleGroup(group, !allOn)}
                             disabled={!canManage}
-                            className="text-xs text-[#0875FF] hover:underline disabled:opacity-40"
+                            className="text-xs text-[var(--color-primary)] hover:underline disabled:opacity-40"
                           >
                             {allOn ? 'Clear group' : 'Select group'}
                           </button>
@@ -414,8 +414,8 @@ export function RolesAdmin() {
                                 key={perm.key}
                                 className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors ${
                                   on
-                                    ? 'border-[#0875FF]/40 bg-[#0875FF]/5'
-                                    : 'border-slate-200 hover:bg-slate-50'
+                                    ? 'border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5'
+                                    : 'border-[var(--border)] hover:bg-[var(--bg-primary)]'
                                 }`}
                               >
                                 <input
@@ -427,13 +427,13 @@ export function RolesAdmin() {
                                 />
                                 <span className="min-w-0">
                                   <span className="flex items-center gap-2">
-                                    <span className="font-medium text-slate-800">{perm.display}</span>
+                                    <span className="font-medium text-[var(--text-primary)]">{perm.display}</span>
                                     <Badge tone={RISK_TONE[perm.risk]}>{perm.risk}</Badge>
                                   </span>
-                                  <span className="mt-0.5 block font-mono text-[11px] text-slate-400">
+                                  <span className="mt-0.5 block font-mono text-[11px] text-[var(--text-muted)]">
                                     {perm.key}
                                   </span>
-                                  <span className="mt-0.5 block text-xs text-slate-500">
+                                  <span className="mt-0.5 block text-xs text-[var(--text-muted)]">
                                     {perm.description}
                                   </span>
                                 </span>

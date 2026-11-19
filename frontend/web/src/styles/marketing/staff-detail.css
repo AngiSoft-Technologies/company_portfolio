@@ -5,9 +5,9 @@
 .staff-portfolio {
   min-height: 100vh;
 
-  background: #07142b;
+  background: var(--bg-primary);
 
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .staff-portfolio a {
@@ -19,12 +19,10 @@
    ========================================================================== */
 
 .staff-portfolio-hero {
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid
+    var(--border);
 
-  padding:
-    clamp(34px, 5vw, 64px)
+  padding: clamp(34px, 5vw, 64px)
     0
     clamp(58px, 8vw, 100px);
 }
@@ -42,33 +40,29 @@
 
   padding: 0;
 
-  color:
-    rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 
   font-size: 0.7rem;
   font-weight: 700;
 
   cursor: pointer;
 
-  transition:
-    color 220ms ease;
+  transition: color 220ms ease;
 }
 
 .staff-portfolio-back:hover {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-portfolio-hero-layout {
   display: grid;
 
-  grid-template-columns:
-    minmax(300px, 0.78fr)
+  grid-template-columns: minmax(300px, 0.78fr)
     minmax(0, 1.22fr);
 
   align-items: stretch;
 
-  gap:
-    clamp(40px, 6vw, 84px);
+  gap: clamp(40px, 6vw, 84px);
 
   margin-top: 30px;
 }
@@ -80,7 +74,7 @@
 
   overflow: hidden;
 
-  background: #0a1b38;
+  background: var(--surface);
 }
 
 .staff-portfolio-portrait::before {
@@ -96,11 +90,10 @@
   width: 34%;
   height: 3px;
 
-  background:
-    linear-gradient(
+  background: linear-gradient(
       90deg,
-      #0a3dff,
-      #00c2ff
+      var(--color-primary),
+      var(--color-secondary)
     );
 }
 
@@ -112,11 +105,10 @@
 
   pointer-events: none;
 
-  background:
-    linear-gradient(
+  background: linear-gradient(
       180deg,
       transparent 60%,
-      rgba(7, 20, 43, 0.82)
+      color-mix(in srgb, var(--surface) 82%, transparent)
       100%
     );
 }
@@ -139,17 +131,15 @@
   align-items: center;
   justify-content: center;
 
-  background:
-    linear-gradient(
+  background: linear-gradient(
       135deg,
-      rgba(10, 61, 255, 0.62),
-      #07142b
+      color-mix(in srgb, var(--color-primary) 62%, transparent),
+      var(--bg-primary)
     );
 
-  color: #ffffff;
+  color: var(--color-white);
 
-  font-family:
-    Sora,
+  font-family: Sora,
     sans-serif;
 
   font-size: 6rem;
@@ -167,7 +157,7 @@
 .staff-portfolio-company {
   margin: 0;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.67rem;
   font-weight: 800;
@@ -181,14 +171,12 @@
 
   margin: 17px 0 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
-  font-family:
-    Sora,
+  font-family: Sora,
     sans-serif;
 
-  font-size:
-    clamp(2.8rem, 6vw, 5.9rem);
+  font-size: clamp(2.8rem, 6vw, 5.9rem);
 
   font-weight: 800;
   line-height: 0.96;
@@ -199,10 +187,9 @@
 .staff-portfolio-title {
   margin: 20px 0 0;
 
-  color: #5dd8ff;
+  color: var(--color-primary-light);
 
-  font-size:
-    clamp(1rem, 1.8vw, 1.4rem);
+  font-size: clamp(1rem, 1.8vw, 1.4rem);
 
   font-weight: 700;
 }
@@ -212,8 +199,7 @@
 
   margin: 26px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.64);
+  color: var(--text-secondary);
 
   font-size: 0.94rem;
   line-height: 1.85;
@@ -240,21 +226,19 @@
 
   gap: 9px;
 
-  color:
-    rgba(255, 255, 255, 0.58);
+  color: var(--text-muted);
 
   font-size: 0.72rem;
 
-  transition:
-    color 220ms ease;
+  transition: color 220ms ease;
 }
 
 .staff-portfolio-contact svg {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 a.staff-portfolio-contact:hover {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-portfolio-socials {
@@ -274,26 +258,22 @@ a.staff-portfolio-contact:hover {
   align-items: center;
   justify-content: center;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.14);
+  border: 1px solid
+    var(--border);
 
-  color:
-    rgba(255, 255, 255, 0.62);
+  color: var(--text-secondary);
 
-  transition:
-    border-color 220ms ease,
+  transition: border-color 220ms ease,
     background-color 220ms ease,
     color 220ms ease;
 }
 
 .staff-portfolio-social:hover {
-  border-color: #00c2ff;
+  border-color: var(--color-primary);
 
-  background:
-    rgba(0, 194, 255, 0.07);
+  background: color-mix(in srgb, var(--color-secondary) 7%, transparent);
 
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-portfolio-availability {
@@ -305,8 +285,7 @@ a.staff-portfolio-contact:hover {
 
   margin: 24px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.46);
+  color: var(--text-muted);
 
   font-size: 0.7rem;
 }
@@ -317,11 +296,10 @@ a.staff-portfolio-contact:hover {
 
   border-radius: 50%;
 
-  background: #39ff6a;
+  background: var(--color-accent);
 
-  box-shadow:
-    0 0 0 4px
-    rgba(57, 255, 106, 0.1);
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--color-accent-2) 10%, transparent);
 }
 
 /* ==========================================================================
@@ -331,8 +309,7 @@ a.staff-portfolio-contact:hover {
 .staff-portfolio-nav {
   position: sticky;
 
-  top:
-    var(
+  top: var(
       --header-height,
       72px
     );
@@ -341,12 +318,10 @@ a.staff-portfolio-contact:hover {
 
   overflow-x: auto;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid
+    var(--border);
 
-  background:
-    rgba(7, 20, 43, 0.95);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
 
   backdrop-filter: blur(14px);
 
@@ -377,16 +352,14 @@ a.staff-portfolio-contact:hover {
 
   padding: 20px 18px;
 
-  color:
-    rgba(255, 255, 255, 0.46);
+  color: var(--text-muted);
 
   font-size: 0.66rem;
   font-weight: 800;
 
   cursor: pointer;
 
-  transition:
-    color 220ms ease;
+  transition: color 220ms ease;
 }
 
 .staff-portfolio-nav-link::after {
@@ -399,17 +372,16 @@ a.staff-portfolio-contact:hover {
 
   height: 2px;
 
-  background: #00c2ff;
+  background: var(--color-primary);
 
   transform: scaleX(0);
 
-  transition:
-    transform 240ms ease;
+  transition: transform 240ms ease;
 }
 
 .staff-portfolio-nav-link:hover,
 .staff-portfolio-nav-link.is-active {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .staff-portfolio-nav-link.is-active::after {
@@ -421,22 +393,19 @@ a.staff-portfolio-contact:hover {
    ========================================================================== */
 
 .staff-portfolio-body {
-  padding:
-    clamp(60px, 8vw, 112px)
+  padding: clamp(60px, 8vw, 112px)
     0;
 }
 
 .staff-portfolio-layout {
   display: grid;
 
-  grid-template-columns:
-    280px
+  grid-template-columns: 280px
     minmax(0, 1fr);
 
   align-items: start;
 
-  gap:
-    clamp(46px, 7vw, 98px);
+  gap: clamp(46px, 7vw, 98px);
 }
 
 .staff-portfolio-content {
@@ -450,8 +419,7 @@ a.staff-portfolio-contact:hover {
 .staff-portfolio-sidebar {
   position: sticky;
 
-  top:
-    calc(
+  top: calc(
       var(
         --header-height,
         72px
@@ -462,30 +430,26 @@ a.staff-portfolio-contact:hover {
 .staff-profile-facts {
   margin: 0;
 
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.14);
+  border-top: 1px solid
+    var(--border);
 }
 
 .staff-profile-fact {
   display: grid;
 
-  grid-template-columns:
-    90px
+  grid-template-columns: 90px
     minmax(0, 1fr);
 
   gap: 14px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.09);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 14px 0;
 }
 
 .staff-profile-fact dt {
-  color:
-    rgba(255, 255, 255, 0.36);
+  color: var(--text-muted);
 
   font-size: 0.62rem;
   font-weight: 700;
@@ -496,8 +460,7 @@ a.staff-portfolio-contact:hover {
 .staff-profile-fact dd {
   margin: 0;
 
-  color:
-    rgba(255, 255, 255, 0.68);
+  color: var(--text-secondary);
 
   font-size: 0.73rem;
   line-height: 1.5;
@@ -513,25 +476,23 @@ a.staff-portfolio-contact:hover {
 
   margin-top: 22px;
 
-  border:
-    1px solid
-    #0a3dff;
+  border: 1px solid
+    var(--color-primary);
 
-  background: #0a3dff;
+  background: var(--color-primary);
 
   padding: 12px 15px;
 
-  color: #ffffff;
+  color: var(--color-white);
 
   font-size: 0.7rem;
   font-weight: 800;
 
-  transition:
-    background-color 220ms ease;
+  transition: background-color 220ms ease;
 }
 
 .staff-portfolio-download:hover {
-  background: #3b6fff;
+  background: var(--color-primary-light);
 }
 
 .staff-sidebar-skills {
@@ -541,8 +502,7 @@ a.staff-portfolio-contact:hover {
 .staff-sidebar-skills h3 {
   margin: 0;
 
-  color:
-    rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 
   font-size: 0.62rem;
   font-weight: 800;
@@ -562,13 +522,12 @@ a.staff-portfolio-contact:hover {
 }
 
 .staff-sidebar-skills span {
-  border:
-    1px solid
-    rgba(0, 194, 255, 0.18);
+  border: 1px solid
+    var(--border);
 
   padding: 5px 8px;
 
-  color: #5dd8ff;
+  color: var(--color-primary-light);
 
   font-size: 0.59rem;
 }
@@ -583,28 +542,25 @@ a.staff-portfolio-contact:hover {
 
 .staff-portfolio-section +
 .staff-portfolio-section {
-  margin-top:
-    clamp(66px, 8vw, 108px);
+  margin-top: clamp(66px, 8vw, 108px);
 }
 
 .staff-portfolio-section-header {
   display: grid;
 
-  grid-template-columns:
-    150px
+  grid-template-columns: 150px
     minmax(0, 1fr);
 
   gap: 30px;
 
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.13);
+  border-top: 1px solid
+    var(--border);
 
   padding-top: 20px;
 }
 
 .staff-portfolio-section-index {
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.64rem;
   font-weight: 800;
@@ -615,14 +571,12 @@ a.staff-portfolio-contact:hover {
 .staff-portfolio-section-title {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
-  font-family:
-    Sora,
+  font-family: Sora,
     sans-serif;
 
-  font-size:
-    clamp(1.8rem, 3vw, 2.9rem);
+  font-size: clamp(1.8rem, 3vw, 2.9rem);
 
   font-weight: 800;
 
@@ -638,8 +592,7 @@ a.staff-portfolio-contact:hover {
 
   margin: 31px 0 0 180px;
 
-  color:
-    rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
 
   font-size: 0.92rem;
   line-height: 1.95;
@@ -660,8 +613,7 @@ a.staff-portfolio-contact:hover {
 
   display: grid;
 
-  grid-template-columns:
-    140px
+  grid-template-columns: 140px
     minmax(0, 1fr);
 
   gap: 28px;
@@ -680,14 +632,13 @@ a.staff-portfolio-contact:hover {
 
   width: 1px;
 
-  background:
-    rgba(255, 255, 255, 0.11);
+  background: color-mix(in srgb, var(--card-bg) 11%, transparent);
 }
 
 .staff-experience-period {
   margin: 0;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.68rem;
   font-weight: 800;
@@ -710,21 +661,19 @@ a.staff-portfolio-contact:hover {
   width: 9px;
   height: 9px;
 
-  border:
-    2px solid
-    #07142b;
+  border: 2px solid
+    var(--bg-primary);
 
-  background: #00c2ff;
+  background: var(--color-primary);
 
-  box-shadow:
-    0 0 0 4px
-    rgba(0, 194, 255, 0.15);
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--color-secondary) 15%, transparent);
 }
 
 .staff-experience-content h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 1.05rem;
   font-weight: 800;
@@ -733,8 +682,7 @@ a.staff-portfolio-contact:hover {
 .staff-experience-company {
   margin: 6px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.46);
+  color: var(--text-muted);
 
   font-size: 0.73rem;
 }
@@ -742,8 +690,7 @@ a.staff-portfolio-contact:hover {
 .staff-experience-description {
   margin: 15px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 
   font-size: 0.81rem;
   line-height: 1.78;
@@ -755,8 +702,7 @@ a.staff-portfolio-contact:hover {
 
   padding-left: 18px;
 
-  color:
-    rgba(255, 255, 255, 0.57);
+  color: var(--text-muted);
 
   font-size: 0.78rem;
   line-height: 1.7;
@@ -776,24 +722,21 @@ li {
 .staff-project-list {
   margin: 35px 0 0 180px;
 
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border-top: 1px solid
+    var(--border);
 }
 
 .staff-project-item {
   display: grid;
 
-  grid-template-columns:
-    minmax(170px, 0.52fr)
+  grid-template-columns: minmax(170px, 0.52fr)
     minmax(0, 1.48fr)
     auto;
 
   gap: 30px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 29px 0;
 }
@@ -801,7 +744,7 @@ li {
 .staff-project-title {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 1rem;
   font-weight: 800;
@@ -810,7 +753,7 @@ li {
 .staff-project-role {
   margin: 7px 0 0;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.68rem;
   font-weight: 700;
@@ -819,8 +762,7 @@ li {
 .staff-project-period {
   margin: 7px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.34);
+  color: var(--text-muted);
 
   font-size: 0.62rem;
 }
@@ -828,8 +770,7 @@ li {
 .staff-project-summary {
   margin: 0;
 
-  color:
-    rgba(255, 255, 255, 0.58);
+  color: var(--text-muted);
 
   font-size: 0.8rem;
   line-height: 1.72;
@@ -846,13 +787,12 @@ li {
 }
 
 .staff-project-technology {
-  border:
-    1px solid
-    rgba(10, 61, 255, 0.26);
+  border: 1px solid
+    color-mix(in srgb, var(--color-primary) 26%, transparent);
 
   padding: 4px 7px;
 
-  color: #5dd8ff;
+  color: var(--color-primary-light);
 
   font-size: 0.57rem;
   font-weight: 700;
@@ -865,8 +805,7 @@ li {
 .staff-project-outcomes p {
   margin: 5px 0 0;
 
-  color:
-    rgba(57, 255, 106, 0.7);
+  color: color-mix(in srgb, var(--color-accent-2) 70%, transparent);
 
   font-size: 0.7rem;
 }
@@ -876,7 +815,7 @@ li {
 
   margin-right: 7px;
 
-  color: #39ff6a;
+  color: var(--color-accent);
 }
 
 .staff-project-link {
@@ -888,7 +827,7 @@ li {
 
   align-self: start;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.68rem;
   font-weight: 800;
@@ -899,8 +838,7 @@ li {
 .staff-project-link svg {
   font-size: 0.58rem;
 
-  transition:
-    transform 220ms ease;
+  transition: transform 220ms ease;
 }
 
 .staff-project-link:hover svg {
@@ -914,9 +852,8 @@ li {
 .staff-service-list {
   margin: 35px 0 0 180px;
 
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border-top: 1px solid
+    var(--border);
 }
 
 .staff-service-item {
@@ -927,9 +864,8 @@ li {
 
   gap: 26px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 24px 0;
 
@@ -939,13 +875,12 @@ li {
 .staff-service-item h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.94rem;
   font-weight: 800;
 
-  transition:
-    color 220ms ease;
+  transition: color 220ms ease;
 }
 
 .staff-service-item p {
@@ -953,8 +888,7 @@ li {
 
   margin: 8px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 
   font-size: 0.76rem;
   line-height: 1.65;
@@ -963,14 +897,13 @@ li {
 .staff-service-item > svg {
   flex-shrink: 0;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
-  transition:
-    transform 220ms ease;
+  transition: transform 220ms ease;
 }
 
 .staff-service-item:hover h3 {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-service-item:hover > svg {
@@ -984,8 +917,7 @@ li {
 .staff-skill-groups {
   display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 28px;
 
@@ -993,9 +925,8 @@ li {
 }
 
 .staff-skill-group {
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border-top: 1px solid
+    var(--border);
 
   padding-top: 16px;
 }
@@ -1003,8 +934,7 @@ li {
 .staff-skill-group h3 {
   margin: 0;
 
-  color:
-    rgba(255, 255, 255, 0.44);
+  color: var(--text-muted);
 
   font-size: 0.62rem;
   font-weight: 800;
@@ -1024,17 +954,14 @@ li {
 }
 
 .staff-skill-tag {
-  border:
-    1px solid
-    rgba(0, 194, 255, 0.2);
+  border: 1px solid
+    var(--border);
 
-  background:
-    rgba(0, 194, 255, 0.05);
+  background: color-mix(in srgb, var(--color-secondary) 5%, transparent);
 
   padding: 6px 9px;
 
-  color:
-    rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
 
   font-size: 0.67rem;
 }
@@ -1050,15 +977,13 @@ li {
 .staff-education-item {
   display: grid;
 
-  grid-template-columns:
-    48px
+  grid-template-columns: 48px
     minmax(0, 1fr);
 
   gap: 18px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 22px 0;
 }
@@ -1072,17 +997,16 @@ li {
   align-items: center;
   justify-content: center;
 
-  border:
-    1px solid
-    rgba(0, 194, 255, 0.25);
+  border: 1px solid
+    var(--border);
 
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-education-item h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.95rem;
 }
@@ -1090,8 +1014,7 @@ li {
 .staff-education-item p {
   margin: 6px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 
   font-size: 0.74rem;
 }
@@ -1101,8 +1024,7 @@ li {
 
   margin-top: 6px;
 
-  color:
-    rgba(255, 255, 255, 0.34);
+  color: var(--text-muted);
 
   font-size: 0.63rem;
 }
@@ -1111,8 +1033,7 @@ li {
   div > div {
   margin-top: 12px;
 
-  color:
-    rgba(255, 255, 255, 0.56);
+  color: var(--text-muted);
 
   font-size: 0.76rem;
   line-height: 1.65;
@@ -1125,8 +1046,7 @@ li {
 .staff-certification-list {
   display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 16px;
 
@@ -1136,23 +1056,21 @@ li {
 .staff-certification-item {
   display: grid;
 
-  grid-template-columns:
-    38px
+  grid-template-columns: 38px
     minmax(0, 1fr);
 
   gap: 14px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.11);
+  border: 1px solid
+    var(--border);
 
-  background: #0a1b38;
+  background: var(--surface);
 
   padding: 19px;
 }
 
 .staff-certification-item > svg {
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 1.1rem;
 }
@@ -1160,7 +1078,7 @@ li {
 .staff-certification-item h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.85rem;
 }
@@ -1168,8 +1086,7 @@ li {
 .staff-certification-item p {
   margin: 7px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.42);
+  color: var(--text-muted);
 
   font-size: 0.65rem;
 }
@@ -1183,7 +1100,7 @@ li {
 
   margin-top: 12px;
 
-  color: #00c2ff;
+  color: var(--color-primary);
 
   font-size: 0.64rem;
 }
@@ -1199,15 +1116,13 @@ li {
 .staff-achievement-item {
   display: grid;
 
-  grid-template-columns:
-    46px
+  grid-template-columns: 46px
     minmax(0, 1fr);
 
   gap: 18px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 22px 0;
 }
@@ -1221,17 +1136,16 @@ li {
   align-items: center;
   justify-content: center;
 
-  border:
-    1px solid
-    rgba(57, 255, 106, 0.22);
+  border: 1px solid
+    color-mix(in srgb, var(--color-accent-2) 22%, transparent);
 
-  color: #39ff6a;
+  color: var(--color-accent);
 }
 
 .staff-achievement-item h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.9rem;
 }
@@ -1239,8 +1153,7 @@ li {
 .staff-achievement-item p {
   margin: 6px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.36);
+  color: var(--text-muted);
 
   font-size: 0.64rem;
 }
@@ -1249,8 +1162,7 @@ li {
   div > div {
   margin-top: 11px;
 
-  color:
-    rgba(255, 255, 255, 0.56);
+  color: var(--text-muted);
 
   font-size: 0.77rem;
   line-height: 1.66;
@@ -1267,8 +1179,7 @@ li {
 .staff-article-item {
   display: grid;
 
-  grid-template-columns:
-    110px
+  grid-template-columns: 110px
     minmax(0, 1fr)
     auto;
 
@@ -1276,9 +1187,8 @@ li {
 
   gap: 25px;
 
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid
+    var(--border);
 
   padding: 22px 0;
 
@@ -1286,8 +1196,7 @@ li {
 }
 
 .staff-article-date {
-  color:
-    rgba(255, 255, 255, 0.34);
+  color: var(--text-muted);
 
   font-size: 0.63rem;
 }
@@ -1295,13 +1204,12 @@ li {
 .staff-article-title {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.9rem;
   font-weight: 800;
 
-  transition:
-    color 220ms ease;
+  transition: color 220ms ease;
 }
 
 .staff-article-excerpt {
@@ -1309,23 +1217,21 @@ li {
 
   margin: 7px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.47);
+  color: var(--text-muted);
 
   font-size: 0.73rem;
   line-height: 1.6;
 }
 
 .staff-article-arrow {
-  color: #00c2ff;
+  color: var(--color-primary);
 
-  transition:
-    transform 220ms ease;
+  transition: transform 220ms ease;
 }
 
 .staff-article-item:hover
   .staff-article-title {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-article-item:hover
@@ -1340,8 +1246,7 @@ li {
 .staff-document-list {
   display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 14px;
 
@@ -1351,8 +1256,7 @@ li {
 .staff-document-item {
   display: grid;
 
-  grid-template-columns:
-    34px
+  grid-template-columns: 34px
     minmax(0, 1fr)
     auto;
 
@@ -1360,31 +1264,28 @@ li {
 
   gap: 13px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.11);
+  border: 1px solid
+    var(--border);
 
   padding: 18px;
 
   color: inherit;
 
-  transition:
-    border-color 220ms ease;
+  transition: border-color 220ms ease;
 }
 
 .staff-document-item:hover {
-  border-color:
-    rgba(0, 194, 255, 0.5);
+  border-color: var(--border);
 }
 
 .staff-document-item > svg {
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 .staff-document-item h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.78rem;
 }
@@ -1392,8 +1293,7 @@ li {
 .staff-document-item p {
   margin: 6px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.42);
+  color: var(--text-muted);
 
   font-size: 0.65rem;
   line-height: 1.5;
@@ -1406,8 +1306,7 @@ li {
 .staff-contact-panel {
   display: grid;
 
-  grid-template-columns:
-    minmax(0, 1fr)
+  grid-template-columns: minmax(0, 1fr)
     auto;
 
   align-items: center;
@@ -1416,23 +1315,20 @@ li {
 
   margin: 35px 0 0 180px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border: 1px solid
+    var(--border);
 
-  background: #0a1b38;
+  background: var(--surface);
 
-  padding:
-    clamp(26px, 4vw, 44px);
+  padding: clamp(26px, 4vw, 44px);
 }
 
 .staff-contact-panel h3 {
   margin: 0;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
-  font-family:
-    Sora,
+  font-family: Sora,
     sans-serif;
 
   font-size: 1.4rem;
@@ -1443,8 +1339,7 @@ li {
 
   margin: 13px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.52);
+  color: var(--text-muted);
 
   font-size: 0.78rem;
   line-height: 1.7;
@@ -1465,21 +1360,20 @@ li {
 
   gap: 9px;
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.14);
+  border: 1px solid
+    var(--border);
 
   padding: 10px 14px;
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   font-size: 0.68rem;
 }
 
 .staff-contact-actions a:hover {
-  border-color: #00c2ff;
+  border-color: var(--color-primary);
 
-  color: #00c2ff;
+  color: var(--color-primary);
 }
 
 /* ==========================================================================
@@ -1495,9 +1389,9 @@ li {
   align-items: center;
   justify-content: center;
 
-  background: #07142b;
+  background: var(--bg-primary);
 
-  color: #ffffff;
+  color: var(--text-primary);
 
   text-align: center;
 }
@@ -1506,37 +1400,32 @@ li {
   width: 45px;
   height: 45px;
 
-  border:
-    2px solid
-    rgba(255, 255, 255, 0.1);
+  border: 2px solid
+    var(--border);
 
-  border-top-color: #00c2ff;
+  border-top-color: var(--color-primary);
 
   border-radius: 50%;
 
-  animation:
-    staffPortfolioSpin
+  animation: staffPortfolioSpin
     800ms linear infinite;
 }
 
 .staff-portfolio-loading p {
   margin-left: 14px;
 
-  color:
-    rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 
   font-size: 0.76rem;
 }
 
 .staff-portfolio-error > div {
-  width:
-    min(100% - 40px, 560px);
+  width: min(100% - 40px, 560px);
 
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border: 1px solid
+    var(--border);
 
-  background: #0a1b38;
+  background: var(--surface);
 
   padding: 36px;
 }
@@ -1550,8 +1439,7 @@ li {
 .staff-portfolio-error p {
   margin: 15px 0 0;
 
-  color:
-    rgba(255, 255, 255, 0.52);
+  color: var(--text-muted);
 
   font-size: 0.8rem;
   line-height: 1.65;
@@ -1568,11 +1456,11 @@ li {
 
   border: 0;
 
-  background: #0a3dff;
+  background: var(--color-primary);
 
   padding: 11px 16px;
 
-  color: #ffffff;
+  color: var(--color-white);
 
   font-size: 0.7rem;
   font-weight: 800;
@@ -1593,8 +1481,7 @@ li {
 @media (max-width: 1023px) {
   .staff-portfolio-hero-layout,
   .staff-portfolio-layout {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .staff-portfolio-portrait {
@@ -1608,8 +1495,7 @@ li {
   .staff-profile-facts {
     display: grid;
 
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .staff-profile-fact {
@@ -1645,13 +1531,11 @@ li {
   }
 
   .staff-portfolio-nav-inner {
-    justify-content:
-      flex-start;
+    justify-content: flex-start;
   }
 
   .staff-profile-facts {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .staff-portfolio-section-header {
@@ -1683,8 +1567,7 @@ li {
   }
 
   .staff-project-item {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
 
     gap: 15px;
   }
@@ -1696,13 +1579,11 @@ li {
   .staff-skill-groups,
   .staff-certification-list,
   .staff-document-list {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .staff-article-item {
-    grid-template-columns:
-      minmax(0, 1fr)
+    grid-template-columns: minmax(0, 1fr)
       auto;
 
     gap: 12px;
@@ -1713,8 +1594,7 @@ li {
   }
 
   .staff-contact-panel {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1724,9 +1604,8 @@ li {
 
 .staff-portfolio button:focus-visible,
 .staff-portfolio a:focus-visible {
-  outline:
-    2px solid
-    #00c2ff;
+  outline: 2px solid
+    var(--color-secondary);
 
   outline-offset: 3px;
 }
@@ -1740,5 +1619,186 @@ li {
   .staff-portfolio *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+/* Brand-filled actions keep white text in both themes */
+.staff-portfolio-download,
+.staff-portfolio-error button {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Hero top row + template switcher (shared by both layouts)
+   ========================================================================== */
+
+.staff-portfolio-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.staff-template-switch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.staff-template-switch a {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.staff-template-switch a:hover {
+  color: var(--text-primary);
+}
+
+.staff-template-switch a.is-active {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   Spotlight template — full-width portrait hero, single-column body
+   ========================================================================== */
+
+.staff-spotlight-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2rem, 4vw, 3rem) 0 clamp(3rem, 6vw, 4.5rem);
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(900px 480px at 85% -10%, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 60%),
+    var(--bg-primary);
+}
+
+.staff-spotlight-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1.75rem, 3vw, 2.75rem);
+}
+
+.staff-spotlight-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+}
+
+.staff-spotlight-portrait {
+  position: relative;
+}
+
+.staff-spotlight-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 8% -6% -6% 8%;
+  border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  z-index: 0;
+}
+
+.staff-spotlight-portrait .staff-portfolio-portrait {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--color-abyss) 50%, transparent);
+}
+
+.staff-spotlight-portrait .staff-portfolio-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.staff-spotlight-portrait .staff-portfolio-portrait-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 800;
+  color: var(--color-primary);
+  background: radial-gradient(120% 120% at 20% 0%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 60%),
+    var(--surface);
+}
+
+.staff-spotlight-intro .staff-portfolio-company {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.staff-spotlight-intro .staff-portfolio-name {
+  margin: 0;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.staff-spotlight-intro .staff-portfolio-title {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.staff-spotlight-intro .staff-portfolio-summary {
+  margin: 1rem 0 0;
+  max-width: 58ch;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.staff-spotlight-intro .staff-portfolio-contact-row {
+  margin-top: 1.4rem;
+}
+
+.staff-spotlight-intro .staff-portfolio-socials {
+  margin-top: 1rem;
+}
+
+.staff-spotlight-intro .staff-portfolio-availability {
+  margin-top: 1.25rem;
+}
+
+.staff-portfolio-content--single {
+  max-width: 920px;
+}
+
+@media (max-width: 860px) {
+  .staff-spotlight-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-spotlight-portrait {
+    max-width: 340px;
+  }
+
+  .staff-spotlight-portrait::after {
+    display: none;
   }
 }

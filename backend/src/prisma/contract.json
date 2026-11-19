@@ -120,6 +120,14 @@
       "model": "Industry",
       "namespace": "public"
     },
+    "Invoice": {
+      "model": "Invoice",
+      "namespace": "public"
+    },
+    "InvoiceLineItem": {
+      "model": "InvoiceLineItem",
+      "namespace": "public"
+    },
     "JobPosting": {
       "model": "JobPosting",
       "namespace": "public"
@@ -138,6 +146,10 @@
     },
     "Notification": {
       "model": "Notification",
+      "namespace": "public"
+    },
+    "Opportunity": {
+      "model": "Opportunity",
       "namespace": "public"
     },
     "PageView": {
@@ -210,6 +222,14 @@
     },
     "ProjectMilestone": {
       "model": "ProjectMilestone",
+      "namespace": "public"
+    },
+    "Quote": {
+      "model": "Quote",
+      "namespace": "public"
+    },
+    "QuoteLineItem": {
+      "model": "QuoteLineItem",
       "namespace": "public"
     },
     "RefreshToken": {
@@ -1441,10 +1461,14 @@
                 }
               },
               "budgetAmount": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "clientId": {
@@ -1548,10 +1572,14 @@
                 }
               },
               "priceEstimate": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "pricingType": {
@@ -1593,10 +1621,14 @@
                 }
               },
               "quotedAmount": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "quotedCurrency": {
@@ -1824,6 +1856,21 @@
                   "namespace": "public"
                 }
               },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "bookingId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
+                  "namespace": "public"
+                }
+              },
               "notes": {
                 "cardinality": "1:N",
                 "on": {
@@ -1839,6 +1886,21 @@
                   "namespace": "public"
                 }
               },
+              "opportunities": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "bookingId"
+                  ]
+                },
+                "to": {
+                  "model": "Opportunity",
+                  "namespace": "public"
+                }
+              },
               "payments": {
                 "cardinality": "1:N",
                 "on": {
@@ -1851,6 +1913,21 @@
                 },
                 "to": {
                   "model": "Payment",
+                  "namespace": "public"
+                }
+              },
+              "quotes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "bookingId"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
                   "namespace": "public"
                 }
               }
@@ -2613,6 +2690,36 @@
                   "namespace": "public"
                 }
               },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "clientId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
+                  "namespace": "public"
+                }
+              },
+              "opportunities": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "clientId"
+                  ]
+                },
+                "to": {
+                  "model": "Opportunity",
+                  "namespace": "public"
+                }
+              },
               "productInquiries": {
                 "cardinality": "1:N",
                 "on": {
@@ -2625,6 +2732,21 @@
                 },
                 "to": {
                   "model": "ProductInquiry",
+                  "namespace": "public"
+                }
+              },
+              "quotes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "clientId"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
                   "namespace": "public"
                 }
               },
@@ -2991,6 +3113,21 @@
                 },
                 "to": {
                   "model": "File",
+                  "namespace": "public"
+                }
+              },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "clientProjectId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
                   "namespace": "public"
                 }
               },
@@ -4199,6 +4336,36 @@
                   "namespace": "public"
                 }
               },
+              "invoicesCreated": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "createdById"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
+                  "namespace": "public"
+                }
+              },
+              "opportunities": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "assignedToId"
+                  ]
+                },
+                "to": {
+                  "model": "Opportunity",
+                  "namespace": "public"
+                }
+              },
               "position": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -4287,6 +4454,21 @@
                 },
                 "to": {
                   "model": "Project",
+                  "namespace": "public"
+                }
+              },
+              "quotesCreated": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "createdById"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
                   "namespace": "public"
                 }
               },
@@ -5543,6 +5725,464 @@
               "table": "Industry"
             }
           },
+          "Invoice": {
+            "fields": {
+              "amountPaid": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "balanceDue": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "bookingId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clientId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clientProjectId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "createdById": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "dueAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "issuedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "number": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "paidAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "publicReference": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "quoteId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "tax": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "total": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "booking": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "bookingId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Booking",
+                  "namespace": "public"
+                }
+              },
+              "client": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "clientId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Client",
+                  "namespace": "public"
+                }
+              },
+              "clientProject": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "clientProjectId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ClientProject",
+                  "namespace": "public"
+                }
+              },
+              "createdBy": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "createdById"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              },
+              "lineItems": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "invoiceId"
+                  ]
+                },
+                "to": {
+                  "model": "InvoiceLineItem",
+                  "namespace": "public"
+                }
+              },
+              "quote": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "quoteId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amountPaid": {
+                  "column": "amountPaid"
+                },
+                "balanceDue": {
+                  "column": "balanceDue"
+                },
+                "bookingId": {
+                  "column": "bookingId"
+                },
+                "clientId": {
+                  "column": "clientId"
+                },
+                "clientProjectId": {
+                  "column": "clientProjectId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "createdById": {
+                  "column": "createdById"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "dueAt": {
+                  "column": "dueAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "issuedAt": {
+                  "column": "issuedAt"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "number": {
+                  "column": "number"
+                },
+                "paidAt": {
+                  "column": "paidAt"
+                },
+                "publicReference": {
+                  "column": "publicReference"
+                },
+                "quoteId": {
+                  "column": "quoteId"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                },
+                "tax": {
+                  "column": "tax"
+                },
+                "total": {
+                  "column": "total"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Invoice"
+            }
+          },
+          "InvoiceLineItem": {
+            "fields": {
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "invoiceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lineTotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "quantity": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "sortOrder": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "unitPrice": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              }
+            },
+            "relations": {
+              "invoice": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "invoiceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "invoiceId": {
+                  "column": "invoiceId"
+                },
+                "lineTotal": {
+                  "column": "lineTotal"
+                },
+                "quantity": {
+                  "column": "quantity"
+                },
+                "sortOrder": {
+                  "column": "sortOrder"
+                },
+                "unitPrice": {
+                  "column": "unitPrice"
+                }
+              },
+              "namespaceId": "public",
+              "table": "InvoiceLineItem"
+            }
+          },
           "JobPosting": {
             "fields": {
               "_type": {
@@ -5899,6 +6539,13 @@
                   }
                 }
               },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "email": {
                 "nullable": false,
                 "type": {
@@ -5908,6 +6555,13 @@
               },
               "id": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lostReason": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -5934,8 +6588,22 @@
                   "kind": "scalar"
                 }
               },
+              "qualificationNotes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "source": {
                 "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "stage": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -5957,9 +6625,36 @@
                     "precision": 3
                   }
                 }
+              },
+              "value": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
               }
             },
-            "relations": {},
+            "relations": {
+              "opportunities": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "leadId"
+                  ]
+                },
+                "to": {
+                  "model": "Opportunity",
+                  "namespace": "public"
+                }
+              }
+            },
             "storage": {
               "fields": {
                 "assignedToId": {
@@ -5968,11 +6663,17 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "currency": {
+                  "column": "currency"
+                },
                 "email": {
                   "column": "email"
                 },
                 "id": {
                   "column": "id"
+                },
+                "lostReason": {
+                  "column": "lostReason"
                 },
                 "name": {
                   "column": "name"
@@ -5983,14 +6684,23 @@
                 "phone": {
                   "column": "phone"
                 },
+                "qualificationNotes": {
+                  "column": "qualificationNotes"
+                },
                 "source": {
                   "column": "source"
+                },
+                "stage": {
+                  "column": "stage"
                 },
                 "status": {
                   "column": "status"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "value": {
+                  "column": "value"
                 }
               },
               "namespaceId": "public",
@@ -6332,6 +7042,280 @@
               "table": "Notification"
             }
           },
+          "Opportunity": {
+            "fields": {
+              "assignedToId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "bookingId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clientId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "expectedCloseDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "leadId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lostReason": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "probability": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "publicReference": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "source": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "stage": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "title": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "value": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              }
+            },
+            "relations": {
+              "assignedTo": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "assignedToId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              },
+              "booking": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "bookingId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Booking",
+                  "namespace": "public"
+                }
+              },
+              "client": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "clientId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Client",
+                  "namespace": "public"
+                }
+              },
+              "lead": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "leadId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Lead",
+                  "namespace": "public"
+                }
+              },
+              "quotes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "opportunityId"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "assignedToId": {
+                  "column": "assignedToId"
+                },
+                "bookingId": {
+                  "column": "bookingId"
+                },
+                "clientId": {
+                  "column": "clientId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "expectedCloseDate": {
+                  "column": "expectedCloseDate"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "leadId": {
+                  "column": "leadId"
+                },
+                "lostReason": {
+                  "column": "lostReason"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "probability": {
+                  "column": "probability"
+                },
+                "publicReference": {
+                  "column": "publicReference"
+                },
+                "source": {
+                  "column": "source"
+                },
+                "stage": {
+                  "column": "stage"
+                },
+                "title": {
+                  "column": "title"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "value": {
+                  "column": "value"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Opportunity"
+            }
+          },
           "PageView": {
             "fields": {
               "createdAt": {
@@ -6421,8 +7405,12 @@
               "amount": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "bookingId": {
@@ -6748,8 +7736,12 @@
               "balance": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "createdAt": {
@@ -6865,8 +7857,12 @@
               "amount": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "channel": {
@@ -7628,6 +8624,21 @@
                 },
                 "to": {
                   "model": "ProductTeamMember",
+                  "namespace": "public"
+                }
+              },
+              "quoteLineItems": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "productId"
+                  ]
+                },
+                "to": {
+                  "model": "QuoteLineItem",
                   "namespace": "public"
                 }
               }
@@ -8985,6 +9996,491 @@
               "table": "ProjectMilestone"
             }
           },
+          "Quote": {
+            "fields": {
+              "acceptedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "bookingId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "clientId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "createdById": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "discount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "issuedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "number": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "opportunityId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "publicReference": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "subtotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "tax": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "total": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "validUntil": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "booking": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "bookingId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Booking",
+                  "namespace": "public"
+                }
+              },
+              "client": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "clientId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Client",
+                  "namespace": "public"
+                }
+              },
+              "createdBy": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "createdById"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              },
+              "invoices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "quoteId"
+                  ]
+                },
+                "to": {
+                  "model": "Invoice",
+                  "namespace": "public"
+                }
+              },
+              "lineItems": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "quoteId"
+                  ]
+                },
+                "to": {
+                  "model": "QuoteLineItem",
+                  "namespace": "public"
+                }
+              },
+              "opportunity": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "opportunityId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Opportunity",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "acceptedAt": {
+                  "column": "acceptedAt"
+                },
+                "bookingId": {
+                  "column": "bookingId"
+                },
+                "clientId": {
+                  "column": "clientId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "createdById": {
+                  "column": "createdById"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "discount": {
+                  "column": "discount"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "issuedAt": {
+                  "column": "issuedAt"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "number": {
+                  "column": "number"
+                },
+                "opportunityId": {
+                  "column": "opportunityId"
+                },
+                "publicReference": {
+                  "column": "publicReference"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "subtotal": {
+                  "column": "subtotal"
+                },
+                "tax": {
+                  "column": "tax"
+                },
+                "total": {
+                  "column": "total"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "validUntil": {
+                  "column": "validUntil"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Quote"
+            }
+          },
+          "QuoteLineItem": {
+            "fields": {
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lineTotal": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "productId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "quantity": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "quoteId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "serviceId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sortOrder": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "unitPrice": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              }
+            },
+            "relations": {
+              "product": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "productId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Product",
+                  "namespace": "public"
+                }
+              },
+              "quote": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "quoteId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Quote",
+                  "namespace": "public"
+                }
+              },
+              "service": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "serviceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Service",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "lineTotal": {
+                  "column": "lineTotal"
+                },
+                "productId": {
+                  "column": "productId"
+                },
+                "quantity": {
+                  "column": "quantity"
+                },
+                "quoteId": {
+                  "column": "quoteId"
+                },
+                "serviceId": {
+                  "column": "serviceId"
+                },
+                "sortOrder": {
+                  "column": "sortOrder"
+                },
+                "unitPrice": {
+                  "column": "unitPrice"
+                }
+              },
+              "namespaceId": "public",
+              "table": "QuoteLineItem"
+            }
+          },
           "RefreshToken": {
             "fields": {
               "createdAt": {
@@ -9332,10 +10828,14 @@
                 }
               },
               "priceFrom": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
-                  "codecId": "pg/float8@1",
-                  "kind": "scalar"
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 }
               },
               "pricing": {
@@ -9450,6 +10950,21 @@
                 },
                 "to": {
                   "model": "ContactEnquiry",
+                  "namespace": "public"
+                }
+              },
+              "quoteLineItems": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "serviceId"
+                  ]
+                },
+                "to": {
+                  "model": "QuoteLineItem",
                   "namespace": "public"
                 }
               }
@@ -11910,9 +13425,17 @@
                   "nullable": true
                 },
                 "budgetAmount": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": true
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "clientId": {
                   "codecId": "pg/text@1",
@@ -12001,9 +13524,17 @@
                   "nullable": true
                 },
                 "priceEstimate": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": true
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "pricingType": {
                   "codecId": "pg/text@1",
@@ -12040,9 +13571,17 @@
                   "nullable": false
                 },
                 "quotedAmount": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": true
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "quotedCurrency": {
                   "codecId": "pg/text@1",
@@ -14811,6 +16350,450 @@
               },
               "uniques": []
             },
+            "Invoice": {
+              "columns": {
+                "amountPaid": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "balanceDue": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "bookingId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "clientId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "clientProjectId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "createdById": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "KES"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "dueAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "issuedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "number": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "paidAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "publicReference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "quoteId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "draft"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "tax": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "total": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "Invoice_quoteId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "quoteId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  }
+                },
+                {
+                  "name": "Invoice_bookingId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "bookingId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Booking"
+                  }
+                },
+                {
+                  "name": "Invoice_clientProjectId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "clientProjectId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ClientProject"
+                  }
+                },
+                {
+                  "name": "Invoice_clientId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "clientId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Client"
+                  }
+                },
+                {
+                  "name": "Invoice_createdById_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "createdById"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "bookingId"
+                  ],
+                  "name": "Invoice_bookingId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "clientId"
+                  ],
+                  "name": "Invoice_clientId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "clientProjectId"
+                  ],
+                  "name": "Invoice_clientProjectId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdAt"
+                  ],
+                  "name": "Invoice_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdById"
+                  ],
+                  "name": "Invoice_createdById_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "dueAt"
+                  ],
+                  "name": "Invoice_dueAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "number"
+                  ],
+                  "name": "Invoice_number_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "publicReference"
+                  ],
+                  "name": "Invoice_publicReference_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "quoteId"
+                  ],
+                  "name": "Invoice_quoteId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "status"
+                  ],
+                  "name": "Invoice_status_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "Invoice_pkey"
+              },
+              "uniques": []
+            },
+            "InvoiceLineItem": {
+              "columns": {
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "invoiceId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "lineTotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "quantity": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "sortOrder": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "unitPrice": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "InvoiceLineItem_invoiceId_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "invoiceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InvoiceLineItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Invoice"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "invoiceId"
+                  ],
+                  "name": "InvoiceLineItem_invoiceId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "InvoiceLineItem_pkey"
+              },
+              "uniques": []
+            },
             "JobPosting": {
               "columns": {
                 "applicationDeadline": {
@@ -15123,6 +17106,15 @@
                     "precision": 3
                   }
                 },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "KES"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "email": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -15132,6 +17124,11 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "lostReason": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "name": {
                   "codecId": "pg/text@1",
@@ -15148,10 +17145,24 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "qualificationNotes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "source": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
+                },
+                "stage": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "new"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "status": {
                   "codecId": "pg/text@1",
@@ -15168,6 +17179,15 @@
                   "nullable": false,
                   "typeParams": {
                     "precision": 3
+                  }
+                },
+                "value": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
                   }
                 }
               },
@@ -15442,6 +17462,260 @@
               },
               "uniques": []
             },
+            "Opportunity": {
+              "columns": {
+                "assignedToId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "bookingId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "clientId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "KES"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "expectedCloseDate": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "leadId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "lostReason": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "probability": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "publicReference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "source": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "stage": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "new"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "title": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "value": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "Opportunity_leadId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "leadId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Opportunity"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Lead"
+                  }
+                },
+                {
+                  "name": "Opportunity_clientId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "clientId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Opportunity"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Client"
+                  }
+                },
+                {
+                  "name": "Opportunity_bookingId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "bookingId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Opportunity"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Booking"
+                  }
+                },
+                {
+                  "name": "Opportunity_assignedToId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "assignedToId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Opportunity"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "assignedToId"
+                  ],
+                  "name": "Opportunity_assignedToId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "bookingId"
+                  ],
+                  "name": "Opportunity_bookingId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "clientId"
+                  ],
+                  "name": "Opportunity_clientId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdAt"
+                  ],
+                  "name": "Opportunity_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "leadId"
+                  ],
+                  "name": "Opportunity_leadId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "publicReference"
+                  ],
+                  "name": "Opportunity_publicReference_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "stage"
+                  ],
+                  "name": "Opportunity_stage_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "Opportunity_pkey"
+              },
+              "uniques": []
+            },
             "PageView": {
               "columns": {
                 "createdAt": {
@@ -15509,9 +17783,17 @@
             "Payment": {
               "columns": {
                 "amount": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": false
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "bookingId": {
                   "codecId": "pg/text@1",
@@ -15829,13 +18111,17 @@
             "PaymentWallet": {
               "columns": {
                 "balance": {
-                  "codecId": "pg/float8@1",
+                  "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": 0
+                    "value": "0.00"
                   },
-                  "nativeType": "float8",
-                  "nullable": false
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "createdAt": {
                   "codecId": "pg/timestamp-string@1",
@@ -15922,9 +18208,17 @@
                   "nullable": true
                 },
                 "amount": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": false
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "channel": {
                   "codecId": "pg/text@1",
@@ -17587,6 +19881,461 @@
               },
               "uniques": []
             },
+            "Quote": {
+              "columns": {
+                "acceptedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "bookingId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "clientId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "createdById": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "KES"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "discount": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "issuedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "number": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "opportunityId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "publicReference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "draft"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "subtotal": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "tax": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "total": {
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "validUntil": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "Quote_opportunityId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "opportunityId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Opportunity"
+                  }
+                },
+                {
+                  "name": "Quote_bookingId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "bookingId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Booking"
+                  }
+                },
+                {
+                  "name": "Quote_clientId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "clientId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Client"
+                  }
+                },
+                {
+                  "name": "Quote_createdById_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "createdById"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "bookingId"
+                  ],
+                  "name": "Quote_bookingId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "clientId"
+                  ],
+                  "name": "Quote_clientId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdAt"
+                  ],
+                  "name": "Quote_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "createdById"
+                  ],
+                  "name": "Quote_createdById_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "number"
+                  ],
+                  "name": "Quote_number_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "opportunityId"
+                  ],
+                  "name": "Quote_opportunityId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "publicReference"
+                  ],
+                  "name": "Quote_publicReference_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "status"
+                  ],
+                  "name": "Quote_status_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "Quote_pkey"
+              },
+              "uniques": []
+            },
+            "QuoteLineItem": {
+              "columns": {
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "lineTotal": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                },
+                "productId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "quantity": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "quoteId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "serviceId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "sortOrder": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "unitPrice": {
+                  "codecId": "pg/numeric@1",
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "QuoteLineItem_quoteId_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "quoteId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "QuoteLineItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Quote"
+                  }
+                },
+                {
+                  "name": "QuoteLineItem_serviceId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "serviceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "QuoteLineItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Service"
+                  }
+                },
+                {
+                  "name": "QuoteLineItem_productId_fkey",
+                  "onDelete": "setNull",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "productId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "QuoteLineItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Product"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "productId"
+                  ],
+                  "name": "QuoteLineItem_productId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "quoteId"
+                  ],
+                  "name": "QuoteLineItem_quoteId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "serviceId"
+                  ],
+                  "name": "QuoteLineItem_serviceId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "QuoteLineItem_pkey"
+              },
+              "uniques": []
+            },
             "RefreshToken": {
               "columns": {
                 "createdAt": {
@@ -17912,9 +20661,17 @@
                   "nullable": true
                 },
                 "priceFrom": {
-                  "codecId": "pg/float8@1",
-                  "nativeType": "float8",
-                  "nullable": true
+                  "codecId": "pg/numeric@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nativeType": "numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 18,
+                    "scale": 2
+                  }
                 },
                 "pricing": {
                   "codecId": "pg/jsonb@1",
@@ -19287,7 +22044,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "2fc70153d54a2554fe5dd3dc06f7377d373b7634a53eeaefbcba29ccbefd06c6"
+    "storageHash": "4c54679f25cc25f326c6078dff33b07565556919b09a52a8dca25a2410f67f8a"
   },
   "capabilities": {
     "postgres": {

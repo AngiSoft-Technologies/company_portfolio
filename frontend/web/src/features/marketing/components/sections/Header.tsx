@@ -11,7 +11,7 @@ const resolveIcon = (iconName, fallback = FaGlobe) => localIconRegistry[iconName
 const normalizeLink = (link) => ({label: link.label,to: link.href || link.to || '/',});
 
 /* ═══════════════════ HEADER ═══════════════════ */const Header = () => {const location = useLocation();
-  const { colors, mode, toggleMode } = useTheme();
+  const { colors, mode, toggleMode, theme, setTheme, availableThemes } = useTheme();
   const isDark = mode === 'dark';const [scrolled, setScrolled] = useState(false);const [sidebarOpen, setSidebarOpen] = useState(false);const [activeMega, setActiveMega] = useState(null);const [mobileExpanded, setMobileExpanded] = useState(null);const [isMobile, setIsMobile] = useState(false);const [searchOpen, setSearchOpen] = useState(false);const [searchQuery, setSearchQuery] = useState('');const [searchResults, setSearchResults] = useState([]);const [searchLoading, setSearchLoading] = useState(false);const [navigation, setNavigation] = useState(null);const [branding, setBranding] = useState(null);
 
 useEffect(() => {const mq = window.matchMedia('(max-width: 1024px)');const handler = () => setIsMobile(mq.matches);handler();mq.addEventListener('change', handler);return () => mq.removeEventListener('change', handler);}, []);
@@ -57,7 +57,6 @@ useEffect(() => {
 // drawer, search) which are always theme-coloured, never transparent.
 const barInk = 'var(--header-ink)';
 const barInkHover = 'var(--header-ink-hover)';
-const barInkMuted = 'var(--header-ink-muted)';
 const barAccent = 'var(--header-ink-accent)';
 const panelSurface = isDark ? 'rgba(9, 26, 52, 0.98)' : 'rgba(255, 255, 255, 0.98)';
 const panelInk = isDark ? '#EAF2FF' : '#07142B';
@@ -142,7 +141,7 @@ return (<>
         <button
           type="button"
           onClick={() => setSidebarOpen(false)} style={{
-          width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem',
+          borderRadius: '0.5rem',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
           border: '1px solid transparent',
@@ -428,6 +427,22 @@ return (<>
           </Link>
         )}
 
+        {availableThemes.length > 1 && (
+          <select
+            className="angi-header-control angi-header-theme-select"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            style={{ color: barInk, background: 'transparent', border: 'none', font: 'inherit', cursor: 'pointer', padding: '0 0.25rem' }}
+            aria-label="Color theme"
+          >
+            {availableThemes.map((t) => (
+              <option key={t.name} value={t.name} style={{ color: '#0B1E3D', background: '#fff' }}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        )}
+
         <button
           type="button"
           className="angi-header-control angi-header-theme-toggle"
@@ -461,7 +476,6 @@ return (<>
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             style={{
-              width: '2.25rem', height: '2.25rem',
               borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent', border: '1px solid transparent',
               width: '2.75rem', height: '2.75rem',

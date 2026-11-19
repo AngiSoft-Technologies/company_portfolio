@@ -1,6 +1,7 @@
 import prisma from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { logAudit } from '../../../shared/services/audit';
+import { toMoney } from '../../billing/utils/money';
 
 const remapService = (s: any) => {
     const { categoryServiceCategory, ...rest } = s;
@@ -21,7 +22,7 @@ export const servicesController = {
             description: data.description ?? null,
             category: data.category ?? 'General',
             categoryId: data.categoryId ?? null,
-            priceFrom: data.priceFrom ?? null,
+            priceFrom: data.priceFrom != null ? toMoney(data.priceFrom) : toMoney(0),
             targetAudience: data.targetAudience ?? null,
             scope: data.scope ?? null,
             images: data.images ?? [],
@@ -53,7 +54,10 @@ export const servicesController = {
     },
     async update(id: string, data: any, user: any) {
         const payload: any = {};
-        for (const [k, v] of Object.entries(data)) if (v !== undefined) payload[k] = v;
+        for (const [k, v] of Object.entries(data)) {
+            if (v === undefined) continue;
+            payload[k] = k === 'priceFrom' && v != null ? toMoney(v as number | string) : v;
+        }
         const s = await prisma.orm.public.Service.where({ id }).update(payload);
         await logAudit({ action: 'update_service', entity: 'Service', entityId: id, actorId: user?.sub || null, actorRole: user?.role || null });
         return s ? remapService(s) : null;

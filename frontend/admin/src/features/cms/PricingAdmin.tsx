@@ -44,7 +44,7 @@ export function PricingAdmin() {
             {
               key: 'pricing',
               header: 'Pricing',
-              render: (r) => <span className="text-slate-500">{pricingText(r.pricing ?? r.displayPricing)}</span>,
+              render: (r) => <span className="text-[var(--text-muted)]">{pricingText(r.pricing ?? r.displayPricing)}</span>,
             },
             { key: 'updatedAt', header: 'Updated', render: (r) => formatDate(r.updatedAt ?? r.createdAt) },
           ]}
@@ -112,7 +112,7 @@ function PricingFormModal({ row, onClose, onSaved }: { row: Row; onClose: () => 
             onChange={set('pricing')}
             placeholder={'KES 2,500 / month\nor JSON: {"basic": "KES 2,500", "pro": "KES 5,000"}'}
           />
-          <span className="mt-1 block text-xs text-slate-400">Plain text or JSON object/array.</span>
+          <span className="mt-1 block text-xs text-[var(--text-muted)]">Plain text or JSON object/array.</span>
         </Field>
         <SaveStatus error={error} success={success} />
         <div className="flex justify-end gap-3 pt-2">

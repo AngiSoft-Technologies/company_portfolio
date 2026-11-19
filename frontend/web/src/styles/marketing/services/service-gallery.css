@@ -15,7 +15,7 @@
     object-fit: cover;
     border-radius: 1.4rem;
     border: 1px solid var(--sd-border);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+    box-shadow: 0 20px 50px color-mix(in srgb, var(--color-abyss) 32%, transparent);
 }
 .service-gallery__nav {
     flex: none;
@@ -31,7 +31,7 @@
     transition: background 0.2s ease, transform 0.2s ease;
 }
 .service-gallery__nav:hover {
-    background: rgba(0, 175, 255, 0.18);
+    background: color-mix(in srgb, var(--color-secondary) 18%, transparent);
     transform: scale(1.05);
 }
 .service-gallery__thumbs {

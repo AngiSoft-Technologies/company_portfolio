@@ -1,52 +1,85 @@
 /* =========================================================================
-   Service Detail — "How it works" process.
-   Driven by --sd-* tokens defined in service-detail.css.
+   Services — "How to Get a Service" process steps.
+   Uses --sd-* tokens (defined on .services-page / .service-detail) with
+   dark-first fallbacks so the section renders correctly in both themes.
    ========================================================================= */
 
-.service-process__list {
+.service-process {
+    margin-top: 2.5rem;
+}
+
+.service-process__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: step;
 }
+
 .service-process__step {
     position: relative;
     display: flex;
-    gap: 0.9rem;
-    padding: 1.3rem;
-    border-radius: var(--sd-radius);
-    border: 1px solid var(--sd-border);
-    background: var(--sd-surface);
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.5rem 1.3rem 1.3rem;
+    border-radius: var(--sd-radius, 1.1rem);
+    border: 1px solid var(--sd-border, var(--border));
+    background: var(--sd-surface, var(--card-bg));
+    transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.service-process__number {
-    flex: none;
+
+.service-process__step:hover {
+    border-color: var(--sd-border-strong, var(--border));
+    transform: translateY(-3px);
+}
+
+.service-process__num {
+    position: absolute;
+    top: -0.7rem;
+    left: 1.1rem;
     display: grid;
     place-items: center;
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 1.9rem;
+    height: 1.9rem;
     border-radius: 999px;
-    font-weight: 700;
-    color: #07142B;
-    background: linear-gradient(120deg, var(--sd-accent), var(--sd-accent-2));
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--color-white);
+    background: linear-gradient(120deg, var(--sd-accent, var(--color-secondary)), var(--sd-accent-2, var(--color-accent-2)));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-secondary) 30%, transparent);
 }
-.service-process__body { min-width: 0; }
+
+.service-process__icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.7rem;
+    background: color-mix(in srgb, var(--sd-accent, var(--color-secondary)) 14%, transparent);
+    color: var(--sd-accent, var(--color-secondary));
+    font-size: 1.05rem;
+}
+
 .service-process__title {
-    margin: 0 0 0.3rem;
-    font-size: 1.02rem;
-    color: var(--sd-text);
+    margin: 0.35rem 0 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sd-text, var(--text-primary));
 }
+
 .service-process__text {
     margin: 0;
-    color: var(--sd-muted);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.55;
+    color: var(--sd-muted, var(--text-muted));
 }
-.service-process__duration {
-    display: inline-block;
-    margin-top: 0.5rem;
-    font-size: 0.78rem;
-    color: var(--sd-accent);
+
+@media (max-width: 1023px) {
+    .service-process__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 559px) {
+    .service-process__grid { grid-template-columns: 1fr; }
 }

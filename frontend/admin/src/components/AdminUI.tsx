@@ -82,14 +82,14 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
 // ─── UI primitives ─────────────────────────────────────────────────────────
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm ${className}`}>{children}</div>;
 }
 
 export function Spinner({ size = 32 }: { size?: number }) {
   return (
     <div className="flex items-center justify-center py-16">
       <div
-        className="animate-spin rounded-full border-4 border-[#0875FF] border-t-transparent"
+        className="animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent"
         style={{ width: size, height: size }}
       />
     </div>
@@ -98,7 +98,7 @@ export function Spinner({ size = 32 }: { size?: number }) {
 
 export function EmptyState({ title = 'No records found' }: { title?: string }) {
   return (
-    <div className="py-16 text-center text-sm text-slate-400">
+    <div className="py-16 text-center text-sm text-[var(--text-muted)]">
       <p className="mb-2 text-2xl">🗂</p>
       {title}
     </div>
@@ -118,7 +118,7 @@ export function PageHeader({
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 className="text-xl font-semibold">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-3">{actions}</div> : null}
     </div>
@@ -141,10 +141,10 @@ export function Button({
   disabled?: boolean;
 }) {
   const styles: Record<string, string> = {
-    primary: 'bg-[#0875FF] text-white hover:bg-[#3B9AFF]',
-    outline: 'border border-slate-300 text-slate-700 hover:bg-slate-50',
+    primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]',
+    outline: 'border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]',
     danger: 'bg-red-500 text-white hover:bg-red-600',
-    ghost: 'text-slate-600 hover:bg-slate-100',
+    ghost: 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]',
   };
   return (
     <button
@@ -170,10 +170,10 @@ export function Table<T extends { id: string | number }>({
   onDelete?: (row: T) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+          <tr className="border-b border-[var(--border)] bg-[var(--bg-primary)] text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
             {columns.map((c) => (
               <th key={c.key} className="px-4 py-3 font-semibold">
                 {c.header}
@@ -184,7 +184,7 @@ export function Table<T extends { id: string | number }>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+            <tr key={row.id} className="border-b border-[var(--border-light)] last:border-0 hover:bg-[var(--bg-primary)]">
               {columns.map((c) => (
                 <td key={c.key} className="px-4 py-3">
                   {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? '—')}
@@ -196,7 +196,7 @@ export function Table<T extends { id: string | number }>({
                     {onEdit && (
                       <button
                         onClick={() => onEdit(row)}
-                        className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                        className="rounded border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
                       >
                         Edit
                       </button>
@@ -216,7 +216,7 @@ export function Table<T extends { id: string | number }>({
           ))}
         </tbody>
       </table>
-      {rows.length === 0 && <div className="py-10 text-center text-sm text-slate-400">No records.</div>}
+      {rows.length === 0 && <div className="py-10 text-center text-sm text-[var(--text-muted)]">No records.</div>}
     </div>
   );
 }
@@ -224,11 +224,11 @@ export function Table<T extends { id: string | number }>({
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-[var(--text-secondary)]">{label}</span>
       {children}
     </label>
   );
 }
 
 export const inputClass =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-[#0875FF] focus:ring-2 focus:ring-[#0875FF]/20';
+  'w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20';

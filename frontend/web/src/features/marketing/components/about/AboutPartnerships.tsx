@@ -181,7 +181,7 @@ const AboutPartnerships = ({
     <section
       ref={sectionRef}
       id="about-partnerships"
-      className="about-partnerships bg-[#07142B] py-14 md:py-16 lg:py-20"
+      className="about-partnerships bg-[var(--bg-primary)] py-14 md:py-16 lg:py-20"
       aria-labelledby="about-partnerships-heading"
     >
       <div className="container">
@@ -194,7 +194,7 @@ const AboutPartnerships = ({
         >
           <h2
             id="about-partnerships-heading"
-            className="text-base font-semibold leading-7 text-white md:text-lg"
+            className="about-partnerships-heading"
           >
             {data.title}
           </h2>
@@ -288,7 +288,7 @@ const FeaturedRecognition = ({
 }) => (
   <RecognitionWrapper
     item={item}
-    className="about-featured-recognition group flex min-h-[190px] flex-col items-center justify-center border border-white/15 bg-[#0A1B38] px-6 py-7 text-center no-underline transition"
+    className="about-featured-recognition group flex min-h-[190px] flex-col items-center justify-center border border-[var(--border-light)] bg-[var(--card-bg)] px-6 py-7 text-center no-underline transition"
   >
     <div className="flex min-h-[92px] items-center justify-center">
       <SmartImage
@@ -302,7 +302,7 @@ const FeaturedRecognition = ({
     </div>
 
     {item.caption && (
-      <p className="mt-5 max-w-md text-xs leading-5 text-white/65">
+      <p className="mt-5 max-w-md text-xs leading-5 text-[var(--text-secondary)]">
         {item.caption}
       </p>
     )}
@@ -314,7 +314,7 @@ const SupportingRecognition = ({
 }) => (
   <RecognitionWrapper
     item={item}
-    className="about-supporting-recognition group flex min-h-[105px] items-center justify-center border border-white/15 bg-[#0A1B38] px-4 py-5 no-underline transition"
+    className="about-supporting-recognition group flex min-h-[105px] items-center justify-center border border-[var(--border-light)] bg-[var(--card-bg)] px-4 py-5 no-underline transition"
   >
     <SmartImage
       src={resolveAssetUrl(

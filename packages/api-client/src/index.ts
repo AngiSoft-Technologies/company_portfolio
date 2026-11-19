@@ -81,9 +81,13 @@ const tryRefresh = async (): Promise<string> => {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       const url = buildApiUrl('/auth/refresh');
+      const csrf = readCookie('csrfToken');
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrf ? { 'x-csrf-token': csrf } : {}),
+        },
         credentials: 'include',
         body: JSON.stringify({}),
       });

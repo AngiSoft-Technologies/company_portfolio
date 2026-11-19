@@ -99,12 +99,12 @@ export function FileUploadManager() {
             ref={inputRef}
             type="file"
             onChange={(e) => onPick(e.target.files?.[0])}
-            className="block w-full max-w-sm text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-[#0875FF]/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-[#0875FF] hover:file:bg-[#0875FF]/20"
+            className="block w-full max-w-sm text-sm text-[var(--text-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-primary)]/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-[var(--color-primary)] hover:file:bg-[var(--color-primary)]/20"
           />
           <Button onClick={() => void upload()} disabled={uploading || !fileName}>
             {uploading ? 'Uploading…' : 'Upload'}
           </Button>
-          {fileName ? <span className="text-sm text-slate-500">{fileName}</span> : null}
+          {fileName ? <span className="text-sm text-[var(--text-muted)]">{fileName}</span> : null}
         </div>
         {message ? (
           <div
@@ -125,7 +125,7 @@ export function FileUploadManager() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No uploaded files" />
         </div>
       ) : (
@@ -144,7 +144,7 @@ export function FileUploadManager() {
                     href={r.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="max-w-56 truncate inline-block text-[#0875FF] hover:underline"
+                    className="max-w-56 truncate inline-block text-[var(--color-primary)] hover:underline"
                     title={r.url}
                   >
                     {r.url}

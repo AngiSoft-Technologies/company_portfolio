@@ -45,8 +45,8 @@ export function SiteSettingsAdmin() {
           columns={[
             { key: 'key', header: 'Key', render: (r) => <span className="font-mono text-xs">{r.key}</span> },
             { key: 'name', header: 'Name', render: (r) => <span className="font-medium">{r.name}</span> },
-            { key: 'type', header: 'Type', render: (r) => <span className="text-slate-500">{r.type || '—'}</span> },
-            { key: 'value', header: 'Value', render: (r) => <span className="text-slate-500">{truncate(r.value, 50)}</span> },
+            { key: 'type', header: 'Type', render: (r) => <span className="text-[var(--text-muted)]">{r.type || '—'}</span> },
+            { key: 'value', header: 'Value', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.value, 50)}</span> },
             { key: 'updatedAt', header: 'Updated', render: (r) => formatDate(r.updatedAt ?? r.createdAt) },
           ]}
         />

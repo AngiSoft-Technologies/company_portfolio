@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowRight } from 'react-icons/fa';
+import { LuArrowRight } from 'react-icons/lu';;
 
 const normalizeModel = (
   model,
@@ -134,7 +134,7 @@ const AboutPricing = ({
     <section
       ref={sectionRef}
       id="about-pricing-policy"
-      className="about-pricing bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-pricing bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-labelledby="about-pricing-heading"
     >
       <div className="container">
@@ -147,13 +147,13 @@ const AboutPricing = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="about-pricing-heading"
-              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -164,7 +164,7 @@ const AboutPricing = ({
           </div>
 
           {data.description && (
-            <p className="mt-7 max-w-4xl text-sm leading-7 text-white/65 md:text-base">
+            <p className="mt-7 max-w-4xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {data.description}
             </p>
           )}
@@ -198,11 +198,11 @@ const AboutPricing = ({
             >
               <Link
                 to={data.cta.to}
-                className="group inline-flex min-h-12 items-center justify-center gap-3 bg-[#0A3DFF] px-7 py-3.5 text-sm font-bold text-white no-underline transition hover:bg-[#3B6FFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2FF]"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 bg-[var(--color-primary)] px-7 py-3.5 text-sm font-bold text-white no-underline transition hover:bg-[#3B6FFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2FF]"
               >
                 {data.cta.label}
 
-                <FaArrowRight className="text-xs transition-transform duration-300 group-hover:translate-x-1" />
+                <LuArrowRight className="text-xs transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </div>
           )}
@@ -227,12 +227,12 @@ const PricingModel = ({
         `${80 + index * 60}ms`,
     }}
   >
-    <h3 className="text-sm font-bold leading-6 text-white">
+    <h3 className="text-sm font-bold leading-6 text-[var(--text-primary)]">
       {model.title}
     </h3>
 
     {model.description && (
-      <p className="mt-3 text-sm leading-7 text-white/60">
+      <p className="mt-3 text-base leading-7 text-[var(--text-secondary)] text-pretty">
         {model.description}
       </p>
     )}

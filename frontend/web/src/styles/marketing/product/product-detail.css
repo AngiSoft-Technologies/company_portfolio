@@ -4,37 +4,36 @@
    ========================================================================= */
 
 .product-detail {
-    --pd-bg: #07142B;
-    --pd-surface: rgba(11, 30, 61, 0.55);
-    --pd-surface-2: rgba(7, 20, 43, 0.7);
-    --pd-border: rgba(0, 175, 255, 0.16);
-    --pd-border-strong: rgba(0, 175, 255, 0.4);
-    --pd-text: #F5F7FA;
-    --pd-muted: #94A3B8;
-    --pd-accent: #00AFFF;
-    --pd-accent-2: #27D94B;
+    --pd-bg: var(--bg-primary);
+    --pd-surface: var(--card-bg);
+    --pd-surface-2: color-mix(in srgb, var(--surface) 70%, transparent);
+    --pd-border: var(--border);
+    --pd-border-strong: var(--border);
+    --pd-text: var(--text-primary);
+    --pd-muted: var(--text-muted);
+    --pd-accent: var(--color-secondary);
+    --pd-accent-2: var(--color-accent-2);
     --pd-radius: 1.1rem;
 
     position: relative;
     min-height: 100vh;
     padding: 2rem 0 5rem;
     color: var(--pd-text);
-    background:
-        radial-gradient(900px 420px at 85% -5%, rgba(0, 175, 255, 0.12), transparent 60%),
-        radial-gradient(700px 380px at 5% 8%, rgba(39, 217, 75, 0.08), transparent 55%),
-        linear-gradient(180deg, #08152E 0%, #07142B 100%);
+    background: radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--color-secondary) 12%, transparent), transparent 60%),
+        radial-gradient(700px 380px at 5% 8%, color-mix(in srgb, var(--color-accent-2) 8%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
 }
 
-.product-detail.is-light {
-    --pd-bg: #F4F7FB;
-    --pd-surface: rgba(255, 255, 255, 0.9);
-    --pd-surface-2: #FFFFFF;
-    --pd-border: rgba(8, 127, 224, 0.16);
-    --pd-border-strong: rgba(8, 127, 224, 0.38);
-    --pd-text: #0B1F3A;
-    --pd-muted: #4B5B73;
-    --pd-accent: #0B7FE0;
-    --pd-accent-2: #17A832;
+html[data-theme='light'] .product-detail {
+    --pd-bg: var(--bg-secondary);
+    --pd-surface: color-mix(in srgb, var(--card-bg) 90%, transparent);
+    --pd-surface-2: var(--surface);
+    --pd-border: var(--border);
+    --pd-border-strong: color-mix(in srgb, var(--color-primary) 38%, transparent);
+    --pd-text: var(--text-primary);
+    --pd-muted: var(--text-muted);
+    --pd-accent: var(--color-primary);
+    --pd-accent-2: var(--color-accent-2);
 }
 
 .product-container {
@@ -121,7 +120,7 @@
     font-size: clamp(2.2rem, 6vw, 4rem);
     line-height: 1.02;
     margin: 0 0 0.75rem;
-    background: linear-gradient(120deg, #FFFFFF, var(--pd-accent));
+    background: linear-gradient(120deg, var(--text-primary), var(--pd-accent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -151,14 +150,14 @@
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .product-hero__btn--primary {
-    background: linear-gradient(135deg, #0875FF, var(--pd-accent-2));
-    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary), var(--pd-accent-2));
+    color: var(--color-white);
 }
 .product-hero__btn--ghost {
     border: 1px solid var(--pd-border-strong);
     color: var(--pd-text);
 }
-.product-hero__btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 175, 255, 0.25); }
+.product-hero__btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px color-mix(in srgb, var(--color-secondary) 25%, transparent); }
 .product-hero__logo-card {
     display: flex;
     flex-direction: column;
@@ -168,7 +167,7 @@
     border: 1px solid var(--pd-border);
     border-radius: var(--pd-radius);
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--card-bg) 4%, transparent);
     text-align: center;
 }
 .product-hero__logo {
@@ -194,7 +193,7 @@
     font-size: 0.8rem;
     font-weight: 700;
     border: 1px solid var(--pd-border);
-    background: rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--card-bg) 4%, transparent);
     color: var(--pd-text);
 }
 .product-status-badge__dot {
@@ -203,18 +202,18 @@
     border-radius: 50%;
     background: var(--pd-muted);
 }
-.product-status-badge.status--live { color: var(--pd-accent-2); border-color: rgba(39, 217, 75, 0.4); }
+.product-status-badge.status--live { color: var(--pd-accent-2); border-color: color-mix(in srgb, var(--color-accent-2) 40%, transparent); }
 .product-status-badge.status--live .product-status-badge__dot { background: var(--pd-accent-2); }
-.product-status-badge.status--beta { color: #ffd166; border-color: rgba(255, 209, 102, 0.4); }
+.product-status-badge.status--beta { color: #ffd166; border-color: color-mix(in srgb, var(--color-warning) 40%, transparent); }
 .product-status-badge.status--beta .product-status-badge__dot { background: #ffd166; }
-.product-status-badge.status--dev { color: #6bb8ff; border-color: rgba(107, 184, 255, 0.4); }
+.product-status-badge.status--dev { color: #6bb8ff; border-color: color-mix(in srgb, var(--color-secondary) 40%, transparent); }
 .product-status-badge.status--dev .product-status-badge__dot { background: #6bb8ff; }
-.product-status-badge.status--planned { color: #b794f6; border-color: rgba(183, 148, 246, 0.4); }
+.product-status-badge.status--planned { color: #b794f6; border-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
 .product-status-badge.status--planned .product-status-badge__dot { background: #b794f6; }
-.product-status-badge.status--maint { color: #ff9f6b; border-color: rgba(255, 159, 107, 0.4); }
+.product-status-badge.status--maint { color: #ff9f6b; border-color: color-mix(in srgb, var(--color-warning) 40%, transparent); }
 .product-status-badge.status--maint .product-status-badge__dot { background: #ff9f6b; }
-.product-status-badge.status--deprecated { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
-.product-status-badge.status--deprecated .product-status-badge__dot { background: #f87171; }
+.product-status-badge.status--deprecated { color: var(--color-error); border-color: color-mix(in srgb, var(--color-error) 40%, transparent); }
+.product-status-badge.status--deprecated .product-status-badge__dot { background: var(--color-error); }
 
 /* ---------- Features ---------- */
 .product-features { padding: clamp(2.5rem, 5vw, 4rem) 0; }
@@ -268,7 +267,7 @@
     padding: 2rem;
     border: 1px solid var(--pd-border);
     border-radius: var(--pd-radius);
-    background: linear-gradient(135deg, rgba(0, 175, 255, 0.08), rgba(39, 217, 75, 0.05));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-secondary) 8%, transparent), color-mix(in srgb, var(--color-accent-2) 5%, transparent));
     max-width: 520px;
 }
 .product-pricing__icon { color: var(--pd-accent); font-size: 1.4rem; }
@@ -326,8 +325,7 @@
     gap: 2rem;
     padding: clamp(2rem, 5vw, 3.5rem);
     border-radius: calc(var(--pd-radius) + 0.6rem);
-    background:
-        radial-gradient(600px 300px at 90% 0%, rgba(0, 175, 255, 0.18), transparent 60%),
+    background: radial-gradient(600px 300px at 90% 0%, color-mix(in srgb, var(--color-secondary) 18%, transparent), transparent 60%),
         var(--pd-surface-2);
     border: 1px solid var(--pd-border);
 }
@@ -343,9 +341,9 @@
     font-weight: 700;
     text-decoration: none;
 }
-.product-cta__btn--primary { background: linear-gradient(135deg, #0875FF, var(--pd-accent-2)); color: #fff; }
+.product-cta__btn--primary { background: linear-gradient(135deg, var(--color-primary), var(--pd-accent-2)); color: var(--color-white); }
 .product-cta__btn--ghost { border: 1px solid var(--pd-border-strong); color: var(--pd-text); }
-.product-cta__btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 175, 255, 0.25); }
+.product-cta__btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px color-mix(in srgb, var(--color-secondary) 25%, transparent); }
 
 /* ---------- Skeleton ---------- */
 .product-skeleton__hero { display: flex; flex-direction: column; gap: 1rem; padding-top: 4rem; }
@@ -357,7 +355,7 @@
 }
 .product-skeleton__block,
 .product-skeleton__line {
-    background: linear-gradient(90deg, var(--pd-surface) 25%, rgba(0, 175, 255, 0.12) 50%, var(--pd-surface) 75%);
+    background: linear-gradient(90deg, var(--pd-surface) 25%, color-mix(in srgb, var(--color-secondary) 12%, transparent) 50%, var(--pd-surface) 75%);
     background-size: 200% 100%;
     animation: product-shimmer 1.4s infinite;
     border-radius: 0.8rem;

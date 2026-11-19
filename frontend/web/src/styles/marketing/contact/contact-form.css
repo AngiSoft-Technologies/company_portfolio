@@ -117,6 +117,6 @@
 }
 .contact-intent__chip.is-active {
     border-color: var(--contact-primary);
-    background: var(--contact-primary); color: #fff; font-weight: 600;
+    background: var(--contact-primary); color: var(--text-primary); font-weight: 600;
 }
 .contact-intent__helper { color: var(--contact-muted); font-size: 0.85rem; margin: 0.75rem 0 0; }

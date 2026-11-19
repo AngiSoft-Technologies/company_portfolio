@@ -130,7 +130,7 @@ export function ProjectsAdmin() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No projects yet" />
         </div>
       ) : (
@@ -148,7 +148,7 @@ export function ProjectsAdmin() {
             {
               key: 'featured',
               header: 'Featured',
-              render: (r) => (r.featured ? <Badge tone="green">Yes</Badge> : <span className="text-slate-400">No</span>),
+              render: (r) => (r.featured ? <Badge tone="green">Yes</Badge> : <span className="text-[var(--text-muted)]">No</span>),
             },
           ]}
         />
@@ -202,12 +202,12 @@ export function ProjectsAdmin() {
                 </select>
               </Field>
               <div className="flex items-end">
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
                   <input
                     type="checkbox"
                     checked={form.featured}
                     onChange={(e) => set('featured', e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300"
+                    className="h-4 w-4 rounded border-[var(--border)]"
                   />
                   Featured
                 </label>

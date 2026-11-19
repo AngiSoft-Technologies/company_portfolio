@@ -6,6 +6,7 @@ import { createPaymentIntent } from './stripeService';
 import * as paystack from './paystackService';
 import * as mpesa from './mpesaService';
 import * as payhero from './payheroService';
+import { toMoney, type MoneyInput } from '../../utils/money';
 
 /**
  * Payment gateway — one internal API, interchangeable providers, all feeding
@@ -149,7 +150,7 @@ export async function initializePayment(args: InitPaymentArgs): Promise<PaymentI
 export interface PaymentOutcomeInput {
     provider: ProviderId | string;
     providerId: string;
-    amount?: number;
+    amount?: MoneyInput;
     currency?: string;
     reference?: string;
     channelId?: string;
@@ -187,7 +188,7 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                     updatedAt: ts(),
                         provider: input.provider as any,
                         providerId: input.providerId,
-                        amount: input.amount || 0,
+                        amount: toMoney(input.amount ?? 0),
                         currency: input.currency || 'KES',
                         reference: input.reference ?? null,
                         channelId: input.channelId ?? null,

@@ -1,15 +1,15 @@
 /* Root contact page styles. Theme via inline CSS vars from useTheme. */
 
 .contact-page {
-    --contact-primary: #00AFFF;
-    --contact-secondary: #7C3AED;
-    --contact-background: #ffffff;
-    --contact-surface: #f5f7fb;
-    --contact-text: #0f172a;
-    --contact-muted: #64748b;
-    --contact-border: #e2e8f0;
-    --contact-danger: #ef4444;
-    --contact-success: #27D94b;
+    --contact-primary: var(--color-secondary);
+    --contact-secondary: var(--color-accent);
+    --contact-background: var(--surface);
+    --contact-surface: var(--bg-secondary);
+    --contact-text: var(--text-primary);
+    --contact-muted: var(--text-muted);
+    --contact-border: var(--border-light);
+    --contact-danger: var(--color-error);
+    --contact-success: var(--color-accent-2);
 
     background: var(--contact-background);
     color: var(--contact-text);
@@ -18,11 +18,11 @@
 }
 
 .contact-page.is-dark {
-    --contact-background: #0b1220;
-    --contact-surface: #111c30;
-    --contact-text: #e8eef7;
-    --contact-muted: #9fb0c6;
-    --contact-border: #22304a;
+    --contact-background: var(--bg-primary);
+    --contact-surface: var(--surface);
+    --contact-text: var(--text-primary);
+    --contact-muted: var(--text-muted);
+    --contact-border: var(--border);
 }
 
 .contact-page section {
@@ -66,7 +66,7 @@
 }
 .btn--primary {
     background: var(--contact-primary);
-    color: #ffffff;
+    color: var(--text-primary);
     border-color: var(--contact-primary);
 }
 .btn--primary:hover { filter: brightness(1.05); }

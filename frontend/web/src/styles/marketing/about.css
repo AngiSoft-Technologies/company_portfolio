@@ -1,0 +1,405 @@
+/* ==========================================================================
+   About page — unified editorial type system
+   --------------------------------------------------------------------------
+   Inspiration: ITransition's editorial sequence (structure), Stripe/Linear's
+   typographic restraint (scale). One scale for every section heading and lead:
+   - Section h2: Sora 700, clamp(1.75rem→2.5rem), tracking -0.03em, balanced
+   - Lead: 17→19px, 1.75 line-height, text-pretty, muted ink
+   - Hero h1: Sora 700, clamp(2.25rem→3.75rem) (was a weak weight-500 2.65rem)
+   Card h3s keep their own rhythm; big figures use Sora 700 tabular-nums.
+   Unlayered author CSS wins over Tailwind's layered utilities by design.
+   ========================================================================== */
+
+/* ==========================================================================
+   Card design language — quiet, flat, disciplined
+   --------------------------------------------------------------------------
+   Rules 1+2 applied: one accent per view, no decorative gradients. Cards are
+   flat --surface with a token hairline; the per-card gradient washes, accent
+   bars and colored strip decorations are removed (Chanel: remove one
+   accessory). Inspiration: Stripe/Linear card restraint over the reference
+   clone's colorful tiles.
+   ========================================================================== */
+
+/* Kill decorative gradient washes + accent bars on cards */
+#about-company-page .about-collaboration-card::before,
+#about-company-page .about-collaboration-card::after,
+#about-company-page .about-client-logo-item::before,
+#about-company-page .about-featured-recognition::before,
+#about-company-page .about-featured-recognition::after,
+#about-company-page .about-supporting-recognition::before,
+#about-company-page .about-supporting-recognition::after,
+#about-company-page .about-project-success-card::before,
+#about-company-page .about-pricing-model::before,
+#about-company-page .about-technology-section::before,
+#about-company-page .about-testimonial-card::before,
+#about-company-page .about-testimonial-card::after,
+#about-company-page .about-video-testimonial-card::before,
+#about-company-page .about-video-testimonial-card::after {
+  display: none;
+}
+
+/* Unified card surface: token hairline, one hover voice */
+#about-company-page section article[class*='about-'] {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+#about-company-page section article[class*='about-']:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+/* Client logo wall: muted until hover (modern logo grid) */
+#about-company-page .about-client-logo-item img,
+#about-company-page .about-client-logo-item svg {
+  filter: grayscale(1);
+  opacity: 0.72;
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+#about-company-page .about-client-logo-item:hover img,
+#about-company-page .about-client-logo-item:hover svg {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+/* Testimonials + quotation: quote-first emphasis */
+#about-company-page .about-testimonial-card blockquote p,
+#about-company-page .about-pricing-quote-panel blockquote p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+#about-company-page .about-pricing-quote-panel blockquote p {
+  font-size: clamp(1.25rem, 2vw, 1.625rem);
+}
+
+/* --- Section spacing: one controlled rhythm ------------------------------
+   The legacy global `section { @apply py-16 md:py-24 }` rule doubled with
+   internal header margins and produced excessive gaps. The About page uses
+   a tighter clamp (48→72px) and lets .container own inline padding. */
+#about-company-page > section {
+  padding-block: clamp(2.5rem, 3.2vw, 3.25rem);
+  padding-inline: 0;
+}
+
+/* --- Card type scale: one hierarchy --------------------------------------
+   Card titles sit between section h2 (40px) and body: 17→20px Sora 700.
+   Big editorial titles (number/highlight copy) keep their own clamp sizes. */
+#about-company-page section article h3:not(.about-number-copy-title):not(.about-highlight-content-title) {
+  font-family: var(--font-display);
+  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+#about-company-page section article p {
+  text-wrap: pretty;
+}
+
+/* Tiny card text floors: 10-11px -> 13px, 12px -> 14px (never shrinks) */
+#about-company-page section article .text-xs {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+#about-company-page section article .text-\[10px\],
+#about-company-page section article .text-\[11px\] {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* Technology group labels: readable micro-labels */
+#about-company-page section article h4 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+/* --- Touch targets: 44px minimum (interactive controls) ----------------- */
+#about-company-page .about-company-hero-cta,
+#about-company-page .about-hero-prev,
+#about-company-page .about-hero-next,
+#about-company-page .about-number-copy-link,
+#about-company-page .about-final-contact-link {
+  min-height: 44px;
+}
+
+#about-company-page .about-hero-prev,
+#about-company-page .about-hero-next {
+  min-width: 44px;
+}
+
+#about-company-page .about-number-history-item {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.about-leaflet-shell .leaflet-touch .leaflet-control-zoom a,
+.about-leaflet-shell .leaflet-control-zoom a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+}
+
+/* --- Section headings: one voice --------------------------------------- */
+#about-company-page section h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+/* Finale keeps its larger deliberate moment */
+#about-company-page .about-final-cta-title {
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  font-weight: 800;
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+#about-company-page .about-company-hero-heading {
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+/* --- Compact band + tile titles ----------------------------------------- */
+#about-company-page .about-sustainability-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+#about-company-page .about-numbers-heading {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+#about-company-page .about-service-map-intro-title {
+  font-weight: 700;
+}
+
+/* --- Leads & body -------------------------------------------------------- */
+#about-company-page section header p {
+  text-wrap: pretty;
+}
+
+/* --- Media controls stay light-ink on their navy scrim (both themes) ----- */
+#about-company-page .about-hero-prev,
+#about-company-page .about-hero-next {
+  color: var(--text-primary);
+}
+
+#about-company-page .about-hero-prev:focus-visible,
+#about-company-page .about-hero-next:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Numbers section: readable editorial scale ---------------------------
+   The legacy sizes (12px lead, 11px timeline stats) were far too small.
+   Lead: 17→19px; story body 15px; timeline year figures 17px/700
+   tabular-nums with 14px titles. */
+#about-company-page .about-numbers-description {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+#about-company-page .about-number-copy-text {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+#about-company-page .about-number-history-stat {
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+#about-company-page .about-number-history-title {
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+/* --- Big figures -------------------------------------------------------- */
+#about-company-page .about-number-statistic,
+#about-company-page .about-number-statistic-value {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* --- Motion safety ------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  #about-company-page *,
+  #about-company-page *::before,
+  #about-company-page *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ==========================================================================
+   Geography — real Leaflet delivery map
+   Quiet cartography in both themes; brand dot marks the Nairobi HQ.
+   ========================================================================== */
+
+.about-leaflet-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--surface);
+}
+
+.about-leaflet-map {
+  position: relative;
+  height: clamp(340px, 48vw, 480px);
+  width: 100%;
+  z-index: 0;
+  font-family: var(--font-body);
+}
+
+.about-leaflet-shell .leaflet-container {
+  background: var(--bg-primary);
+  font-family: var(--font-body);
+}
+
+.about-leaflet-shell .leaflet-control-zoom a {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--border);
+}
+
+.about-leaflet-shell .leaflet-control-zoom a:hover {
+  background: var(--surface-hover);
+}
+
+.about-leaflet-shell .leaflet-bar {
+  border: 1px solid var(--border);
+  box-shadow: var(--elevation-md);
+}
+
+.about-leaflet-shell .leaflet-control-attribution {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--card-bg) 88%, transparent);
+  border-top: 1px solid var(--border-light);
+  font-size: 0.625rem;
+  padding: 2px 6px;
+}
+
+.about-leaflet-shell .leaflet-control-attribution a {
+  color: var(--brand-accent-ink);
+}
+
+/* HQ marker: quiet brand dot with a crisp ring */
+.about-map-hq-icon {
+  background: transparent;
+  border: 0;
+}
+
+.about-map-hq-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+.about-leaflet-shell .leaflet-popup-content-wrapper {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-lg);
+  font-size: 0.8125rem;
+}
+
+.about-leaflet-shell .leaflet-popup-tip {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.about-leaflet-shell .leaflet-tooltip {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-sm);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
+
+.about-leaflet-shell .leaflet-tooltip-top::before {
+  border-top-color: var(--card-bg);
+}
+
+/* Unavailable state: one clear action */
+.about-leaflet-fallback {
+  display: flex;
+  height: clamp(340px, 48vw, 480px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.about-leaflet-fallback-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.about-leaflet-fallback-text {
+  max-width: 32rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.about-leaflet-retry {
+  margin-top: 0.75rem;
+  min-height: 44px;
+  padding: 0.625rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.about-leaflet-retry:hover {
+  background: var(--color-primary-light);
+}
+
+.about-leaflet-retry:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

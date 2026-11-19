@@ -26,7 +26,7 @@ export function StatusBadge({
       {onLabel}
     </span>
   ) : (
-    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+    <span className="inline-flex rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
       {offLabel}
     </span>
   );
@@ -44,7 +44,7 @@ export function ModalShell({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+        className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-[var(--surface)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -53,7 +53,7 @@ export function ModalShell({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg px-2.5 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg px-2.5 py-1 text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)]"
           >
             ✕
           </button>

@@ -14,10 +14,7 @@ import {
   Swiper,
   SwiperSlide,
 } from 'swiper/react';
-import {
-  FaArrowLeft,
-  FaArrowRight,
-} from 'react-icons/fa';
+import { LuArrowLeft, LuArrowRight } from 'react-icons/lu';;
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -201,7 +198,7 @@ const AboutClientsSlider = ({
     <section
       ref={sectionRef}
       id="about-clients"
-      className="about-clients bg-[#07142B] py-14 md:py-16 lg:py-20"
+      className="about-clients bg-[var(--band-services)] py-14 md:py-16 lg:py-20"
       aria-labelledby="about-clients-heading"
     >
       <div className="container">
@@ -214,13 +211,13 @@ const AboutClientsSlider = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="about-clients-heading"
-              className="relative text-3xl font-bold tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -231,7 +228,7 @@ const AboutClientsSlider = ({
           </div>
 
           {headingData.description && (
-            <p className="mt-7 max-w-5xl text-sm leading-7 text-white/65 md:text-base">
+            <p className="mt-7 max-w-5xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {headingData.description}
             </p>
           )}
@@ -252,10 +249,10 @@ const AboutClientsSlider = ({
             {hasMultipleClients && (
               <button
                 type="button"
-                className="about-client-prev absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00C2FF] hover:text-[#00C2FF] max-md:left-2 max-md:translate-x-0"
+                className="about-client-prev absolute left-0 top-1/2 z-10 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[var(--border-light)] bg-[var(--card-bg)] text-[var(--text-primary)] transition hover:border-[#00C2FF] hover:text-[var(--brand-accent-ink)] max-md:left-2 max-md:translate-x-0"
                 aria-label="Previous clients"
               >
-                <FaArrowLeft className="text-[10px]" />
+                <LuArrowLeft className="text-[10px]" />
               </button>
             )}
 
@@ -310,7 +307,7 @@ const AboutClientsSlider = ({
                   slidesPerView: 6,
                 },
               }}
-              className="about-clients-swiper border-l border-t border-white/12"
+              className="about-clients-swiper border-l border-t border-[var(--border-light)]"
             >
               {safeClients.map(
                 (client) => (
@@ -329,10 +326,10 @@ const AboutClientsSlider = ({
             {hasMultipleClients && (
               <button
                 type="button"
-                className="about-client-next absolute right-0 top-1/2 z-10 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center border border-white/15 bg-[#0A1B38] text-white transition hover:border-[#00C2FF] hover:text-[#00C2FF] max-md:right-2 max-md:translate-x-0"
+                className="about-client-next absolute right-0 top-1/2 z-10 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[var(--border-light)] bg-[var(--card-bg)] text-[var(--text-primary)] transition hover:border-[#00C2FF] hover:text-[var(--brand-accent-ink)] max-md:right-2 max-md:translate-x-0"
                 aria-label="Next clients"
               >
-                <FaArrowRight className="text-[10px]" />
+                <LuArrowRight className="text-[10px]" />
               </button>
             )}
           </div>
@@ -340,7 +337,7 @@ const AboutClientsSlider = ({
 
         {targetMarkets.length > 0 && (
           <div
-            className={`mt-9 border-t border-white/10 pt-7 transition duration-700 ${
+            className={`mt-9 border-t border-[var(--border-light)] pt-7 transition duration-700 ${
               visible
                 ? 'translate-y-0 opacity-100'
                 : 'translate-y-4 opacity-0'
@@ -351,7 +348,7 @@ const AboutClientsSlider = ({
             }}
           >
             {headingData.targetMarketLabel && (
-              <p className="text-sm font-semibold text-white/75">
+              <p className="text-sm font-semibold text-[var(--text-secondary)]">
                 {
                   headingData
                     .targetMarketLabel
@@ -364,7 +361,7 @@ const AboutClientsSlider = ({
                 (market) => (
                   <span
                     key={market.id}
-                    className="about-target-market inline-flex items-center border border-white/12 bg-white/[0.025] px-4 py-2 text-xs font-semibold text-white/68"
+                    className="about-target-market inline-flex items-center border border-[var(--border-light)] bg-[var(--surface-hover)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)]"
                   >
                     {market.title}
                   </span>
@@ -395,7 +392,7 @@ const ClientLogoItem = ({
   );
 
   const className =
-    'about-client-logo-item group block h-full border-b border-r border-white/12 bg-[#0A1B38] no-underline transition';
+    'about-client-logo-item group block h-full border-b border-r border-[var(--border-light)] bg-[var(--card-bg)] no-underline transition';
 
   if (client.projectUrl) {
     return (

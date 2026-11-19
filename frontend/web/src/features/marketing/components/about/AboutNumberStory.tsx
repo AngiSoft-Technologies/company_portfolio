@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowRight } from 'react-icons/fa';
+import { LuArrowRight } from 'react-icons/lu';;
 
 import {
   resolveAssetUrl,
@@ -15,12 +15,7 @@ import {
 
 import SmartImage from './SmartImage';
 
-const DEFAULT_ACCENTS = [
-  '#0A3DFF',
-  '#8A2BE2',
-  '#FF9F1C',
-  '#00C2FF',
-];
+const DEFAULT_ACCENTS = ['var(--color-primary)'];
 
 const normalizeStory = (
   story,
@@ -648,7 +643,7 @@ const NumberStorySlide = ({
                   {story.link.label}
                 </span>
 
-                <FaArrowRight
+                <LuArrowRight
                   aria-hidden="true"
                 />
               </Link>
@@ -759,7 +754,7 @@ const MobileNumberStory = ({
               {story.link.label}
             </span>
 
-            <FaArrowRight
+            <LuArrowRight
               aria-hidden="true"
             />
           </Link>

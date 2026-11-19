@@ -6,23 +6,17 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaCheck,
-  FaHandshake,
-  FaProjectDiagram,
-  FaRegComments,
-} from 'react-icons/fa';
+import { LuArrowRight, LuCheck, LuHandshake, LuNetwork, LuMessageSquare } from 'react-icons/lu';;
 
 const ICONS = {
   flexible:
-    FaProjectDiagram,
+    LuNetwork,
 
   integration:
-    FaHandshake,
+    LuHandshake,
 
   communication:
-    FaRegComments,
+    LuMessageSquare,
 };
 
 const normalizeItem = (
@@ -91,11 +85,7 @@ const normalizeModel = (
 
     accent:
       model?.accent ||
-      [
-        '#0A3DFF',
-        '#00C2FF',
-        '#39FF6A',
-      ][index % 3],
+      'var(--color-primary)'[index % 3],
 
     enabled:
       model?.enabled !== false,
@@ -212,7 +202,7 @@ const AboutCollaboration = ({
     <section
       ref={sectionRef}
       id="about-collaboration"
-      className="about-collaboration bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-collaboration py-16 md:py-20 lg:py-24"
       aria-labelledby="about-collaboration-heading"
     >
       <div className="container">
@@ -225,13 +215,13 @@ const AboutCollaboration = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="about-collaboration-heading"
-              className="relative text-3xl font-bold tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -266,11 +256,11 @@ const CollaborationCard = ({
 }) => {
   const Icon =
     ICONS[model.icon] ||
-    FaHandshake;
+    LuHandshake;
 
   return (
     <article
-      className={`about-collaboration-card relative flex min-h-[255px] flex-col border border-white/14 bg-[#0A1B38] px-6 py-7 transition duration-700 ${
+      className={`about-collaboration-card relative flex min-h-[255px] flex-col border border-[var(--border-light)] bg-[var(--card-bg)] px-6 py-7 transition duration-700 ${
         visible
           ? 'translate-y-0 opacity-100'
           : 'translate-y-5 opacity-0'
@@ -292,7 +282,7 @@ const CollaborationCard = ({
         </span>
       </div>
 
-      <h3 className="mt-5 text-center text-sm font-bold leading-6 text-white">
+      <h3 className="mt-5 text-center text-sm font-bold leading-6 text-[var(--text-primary)]">
         {model.title}
       </h3>
 
@@ -301,14 +291,14 @@ const CollaborationCard = ({
           (item) => (
             <li
               key={item.id}
-              className="text-xs leading-6 text-white/66"
+              className="text-xs leading-6 text-[var(--text-secondary)]"
             >
               {item.to ? (
                 <Link
                   to={item.to}
-                  className="group flex items-start gap-2.5 no-underline transition hover:text-white"
+                  className="group flex items-start gap-2.5 no-underline transition hover:text-[var(--text-primary)]"
                 >
-                  <FaCheck
+                  <LuCheck
                     className="mt-2 shrink-0 text-[7px]"
                     style={{
                       color:
@@ -320,7 +310,7 @@ const CollaborationCard = ({
                     {item.label}
                   </span>
 
-                  <FaArrowRight
+                  <LuArrowRight
                     className="mt-2 shrink-0 text-[8px] opacity-55 transition group-hover:translate-x-1 group-hover:opacity-100"
                     style={{
                       color:
@@ -330,7 +320,7 @@ const CollaborationCard = ({
                 </Link>
               ) : (
                 <div className="flex items-start gap-2.5">
-                  <FaCheck
+                  <LuCheck
                     className="mt-2 shrink-0 text-[7px]"
                     style={{
                       color:

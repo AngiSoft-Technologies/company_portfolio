@@ -7,8 +7,7 @@
 .pricing-engagement {
     border: 1px solid var(--pricing-border);
     border-radius: var(--pricing-radius);
-    background:
-        radial-gradient(420px 240px at 90% -10%, rgba(0, 175, 255, 0.08), transparent 60%),
+    background: radial-gradient(420px 240px at 90% -10%, color-mix(in srgb, var(--color-secondary) 8%, transparent), transparent 60%),
         var(--pricing-surface);
     padding: 1.6rem;
     transition: border-color 0.2s ease;

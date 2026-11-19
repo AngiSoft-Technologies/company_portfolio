@@ -59,13 +59,13 @@
     font-size: 0.95rem;
 }
 .angi-trends-tab.is-active {
-    color: #fff;
+    color: var(--color-white);
     background: var(--color-primary);
     border-color: transparent;
-    box-shadow: 0 6px 20px rgba(8, 117, 255, 0.3);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 .angi-trends-tab:focus-visible {
-    outline: 2px solid var(--accent, #00AFFF);
+    outline: 2px solid var(--accent, var(--color-secondary));
     outline-offset: 2px;
 }
 
@@ -77,7 +77,7 @@
     /* Glass over the band photo rather than an opaque card. */
     background: transparent;
     backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid color-mix(in srgb, var(--card-bg) 14%, transparent);
     margin-top: 2rem;
     display: flex;
     isolation: isolate;
@@ -144,7 +144,7 @@
     align-items: center;
     justify-content: center;
     font-size: clamp(1.125rem, 4vw, 1.5rem);
-    color: #fff;
+    color: var(--color-white);
     background: var(--color-primary);
 }
 .angi-trends-title {
@@ -192,7 +192,7 @@
     height: 0.5rem;
     margin-top: 0.45rem;
     border-radius: 9999px;
-    background: var(--accent, #00AFFF);
+    background: var(--accent, var(--color-secondary));
 }
 
 .angi-trends-footer {
@@ -220,24 +220,24 @@
 
 /* Tech-trends media tokens, per theme. */
 html[data-theme='light'] {
-  --trends-scrim: linear-gradient(150deg, rgb(7 20 43 / 0.82) 0%, rgb(7 20 43 / 0.58) 58%, rgb(0 60 110 / 0.44) 100%);
-  --trends-ink: #FFFFFF;
+  --trends-scrim: linear-gradient(150deg, color-mix(in srgb, var(--bg-primary) 1%, transparent) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 58%, rgb(0 60 110 / 0.44) 100%);
+  --trends-ink: var(--text-primary);
 }
 
 html:not([data-theme='light']) {
-  --trends-scrim: linear-gradient(150deg, rgb(5 15 31 / 0.9) 0%, rgb(7 20 43 / 0.74) 58%, rgb(8 40 70 / 0.6) 100%);
-  --trends-ink: #F5F7FA;
+  --trends-scrim: linear-gradient(150deg, rgb(5 15 31 / 0.9) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 58%, rgb(8 40 70 / 0.6) 100%);
+  --trends-ink: var(--text-primary);
 }
 
 /* The trends panel sits on the band photo: light ink in both themes. */
 .angi-trends-panel .angi-trends-title,
 .angi-trends-panel .angi-trends-item,
 .angi-trends-panel .angi-trends-capabilities-label {
-    color: #F5F7FA;
+    color: var(--text-primary);
 }
 .angi-trends-panel .angi-trends-item {
     background: transparent;
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: color-mix(in srgb, var(--card-bg) 12%, transparent);
     backdrop-filter: blur(12px);
 }
 .angi-trends-panel .angi-trends-item-dot {
@@ -247,24 +247,24 @@ html:not([data-theme='light']) {
 /* Trend tabs sit on the band photo. */
 .angi-trends-tab {
     background: transparent;
-    border-color: rgba(255, 255, 255, 0.14);
-    color: rgba(226, 240, 255, 0.82);
+    border-color: color-mix(in srgb, var(--card-bg) 14%, transparent);
+    color: color-mix(in srgb, var(--text-secondary) 82%, transparent);
     backdrop-filter: blur(12px);
 }
 .angi-trends-tab[aria-selected='true'] {
-    color: #07142B;
+    color: var(--text-primary);
     background: var(--color-cyan-bright);
     border-color: var(--color-cyan-bright);
 }
 
 html[data-theme='light'] .angi-trends-tab {
-  color: #334A6B;
-  background: rgba(255, 255, 255, 0.78);
-  border-color: rgba(8, 117, 255, 0.18);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--card-bg) 78%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
   backdrop-filter: blur(10px);
 }
 html[data-theme='light'] .angi-trends-tab:hover {
-  color: #07142B;
-  background: #FFFFFF;
-  border-color: rgba(8, 117, 255, 0.34);
+  color: var(--text-primary);
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
 }

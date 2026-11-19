@@ -7,6 +7,7 @@ import { requireAccess } from '../../../shared/middleware/roles';
 import { generateReference, withScopeLock, applyPaymentOutcome, PaymentProviderError } from '../services/payments';
 import * as payhero from '../services/payments/payheroService';
 import * as paystack from '../services/payments/paystackService';
+import { toMoney, toMoneyFromMinorUnits } from '../utils/money';
 
 /**
  * In-app Payments console (admin-only). Lets staff manage the entire payment
@@ -224,7 +225,7 @@ export default function paymentConsoleRouter(prisma: Db) {
                         .where((x) => x.provider.eq('PAYHERO'))
                         .first();
                     const data = {
-                        balance: w.balance,
+                        balance: toMoney(w.balance),
                         name: w.walletType,
                         meta: w.meta as any,
                         syncedAt: ts(),
@@ -259,7 +260,7 @@ export default function paymentConsoleRouter(prisma: Db) {
                     id: newId(),
                     updatedAt: ts(),
                         provider: 'PAYHERO', reference: ref, channel: 'topup',
-                        amount: Number(amount), phoneNumber: phone, accountNumber: null,
+                        amount: toMoney(amount), phoneNumber: phone, accountNumber: null,
                         networkCode: null, status: 'PENDING', providerReference: null,
                         currency: 'KES', metadata: null, completedAt: null,
                     });
@@ -301,7 +302,7 @@ export default function paymentConsoleRouter(prisma: Db) {
                     id: newId(),
                     updatedAt: ts(),
                         provider: 'PAYHERO', reference: ref, channel,
-                        amount: Number(amount), phoneNumber: phone || null,
+                        amount: toMoney(amount), phoneNumber: phone || null,
                         accountNumber: accountNumber || null, networkCode,
                         status: 'PENDING', providerReference: null,
                         currency: 'KES', metadata: null, completedAt: null,
@@ -399,7 +400,7 @@ export default function paymentConsoleRouter(prisma: Db) {
                 provider: 'PAYSTACK',
                 providerId: reference,
                 reference,
-                amount: Number(txn.amount || 0) / 100,
+                amount: toMoneyFromMinorUnits(txn.amount || 0),
                 currency: String(txn.currency || 'KES').toUpperCase(),
                 status: txn.status === 'success' ? 'SUCCEEDED' : 'PENDING',
                 metadata: txn,

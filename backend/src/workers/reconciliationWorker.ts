@@ -4,6 +4,7 @@ import { ts } from '../prisma/db';
 import { applyPaymentOutcome } from '../modules/billing/services/payments';
 import * as payhero from '../modules/billing/services/payments/payheroService';
 import * as paystack from '../modules/billing/services/payments/paystackService';
+import { toMoneyFromMinorUnits } from '../modules/billing/utils/money';
 
 /** Age after which a PENDING row is considered reconcile-worthy (callbacks may have been missed). */
 const RECONCILE_AFTER_MS = 2 * 60 * 1000;
@@ -43,7 +44,7 @@ export function startReconciliationWorker() {
                             updatedAt: ts(),
                             provider: 'STRIPE' as any,
                             providerId,
-                            amount: (pi.amount_received || pi.amount || 0) / 100,
+                            amount: toMoneyFromMinorUnits(pi.amount_received || pi.amount || 0),
                             currency: String(pi.currency || 'KES').toUpperCase(),
                             status: status as any,
                             metadata,
@@ -154,7 +155,7 @@ export function startReconciliationWorker() {
                                 provider: 'PAYSTACK',
                                 providerId: payment.providerId,
                                 reference: payment.reference || undefined,
-                                amount: Number(txn.amount || 0) / 100 || payment.amount,
+                                amount: txn?.amount ? toMoneyFromMinorUnits(txn.amount) : payment.amount,
                                 currency: String(txn.currency || payment.currency || 'KES').toUpperCase(),
                                 status: 'SUCCEEDED',
                                 metadata: { ...(payment.metadata as object || {}), reconciled: txn },

@@ -8,6 +8,7 @@ import { createClientProjectFromBooking } from '../../../modules/projects/servic
 import { logAudit } from '../../../shared/services/audit';
 import { generatePublicReference, generateTrackingToken } from '../../../modules/bookings/services/bookingReference';
 import { logBookingEvent, BOOKING_EVENT_TYPES, EVENT_VISIBILITY } from '../../../modules/bookings/services/bookingEvents';
+import { toMoney } from '../../billing/utils/money';
 // stripe types may not be available until dependency is installed; keep runtime require below
 
 const upload = multer({ dest: 'uploads/' });
@@ -216,8 +217,8 @@ export default function bookingsRouter(prisma: Db) {
             if (!email || !title) return res.status(400).json({ error: 'Email and title required' });
 
             const safeSource = SOURCE_VALUES.includes(source) ? source : 'direct';
-            const numericBudget = budgetAmount != null ? Number(budgetAmount) : null;
-            const numericQuote = quotedAmount != null ? Number(quotedAmount) : null;
+            const budgetMoney = budgetAmount != null ? toMoney(budgetAmount) : undefined;
+            const quoteMoney = quotedAmount != null ? toMoney(quotedAmount) : undefined;
 
             // upsert client
             let client = await prisma.orm.public.Client.where({ email }).first();
@@ -267,9 +268,9 @@ export default function bookingsRouter(prisma: Db) {
                     desiredOutcome: desiredOutcome || null,
                     preferredTimeline: preferredTimeline || null,
                     preferredDate: preferredDate ? ts(preferredDate) : null,
-                    budgetAmount: numericBudget,
+                    budgetAmount: budgetMoney,
                     currency: currency || 'KES',
-                    quotedAmount: numericQuote,
+                    quotedAmount: quoteMoney,
                     quotedCurrency: quotedCurrency || null,
                     pricingType: pricingType || null,
                     submittedAt: ts(),
@@ -321,7 +322,7 @@ export default function bookingsRouter(prisma: Db) {
                     updatedAt: ts(),
                     bookingId: booking.id,
                     clientId: client.id,
-                    amount: Number(depositAmount),
+                    amount: toMoney(depositAmount),
                     currency: curr,
                     provider: 'STRIPE' as any,
                     providerId: paymentIntent.id,
@@ -614,7 +615,7 @@ export default function bookingsRouter(prisma: Db) {
                     .include('clientProject')
                     .update({
                         status: status as any,
-                        priceEstimate: priceEstimate ? Number(priceEstimate) : booking.priceEstimate,
+                        priceEstimate: priceEstimate ? toMoney(priceEstimate) : booking.priceEstimate,
                         assignedToId: assignedToId || booking.assignedToId,
                     });
 

@@ -16,17 +16,17 @@ const SectionHeading = ({
   return (
     <header className={`max-w-3xl ${alignment} ${className}`}>
       {eyebrow && (
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#00C2FF]">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-accent-ink)]">
           {eyebrow}
         </p>
       )}
       {title && (
-        <h2 className="text-3xl font-black leading-tight text-white md:text-4xl lg:text-[2.75rem]">
+        <h2 className="text-3xl font-black leading-tight text-[var(--text-primary)] md:text-4xl lg:text-[2.75rem]">
           {title}
         </h2>
       )}
       {description && (
-        <p className="mt-4 text-base leading-relaxed text-white/65 md:text-lg">
+        <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)] md:text-lg">
           {description}
         </p>
       )}

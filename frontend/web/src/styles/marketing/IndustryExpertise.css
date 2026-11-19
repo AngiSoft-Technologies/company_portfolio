@@ -62,9 +62,9 @@
 }
 .angi-industry-tab[aria-selected='true'] {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
   border-color: transparent;
-  box-shadow: 0 4px 16px rgba(8, 117, 255, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 /* ── Active panel (self-contained; replaces inline .angi-panel-bleed) ── */
@@ -114,13 +114,13 @@
   flex-shrink: 0;
   font-size: 1rem;
   color: var(--primary);
-  background: rgba(8, 117, 255, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 .angi-industry-panel-title {
   font-family: 'Sora', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -158,14 +158,14 @@
   background: var(--industry-card-surface);
   border: 1px solid var(--industry-card-border);
   backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: 0 16px 40px rgba(6, 19, 36, 0.3);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--color-abyss) 30%, transparent);
   border-radius: 0.75rem;
   backdrop-filter: blur(10px);
   transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 .angi-industry-card:hover {
-  background: rgba(8, 117, 255, 0.12);
-  border-color: rgba(8, 117, 255, 0.3);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
   transform: translateY(-2px);
 }
 .angi-industry-card-icon {
@@ -178,7 +178,7 @@
   margin: 0 auto 0.75rem;
   font-size: 1rem;
   color: var(--primary);
-  background: rgba(8, 117, 255, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 .angi-industry-card-name {
   font-size: 0.8125rem;
@@ -238,17 +238,17 @@
 
 /* Industry media + card glass tokens, per theme. */
 html[data-theme='light'] {
-  --industry-panel-scrim: linear-gradient(155deg, rgb(7 20 43 / 0.84) 0%, rgb(7 20 43 / 0.6) 56%, rgb(0 60 110 / 0.46) 100%);
+  --industry-panel-scrim: linear-gradient(155deg, color-mix(in srgb, var(--bg-primary) 1%, transparent) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 56%, rgb(0 60 110 / 0.46) 100%);
   --industry-panel-brightness: 0.72;
   --industry-card-surface: transparent;
-  --industry-card-border: rgb(255 255 255 / 0.6);
-  --industry-card-ink: #F5F7FA;
+  --industry-card-border: color-mix(in srgb, var(--surface) 1%, transparent);
+  --industry-card-ink: var(--text-primary);
 }
 
 html:not([data-theme='light']) {
-  --industry-panel-scrim: linear-gradient(155deg, rgb(5 15 31 / 0.9) 0%, rgb(7 20 43 / 0.72) 56%, rgb(8 40 70 / 0.58) 100%);
+  --industry-panel-scrim: linear-gradient(155deg, rgb(5 15 31 / 0.9) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 56%, rgb(8 40 70 / 0.58) 100%);
   --industry-panel-brightness: 0.46;
   --industry-card-surface: transparent;
-  --industry-card-border: rgba(255, 255, 255, 0.12);
-  --industry-card-ink: #F5F7FA;
+  --industry-card-border: color-mix(in srgb, var(--card-bg) 12%, transparent);
+  --industry-card-ink: var(--text-primary);
 }

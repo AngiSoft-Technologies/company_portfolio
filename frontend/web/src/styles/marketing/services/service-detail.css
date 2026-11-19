@@ -4,38 +4,27 @@
    ========================================================================= */
 
 .service-detail {
-    --sd-bg: #07142B;
-    --sd-surface: rgba(11, 30, 61, 0.55);
-    --sd-surface-2: rgba(7, 20, 43, 0.7);
-    --sd-border: rgba(0, 175, 255, 0.16);
-    --sd-border-strong: rgba(0, 175, 255, 0.4);
-    --sd-text: #F5F7FA;
-    --sd-muted: #94A3B8;
-    --sd-accent: #00AFFF;
-    --sd-accent-2: #27D94B;
+    --sd-bg: var(--bg-primary);
+    --sd-surface: var(--card-bg);
+    --sd-surface-2: color-mix(in srgb, var(--surface) 70%, transparent);
+    --sd-border: var(--border);
+    --sd-border-strong: var(--border);
+    --sd-text: var(--text-primary);
+    --sd-muted: var(--text-muted);
+    --sd-accent: var(--color-secondary);
+    --sd-accent-2: var(--color-accent-2);
     --sd-radius: 1.1rem;
 
     position: relative;
     min-height: 100vh;
     padding: 2rem 0 5rem;
     color: var(--sd-text);
-    background:
-        radial-gradient(900px 420px at 85% -5%, rgba(0, 175, 255, 0.12), transparent 60%),
-        radial-gradient(700px 380px at 5% 8%, rgba(39, 217, 75, 0.08), transparent 55%),
-        linear-gradient(180deg, #08152E 0%, #07142B 100%);
+    background: radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--color-secondary) 12%, transparent), transparent 60%),
+        radial-gradient(700px 380px at 5% 8%, color-mix(in srgb, var(--color-accent-2) 8%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
 }
 
-.service-detail.is-light {
-    --sd-bg: #F4F7FB;
-    --sd-surface: rgba(255, 255, 255, 0.9);
-    --sd-surface-2: #FFFFFF;
-    --sd-border: rgba(8, 127, 224, 0.16);
-    --sd-border-strong: rgba(8, 127, 224, 0.38);
-    --sd-text: #0B1F3A;
-    --sd-muted: #4B5B73;
-    --sd-accent: #0B7FE0;
-    --sd-accent-2: #17A832;
-}
+
 
 .service-container {
     width: min(1240px, 100%);
@@ -146,7 +135,7 @@
     object-fit: cover;
     border-radius: 1.5rem;
     border: 1px solid var(--sd-border);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    box-shadow: 0 24px 60px color-mix(in srgb, var(--color-abyss) 34%, transparent);
 }
 .service-hero__visual {
     display: grid;
@@ -154,9 +143,8 @@
     aspect-ratio: 4 / 3;
     border-radius: 1.5rem;
     border: 1px solid var(--sd-border);
-    background:
-        radial-gradient(420px 280px at 70% 20%, rgba(0, 175, 255, 0.2), transparent 60%),
-        linear-gradient(160deg, rgba(13, 34, 67, 0.9), rgba(7, 20, 43, 0.9));
+    background: radial-gradient(420px 280px at 70% 20%, color-mix(in srgb, var(--color-secondary) 20%, transparent), transparent 60%),
+        linear-gradient(160deg, var(--card-bg), color-mix(in srgb, var(--surface) 90%, transparent));
 }
 .service-hero__visual-icon { font-size: clamp(4rem, 9vw, 7rem); color: var(--sd-accent); }
 
@@ -290,7 +278,7 @@
     height: 2.1rem;
     border-radius: 999px;
     font-weight: 700;
-    color: #07142B;
+    color: var(--color-white);
     background: linear-gradient(120deg, var(--sd-accent), var(--sd-accent-2));
 }
 .service-process__title { margin: 0 0 0.3rem; font-size: 1.02rem; color: var(--sd-text); }
@@ -323,14 +311,14 @@
     position: relative;
     overflow: hidden;
     border-radius: 0.8rem;
-    background: rgba(148, 163, 184, 0.16);
+    background: var(--border);
 }
 .skeleton::after {
     content: '';
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
     animation: sd-shimmer 1.4s infinite;
 }
 @keyframes sd-shimmer { 100% { transform: translateX(100%); } }
@@ -395,13 +383,13 @@
     min-height: 44px;
 }
 .btn--primary {
-    color: #07142B;
-    background: linear-gradient(120deg, #18D8FF, #27D94B);
-    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.3);
+    color: var(--color-white);
+    background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2));
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--color-secondary) 30%, transparent);
 }
-.btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0, 175, 255, 0.42); }
+.btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px color-mix(in srgb, var(--color-secondary) 42%, transparent); }
 .btn--ghost { color: var(--sd-text); border-color: var(--sd-border-strong); background: transparent; }
-.btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+.btn--ghost:hover { background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
 .btn--link { color: var(--sd-muted); background: transparent; }
 .btn--link:hover { color: var(--sd-accent); }
 .btn svg { font-size: 1rem; }

@@ -123,7 +123,7 @@ export function StaffManagement() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No staff members yet" />
         </div>
       ) : (
@@ -140,7 +140,7 @@ export function StaffManagement() {
                   {r.avatarUrl ? (
                     <img src={r.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
                   ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0875FF]/10 text-sm font-semibold text-[#0875FF]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-sm font-semibold text-[var(--color-primary)]">
                       {r.name.charAt(0).toUpperCase() || '?'}
                     </span>
                   )}

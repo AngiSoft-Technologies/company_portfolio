@@ -8,15 +8,15 @@
    ============================================================ */
 
 .booking-success {
-    background: rgba(39, 217, 75, 0.08);
-    border: 1px solid rgba(39, 217, 75, 0.3);
+    background: color-mix(in srgb, var(--color-accent-2) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-2) 30%, transparent);
     border-radius: 18px;
     padding: 40px;
     text-align: center;
 }
 
 .booking-success-eyebrow {
-    color: #27d94b;
+    color: var(--color-accent-2);
     text-transform: uppercase;
     letter-spacing: 0.16em;
     font-size: 12px;
@@ -39,8 +39,8 @@
     border-radius: 12px;
     font-weight: 600;
     text-decoration: none;
-    background: #00afff;
-    color: #05070d;
+    background: var(--color-secondary);
+    color: var(--bg-primary);
     transition: filter 0.2s, transform 0.2s;
 }
 .booking-success-cta:hover {
@@ -48,9 +48,9 @@
     transform: translateY(-1px);
 }
 .booking-success-cta.is-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    color: #e7ecf3;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--card-bg) 6%, transparent);
+    color: var(--text-primary);
+    border: 1px solid color-mix(in srgb, var(--card-bg) 10%, transparent);
 }
 
 /* Form field groups reused by the stepper steps */
@@ -60,18 +60,18 @@
 .booking-field label {
     display: block;
     font-size: 13px;
-    color: #aeb7c6;
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 .booking-field input,
 .booking-field textarea,
 .booking-field select {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--card-bg) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-bg) 10%, transparent);
     border-radius: 10px;
     padding: 12px 14px;
-    color: #e7ecf3;
+    color: var(--text-primary);
     font-size: 14px;
     font-family: inherit;
 }
@@ -79,7 +79,7 @@
 .booking-field textarea:focus,
 .booking-field select:focus {
     outline: none;
-    border-color: rgba(0, 175, 255, 0.5);
+    border-color: var(--border);
 }
 
 .booking-context-banner {
@@ -88,8 +88,8 @@
     gap: 12px;
     padding: 14px 16px;
     border-radius: 12px;
-    border: 1px solid rgba(0, 175, 255, 0.25);
-    background: rgba(0, 175, 255, 0.08);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--color-secondary) 8%, transparent);
     margin-bottom: 20px;
 }
 

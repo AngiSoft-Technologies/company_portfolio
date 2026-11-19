@@ -6,19 +6,11 @@ import React, {
   useState,
 } from 'react';
 
-import {
-  FaCheck,
-} from 'react-icons/fa';
+import { LuCheck } from 'react-icons/lu';;
 
-import {
-  resolveAssetUrl,
-} from '@/lib/marketing/constants';
+import AboutDeliveryMap from './AboutDeliveryMap';
 
-const DEFAULT_COLORS = [
-  '#0A3DFF',
-  '#FF9F1C',
-  '#39FF6A',
-];
+const DEFAULT_COLORS = 'var(--color-primary)';
 
 const normalizeRegion = (
   region,
@@ -48,69 +40,6 @@ const normalizeRegion = (
         DEFAULT_COLORS.length
     ],
 });
-
-const normalizeLocation = (
-  location,
-  index,
-  regions
-) => {
-  const parsedRegionIndex =
-    Number(
-      location?.regionIndex
-    );
-
-  const regionIndex =
-    Number.isFinite(
-      parsedRegionIndex
-    )
-      ? parsedRegionIndex
-      : 0;
-
-  const parsedX =
-    Number(location?.x);
-
-  const parsedY =
-    Number(location?.y);
-
-  return {
-    id:
-      location?.id ||
-      `map-location-${index}`,
-
-    label:
-      location?.label ||
-      location?.title ||
-      '',
-
-    detail:
-      location?.detail ||
-      '',
-
-    x:
-      Number.isFinite(parsedX)
-        ? parsedX
-        : 50,
-
-    y:
-      Number.isFinite(parsedY)
-        ? parsedY
-        : 50,
-
-    labelPosition:
-      location?.labelPosition ||
-      'right',
-
-    color:
-      location?.color ||
-      regions[
-        regionIndex
-      ]?.color ||
-      DEFAULT_COLORS[
-        regionIndex %
-          DEFAULT_COLORS.length
-      ],
-  };
-};
 
 const normalizeBenefit = (
   benefit,
@@ -142,35 +71,6 @@ const normalizeBenefit = (
   };
 };
 
-const resolveMapImageUrl = (
-  imageUrl
-) => {
-  if (!imageUrl) {
-    return '';
-  }
-
-  /*
-   * Frontend public files should remain frontend-relative.
-   */
-  if (
-    imageUrl.startsWith(
-      '/images/'
-    ) ||
-    imageUrl.startsWith(
-      '/assets/'
-    )
-  ) {
-    return imageUrl;
-  }
-
-  /*
-   * Uploaded media may need the API host.
-   */
-  return resolveAssetUrl(
-    imageUrl
-  );
-};
-
 const AboutGeographyMap = ({
   content = {},
 }) => {
@@ -179,11 +79,6 @@ const AboutGeographyMap = ({
 
   const [visible, setVisible] =
     useState(false);
-
-  const [
-    mapLoadFailed,
-    setMapLoadFailed,
-  ] = useState(false);
 
   const data = useMemo(
     () => ({
@@ -213,36 +108,6 @@ const AboutGeographyMap = ({
           region.title
       );
   }, [data.regions]);
-
-  const locations = useMemo(() => {
-    const source =
-      Array.isArray(
-        data.locations
-      ) &&
-      data.locations.length
-        ? data.locations
-        : [];
-
-    return source
-      .map(
-        (
-          location,
-          index
-        ) =>
-          normalizeLocation(
-            location,
-            index,
-            regions
-          )
-      )
-      .filter(
-        (location) =>
-          location.label
-      );
-  }, [
-    data.locations,
-    regions,
-  ]);
 
   const benefits = useMemo(() => {
     const source =
@@ -322,16 +187,11 @@ const AboutGeographyMap = ({
     return null;
   }
 
-  const mapSrc =
-    resolveMapImageUrl(
-      data.mapImageUrl
-    );
-
   return (
     <section
       ref={sectionRef}
       id="about-geography"
-      className="about-geography bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-geography py-16 md:py-20 lg:py-24"
       aria-labelledby="about-geography-heading"
     >
       <div className="container">
@@ -345,7 +205,7 @@ const AboutGeographyMap = ({
         >
           <h2
             id="about-geography-heading"
-            className="text-3xl font-bold tracking-[-0.035em] text-white md:text-4xl"
+            className="text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
             style={{
               fontFamily:
                 'Sora, sans-serif',
@@ -355,7 +215,7 @@ const AboutGeographyMap = ({
           </h2>
 
           {data.intro && (
-            <p className="mx-auto mt-5 max-w-4xl text-sm leading-7 text-white/65 md:text-base">
+            <p className="mx-auto mt-5 max-w-4xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {data.intro}
             </p>
           )}
@@ -396,13 +256,13 @@ const AboutGeographyMap = ({
                   </h3>
 
                   {region.lineOne && (
-                    <p className="mt-1 text-xs leading-5 text-white/65">
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                       {region.lineOne}
                     </p>
                   )}
 
                   {region.lineTwo && (
-                    <p className="text-xs leading-5 text-white/42">
+                    <p className="text-xs leading-5 text-[var(--text-muted)]">
                       {region.lineTwo}
                     </p>
                   )}
@@ -412,7 +272,7 @@ const AboutGeographyMap = ({
           </div>
         )}
 
-        {/* World map */}
+        {/* Real delivery map */}
         <div
           className={`about-geography-map mt-8 transition duration-1000 ${
             visible
@@ -424,40 +284,7 @@ const AboutGeographyMap = ({
               '220ms',
           }}
         >
-          <div className="about-geography-map-canvas">
-            {!mapLoadFailed &&
-            mapSrc ? (
-              <img
-                src={mapSrc}
-                alt={
-                  data.mapAlt ||
-                  ''
-                }
-                loading="lazy"
-                className="about-geography-map-image"
-                onError={() => {
-                  setMapLoadFailed(
-                    true
-                  );
-                }}
-              />
-            ) : (
-              <MapFallback />
-            )}
-
-            {locations.map(
-              (location) => (
-                <MapLocation
-                  key={
-                    location.id
-                  }
-                  location={
-                    location
-                  }
-                />
-              )
-            )}
-          </div>
+          <AboutDeliveryMap />
         </div>
 
         {/* Delivery copy and benefits — same section */}
@@ -469,7 +296,7 @@ const AboutGeographyMap = ({
             benefits.length > 0
           ) && (
             <div
-              className={`about-geography-delivery mt-10 border-t border-white/10 pt-8 transition duration-700 md:mt-12 md:pt-10 ${
+              className={`about-geography-delivery mt-10 border-t border-[var(--border-light)] pt-8 transition duration-700 md:mt-12 md:pt-10 ${
                 visible
                   ? 'translate-y-0 opacity-100'
                   : 'translate-y-5 opacity-0'
@@ -481,7 +308,7 @@ const AboutGeographyMap = ({
             >
               {data.delivery
                 ?.introduction && (
-                <p className="max-w-6xl text-sm leading-7 text-white/66 md:text-base">
+                <p className="max-w-6xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
                   {
                     data.delivery
                       .introduction
@@ -503,13 +330,13 @@ const AboutGeographyMap = ({
                         className="about-geography-benefit flex items-start gap-3"
                       >
                         <span
-                          className="mt-[7px] flex h-4 w-4 shrink-0 items-center justify-center border border-[#00C2FF]/55 text-[7px] text-[#00C2FF]"
+                          className="mt-[7px] flex h-4 w-4 shrink-0 items-center justify-center border border-[#00C2FF]/55 text-[7px] text-[var(--brand-accent-ink)]"
                           aria-hidden="true"
                         >
-                          <FaCheck />
+                          <LuCheck />
                         </span>
 
-                        <p className="text-xs leading-6 text-white/62 md:text-sm">
+                        <p className="text-xs leading-6 text-[var(--text-secondary)] md:text-sm">
                           {
                             benefit.title
                           }
@@ -525,77 +352,5 @@ const AboutGeographyMap = ({
     </section>
   );
 };
-
-const MapLocation = ({
-  location,
-}) => {
-  const position =
-    location.labelPosition;
-
-  const labelClass =
-    position === 'left'
-      ? 'right-5 top-1/2 -translate-y-1/2 text-right'
-      : position ===
-          'above'
-        ? 'bottom-5 left-1/2 -translate-x-1/2 text-center'
-        : position ===
-            'below'
-          ? 'left-1/2 top-5 -translate-x-1/2 text-center'
-          : 'left-5 top-1/2 -translate-y-1/2 text-left';
-
-  return (
-    <div
-      className="about-map-location"
-      style={{
-        left:
-          `${location.x}%`,
-
-        top:
-          `${location.y}%`,
-
-        '--location-color':
-          location.color,
-      }}
-    >
-      <span
-        className="about-map-location-dot"
-        aria-hidden="true"
-      />
-
-      <div
-        className={`about-map-label ${labelClass}`}
-      >
-        <p
-          className="about-map-label-title"
-          style={{
-            color:
-              location.color,
-          }}
-        >
-          {location.label}
-        </p>
-
-        {location.detail && (
-          <p className="about-map-label-detail">
-            {location.detail}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const MapFallback = () => (
-  <div className="about-geography-map-fallback">
-    <div
-      className="about-geography-map-fallback-grid"
-      aria-hidden="true"
-    />
-
-    <p>
-      AngiSoft digital delivery
-    </p>
-  </div>
-);
 
 export default AboutGeographyMap;

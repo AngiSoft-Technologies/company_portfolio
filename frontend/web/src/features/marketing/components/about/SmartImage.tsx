@@ -11,7 +11,7 @@ const SmartImage = ({ src, alt = '', className = '', loading = 'lazy', fallbackT
   if (failed || !src) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-[#0B1E3D] to-[#07142B] text-center text-sm font-semibold text-white/40 ${className}`}
+        className={`flex items-center justify-center bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] text-center text-sm font-semibold text-[var(--text-muted)] ${className}`}
         aria-label={alt}
       >
         {fallbackText}

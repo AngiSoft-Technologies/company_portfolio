@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useTheme } from '@/lib/theme';
 import { usePricing } from '@/hooks/marketing/usePricing';
 import { usePricingFilters } from '@/hooks/marketing/usePricingFilters';
 
@@ -28,13 +29,14 @@ import '@/styles/marketing/pricing/pricing-service-card.css';
 export default function Pricing() {
     const { content, services, loading, error, refetch, hasContent, hasServiceData } = usePricing();
     const filters = usePricingFilters(services);
+    const { mode } = useTheme();
 
     if (loading) return <PricingSkeleton />;
     if (error) return <PricingError error={error} onRetry={refetch} />;
     if (!hasContent && !hasServiceData) return <PricingEmptyState />;
 
     return (
-        <main className="pricing-page">
+        <main className={`pricing-page${mode === 'light' ? ' is-light' : ''}`}>
             <PricingHero content={content} />
 
             <PricingIntro content={content} />

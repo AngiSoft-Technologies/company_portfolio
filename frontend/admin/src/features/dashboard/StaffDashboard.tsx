@@ -92,17 +92,17 @@ export function StaffDashboard() {
           {work.length === 0 ? (
             <EmptyState title="Nothing assigned to you yet" />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--border-light)]">
               {work.map((r, i) => (
                 <li key={String(r.id ?? i)} className="flex items-center justify-between py-2.5">
                   <div>
                     <div className="font-medium">{workTitle(r)}</div>
-                    <div className="text-sm text-slate-500">
+                    <div className="text-sm text-[var(--text-muted)]">
                       {asStr(r, 'status') !== '—' ? asStr(r, 'status') : ''}
                       {asStr(r, 'client') !== '—' ? ` · ${asStr(r, 'client')}` : ''}
                     </div>
                   </div>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-[var(--text-muted)]">
                     {asStr(r, 'dueDate') !== '—' ? formatDate(r.dueDate) : ''}
                   </span>
                 </li>
@@ -116,13 +116,13 @@ export function StaffDashboard() {
           {schedule.length === 0 ? (
             <EmptyState title="No upcoming bookings" />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--border-light)]">
               {schedule.map((r, i) => (
                 <li key={String(r.id ?? r.reference ?? i)} className="flex items-center justify-between py-2.5">
                   <span className="font-medium">
                     {asStr(r, 'reference') !== '—' ? asStr(r, 'reference') : asStr(r, 'client')}
                   </span>
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-[var(--text-muted)]">
                     {formatDate(r.date ?? r.scheduledAt ?? r.startDate ?? r.createdAt)}
                   </span>
                 </li>

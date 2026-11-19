@@ -1,0 +1,3436 @@
+[
+  {
+    "id": "table.Invoice",
+    "label": "Create table \"Invoice\"",
+    "summary": "Creates table \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Invoice\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Invoice\"",
+        "sql": "CREATE TABLE \"public\".\"Invoice\" (\n  \"amountPaid\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"balanceDue\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"bookingId\" text,\n  \"clientId\" text,\n  \"clientProjectId\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"createdById\" text,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"dueAt\" timestamp(3),\n  \"id\" text NOT NULL,\n  \"issuedAt\" timestamp(3),\n  \"notes\" text,\n  \"number\" text NOT NULL,\n  \"paidAt\" timestamp(3),\n  \"publicReference\" text NOT NULL,\n  \"quoteId\" text,\n  \"status\" text DEFAULT 'draft' NOT NULL,\n  \"subtotal\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"tax\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"total\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Invoice_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Invoice\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.InvoiceLineItem",
+    "label": "Create table \"InvoiceLineItem\"",
+    "summary": "Creates table \"InvoiceLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "InvoiceLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"InvoiceLineItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InvoiceLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"InvoiceLineItem\"",
+        "sql": "CREATE TABLE \"public\".\"InvoiceLineItem\" (\n  \"description\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"invoiceId\" text NOT NULL,\n  \"lineTotal\" numeric(18,2) NOT NULL,\n  \"quantity\" int4 DEFAULT 1 NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"unitPrice\" numeric(18,2) NOT NULL,\n  CONSTRAINT \"InvoiceLineItem_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"InvoiceLineItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InvoiceLineItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.Opportunity",
+    "label": "Create table \"Opportunity\"",
+    "summary": "Creates table \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Opportunity\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Opportunity\"",
+        "sql": "CREATE TABLE \"public\".\"Opportunity\" (\n  \"assignedToId\" text,\n  \"bookingId\" text,\n  \"clientId\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"expectedCloseDate\" timestamp(3),\n  \"id\" text NOT NULL,\n  \"leadId\" text,\n  \"lostReason\" text,\n  \"notes\" text,\n  \"probability\" int4 DEFAULT 0 NOT NULL,\n  \"publicReference\" text NOT NULL,\n  \"source\" text,\n  \"stage\" text DEFAULT 'new' NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  \"value\" numeric(18,2),\n  CONSTRAINT \"Opportunity_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Opportunity\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.Quote",
+    "label": "Create table \"Quote\"",
+    "summary": "Creates table \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Quote\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Quote\"",
+        "sql": "CREATE TABLE \"public\".\"Quote\" (\n  \"acceptedAt\" timestamp(3),\n  \"bookingId\" text,\n  \"clientId\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"createdById\" text,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"discount\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"id\" text NOT NULL,\n  \"issuedAt\" timestamp(3),\n  \"notes\" text,\n  \"number\" text NOT NULL,\n  \"opportunityId\" text,\n  \"publicReference\" text NOT NULL,\n  \"status\" text DEFAULT 'draft' NOT NULL,\n  \"subtotal\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"tax\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"total\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  \"validUntil\" timestamp(3),\n  CONSTRAINT \"Quote_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Quote\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.QuoteLineItem",
+    "label": "Create table \"QuoteLineItem\"",
+    "summary": "Creates table \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"QuoteLineItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"QuoteLineItem\"",
+        "sql": "CREATE TABLE \"public\".\"QuoteLineItem\" (\n  \"description\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"lineTotal\" numeric(18,2) NOT NULL,\n  \"productId\" text,\n  \"quantity\" int4 DEFAULT 1 NOT NULL,\n  \"quoteId\" text NOT NULL,\n  \"serviceId\" text,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"unitPrice\" numeric(18,2) NOT NULL,\n  CONSTRAINT \"QuoteLineItem_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"QuoteLineItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Lead.currency",
+    "label": "Add column \"currency\" to \"Lead\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currency",
+        "table": "Lead"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currency\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "currency"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"currency\"",
+        "sql": "ALTER TABLE \"public\".\"Lead\" ADD COLUMN \"currency\" text DEFAULT 'KES' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"currency\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "currency"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Lead.lostReason",
+    "label": "Add column \"lostReason\" to \"Lead\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "lostReason",
+        "table": "Lead"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"lostReason\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "lostReason"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"lostReason\"",
+        "sql": "ALTER TABLE \"public\".\"Lead\" ADD COLUMN \"lostReason\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"lostReason\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "lostReason"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Lead.qualificationNotes",
+    "label": "Add column \"qualificationNotes\" to \"Lead\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "qualificationNotes",
+        "table": "Lead"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"qualificationNotes\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "qualificationNotes"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"qualificationNotes\"",
+        "sql": "ALTER TABLE \"public\".\"Lead\" ADD COLUMN \"qualificationNotes\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"qualificationNotes\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "qualificationNotes"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Lead.stage",
+    "label": "Add column \"stage\" to \"Lead\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "stage",
+        "table": "Lead"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"stage\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "stage"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"stage\"",
+        "sql": "ALTER TABLE \"public\".\"Lead\" ADD COLUMN \"stage\" text DEFAULT 'new' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"stage\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "stage"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Lead.value",
+    "label": "Add column \"value\" to \"Lead\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "value",
+        "table": "Lead"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"value\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "value"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"value\"",
+        "sql": "ALTER TABLE \"public\".\"Lead\" ADD COLUMN \"value\" numeric(18,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"value\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Lead",
+          "value"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_migration.typechange-Booking-budgetAmount",
+    "label": "Data transform: typechange-Booking-budgetAmount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Booking-budgetAmount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Booking-budgetAmount",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"budgetAmount\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Booking-budgetAmount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Booking.budgetAmount",
+    "label": "Alter type of \"Booking\".\"budgetAmount\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "budgetAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"budgetAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"budgetAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"budgetAmount\" TYPE numeric(18,2) USING round(\"budgetAmount\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"budgetAmount\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.handle-nulls-Booking-budgetAmount",
+    "label": "Data transform: handle-nulls-Booking-budgetAmount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check handle-nulls-Booking-budgetAmount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"budgetAmount\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run handle-nulls-Booking-budgetAmount",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"budgetAmount\" = $1 WHERE \"budgetAmount\" IS NULL",
+        "params": [
+          "0.00"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify handle-nulls-Booking-budgetAmount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"budgetAmount\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.Booking.budgetAmount",
+    "label": "Set NOT NULL on \"Booking\".\"budgetAmount\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "budgetAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"budgetAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"budgetAmount\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"Booking\" WHERE \"budgetAmount\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"budgetAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"budgetAmount\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"budgetAmount\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_migration.typechange-Booking-priceEstimate",
+    "label": "Data transform: typechange-Booking-priceEstimate",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Booking-priceEstimate has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Booking-priceEstimate",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"priceEstimate\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Booking-priceEstimate resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Booking.priceEstimate",
+    "label": "Alter type of \"Booking\".\"priceEstimate\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceEstimate",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceEstimate\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"priceEstimate\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"priceEstimate\" TYPE numeric(18,2) USING round(\"priceEstimate\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceEstimate\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.handle-nulls-Booking-priceEstimate",
+    "label": "Data transform: handle-nulls-Booking-priceEstimate",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check handle-nulls-Booking-priceEstimate has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"priceEstimate\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run handle-nulls-Booking-priceEstimate",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"priceEstimate\" = $1 WHERE \"priceEstimate\" IS NULL",
+        "params": [
+          "0.00"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify handle-nulls-Booking-priceEstimate resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"priceEstimate\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.Booking.priceEstimate",
+    "label": "Set NOT NULL on \"Booking\".\"priceEstimate\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceEstimate",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceEstimate\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"priceEstimate\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"Booking\" WHERE \"priceEstimate\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"priceEstimate\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"priceEstimate\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceEstimate\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_migration.typechange-Booking-quotedAmount",
+    "label": "Data transform: typechange-Booking-quotedAmount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Booking-quotedAmount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Booking-quotedAmount",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"quotedAmount\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Booking-quotedAmount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Booking.quotedAmount",
+    "label": "Alter type of \"Booking\".\"quotedAmount\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "quotedAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"quotedAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"quotedAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"quotedAmount\" TYPE numeric(18,2) USING round(\"quotedAmount\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"quotedAmount\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.handle-nulls-Booking-quotedAmount",
+    "label": "Data transform: handle-nulls-Booking-quotedAmount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check handle-nulls-Booking-quotedAmount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"quotedAmount\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run handle-nulls-Booking-quotedAmount",
+        "sql": "UPDATE \"public\".\"Booking\" SET \"quotedAmount\" = $1 WHERE \"quotedAmount\" IS NULL",
+        "params": [
+          "0.00"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify handle-nulls-Booking-quotedAmount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Booking\" WHERE \"quotedAmount\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.Booking.quotedAmount",
+    "label": "Set NOT NULL on \"Booking\".\"quotedAmount\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "quotedAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"quotedAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"quotedAmount\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"Booking\" WHERE \"quotedAmount\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"quotedAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"quotedAmount\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"quotedAmount\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_migration.typechange-Payment-amount",
+    "label": "Data transform: typechange-Payment-amount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Payment-amount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Payment\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Payment-amount",
+        "sql": "UPDATE \"public\".\"Payment\" SET \"amount\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Payment-amount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Payment\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Payment.amount",
+    "label": "Alter type of \"Payment\".\"amount\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payment\" ALTER COLUMN \"amount\" TYPE numeric(18,2) USING round(\"amount\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.typechange-PaymentWallet-balance",
+    "label": "Data transform: typechange-PaymentWallet-balance",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-PaymentWallet-balance has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"PaymentWallet\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-PaymentWallet-balance",
+        "sql": "UPDATE \"public\".\"PaymentWallet\" SET \"balance\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-PaymentWallet-balance resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"PaymentWallet\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.PaymentWallet.balance",
+    "label": "Alter type of \"PaymentWallet\".\"balance\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "balance",
+        "table": "PaymentWallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"balance\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"balance\"",
+        "sql": "ALTER TABLE \"public\".\"PaymentWallet\" ALTER COLUMN \"balance\" TYPE numeric(18,2) USING round(\"balance\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"balance\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.typechange-Payout-amount",
+    "label": "Data transform: typechange-Payout-amount",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Payout-amount has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Payout\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Payout-amount",
+        "sql": "UPDATE \"public\".\"Payout\" SET \"amount\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Payout-amount resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Payout\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Payout.amount",
+    "label": "Alter type of \"Payout\".\"amount\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payout"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payout\" ALTER COLUMN \"amount\" TYPE numeric(18,2) USING round(\"amount\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.typechange-Service-priceFrom",
+    "label": "Data transform: typechange-Service-priceFrom",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-Service-priceFrom has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Service\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-Service-priceFrom",
+        "sql": "UPDATE \"public\".\"Service\" SET \"priceFrom\" = $1 WHERE \"id\" = $2",
+        "params": [
+          "0.00",
+          "__p8_noop__"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-Service-priceFrom resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Service\" WHERE \"id\" = $1 LIMIT 1) AS ok",
+        "params": [
+          "__p8_noop__"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterType.Service.priceFrom",
+    "label": "Alter type of \"Service\".\"priceFrom\" to numeric(18,2)",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceFrom",
+        "table": "Service"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceFrom\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"priceFrom\"",
+        "sql": "ALTER TABLE \"public\".\"Service\" ALTER COLUMN \"priceFrom\" TYPE numeric(18,2) USING round(\"priceFrom\"::numeric,2)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceFrom\" has type \"numeric(18,2)\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom",
+          "numeric(18,2)"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.handle-nulls-Service-priceFrom",
+    "label": "Data transform: handle-nulls-Service-priceFrom",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check handle-nulls-Service-priceFrom has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Service\" WHERE \"priceFrom\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run handle-nulls-Service-priceFrom",
+        "sql": "UPDATE \"public\".\"Service\" SET \"priceFrom\" = $1 WHERE \"priceFrom\" IS NULL",
+        "params": [
+          "0.00"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify handle-nulls-Service-priceFrom resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"Service\" WHERE \"priceFrom\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.setNotNull.Service.priceFrom",
+    "label": "Set NOT NULL on \"Service\".\"priceFrom\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceFrom",
+        "table": "Service"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceFrom\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      },
+      {
+        "description": "ensure no NULL values in \"priceFrom\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"public\".\"Service\" WHERE \"priceFrom\" IS NULL) AS \"result\"",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "set NOT NULL on \"priceFrom\"",
+        "sql": "ALTER TABLE \"public\".\"Service\" ALTER COLUMN \"priceFrom\" SET NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceFrom\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Booking.budgetAmount",
+    "label": "Set default on \"Booking\".\"budgetAmount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "budgetAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"budgetAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"budgetAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"budgetAmount\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"budgetAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Booking.priceEstimate",
+    "label": "Set default on \"Booking\".\"priceEstimate\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceEstimate",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceEstimate\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"priceEstimate\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"priceEstimate\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceEstimate\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Booking.quotedAmount",
+    "label": "Set default on \"Booking\".\"quotedAmount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "quotedAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"quotedAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"quotedAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"quotedAmount\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"quotedAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payment.amount",
+    "label": "Set default on \"Payment\".\"amount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payment\" ALTER COLUMN \"amount\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PaymentWallet.balance",
+    "label": "Set default on \"PaymentWallet\".\"balance\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "balance",
+        "table": "PaymentWallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"balance\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"balance\"",
+        "sql": "ALTER TABLE \"public\".\"PaymentWallet\" ALTER COLUMN \"balance\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"balance\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payout.amount",
+    "label": "Set default on \"Payout\".\"amount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payout"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payout\" ALTER COLUMN \"amount\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Service.priceFrom",
+    "label": "Set default on \"Service\".\"priceFrom\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceFrom",
+        "table": "Service"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceFrom\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"priceFrom\"",
+        "sql": "ALTER TABLE \"public\".\"Service\" ALTER COLUMN \"priceFrom\" SET DEFAULT '0.00'"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceFrom\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_bookingId_idx",
+    "label": "Create index \"Invoice_bookingId_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_bookingId_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_bookingId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_bookingId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_bookingId_idx\"",
+        "sql": "CREATE INDEX \"Invoice_bookingId_idx\" ON \"public\".\"Invoice\" (\"bookingId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_bookingId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_bookingId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_clientId_idx",
+    "label": "Create index \"Invoice_clientId_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_clientId_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_clientId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_clientId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_clientId_idx\"",
+        "sql": "CREATE INDEX \"Invoice_clientId_idx\" ON \"public\".\"Invoice\" (\"clientId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_clientId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_clientId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_clientProjectId_idx",
+    "label": "Create index \"Invoice_clientProjectId_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_clientProjectId_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_clientProjectId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_clientProjectId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_clientProjectId_idx\"",
+        "sql": "CREATE INDEX \"Invoice_clientProjectId_idx\" ON \"public\".\"Invoice\" (\"clientProjectId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_clientProjectId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_clientProjectId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_createdAt_idx",
+    "label": "Create index \"Invoice_createdAt_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_createdAt_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_createdAt_idx\"",
+        "sql": "CREATE INDEX \"Invoice_createdAt_idx\" ON \"public\".\"Invoice\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_createdById_idx",
+    "label": "Create index \"Invoice_createdById_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_createdById_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_createdById_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_createdById_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_createdById_idx\"",
+        "sql": "CREATE INDEX \"Invoice_createdById_idx\" ON \"public\".\"Invoice\" (\"createdById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_createdById_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_createdById_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_dueAt_idx",
+    "label": "Create index \"Invoice_dueAt_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_dueAt_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_dueAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_dueAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_dueAt_idx\"",
+        "sql": "CREATE INDEX \"Invoice_dueAt_idx\" ON \"public\".\"Invoice\" (\"dueAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_dueAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_dueAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_number_key",
+    "label": "Create index \"Invoice_number_key\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_number_key",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_number_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_number_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_number_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Invoice_number_key\" ON \"public\".\"Invoice\" (\"number\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_number_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_number_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_publicReference_key",
+    "label": "Create index \"Invoice_publicReference_key\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_publicReference_key",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_publicReference_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_publicReference_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_publicReference_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Invoice_publicReference_key\" ON \"public\".\"Invoice\" (\"publicReference\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_publicReference_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_publicReference_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_quoteId_idx",
+    "label": "Create index \"Invoice_quoteId_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_quoteId_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_quoteId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_quoteId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_quoteId_idx\"",
+        "sql": "CREATE INDEX \"Invoice_quoteId_idx\" ON \"public\".\"Invoice\" (\"quoteId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_quoteId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_quoteId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Invoice.Invoice_status_idx",
+    "label": "Create index \"Invoice_status_idx\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Invoice_status_idx",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Invoice_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Invoice_status_idx\"",
+        "sql": "CREATE INDEX \"Invoice_status_idx\" ON \"public\".\"Invoice\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Invoice_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Invoice_status_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.InvoiceLineItem.InvoiceLineItem_invoiceId_idx",
+    "label": "Create index \"InvoiceLineItem_invoiceId_idx\" on \"InvoiceLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "InvoiceLineItem_invoiceId_idx",
+        "table": "InvoiceLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"InvoiceLineItem_invoiceId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InvoiceLineItem_invoiceId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"InvoiceLineItem_invoiceId_idx\"",
+        "sql": "CREATE INDEX \"InvoiceLineItem_invoiceId_idx\" ON \"public\".\"InvoiceLineItem\" (\"invoiceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"InvoiceLineItem_invoiceId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InvoiceLineItem_invoiceId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_assignedToId_idx",
+    "label": "Create index \"Opportunity_assignedToId_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_assignedToId_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_assignedToId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_assignedToId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_assignedToId_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_assignedToId_idx\" ON \"public\".\"Opportunity\" (\"assignedToId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_assignedToId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_assignedToId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_bookingId_idx",
+    "label": "Create index \"Opportunity_bookingId_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_bookingId_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_bookingId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_bookingId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_bookingId_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_bookingId_idx\" ON \"public\".\"Opportunity\" (\"bookingId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_bookingId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_bookingId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_clientId_idx",
+    "label": "Create index \"Opportunity_clientId_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_clientId_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_clientId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_clientId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_clientId_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_clientId_idx\" ON \"public\".\"Opportunity\" (\"clientId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_clientId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_clientId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_createdAt_idx",
+    "label": "Create index \"Opportunity_createdAt_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_createdAt_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_createdAt_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_createdAt_idx\" ON \"public\".\"Opportunity\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_leadId_idx",
+    "label": "Create index \"Opportunity_leadId_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_leadId_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_leadId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_leadId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_leadId_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_leadId_idx\" ON \"public\".\"Opportunity\" (\"leadId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_leadId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_leadId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_publicReference_key",
+    "label": "Create index \"Opportunity_publicReference_key\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_publicReference_key",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_publicReference_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_publicReference_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_publicReference_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Opportunity_publicReference_key\" ON \"public\".\"Opportunity\" (\"publicReference\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_publicReference_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_publicReference_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Opportunity.Opportunity_stage_idx",
+    "label": "Create index \"Opportunity_stage_idx\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Opportunity_stage_idx",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Opportunity_stage_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_stage_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Opportunity_stage_idx\"",
+        "sql": "CREATE INDEX \"Opportunity_stage_idx\" ON \"public\".\"Opportunity\" (\"stage\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Opportunity_stage_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Opportunity_stage_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_bookingId_idx",
+    "label": "Create index \"Quote_bookingId_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_bookingId_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_bookingId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_bookingId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_bookingId_idx\"",
+        "sql": "CREATE INDEX \"Quote_bookingId_idx\" ON \"public\".\"Quote\" (\"bookingId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_bookingId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_bookingId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_clientId_idx",
+    "label": "Create index \"Quote_clientId_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_clientId_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_clientId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_clientId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_clientId_idx\"",
+        "sql": "CREATE INDEX \"Quote_clientId_idx\" ON \"public\".\"Quote\" (\"clientId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_clientId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_clientId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_createdAt_idx",
+    "label": "Create index \"Quote_createdAt_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_createdAt_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_createdAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_createdAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_createdAt_idx\"",
+        "sql": "CREATE INDEX \"Quote_createdAt_idx\" ON \"public\".\"Quote\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_createdAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_createdAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_createdById_idx",
+    "label": "Create index \"Quote_createdById_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_createdById_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_createdById_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_createdById_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_createdById_idx\"",
+        "sql": "CREATE INDEX \"Quote_createdById_idx\" ON \"public\".\"Quote\" (\"createdById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_createdById_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_createdById_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_number_key",
+    "label": "Create index \"Quote_number_key\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_number_key",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_number_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_number_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_number_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Quote_number_key\" ON \"public\".\"Quote\" (\"number\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_number_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_number_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_opportunityId_idx",
+    "label": "Create index \"Quote_opportunityId_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_opportunityId_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_opportunityId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_opportunityId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_opportunityId_idx\"",
+        "sql": "CREATE INDEX \"Quote_opportunityId_idx\" ON \"public\".\"Quote\" (\"opportunityId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_opportunityId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_opportunityId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_publicReference_key",
+    "label": "Create index \"Quote_publicReference_key\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_publicReference_key",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_publicReference_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_publicReference_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_publicReference_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Quote_publicReference_key\" ON \"public\".\"Quote\" (\"publicReference\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_publicReference_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_publicReference_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Quote.Quote_status_idx",
+    "label": "Create index \"Quote_status_idx\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Quote_status_idx",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Quote_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Quote_status_idx\"",
+        "sql": "CREATE INDEX \"Quote_status_idx\" ON \"public\".\"Quote\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Quote_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Quote_status_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.QuoteLineItem.QuoteLineItem_productId_idx",
+    "label": "Create index \"QuoteLineItem_productId_idx\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "QuoteLineItem_productId_idx",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"QuoteLineItem_productId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_productId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"QuoteLineItem_productId_idx\"",
+        "sql": "CREATE INDEX \"QuoteLineItem_productId_idx\" ON \"public\".\"QuoteLineItem\" (\"productId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"QuoteLineItem_productId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_productId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.QuoteLineItem.QuoteLineItem_quoteId_idx",
+    "label": "Create index \"QuoteLineItem_quoteId_idx\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "QuoteLineItem_quoteId_idx",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"QuoteLineItem_quoteId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_quoteId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"QuoteLineItem_quoteId_idx\"",
+        "sql": "CREATE INDEX \"QuoteLineItem_quoteId_idx\" ON \"public\".\"QuoteLineItem\" (\"quoteId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"QuoteLineItem_quoteId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_quoteId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.QuoteLineItem.QuoteLineItem_serviceId_idx",
+    "label": "Create index \"QuoteLineItem_serviceId_idx\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "QuoteLineItem_serviceId_idx",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"QuoteLineItem_serviceId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_serviceId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"QuoteLineItem_serviceId_idx\"",
+        "sql": "CREATE INDEX \"QuoteLineItem_serviceId_idx\" ON \"public\".\"QuoteLineItem\" (\"serviceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"QuoteLineItem_serviceId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"QuoteLineItem_serviceId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Invoice.Invoice_quoteId_fkey",
+    "label": "Add foreign key \"Invoice_quoteId_fkey\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Invoice_quoteId_fkey",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Invoice_quoteId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_quoteId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Invoice_quoteId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\"\nADD CONSTRAINT \"Invoice_quoteId_fkey\"\nFOREIGN KEY (\"quoteId\")\nREFERENCES \"public\".\"Quote\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Invoice_quoteId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_quoteId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Invoice.Invoice_bookingId_fkey",
+    "label": "Add foreign key \"Invoice_bookingId_fkey\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Invoice_bookingId_fkey",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Invoice_bookingId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_bookingId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Invoice_bookingId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\"\nADD CONSTRAINT \"Invoice_bookingId_fkey\"\nFOREIGN KEY (\"bookingId\")\nREFERENCES \"public\".\"Booking\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Invoice_bookingId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_bookingId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Invoice.Invoice_clientProjectId_fkey",
+    "label": "Add foreign key \"Invoice_clientProjectId_fkey\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Invoice_clientProjectId_fkey",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Invoice_clientProjectId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_clientProjectId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Invoice_clientProjectId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\"\nADD CONSTRAINT \"Invoice_clientProjectId_fkey\"\nFOREIGN KEY (\"clientProjectId\")\nREFERENCES \"public\".\"ClientProject\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Invoice_clientProjectId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_clientProjectId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Invoice.Invoice_clientId_fkey",
+    "label": "Add foreign key \"Invoice_clientId_fkey\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Invoice_clientId_fkey",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Invoice_clientId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_clientId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Invoice_clientId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\"\nADD CONSTRAINT \"Invoice_clientId_fkey\"\nFOREIGN KEY (\"clientId\")\nREFERENCES \"public\".\"Client\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Invoice_clientId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_clientId_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Invoice.Invoice_createdById_fkey",
+    "label": "Add foreign key \"Invoice_createdById_fkey\" on \"Invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Invoice_createdById_fkey",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Invoice_createdById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_createdById_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Invoice_createdById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\"\nADD CONSTRAINT \"Invoice_createdById_fkey\"\nFOREIGN KEY (\"createdById\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Invoice_createdById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Invoice_createdById_fkey",
+          "public",
+          "\"public\".\"Invoice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InvoiceLineItem.InvoiceLineItem_invoiceId_fkey",
+    "label": "Add foreign key \"InvoiceLineItem_invoiceId_fkey\" on \"InvoiceLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InvoiceLineItem_invoiceId_fkey",
+        "table": "InvoiceLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InvoiceLineItem_invoiceId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InvoiceLineItem_invoiceId_fkey",
+          "public",
+          "\"public\".\"InvoiceLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InvoiceLineItem_invoiceId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InvoiceLineItem\"\nADD CONSTRAINT \"InvoiceLineItem_invoiceId_fkey\"\nFOREIGN KEY (\"invoiceId\")\nREFERENCES \"public\".\"Invoice\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InvoiceLineItem_invoiceId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InvoiceLineItem_invoiceId_fkey",
+          "public",
+          "\"public\".\"InvoiceLineItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Opportunity.Opportunity_leadId_fkey",
+    "label": "Add foreign key \"Opportunity_leadId_fkey\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Opportunity_leadId_fkey",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Opportunity_leadId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_leadId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Opportunity_leadId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Opportunity\"\nADD CONSTRAINT \"Opportunity_leadId_fkey\"\nFOREIGN KEY (\"leadId\")\nREFERENCES \"public\".\"Lead\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Opportunity_leadId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_leadId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Opportunity.Opportunity_clientId_fkey",
+    "label": "Add foreign key \"Opportunity_clientId_fkey\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Opportunity_clientId_fkey",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Opportunity_clientId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_clientId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Opportunity_clientId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Opportunity\"\nADD CONSTRAINT \"Opportunity_clientId_fkey\"\nFOREIGN KEY (\"clientId\")\nREFERENCES \"public\".\"Client\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Opportunity_clientId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_clientId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Opportunity.Opportunity_bookingId_fkey",
+    "label": "Add foreign key \"Opportunity_bookingId_fkey\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Opportunity_bookingId_fkey",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Opportunity_bookingId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_bookingId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Opportunity_bookingId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Opportunity\"\nADD CONSTRAINT \"Opportunity_bookingId_fkey\"\nFOREIGN KEY (\"bookingId\")\nREFERENCES \"public\".\"Booking\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Opportunity_bookingId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_bookingId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Opportunity.Opportunity_assignedToId_fkey",
+    "label": "Add foreign key \"Opportunity_assignedToId_fkey\" on \"Opportunity\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Opportunity_assignedToId_fkey",
+        "table": "Opportunity"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Opportunity_assignedToId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_assignedToId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Opportunity_assignedToId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Opportunity\"\nADD CONSTRAINT \"Opportunity_assignedToId_fkey\"\nFOREIGN KEY (\"assignedToId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Opportunity_assignedToId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Opportunity_assignedToId_fkey",
+          "public",
+          "\"public\".\"Opportunity\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Quote.Quote_opportunityId_fkey",
+    "label": "Add foreign key \"Quote_opportunityId_fkey\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Quote_opportunityId_fkey",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Quote_opportunityId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_opportunityId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Quote_opportunityId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\"\nADD CONSTRAINT \"Quote_opportunityId_fkey\"\nFOREIGN KEY (\"opportunityId\")\nREFERENCES \"public\".\"Opportunity\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Quote_opportunityId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_opportunityId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Quote.Quote_bookingId_fkey",
+    "label": "Add foreign key \"Quote_bookingId_fkey\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Quote_bookingId_fkey",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Quote_bookingId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_bookingId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Quote_bookingId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\"\nADD CONSTRAINT \"Quote_bookingId_fkey\"\nFOREIGN KEY (\"bookingId\")\nREFERENCES \"public\".\"Booking\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Quote_bookingId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_bookingId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Quote.Quote_clientId_fkey",
+    "label": "Add foreign key \"Quote_clientId_fkey\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Quote_clientId_fkey",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Quote_clientId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_clientId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Quote_clientId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\"\nADD CONSTRAINT \"Quote_clientId_fkey\"\nFOREIGN KEY (\"clientId\")\nREFERENCES \"public\".\"Client\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Quote_clientId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_clientId_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Quote.Quote_createdById_fkey",
+    "label": "Add foreign key \"Quote_createdById_fkey\" on \"Quote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Quote_createdById_fkey",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Quote_createdById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_createdById_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Quote_createdById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\"\nADD CONSTRAINT \"Quote_createdById_fkey\"\nFOREIGN KEY (\"createdById\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Quote_createdById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Quote_createdById_fkey",
+          "public",
+          "\"public\".\"Quote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.QuoteLineItem.QuoteLineItem_quoteId_fkey",
+    "label": "Add foreign key \"QuoteLineItem_quoteId_fkey\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "QuoteLineItem_quoteId_fkey",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"QuoteLineItem_quoteId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_quoteId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"QuoteLineItem_quoteId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"QuoteLineItem\"\nADD CONSTRAINT \"QuoteLineItem_quoteId_fkey\"\nFOREIGN KEY (\"quoteId\")\nREFERENCES \"public\".\"Quote\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"QuoteLineItem_quoteId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_quoteId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.QuoteLineItem.QuoteLineItem_serviceId_fkey",
+    "label": "Add foreign key \"QuoteLineItem_serviceId_fkey\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "QuoteLineItem_serviceId_fkey",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"QuoteLineItem_serviceId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_serviceId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"QuoteLineItem_serviceId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"QuoteLineItem\"\nADD CONSTRAINT \"QuoteLineItem_serviceId_fkey\"\nFOREIGN KEY (\"serviceId\")\nREFERENCES \"public\".\"Service\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"QuoteLineItem_serviceId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_serviceId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.QuoteLineItem.QuoteLineItem_productId_fkey",
+    "label": "Add foreign key \"QuoteLineItem_productId_fkey\" on \"QuoteLineItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "QuoteLineItem_productId_fkey",
+        "table": "QuoteLineItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"QuoteLineItem_productId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_productId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"QuoteLineItem_productId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"QuoteLineItem\"\nADD CONSTRAINT \"QuoteLineItem_productId_fkey\"\nFOREIGN KEY (\"productId\")\nREFERENCES \"public\".\"Product\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"QuoteLineItem_productId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "QuoteLineItem_productId_fkey",
+          "public",
+          "\"public\".\"QuoteLineItem\""
+        ]
+      }
+    ]
+  }
+]

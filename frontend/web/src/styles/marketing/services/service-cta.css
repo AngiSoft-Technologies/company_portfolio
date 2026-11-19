@@ -13,8 +13,8 @@
 .service-models__item {
     padding: 1.4rem;
     border-radius: 1.1rem;
-    border: 1px solid rgba(0, 175, 255, 0.14);
-    background: rgba(11, 30, 61, 0.5);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
 }
 
 .service-models__icon {
@@ -23,25 +23,25 @@
     display: grid;
     place-items: center;
     border-radius: 0.7rem;
-    background: rgba(39, 217, 75, 0.14);
-    color: #27D94B;
+    background: color-mix(in srgb, var(--color-accent-2) 14%, transparent);
+    color: var(--color-accent-2);
     font-size: 1.15rem;
     margin-bottom: 0.7rem;
 }
 
-.service-models__title { margin: 0 0 0.4rem; font-size: 1.05rem; color: #F5F7FA; }
-.service-models__text { margin: 0; font-size: 0.85rem; line-height: 1.5; color: #94A3B8; }
+.service-models__title { margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--text-primary); }
+.service-models__text { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-muted); }
 
 /* ---------- Combination CTA ---------- */
 .service-combination {
     margin-top: 4rem;
     padding: 2rem;
     border-radius: 1.25rem;
-    border: 1px dashed rgba(0, 175, 255, 0.4);
-    background: rgba(11, 30, 61, 0.45);
+    border: 1px dashed var(--border);
+    background: var(--card-bg);
 }
 
-.service-combination__text { margin: 0.5rem 0 1rem; color: #CBD5E1; max-width: 620px; }
+.service-combination__text { margin: 0.5rem 0 1rem; color: var(--text-secondary); max-width: 620px; }
 
 .service-combination__list {
     list-style: none;
@@ -55,10 +55,10 @@
 .service-combination__item {
     padding: 0.5rem 0.9rem;
     border-radius: 999px;
-    border: 1px solid rgba(0, 175, 255, 0.25);
-    background: rgba(7, 20, 43, 0.6);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
     font-size: 0.85rem;
-    color: #CBD5E1;
+    color: var(--text-secondary);
 }
 
 .service-combination__cta {
@@ -69,8 +69,8 @@
     border-radius: 999px;
     font-weight: 700;
     text-decoration: none;
-    color: #07142B;
-    background: linear-gradient(120deg, #18D8FF, #27D94B);
+    color: var(--color-white);
+    background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2));
 }
 .service-combination__cta svg { transition: transform 0.2s ease; }
 .service-combination__cta:hover svg { transform: translateX(3px); }
@@ -91,28 +91,28 @@
     gap: 0.35rem;
     padding: 1.3rem 1.4rem;
     border-radius: 1.1rem;
-    border: 1px solid rgba(0, 175, 255, 0.16);
-    background: rgba(11, 30, 61, 0.5);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
     text-decoration: none;
     transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .services-quicklinks__card:hover {
-    border-color: rgba(0, 175, 255, 0.45);
+    border-color: var(--border);
     transform: translateY(-3px);
 }
 
 .services-quicklinks__label {
     font-size: 1.02rem;
     font-weight: 700;
-    color: #F5F7FA;
+    color: var(--text-primary);
 }
 
-.services-quicklinks__text { font-size: 0.84rem; color: #94A3B8; line-height: 1.45; }
+.services-quicklinks__text { font-size: 0.84rem; color: var(--text-muted); line-height: 1.45; }
 
 .services-quicklinks__arrow {
     margin-top: 0.3rem;
-    color: #18D8FF;
+    color: var(--color-accent);
     transition: transform 0.2s ease;
 }
 .services-quicklinks__card:hover .services-quicklinks__arrow { transform: translateX(3px); }
@@ -123,23 +123,22 @@
     text-align: center;
     padding: 2.5rem 1.5rem;
     border-radius: 1.5rem;
-    border: 1px solid rgba(0, 175, 255, 0.25);
-    background:
-        radial-gradient(700px 360px at 50% -10%, rgba(0, 175, 255, 0.18), transparent 60%),
-        linear-gradient(160deg, rgba(13, 34, 67, 0.96), rgba(7, 20, 43, 0.96));
+    border: 1px solid var(--border);
+    background: radial-gradient(700px 360px at 50% -10%, color-mix(in srgb, var(--color-secondary) 18%, transparent), transparent 60%),
+        linear-gradient(160deg, var(--card-bg), color-mix(in srgb, var(--surface) 96%, transparent));
 }
 
 .services-final-cta__title {
     margin: 0 0 0.6rem;
     font-family: 'Sora', system-ui, sans-serif;
     font-size: clamp(1.4rem, 3.5vw, 2.1rem);
-    color: #F5F7FA;
+    color: var(--text-primary);
 }
 
 .services-final-cta__text {
     max-width: 560px;
     margin: 0 auto 1.4rem;
-    color: #CBD5E1;
+    color: var(--text-secondary);
     line-height: 1.55;
 }
 
@@ -164,30 +163,54 @@
 }
 
 .services-final-cta__btn--primary {
-    background: linear-gradient(120deg, #0875FF, #00AFFF);
-    color: #fff;
-    box-shadow: 0 10px 26px rgba(0, 175, 255, 0.3);
+    background: linear-gradient(120deg, var(--color-primary), var(--color-secondary));
+    color: var(--color-white);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--color-secondary) 30%, transparent);
 }
-.services-final-cta__btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0, 175, 255, 0.42); }
+.services-final-cta__btn--primary:hover { transform: translateY(-2px); box-shadow: 0 14px 34px color-mix(in srgb, var(--color-secondary) 42%, transparent); }
 
 .services-final-cta__btn--ghost {
-    border: 1px solid rgba(0, 175, 255, 0.45);
-    color: #F5F7FA;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
 }
-.services-final-cta__btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+.services-final-cta__btn--ghost:hover { background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
 
 .services-final-cta__link {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    color: #94A3B8;
+    color: var(--text-muted);
     font-size: 0.9rem;
     text-decoration: none;
 }
-.services-final-cta__link:hover { color: #18D8FF; }
+.services-final-cta__link:hover { color: var(--color-accent); }
 
 @media (max-width: 639px) {
     .services-final-cta__actions { flex-direction: column; align-items: stretch; }
     .services-final-cta__btn { justify-content: center; }
     .services-final-cta__link { justify-content: center; }
 }
+
+/* ---------- Light theme ---------- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useTheme } from '@/lib/theme';
 import { useSolutions } from '@/hooks/marketing/useSolutions';
 import SolutionsGrid from '@/features/marketing/components/solutions/SolutionsGrid';
 import SolutionsSkeleton from './SolutionsSkeleton';
@@ -8,9 +9,10 @@ import '@/styles/marketing/solutions/solutions.css';
 
 export default function SolutionsList() {
     const { solutions, loading, error, refetch } = useSolutions();
+    const { mode } = useTheme();
 
     return (
-        <main className="solutions-page">
+        <main className={`solutions-page${mode === 'light' ? ' is-light' : ''}`}>
             <section className="solutions-hero">
                 <div className="solutions-container">
                     <div className="solutions-hero__inner">

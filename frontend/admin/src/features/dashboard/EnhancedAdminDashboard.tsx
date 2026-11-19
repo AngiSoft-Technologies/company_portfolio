@@ -99,7 +99,7 @@ export function EnhancedAdminDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((k) => (
           <Card key={k.key}>
-            <div className="text-sm text-slate-500">{k.label}</div>
+            <div className="text-sm text-[var(--text-muted)]">{k.label}</div>
             <div className="mt-2 text-3xl font-semibold tracking-tight">{k.value}</div>
           </Card>
         ))}
@@ -111,11 +111,11 @@ export function EnhancedAdminDashboard() {
           {bookings.length === 0 ? (
             <EmptyState title="No recent bookings" />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--border-light)]">
               {bookings.map((b) => (
                 <li key={b.id} className="flex items-center justify-between py-2.5">
                   <span className="font-medium">{b.title}</span>
-                  <span className="text-sm text-slate-500">{b.subtitle}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{b.subtitle}</span>
                 </li>
               ))}
             </ul>
@@ -126,11 +126,11 @@ export function EnhancedAdminDashboard() {
           {leads.length === 0 ? (
             <EmptyState title="No recent leads" />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--border-light)]">
               {leads.map((l) => (
                 <li key={l.id} className="flex items-center justify-between py-2.5">
                   <span className="font-medium">{l.title}</span>
-                  <span className="text-sm text-slate-500">{l.subtitle}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{l.subtitle}</span>
                 </li>
               ))}
             </ul>

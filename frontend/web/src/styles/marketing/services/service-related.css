@@ -20,7 +20,7 @@
 .service-related__card:hover {
     border-color: var(--sd-border-strong);
     transform: translateY(-3px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--color-abyss) 28%, transparent);
 }
 .service-related__link {
     display: flex;

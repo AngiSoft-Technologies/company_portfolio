@@ -125,7 +125,7 @@ export function BookingsManagement() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No bookings" />
         </div>
       ) : (
@@ -158,7 +158,7 @@ export function BookingsManagement() {
                 <button
                   onClick={() => void advance(r)}
                   disabled={busyRef === refOf(r)}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                  className="rounded border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
                 >
                   {busyRef === refOf(r) ? 'Updating…' : 'Advance →'}
                 </button>
@@ -171,13 +171,13 @@ export function BookingsManagement() {
       {detail || detailLoading ? (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40" onClick={closeDetail}>
           <aside
-            className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl"
+            className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-[var(--surface)] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
               <div>
                 <div className="text-base font-semibold">Booking detail</div>
-                <div className="text-sm text-slate-500">{refOf(detail ?? {})}</div>
+                <div className="text-sm text-[var(--text-muted)]">{refOf(detail ?? {})}</div>
               </div>
               <Button variant="ghost" onClick={closeDetail}>
                 Close
@@ -192,7 +192,7 @@ export function BookingsManagement() {
                 </div>
               ) : null}
               {detail ? (
-                <dl className="divide-y divide-slate-100">
+                <dl className="divide-y divide-[var(--border-light)]">
                   {(
                     [
                       ['Reference', refOf(detail)],
@@ -206,7 +206,7 @@ export function BookingsManagement() {
                     ] as [string, string][]
                   ).map(([label, value]) => (
                     <div key={label} className="flex items-start justify-between gap-4 py-3">
-                      <dt className="text-sm text-slate-500">{label}</dt>
+                      <dt className="text-sm text-[var(--text-muted)]">{label}</dt>
                       <dd className="text-right text-sm font-medium">{value}</dd>
                     </div>
                   ))}
@@ -214,9 +214,9 @@ export function BookingsManagement() {
               ) : null}
               {detail ? (
                 <div className="mt-6">
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Update status</label>
+                  <label className="mb-1 block text-sm font-medium text-[var(--text-secondary)]">Update status</label>
                   <select
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0875FF]"
+                    className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
                     value={String(detail.status ?? '')}
                     disabled={busyRef === refOf(detail)}
                     onChange={(e) => {

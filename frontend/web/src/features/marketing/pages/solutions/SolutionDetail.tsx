@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useParams } from 'react-router-dom';
+import { useTheme } from '@/lib/theme';
 import { useSolutionDetail } from '@/hooks/marketing/useSolutionDetail';
 import { useSolutions } from '@/hooks/marketing/useSolutions';
 
@@ -17,13 +18,14 @@ export default function SolutionDetail() {
     const { slug } = useParams();
     const { solution, loading, error, notFound, refetch } = useSolutionDetail(slug);
     const { solutions } = useSolutions();
+    const { mode } = useTheme();
 
     if (loading) return <SolutionDetailSkeleton />;
     if (notFound) return <SolutionDetailNotFound />;
     if (error && !solution) return <SolutionDetailError error={error} onRetry={refetch} />;
 
     return (
-        <main className="solutions-page">
+        <main className={`solutions-page${mode === 'light' ? ' is-light' : ''}`}>
             <SolutionDetailHero solution={solution} />
             <div className="solutions-container solutions-detail__flow">
                 <SolutionFeatures solution={solution} />

@@ -5,8 +5,7 @@
     gap: 1rem;
     border: 1px solid var(--pricing-border);
     border-radius: var(--pricing-radius);
-    background:
-        radial-gradient(520px 280px at 88% -10%, rgba(0, 175, 255, 0.1), transparent 60%),
+    background: radial-gradient(520px 280px at 88% -10%, color-mix(in srgb, var(--color-secondary) 10%, transparent), transparent 60%),
         var(--pricing-surface);
     padding: clamp(1.4rem, 3vw, 2.2rem);
 }

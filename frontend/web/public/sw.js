@@ -1,4 +1,4 @@
-const CACHE = 'angisoft-v1';
+const CACHE = 'angisoft-v2';
 const APP_SHELL = ['/', '/index.html', '/favicon.ico', '/site.webmanifest'];
 
 self.addEventListener('install', (event) => {

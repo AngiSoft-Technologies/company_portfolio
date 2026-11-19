@@ -3,23 +3,25 @@
    ========================================================================= */
 
 .solutions-page {
-    --sol-bg: #07142B;
-    --sol-surface: rgba(11, 30, 61, 0.55);
-    --sol-surface-2: rgba(7, 20, 43, 0.7);
-    --sol-border: rgba(0, 175, 255, 0.16);
-    --sol-border-strong: rgba(0, 175, 255, 0.4);
-    --sol-text: #F5F7FA;
-    --sol-muted: #94A3B8;
-    --sol-accent: #00AFFF;
-    --sol-accent-2: #27D94B;
+    --sol-bg: var(--bg-primary);
+    --sol-surface: var(--card-bg);
+    --sol-surface-2: color-mix(in srgb, var(--surface) 70%, transparent);
+    --sol-border: var(--border);
+    --sol-border-strong: var(--border);
+    --sol-text: var(--text-primary);
+    --sol-muted: var(--text-muted);
+    --sol-accent: var(--color-secondary);
+    --sol-accent-2: var(--color-accent-2);
     --sol-radius: 1.1rem;
 
     position: relative;
     min-height: 100vh;
     padding-bottom: 5rem;
     color: var(--sol-text);
-    background: linear-gradient(180deg, #08152E 0%, #07142B 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
 }
+
+
 
 .solutions-container {
     width: min(1240px, 100%);
@@ -40,9 +42,8 @@
 .solutions-hero {
     position: relative;
     padding: clamp(4rem, 9vw, 7rem) 0 clamp(2.5rem, 5vw, 4rem);
-    background:
-        radial-gradient(900px 420px at 85% -5%, rgba(0, 175, 255, 0.12), transparent 60%),
-        radial-gradient(700px 380px at 5% 8%, rgba(39, 217, 75, 0.08), transparent 55%);
+    background: radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--color-secondary) 12%, transparent), transparent 60%),
+        radial-gradient(700px 380px at 5% 8%, color-mix(in srgb, var(--color-accent-2) 8%, transparent), transparent 55%);
 }
 .solutions-hero__inner { max-width: 760px; }
 .solutions-hero__badge {
@@ -95,7 +96,7 @@
 .solution-card:hover {
     transform: translateY(-4px);
     border-color: var(--sol-border-strong);
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+    box-shadow: 0 18px 42px color-mix(in srgb, var(--color-abyss) 34%, transparent);
 }
 .solution-card__media {
     position: relative;
@@ -109,9 +110,9 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(7, 20, 43, 0.2), rgba(7, 20, 43, 0.75));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 20%, transparent), color-mix(in srgb, var(--surface) 75%, transparent));
 }
-.solution-card__icon { font-size: 2.6rem; color: #fff; position: relative; z-index: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+.solution-card__icon { font-size: 2.6rem; color: var(--text-primary); position: relative; z-index: 1; filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--color-abyss) 40%, transparent)); }
 .solution-card__body { padding: 1.1rem 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .solution-card__title { margin: 0; font-size: 1.1rem; color: var(--sol-text); }
 .solution-card__desc {
@@ -151,7 +152,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(7, 20, 43, 0.55), rgba(7, 20, 43, 0.92));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 55%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
 }
 .solution-detail-hero .solutions-container { position: relative; z-index: 1; }
 .solution-detail-hero__inner { max-width: 760px; padding-top: clamp(2rem, 5vw, 3.5rem); }
@@ -241,8 +242,7 @@
     text-align: center;
     border-radius: 1.5rem;
     border: 1px solid var(--sol-border-strong);
-    background:
-        radial-gradient(600px 300px at 50% -20%, rgba(0, 175, 255, 0.16), transparent 60%),
+    background: radial-gradient(600px 300px at 50% -20%, color-mix(in srgb, var(--color-secondary) 16%, transparent), transparent 60%),
         var(--sol-surface);
 }
 .solution-cta__title { margin: 0 0 0.6rem; font-family: 'Sora', system-ui, sans-serif; font-size: clamp(1.4rem, 3.5vw, 2.1rem); color: var(--sol-text); }
@@ -254,14 +254,14 @@
     position: relative;
     overflow: hidden;
     border-radius: 0.8rem;
-    background: rgba(148, 163, 184, 0.16);
+    background: var(--border);
 }
 .skeleton::after {
     content: '';
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
     animation: sol-shimmer 1.4s infinite;
 }
 @keyframes sol-shimmer { 100% { transform: translateX(100%); } }
@@ -271,7 +271,7 @@
 .skeleton--actions { width: 14rem; height: 2.6rem; margin-top: 1.2rem; }
 .skeleton--heading { width: 36%; height: 1.8rem; margin-bottom: 1.2rem; }
 .skeleton--feature { height: 4.6rem; }
-.skeleton--image { height: 150px; border-radius: var(--sol-radius) var(--sol-radius) 0 0; }
+.skeleton--image { height: 150px; border-radius: var(--sol-radius) 0 0; }
 .solution-card--skeleton { border: 1px solid var(--sol-border); background: var(--sol-surface); }
 
 /* ---------- State pages ---------- */
@@ -310,9 +310,9 @@
     border: 1px solid transparent;
     min-height: 44px;
 }
-.btn--primary { color: #07142B; background: linear-gradient(120deg, #18D8FF, #27D94B); }
+.btn--primary { color: var(--color-white); background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2)); }
 .btn--ghost { color: var(--sol-text); border-color: var(--sol-border-strong); background: transparent; }
-.btn--ghost:hover { background: rgba(0, 175, 255, 0.12); }
+.btn--ghost:hover { background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1023px) {

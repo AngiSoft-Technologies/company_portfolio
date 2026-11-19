@@ -4,8 +4,12 @@ import { useTheme as useAngisoftTheme, type ThemeMode, type ThemeSurfaceColors }
 export interface ThemeContextValue {
   mode: ThemeMode;
   isDark: boolean;
+  theme: string;
+  themeLabel: string;
+  availableThemes: { name: string; label: string }[];
   toggleMode: () => void;
   setMode: (mode: ThemeMode) => void;
+  setTheme: (name: string) => void;
   colors: ThemeSurfaceColors & Record<string, string>;
 }
 
@@ -35,8 +39,12 @@ const brandColors = {
 const ThemeContext = createContext<ThemeContextValue>({
   mode: 'dark',
   isDark: true,
+  theme: 'angisoft',
+  themeLabel: 'AngiSoft Blue',
+  availableThemes: [],
   toggleMode: () => {},
   setMode: () => {},
+  setTheme: () => {},
   colors: brandColors as unknown as ThemeContextValue['colors'],
 });
 
@@ -45,8 +53,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ThemeContextValue>(() => ({
     mode: theme.mode,
     isDark: theme.isDark,
+    theme: theme.theme,
+    themeLabel: theme.themeLabel,
+    availableThemes: theme.availableThemes,
     toggleMode: theme.toggleMode,
     setMode: theme.setMode,
+    setTheme: theme.setTheme,
     colors: {
       ...brandColors,
       ...theme.surfaces,
@@ -60,7 +72,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       border: theme.surfaces.border,
       cardBg: theme.surfaces.cardBg,
     },
-  }), [theme.mode, theme.isDark, theme.toggleMode, theme.setMode, theme.surfaces]);
+  }), [theme.mode, theme.isDark, theme.theme, theme.themeLabel, theme.availableThemes, theme.toggleMode, theme.setMode, theme.setTheme, theme.surfaces]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

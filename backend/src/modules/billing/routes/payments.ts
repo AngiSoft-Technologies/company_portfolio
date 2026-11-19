@@ -6,6 +6,7 @@ import { applyPaymentOutcome, initializePayment, isProviderConfigured, generateR
 import * as paystack from '../services/payments/paystackService';
 import * as mpesa from '../services/payments/mpesaService';
 import * as payhero from '../services/payments/payheroService';
+import { toMoney, toMoneyFromMinorUnits } from '../utils/money';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 
 /**
@@ -70,7 +71,7 @@ export default function paymentsRouter(prisma: Db) {
                     updatedAt: ts(),
                                 provider: 'STRIPE' as any,
                                 providerId: pi.id,
-                                amount: (pi.amount_received || pi.amount || 0) / 100,
+                                amount: toMoneyFromMinorUnits(pi.amount_received || pi.amount || 0),
                                 currency: String(pi.currency || 'KES').toUpperCase(),
                                 status: succeeded ? 'SUCCEEDED' as any : 'FAILED' as any,
                                 metadata,
@@ -161,7 +162,7 @@ export default function paymentsRouter(prisma: Db) {
                     updatedAt: ts(),
                 bookingId: bookingId || null,
                 clientId: null,
-                amount: Number(amount),
+                amount: toMoney(amount),
                 currency,
                 provider: 'STRIPE' as any,
                 providerId: pi.id,
@@ -251,7 +252,7 @@ export default function paymentsRouter(prisma: Db) {
                     updatedAt: ts(),
                         bookingId: bookingId || null,
                         clientId: clientId || null,
-                        amount: Number(amount),
+                        amount: toMoney(amount),
                         currency,
                         provider: result.provider as any,
                         providerId: result.providerId,
@@ -319,7 +320,7 @@ export default function paymentsRouter(prisma: Db) {
                     provider: 'PAYSTACK',
                     providerId: String(txn.reference || ''),
                     reference: String(txn.reference || ''),
-                    amount: Number(txn.amount || 0) / 100,
+                    amount: toMoneyFromMinorUnits(txn.amount || 0),
                     currency: String(txn.currency || 'KES').toUpperCase(),
                     status: 'SUCCEEDED',
                     metadata: txn

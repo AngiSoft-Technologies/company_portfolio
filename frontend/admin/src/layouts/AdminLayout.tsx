@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AdminThemeContext } from '@/styles/theme';
 import { apiFetch } from '@/lib/adminApi';
@@ -25,6 +25,14 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
     links: [
       { to: '/contacts', label: 'Contacts', permission: 'enquiries.view_all' },
       { to: '/chat', label: 'Chat Conversations', permission: 'chatbot.view_all' },
+    ],
+  },
+  {
+    title: 'Sales',
+    links: [
+      { to: '/opportunities', label: 'Opportunities', permission: 'opportunities.view' },
+      { to: '/quotes', label: 'Quotes', permission: 'quotes.view' },
+      { to: '/invoices', label: 'Invoices', permission: 'invoices.view' },
     ],
   },
   {
@@ -71,6 +79,12 @@ function AdminShell() {
   const { mode, toggleMode } = useContext(AdminThemeContext);
   const { can, access } = useEffectiveAccess();
   const location = useLocation();
+  const [navOpen, setNavOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   const groups = NAV_GROUPS.map((group) => ({
     title: group.title,
@@ -87,21 +101,35 @@ function AdminShell() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200 bg-white">
-        <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#00AFFF] to-[#0875FF] text-sm font-bold text-white">
+    <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      {navOpen ? (
+        <div
+          className="fixed inset-0 z-20 bg-slate-900/40 md:hidden"
+          onClick={() => setNavOpen(false)}
+          aria-hidden="true"
+        />
+      ) : null}
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)] transition-transform duration-200 max-md:-translate-x-full ${
+          navOpen ? 'max-md:translate-x-0' : ''
+        }`}
+      >
+        <div className="flex h-16 items-center gap-2 border-b border-[var(--border)] px-5">
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
+            style={{ background: 'var(--gradient-brand-sweep)' }}
+          >
             A
           </span>
           <div>
             <div className="text-sm font-bold leading-tight">AngiSoft Admin</div>
-            <div className="text-[11px] text-slate-400">Control Center</div>
+            <div className="text-[11px] text-[var(--text-muted)]">Control Center</div>
           </div>
         </div>
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
           {groups.map((group) => (
             <div key={group.title}>
-              <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                 {group.title}
               </div>
               <div className="space-y-1">
@@ -113,8 +141,8 @@ function AdminShell() {
                     className={({ isActive }) =>
                       `block rounded-lg px-3 py-1.5 text-sm transition-colors ${
                         isActive
-                          ? 'bg-[#0875FF]/10 font-medium text-[#0875FF]'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          ? 'bg-[var(--color-primary)]/10 font-medium text-[var(--color-primary)]'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
                       }`
                     }
                   >
@@ -125,35 +153,48 @@ function AdminShell() {
             </div>
           ))}
         </nav>
-        <div className="border-t border-slate-200 p-3">
+        <div className="border-t border-[var(--border)] p-3">
           {access ? (
-            <div className="mb-2 px-3 text-[11px] text-slate-400">
+            <div className="mb-2 px-3 text-[11px] text-[var(--text-muted)]">
               {access.systemRole}
               {access.departmentId ? ` · dept` : ''}
             </div>
           ) : null}
           <button
             onClick={logout}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
           >
             Sign out
           </button>
         </div>
       </aside>
 
-      <div className="ml-64 flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
-          <div className="text-sm text-slate-500">
-            {location.pathname === '/' ? 'Dashboard' : location.pathname.replace(/^\//, '')}
+      <div className="ml-0 flex min-h-screen flex-1 flex-col md:ml-64">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setNavOpen((v) => !v)}
+              aria-label={navOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={navOpen}
+              className="rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] md:hidden"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+            <div className="text-sm text-[var(--text-muted)]">
+              {location.pathname === '/' ? 'Dashboard' : location.pathname.replace(/^\//, '')}
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-sm text-slate-500 hover:text-slate-900">
+            <Link to="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               View site ↗
             </Link>
             <button
               onClick={toggleMode}
               aria-label="Toggle theme"
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+              className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
             >
               {mode === 'dark' ? '☀' : '☾'}
             </button>

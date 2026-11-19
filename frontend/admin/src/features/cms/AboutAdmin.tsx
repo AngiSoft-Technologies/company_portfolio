@@ -45,7 +45,7 @@ export function AboutAdmin() {
           onDelete={handleDelete}
           columns={[
             { key: 'title', header: 'Title', render: (r) => <span className="font-medium">{truncate(r.title)}</span> },
-            { key: 'order', header: 'Order', render: (r) => <span className="text-slate-500">{r.order ?? '—'}</span> },
+            { key: 'order', header: 'Order', render: (r) => <span className="text-[var(--text-muted)]">{r.order ?? '—'}</span> },
             { key: 'active', header: 'Status', render: (r) => <StatusBadge on={r.active} /> },
             { key: 'updatedAt', header: 'Updated', render: (r) => formatDate(r.updatedAt ?? r.createdAt) },
           ]}
@@ -117,8 +117,8 @@ function AboutFormModal({ row, onClose, onSaved }: { row: Row; onClose: () => vo
         <Field label="Content">
           <textarea className={inputClass} rows={8} value={String(form.content ?? '')} onChange={set('content')} />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={Boolean(form.active)} onChange={setChecked('active')} className="h-4 w-4 rounded border-slate-300" />
+        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <input type="checkbox" checked={Boolean(form.active)} onChange={setChecked('active')} className="h-4 w-4 rounded border-[var(--border)]" />
           Active
         </label>
         <SaveStatus error={error} success={success} />

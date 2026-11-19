@@ -111,7 +111,7 @@ type InternalContext = {
     title: string;
     description: string;
     category: string;
-    priceFrom: number | null;
+    priceFrom: string | number | null;
     scope: string | null;
     targetAudience: string | null;
     categoryName: string | null;

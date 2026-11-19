@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useTheme } from '@/lib/theme';
 import { useIndustries } from '@/hooks/marketing/useIndustries';
 import IndustriesGrid from '../../components/industries/IndustriesGrid';
 import IndustriesSkeleton from '../../components/industries/IndustriesSkeleton';
@@ -8,9 +9,10 @@ import '@/styles/marketing/industries/industries.css';
 
 export default function IndustriesList() {
     const { industries, loading, error, refetch } = useIndustries();
+    const { mode } = useTheme();
 
     return (
-        <main className="industries-page">
+        <main className={`industries-page${mode === 'light' ? ' is-light' : ''}`}>
             <section className="industries-hero">
                 <div className="industries-hero__inner">
                     <span className="industries-hero__badge">Industry Solutions</span>

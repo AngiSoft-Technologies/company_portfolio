@@ -14,10 +14,7 @@ import {
   Swiper,
   SwiperSlide,
 } from 'swiper/react';
-import {
-  FaArrowLeft,
-  FaArrowRight,
-} from 'react-icons/fa';
+import { LuArrowLeft, LuArrowRight } from 'react-icons/lu';;
 
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -140,22 +137,39 @@ const AboutHeroSlider = ({
       <div className="container">
         <div className="about-company-hero-layout">
           <div className="about-company-hero-copy">
+            {content.eyebrow && (
+              <p className="about-company-hero-eyebrow">
+                {content.eyebrow}
+              </p>
+            )}
             <h1
               id="about-company-heading"
               className="about-company-hero-heading"
             >
               {content.headline}
-
-              {content.highlight && (
+              {' '}
+              {(content.highlightedHeadline || content.highlight) && (
                 <span>
-                  {content.highlight}
+                  {content.highlightedHeadline || content.highlight}
                 </span>
               )}
             </h1>
 
+            {(content.subtitle || content.descriptor) && (
+              <p className="about-company-hero-subtitle">
+                {content.subtitle || content.descriptor}
+              </p>
+            )}
+
             {content.paragraph && (
               <p className="about-company-hero-description">
                 {content.paragraph}
+              </p>
+            )}
+
+            {content.philosophy && (
+              <p className="about-company-hero-philosophy">
+                {content.philosophy}
               </p>
             )}
 
@@ -177,7 +191,7 @@ const AboutHeroSlider = ({
                     }
                   </span>
 
-                  <FaArrowRight
+                  <LuArrowRight
                     aria-hidden="true"
                   />
                 </Link>
@@ -304,7 +318,7 @@ const AboutHeroSlider = ({
                       className="about-hero-prev"
                       aria-label="Previous leadership profile"
                     >
-                      <FaArrowLeft />
+                      <LuArrowLeft />
                     </button>
 
                     <div
@@ -323,7 +337,7 @@ const AboutHeroSlider = ({
                       className="about-hero-next"
                       aria-label="Next leadership profile"
                     >
-                      <FaArrowRight />
+                      <LuArrowRight />
                     </button>
                   </>
                 )}

@@ -42,8 +42,8 @@ export function ServiceCategoriesAdmin() {
           onDelete={handleDelete}
           columns={[
             { key: 'name', header: 'Name', render: (r) => <span className="font-medium">{r.name}</span> },
-            { key: 'slug', header: 'Slug', render: (r) => <span className="text-slate-500">{truncate(r.slug, 30)}</span> },
-            { key: 'order', header: 'Order', render: (r) => <span className="text-slate-500">{r.order ?? '—'}</span> },
+            { key: 'slug', header: 'Slug', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.slug, 30)}</span> },
+            { key: 'order', header: 'Order', render: (r) => <span className="text-[var(--text-muted)]">{r.order ?? '—'}</span> },
           ]}
         />
       )}

@@ -72,7 +72,7 @@
   font-family: 'Sora', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -109,7 +109,7 @@
   border: 1px solid var(--solutions-item-border);
   border-radius: 0.75rem;
   backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: 0 16px 40px rgba(6, 19, 36, 0.3);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--color-abyss) 30%, transparent);
   transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 .angi-solutions-item:hover {
@@ -195,23 +195,23 @@
 
 /* Solutions panel media + item glass tokens, per theme. */
 html[data-theme='light'] {
-  --solutions-panel-scrim: linear-gradient(158deg, rgb(7 20 43 / 0.84) 0%, rgb(7 20 43 / 0.6) 56%, rgb(0 60 110 / 0.46) 100%);
+  --solutions-panel-scrim: linear-gradient(158deg, color-mix(in srgb, var(--bg-primary) 1%, transparent) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 56%, rgb(0 60 110 / 0.46) 100%);
   --solutions-panel-brightness: 0.72;
   --solutions-item-surface: transparent;
   --solutions-item-surface-hover: color-mix(in srgb, var(--color-cyan-bright) 14%, transparent);
-  --solutions-item-border: rgb(255 255 255 / 0.6);
-  --solutions-item-border-hover: rgba(8, 117, 255, 0.42);
-  --solutions-item-ink: #F5F7FA;
-  --solutions-item-icon-bg: rgba(8, 117, 255, 0.12);
+  --solutions-item-border: color-mix(in srgb, var(--surface) 1%, transparent);
+  --solutions-item-border-hover: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  --solutions-item-ink: var(--text-primary);
+  --solutions-item-icon-bg: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 html:not([data-theme='light']) {
-  --solutions-panel-scrim: linear-gradient(158deg, rgb(5 15 31 / 0.9) 0%, rgb(7 20 43 / 0.72) 56%, rgb(8 40 70 / 0.58) 100%);
+  --solutions-panel-scrim: linear-gradient(158deg, rgb(5 15 31 / 0.9) 0%, color-mix(in srgb, var(--bg-primary) 1%, transparent) 56%, rgb(8 40 70 / 0.58) 100%);
   --solutions-panel-brightness: 0.5;
   --solutions-item-surface: transparent;
   --solutions-item-surface-hover: color-mix(in srgb, var(--color-cyan-bright) 14%, transparent);
-  --solutions-item-border: rgba(255, 255, 255, 0.12);
-  --solutions-item-border-hover: rgba(8, 117, 255, 0.34);
-  --solutions-item-ink: #F5F7FA;
-  --solutions-item-icon-bg: rgba(8, 117, 255, 0.18);
+  --solutions-item-border: color-mix(in srgb, var(--card-bg) 12%, transparent);
+  --solutions-item-border-hover: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  --solutions-item-ink: var(--text-primary);
+  --solutions-item-icon-bg: color-mix(in srgb, var(--color-primary) 18%, transparent);
 }

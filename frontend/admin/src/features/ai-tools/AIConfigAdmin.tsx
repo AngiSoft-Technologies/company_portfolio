@@ -117,7 +117,7 @@ export function AIConfigAdmin() {
       ) : null}
 
       {!loading && rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <EmptyState title="No AI configurations yet" />
         </div>
       ) : (
@@ -195,12 +195,12 @@ export function AIConfigAdmin() {
                 onChange={(e) => set('systemPrompt', e.target.value)}
               />
             </Field>
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
               <input
                 type="checkbox"
                 checked={form.active}
                 onChange={(e) => set('active', e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300"
+                className="h-4 w-4 rounded border-[var(--border)]"
               />
               Active
             </label>

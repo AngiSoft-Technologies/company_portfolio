@@ -47,9 +47,9 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--faq-primary, #0875FF);
-    background: rgba(8, 117, 255, 0.12);
-    border: 1px solid rgba(8, 117, 255, 0.25);
+    color: var(--faq-primary, var(--color-primary));
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .angi-faq-badge-icon {
@@ -126,10 +126,10 @@
 
 /* 14. Active category state ----------------------------------------------- */
 .angi-faq-category.is-active {
-    color: #fff;
+    color: var(--color-white);
     background: var(--color-primary);
     border-color: transparent;
-    box-shadow: 0 6px 20px rgba(8, 117, 255, 0.3);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 /* 15. FAQ list ------------------------------------------------------------ */
@@ -154,7 +154,7 @@
 
 /* 17. Open item state ----------------------------------------------------- */
 .angi-faq-item.is-open {
-    border-color: rgba(8, 117, 255, 0.45);
+    border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
     background: var(--surface-hover);
 }
 
@@ -181,7 +181,7 @@
     font-size: 1rem;
     font-weight: 800;
     font-family: 'Sora', 'DM Sans', sans-serif;
-    color: var(--faq-primary, #0875FF);
+    color: var(--faq-primary, var(--color-primary));
     letter-spacing: -0.02em;
 }
 
@@ -203,7 +203,7 @@
 
 .angi-faq-item.is-open .angi-faq-chevron {
     transform: rotate(180deg);
-    color: var(--faq-secondary, #00AFFF);
+    color: var(--faq-secondary, var(--color-secondary));
 }
 
 /* 22. Answer-region animation (content-driven grid-rows) ------------------ */
@@ -252,18 +252,18 @@
     font-weight: 600;
     color: var(--text-primary);
     background: var(--surface);
-    border: 1px solid rgba(8, 117, 255, 0.4);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
     cursor: pointer;
     transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .angi-faq-show-more:hover {
-    background: rgba(8, 117, 255, 0.16);
-    border-color: rgba(8, 117, 255, 0.7);
+    background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
 }
 
 .angi-faq-show-more:focus-visible {
-    outline: 2px solid var(--faq-secondary, #00AFFF);
+    outline: 2px solid var(--faq-secondary, var(--color-secondary));
     outline-offset: 2px;
 }
 
@@ -309,7 +309,7 @@
 }
 
 .angi-faq-cta-whatsapp {
-    color: #fff;
+    color: var(--text-primary);
     background: #25D366;
     box-shadow: 0 6px 20px rgba(37, 211, 102, 0.28);
 }
@@ -321,14 +321,14 @@
 
 /* 27. Email button (uses FAQ theme variables) ----------------------------- */
 .angi-faq-cta-email {
-    color: #fff;
+    color: var(--color-white);
     background: var(--color-primary);
-    border: 1px solid rgba(8, 117, 255, 0.25);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .angi-faq-cta-email:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 26px rgba(8, 117, 255, 0.35);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 /* 28. Tablet behavior (768px–1023px): keep categories wrapped + centered,
@@ -430,7 +430,7 @@
 .angi-faq-category:focus-visible,
 .angi-faq-cta-whatsapp:focus-visible,
 .angi-faq-cta-email:focus-visible {
-    outline: 2px solid var(--faq-secondary, #00AFFF);
+    outline: 2px solid var(--faq-secondary, var(--color-secondary));
     outline-offset: 2px;
     border-radius: 0.5rem;
 }

@@ -34,7 +34,7 @@ export function HomeSectionsAdmin() {
           onEdit={setEditing}
           columns={[
             { key: 'title', header: 'Title', render: (r) => <span className="font-medium">{r.title}</span> },
-            { key: 'subtitle', header: 'Subtitle', render: (r) => <span className="text-slate-500">{truncate(r.subtitle, 60)}</span> },
+            { key: 'subtitle', header: 'Subtitle', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.subtitle, 60)}</span> },
             { key: 'updatedAt', header: 'Updated', render: (r) => formatDate(r.updatedAt ?? r.createdAt) },
           ]}
         />

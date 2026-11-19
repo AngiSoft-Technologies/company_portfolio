@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowDown } from 'react-icons/fa';
+import { LuArrowDown } from 'react-icons/lu';;
 
 const normalizeSolution = (
   solution,
@@ -120,7 +120,7 @@ const AboutSolutionTypes = ({
     <section
       ref={sectionRef}
       id="solutions-we-cover"
-      className="about-solutions-we-cover bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-solutions-we-cover bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-labelledby="solutions-we-cover-heading"
     >
       <div className="container">
@@ -133,13 +133,13 @@ const AboutSolutionTypes = ({
         >
           <div className="relative inline-block">
             <span
-              className="absolute -left-4 -top-4 h-14 w-14 bg-[#0A3DFF]/15"
+              className="absolute -left-4 -top-4 h-14 w-14 bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)]"
               aria-hidden="true"
             />
 
             <h2
               id="solutions-we-cover-heading"
-              className="relative text-3xl font-bold tracking-[-0.035em] text-white md:text-4xl"
+              className="relative text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -150,7 +150,7 @@ const AboutSolutionTypes = ({
           </div>
 
           {data.description && (
-            <p className="mt-7 max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+            <p className="mt-7 max-w-3xl text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {data.description}
             </p>
           )}
@@ -180,16 +180,16 @@ const SolutionCard = ({
 }) => {
   const cardContent = (
     <>
-      <span className="relative z-10 block px-3 text-center text-sm font-semibold leading-6 text-white/88">
+      <span className="relative z-10 block px-3 text-center text-sm font-semibold leading-6 text-[var(--text-primary)]/88">
         {solution.title}
       </span>
 
       {solution.to && (
         <span
-          className="absolute bottom-3 right-3 flex h-4 w-4 items-center justify-center text-[#00C2FF]"
+          className="absolute bottom-3 right-3 flex h-4 w-4 items-center justify-center text-[var(--brand-accent-ink)]"
           aria-hidden="true"
         >
-          <FaArrowDown className="-rotate-45 text-[9px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+          <LuArrowDown className="-rotate-45 text-[9px] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
         </span>
       )}
     </>
@@ -197,9 +197,9 @@ const SolutionCard = ({
 
   const className = `
     group relative flex min-h-[100px] items-center justify-center
-    overflow-hidden border border-white/15 bg-white/[0.025]
+    overflow-hidden border border-[var(--border-light)] bg-[var(--surface-hover)]
     px-5 py-5 no-underline transition duration-300
-    hover:border-[#00C2FF]/65 hover:bg-white/[0.045]
+    hover:border-[#00C2FF]/65 hover:bg-[var(--surface-hover)]
     focus-visible:outline-none focus-visible:ring-2
     focus-visible:ring-[#00C2FF]
     ${visible

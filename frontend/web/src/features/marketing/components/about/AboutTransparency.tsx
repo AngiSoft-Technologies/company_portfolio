@@ -6,11 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaExternalLinkAlt,
-  FaPlay,
-} from 'react-icons/fa';
+import { LuArrowRight, LuExternalLink, LuPlay } from 'react-icons/lu';;
 
 
 const normalizeLink = (
@@ -46,6 +42,9 @@ const AboutTransparency = ({
   const sectionRef = useRef(null);
 
   const [visible, setVisible] =
+    useState(false);
+
+  const [coverFailed, setCoverFailed] =
     useState(false);
 
   const [videoPlaying, setVideoPlaying] =
@@ -166,7 +165,7 @@ const AboutTransparency = ({
     <section
       ref={sectionRef}
       id="building-trust-with-transparency"
-      className="about-transparency bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-transparency bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-labelledby="about-transparency-heading"
     >
       <div className="container">
@@ -204,12 +203,13 @@ const AboutTransparency = ({
                     'video'
                   }`}
                 >
-                  {thumbnailUrl && (
+                  {thumbnailUrl && !coverFailed && (
                     <img
                       src={thumbnailUrl}
                       alt=""
                       loading="lazy"
                       className="absolute inset-0 h-full w-full object-cover"
+                      onError={() => setCoverFailed(true)}
                     />
                   )}
 
@@ -232,7 +232,7 @@ const AboutTransparency = ({
 
                     {data.video
                       ?.overlaySubtitle && (
-                      <span className="mt-3 block max-w-sm text-xs font-semibold uppercase tracking-[0.12em] text-white/88 sm:text-sm">
+                      <span className="mt-3 block max-w-sm text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-primary)]/88 sm:text-sm">
                         {
                           data.video
                             .overlaySubtitle
@@ -242,7 +242,7 @@ const AboutTransparency = ({
                   </span>
 
                   <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#FF0000] text-white shadow-xl transition duration-300 group-hover:scale-110 sm:h-16 sm:w-16">
-                    <FaPlay className="ml-1 text-lg" />
+                    <LuPlay className="ml-1 text-lg" />
                   </span>
 
                   <span className="absolute bottom-4 left-5 text-xs font-bold text-white/85">
@@ -257,11 +257,11 @@ const AboutTransparency = ({
                 href={youtubeWatchUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[var(--brand-accent-ink)] no-underline"
               >
                 Watch on YouTube
 
-                <FaExternalLinkAlt className="text-[8px]" />
+                <LuExternalLink className="text-[8px]" />
               </a>
             )}
           </div>
@@ -280,7 +280,7 @@ const AboutTransparency = ({
           >
             <h2
               id="about-transparency-heading"
-              className="text-3xl font-bold leading-tight tracking-[-0.035em] text-white md:text-4xl"
+              className="text-3xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] md:text-4xl"
               style={{
                 fontFamily:
                   'Sora, sans-serif',
@@ -294,7 +294,7 @@ const AboutTransparency = ({
                 (paragraph, index) => (
                   <p
                     key={index}
-                    className="text-sm leading-7 text-white/65 md:text-base"
+                    className="text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty"
                   >
                     {paragraph}
                   </p>
@@ -311,21 +311,21 @@ const AboutTransparency = ({
                       href={link.to}
                       target="_blank"
                       rel="noreferrer"
-                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[var(--brand-accent-ink)] no-underline"
                     >
                       {link.label}
 
-                      <FaExternalLinkAlt className="text-[8px]" />
+                      <LuExternalLink className="text-[8px]" />
                     </a>
                   ) : (
                     <Link
                       key={link.id}
                       to={link.to}
-                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[#00C2FF] no-underline"
+                      className="group inline-flex items-center gap-2 text-xs font-semibold text-[var(--brand-accent-ink)] no-underline"
                     >
                       {link.label}
 
-                      <FaArrowRight className="text-[9px] transition-transform group-hover:translate-x-1" />
+                      <LuArrowRight className="text-[9px] transition-transform group-hover:translate-x-1" />
                     </Link>
                   )
                 )}

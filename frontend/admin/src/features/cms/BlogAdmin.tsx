@@ -47,7 +47,7 @@ export function BlogAdmin() {
           onDelete={handleDelete}
           columns={[
             { key: 'title', header: 'Title', render: (r) => <span className="font-medium">{truncate(r.title)}</span> },
-            { key: 'slug', header: 'Slug', render: (r) => <span className="text-slate-500">{truncate(r.slug, 30)}</span> },
+            { key: 'slug', header: 'Slug', render: (r) => <span className="text-[var(--text-muted)]">{truncate(r.slug, 30)}</span> },
             { key: 'author', header: 'Author' },
             { key: 'publishedAt', header: 'Published', render: (r) => formatDate(r.publishedAt) },
             { key: 'updatedAt', header: 'Updated', render: (r) => formatDate(r.updatedAt ?? r.createdAt) },

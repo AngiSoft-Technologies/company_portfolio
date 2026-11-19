@@ -6,12 +6,8 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaEnvelope,
-  FaPhoneAlt,
-  FaWhatsapp,
-} from 'react-icons/fa';
+import { FaWhatsapp } from 'react-icons/fa';
+import { LuArrowRight, LuMail, LuPhone } from 'react-icons/lu';;
 
 import {
   resolveAssetUrl,
@@ -184,7 +180,7 @@ const AboutFinalCTA = ({
                       }
                     </span>
 
-                    <FaArrowRight
+                    <LuArrowRight
                       aria-hidden="true"
                     />
                   </Link>
@@ -208,7 +204,7 @@ const AboutFinalCTA = ({
                       }
                     </span>
 
-                    <FaArrowRight
+                    <LuArrowRight
                       aria-hidden="true"
                     />
                   </Link>
@@ -222,7 +218,7 @@ const AboutFinalCTA = ({
                   className="about-final-contact-link"
                 >
                   <span className="about-final-contact-icon">
-                    <FaPhoneAlt />
+                    <LuPhone />
                   </span>
 
                   <span>
@@ -239,7 +235,7 @@ const AboutFinalCTA = ({
                   className="about-final-contact-link"
                 >
                   <span className="about-final-contact-icon">
-                    <FaEnvelope />
+                    <LuMail />
                   </span>
 
                   <span>

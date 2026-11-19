@@ -57,7 +57,7 @@
   margin: 1.5rem 0;
   padding: 1rem;
   border-radius: 0.75rem;
-  background: #04101f;
+  background: var(--surface);
   border: 1px solid var(--blog-border);
   overflow-x: auto;
   max-width: 100%;
@@ -66,7 +66,7 @@
 .blog-content pre code {
   background: transparent;
   padding: 0;
-  color: #e6f0ff;
+  color: var(--text-primary);
   font-size: 0.88rem;
   line-height: 1.6;
 }

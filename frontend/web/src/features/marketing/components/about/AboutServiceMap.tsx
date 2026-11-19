@@ -6,37 +6,24 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowDown,
-  FaChartBar,
-  FaCode,
-  FaDatabase,
-  FaFileAlt,
-  FaGlobe,
-  FaLaptopCode,
-  FaMobileAlt,
-  FaPalette,
-  FaTools,
-  FaUpload,
-  FaWindows,
-  FaBoxOpen,
-} from 'react-icons/fa';
+import { FaWindows } from 'react-icons/fa';
+import { LuArrowDown, LuChartColumn, LuCode, LuDatabase, LuFileText, LuGlobe, LuLaptop, LuSmartphone, LuPalette, LuWrench, LuUpload, LuPackage } from 'react-icons/lu';;
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 
 
 const ICONS = {
-  applications: FaGlobe,
-  data: FaChartBar,
-  database: FaDatabase,
-  debugging: FaCode,
-  documents: FaFileAlt,
-  graphics: FaPalette,
+  applications: LuGlobe,
+  data: LuChartColumn,
+  database: LuDatabase,
+  debugging: LuCode,
+  documents: LuFileText,
+  graphics: LuPalette,
   installation: FaWindows,
-  mobile: FaMobileAlt,
-  products: FaBoxOpen,
-  systems: FaTools,
-  upgrades: FaUpload,
-  web: FaLaptopCode,
+  mobile: LuSmartphone,
+  products: LuPackage,
+  systems: LuWrench,
+  upgrades: LuUpload,
+  web: LuLaptop,
 };
 
 const normalizeService = (
@@ -160,7 +147,7 @@ const AboutServiceMap = ({
     <section
       ref={sectionRef}
       id="about-service-map"
-      className="about-service-map bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-service-map bg-[var(--bg-primary)] py-16 md:py-20 lg:py-24"
       aria-label="AngiSoft service map"
     >
       <div className="container">
@@ -202,17 +189,17 @@ const ServiceMapIntro = ({
 
       {content.to && (
         <span
-          className="absolute right-3 top-3 text-white/80"
+          className="absolute right-3 top-3 text-[var(--text-primary)]/80"
           aria-hidden="true"
         >
-          <FaArrowDown className="-rotate-45 text-[9px]" />
+          <LuArrowDown className="-rotate-45 text-[9px]" />
         </span>
       )}
     </>
   );
 
   const className =
-    'about-service-map-intro relative flex min-h-[190px] items-center justify-center overflow-hidden bg-[#0067C9] px-8 py-8 text-center no-underline';
+    'about-service-map-intro relative flex min-h-[190px] items-center justify-center overflow-hidden bg-[var(--color-primary-dark)] px-8 py-8 text-center no-underline';
 
   if (content.to) {
     return (
@@ -240,7 +227,7 @@ const ServiceMapCard = ({
 }) => {
   const Icon =
     ICONS[service.icon] ||
-    FaLaptopCode;
+    LuLaptop;
 
   const cardContent = (
     <>
@@ -255,7 +242,7 @@ const ServiceMapCard = ({
         ) : (
           <div className="about-service-map-fallback absolute inset-0 flex items-center justify-center">
             <Icon
-              className="text-5xl text-[#0067C9]"
+              className="text-5xl text-[var(--color-primary-dark)]"
               aria-hidden="true"
             />
           </div>
@@ -270,7 +257,7 @@ const ServiceMapCard = ({
             className="about-service-map-arrow"
             aria-hidden="true"
           >
-            <FaArrowDown className="-rotate-45 text-[8px]" />
+            <LuArrowDown className="-rotate-45 text-[8px]" />
           </span>
         )}
       </div>

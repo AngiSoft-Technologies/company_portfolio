@@ -6,10 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaDownload,
-} from 'react-icons/fa';
+import { LuArrowRight, LuDownload } from 'react-icons/lu';;
 
 import {
   resolveAssetUrl,
@@ -97,7 +94,7 @@ const AboutSustainability = ({
     <section
       ref={sectionRef}
       id="about-sustainability"
-      className="about-sustainability bg-[#07142B] py-12 md:py-14 lg:py-16"
+      className="about-sustainability py-12 md:py-14 lg:py-16"
       aria-labelledby="about-sustainability-heading"
     >
       <div className="container">
@@ -133,7 +130,7 @@ const AboutSustainability = ({
                   download
                   className="about-sustainability-button"
                 >
-                  <FaDownload
+                  <LuDownload
                     aria-hidden="true"
                   />
 
@@ -150,7 +147,7 @@ const AboutSustainability = ({
                     {data.link.label}
                   </span>
 
-                  <FaArrowRight
+                  <LuArrowRight
                     aria-hidden="true"
                   />
                 </Link>

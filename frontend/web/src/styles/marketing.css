@@ -1,4 +1,5 @@
 /* Reconciled legacy marketing styles. Order is stable and auditable. */
+@import './marketing/about.css';
 @import './marketing/ContactSection.css';
 @import './marketing/FaqSection.css';
 @import './marketing/Hero.css';

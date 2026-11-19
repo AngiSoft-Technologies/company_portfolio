@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import prisma from '../../../../db';
 import { ts, newId } from '../../../../prisma/db';
+import { toMoneyFromMinorUnits } from '../../utils/money';
 
 const stripeKey = process.env.STRIPE_SECRET || '';
 let stripe: Stripe | null = null;
@@ -37,7 +38,7 @@ export async function reconcilePaymentsWindow(start: Date, end: Date) {
                     updatedAt: ts(),
                 provider: 'STRIPE' as any,
                 providerId,
-                amount: (pi.amount_received || pi.amount || 0) / 100,
+                amount: toMoneyFromMinorUnits(pi.amount_received || pi.amount || 0),
                 currency: String(pi.currency || 'KES').toUpperCase(),
                 status: status as any,
                 metadata,

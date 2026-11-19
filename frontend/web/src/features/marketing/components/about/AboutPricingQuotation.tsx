@@ -6,10 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FaArrowRight,
-  FaQuoteLeft,
-} from 'react-icons/fa';
+import { LuArrowRight, LuQuote } from 'react-icons/lu';;
 
 import {
   resolveAssetUrl,
@@ -174,19 +171,19 @@ const AboutPricingQuotation = ({
     <section
       ref={sectionRef}
       id="about-pricing-quotation"
-      className="about-pricing-quotation bg-[#07142B] py-16 md:py-20 lg:py-24"
+      className="about-pricing-quotation bg-[var(--band-services)] py-16 md:py-20 lg:py-24"
     >
       <div className="container">
         {/* Compact quotation panel */}
         <div
-          className={`about-pricing-quote-panel grid border border-white/15 bg-[#0A1B38] transition duration-700 sm:grid-cols-[190px_1fr] md:grid-cols-[220px_1fr] ${
+          className={`about-pricing-quote-panel grid border border-[var(--border-light)] bg-[var(--card-bg)] transition duration-700 sm:grid-cols-[190px_1fr] md:grid-cols-[220px_1fr] ${
             visible
               ? 'translate-y-0 opacity-100'
               : 'translate-y-5 opacity-0'
           }`}
         >
-          <div className="about-pricing-person border-b border-white/15 p-4 sm:border-b-0 sm:border-r sm:p-5">
-            <div className="about-pricing-person-image relative mx-auto aspect-[4/3] max-w-[190px] overflow-hidden bg-[#0B1E3D] sm:aspect-[4/5]">
+          <div className="about-pricing-person border-b border-[var(--border-light)] p-4 sm:border-b-0 sm:border-r sm:p-5">
+            <div className="about-pricing-person-image relative mx-auto aspect-[4/3] max-w-[190px] overflow-hidden bg-[var(--bg-secondary)] sm:aspect-[4/5]">
               {data.person?.imageUrl ? (
                 <picture>
                   {data.person
@@ -228,18 +225,18 @@ const AboutPricingQuotation = ({
             </div>
 
             <div className="mt-4 text-center">
-              <p className="text-sm font-bold text-white">
+              <p className="text-sm font-bold text-[var(--text-primary)]">
                 {data.person?.name}
               </p>
 
               {data.person?.role && (
-                <p className="mt-1 text-xs text-white/60">
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">
                   {data.person.role}
                 </p>
               )}
 
               {data.person?.company && (
-                <p className="mt-1 text-xs text-white/42">
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {data.person.company}
                 </p>
               )}
@@ -248,12 +245,12 @@ const AboutPricingQuotation = ({
 
           <div className="flex items-center px-6 py-8 md:px-10 md:py-9">
             <blockquote className="relative">
-              <FaQuoteLeft
-                className="absolute -left-1 -top-1 text-xl text-[#00C2FF]/45"
+              <LuQuote
+                className="absolute -left-1 -top-1 text-xl text-[var(--brand-accent-ink)]/45"
                 aria-hidden="true"
               />
 
-              <p className="pl-8 text-sm leading-7 text-white/70 md:text-base md:leading-8">
+              <p className="pl-8 text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty md:leading-8">
                 {data.quote}
               </p>
             </blockquote>
@@ -273,7 +270,7 @@ const AboutPricingQuotation = ({
           }}
         >
           {data.firstIntroduction && (
-            <p className="text-sm leading-7 text-white/68 md:text-base">
+            <p className="text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {data.firstIntroduction}
             </p>
           )}
@@ -283,7 +280,7 @@ const AboutPricingQuotation = ({
           />
 
           {data.secondIntroduction && (
-            <p className="mt-7 text-sm leading-7 text-white/68 md:text-base">
+            <p className="mt-7 text-base leading-8 text-[var(--text-secondary)] md:text-lg text-pretty">
               {data.secondIntroduction}
             </p>
           )}
@@ -296,11 +293,11 @@ const AboutPricingQuotation = ({
             data.cta?.to && (
               <Link
                 to={data.cta.to}
-                className="group mt-8 inline-flex items-center gap-3 text-sm font-semibold text-[#00C2FF] no-underline"
+                className="group mt-8 inline-flex items-center gap-3 text-sm font-semibold text-[var(--brand-accent-ink)] no-underline"
               >
                 {data.cta.label}
 
-                <FaArrowRight className="text-[10px] transition-transform group-hover:translate-x-1" />
+                <LuArrowRight className="text-[10px] transition-transform group-hover:translate-x-1" />
               </Link>
             )}
         </div>
@@ -321,10 +318,10 @@ const InvestmentList = ({
       {items.map((item) => (
         <li
           key={item.id}
-          className="flex items-start gap-2 text-sm leading-7 text-white/65"
+          className="flex items-start gap-2 text-sm leading-7 text-[var(--text-secondary)]"
         >
           <span
-            className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-[#00C2FF]"
+            className="mt-[11px] h-1.5 w-1.5 shrink-0 bg-[var(--color-secondary)]"
             aria-hidden="true"
           />
 
@@ -351,8 +348,8 @@ const LeadershipFallback = ({
     .toUpperCase();
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A1B38] via-[#0A3DFF]/20 to-[#07142B]">
-      <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-2xl font-black text-[#00C2FF]">
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0A1B38] via-[#0A3DFF]/20 to-[var(--bg-primary)]">
+      <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#00C2FF]/30 bg-[color-mix(in_srgb,var(--brand-accent-ink)_10%,transparent)] text-2xl font-black text-[var(--brand-accent-ink)]">
         {initials}
       </span>
     </div>

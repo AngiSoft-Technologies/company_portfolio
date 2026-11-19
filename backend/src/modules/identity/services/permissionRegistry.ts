@@ -39,6 +39,7 @@ export type PermissionGroup =
     | 'Bookings'
     | 'Enquiries'
     | 'Leads'
+    | 'Sales Pipeline'
     | 'Newsletters'
     | 'Surveys'
     | 'Product Inquiries'
@@ -156,6 +157,25 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'leads.create', display: 'Create Leads', description: 'Create leads', group: 'Leads', risk: 'MEDIUM', order: 11 },
     { key: 'leads.update', display: 'Edit Leads', description: 'Edit and re-stage leads', group: 'Leads', risk: 'MEDIUM', order: 12 },
     { key: 'leads.delete', display: 'Delete Leads', description: 'Delete leads', group: 'Leads', risk: 'MEDIUM', order: 13 },
+
+    // ── Sales Pipeline ───────────────────────────────────────────────────
+    { key: 'sales.pipeline.view', display: 'View Sales Pipeline', description: 'View the department-wide sales pipeline dashboard', group: 'Sales Pipeline', risk: 'LOW', order: 5 },
+    { key: 'opportunities.view', display: 'View Opportunities', description: 'View the opportunity pipeline', group: 'Sales Pipeline', risk: 'LOW', order: 10 },
+    { key: 'opportunities.create', display: 'Create Opportunities', description: 'Create opportunities', group: 'Sales Pipeline', risk: 'MEDIUM', order: 11 },
+    { key: 'opportunities.update', display: 'Edit Opportunities', description: 'Edit and re-stage opportunities', group: 'Sales Pipeline', risk: 'MEDIUM', order: 12 },
+    { key: 'opportunities.delete', display: 'Delete Opportunities', description: 'Delete opportunities', group: 'Sales Pipeline', risk: 'MEDIUM', order: 13 },
+    { key: 'quotes.view', display: 'View Quotes', description: 'View quotations', group: 'Sales Pipeline', risk: 'LOW', order: 20 },
+    { key: 'quotes.create', display: 'Create Quotes', description: 'Create quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 21 },
+    { key: 'quotes.update', display: 'Edit Quotes', description: 'Edit quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 22 },
+    { key: 'quotes.send', display: 'Send Quotes', description: 'Send quotations to clients', group: 'Sales Pipeline', risk: 'MEDIUM', order: 23 },
+    { key: 'quotes.accept', display: 'Accept Quotes', description: 'Mark quotations accepted by the client', group: 'Sales Pipeline', risk: 'MEDIUM', order: 24 },
+    { key: 'quotes.delete', display: 'Delete Quotes', description: 'Delete quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 25 },
+    { key: 'invoices.view', display: 'View Invoices', description: 'View invoices', group: 'Sales Pipeline', risk: 'LOW', order: 30 },
+    { key: 'invoices.create', display: 'Create Invoices', description: 'Create invoices', group: 'Sales Pipeline', risk: 'MEDIUM', order: 31 },
+    { key: 'invoices.update', display: 'Edit Invoices', description: 'Edit draft invoices', group: 'Sales Pipeline', risk: 'MEDIUM', order: 32 },
+    { key: 'invoices.issue', display: 'Issue Invoices', description: 'Issue invoices to clients', group: 'Sales Pipeline', risk: 'MEDIUM', order: 33 },
+    { key: 'invoices.void', display: 'Void Invoices', description: 'Void issued invoices', group: 'Sales Pipeline', risk: 'HIGH', order: 34 },
+    { key: 'invoices.delete', display: 'Delete Invoices', description: 'Delete draft invoices', group: 'Sales Pipeline', risk: 'MEDIUM', order: 35 },
 
     // ── Newsletters ──────────────────────────────────────────────────────
     { key: 'newsletters.view', display: 'View Newsletters', description: 'View campaigns and subscribers', group: 'Newsletters', risk: 'LOW', order: 10 },
@@ -283,6 +303,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     'Bookings',
     'Enquiries',
     'Leads',
+    'Sales Pipeline',
     'Newsletters',
     'Surveys',
     'Product Inquiries',
@@ -410,6 +431,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Readonly<Record<string, readonly _KnownKe
         'chatbot.view_all', 'chatbot.respond',
         'media.upload', 'media.manage',
         'leads.view', 'leads.create', 'leads.update',
+        'sales.pipeline.view',
+        'opportunities.view', 'opportunities.create', 'opportunities.update', 'opportunities.delete',
+        'quotes.view', 'quotes.create', 'quotes.update', 'quotes.send', 'quotes.accept', 'quotes.delete',
+        'invoices.view', 'invoices.create', 'invoices.update', 'invoices.issue', 'invoices.void', 'invoices.delete',
         'newsletters.view', 'newsletters.create', 'newsletters.update',
         'surveys.view', 'surveys.create', 'surveys.update', 'surveys.view_responses',
         'product_inquiries.view', 'product_inquiries.update',
