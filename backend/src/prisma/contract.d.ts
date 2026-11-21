@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'9baa864354cce1f12ce419a5522ba7086a46b3f0ae05e61f9b5a87701d93d9d9'>;
+  StorageHashBase<'01393c828ad0b87d8aedea9902e046bd866f0fe148cf29c8a8fcd77716757ef0'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -8007,7 +8007,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -8057,7 +8057,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -8126,7 +8126,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10134,7 +10134,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10713,7 +10713,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10723,7 +10723,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10733,7 +10733,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10743,7 +10743,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -10753,7 +10753,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12059,7 +12059,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12318,7 +12318,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12398,7 +12398,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12556,7 +12556,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12566,7 +12566,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12576,7 +12576,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12644,7 +12644,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12659,7 +12659,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -12966,7 +12966,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14113,7 +14113,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14123,7 +14123,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14133,7 +14133,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14143,7 +14143,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14622,7 +14622,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };
@@ -14715,7 +14715,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/numeric@1', '0.00'>;
+                    readonly value: DefaultLiteralValue<'pg/numeric@1', 0>;
                   };
                   readonly typeParams: { readonly precision: 18; readonly scale: 2 };
                 };

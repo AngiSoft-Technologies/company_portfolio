@@ -1,0 +1,1010 @@
+[
+  {
+    "id": "setDefault.Booking.budgetAmount",
+    "label": "Set default on \"Booking\".\"budgetAmount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "budgetAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"budgetAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"budgetAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"budgetAmount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"budgetAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "budgetAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Booking.priceEstimate",
+    "label": "Set default on \"Booking\".\"priceEstimate\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceEstimate",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceEstimate\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"priceEstimate\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"priceEstimate\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceEstimate\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "priceEstimate"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Booking.quotedAmount",
+    "label": "Set default on \"Booking\".\"quotedAmount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "quotedAmount",
+        "table": "Booking"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"quotedAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"quotedAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Booking\" ALTER COLUMN \"quotedAmount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"quotedAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Booking",
+          "quotedAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Expense.amount",
+    "label": "Set default on \"Expense\".\"amount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Expense",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Expense\" ALTER COLUMN \"amount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Expense",
+          "amount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Invoice.amountPaid",
+    "label": "Set default on \"Invoice\".\"amountPaid\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amountPaid",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amountPaid\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "amountPaid"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amountPaid\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\" ALTER COLUMN \"amountPaid\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amountPaid\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "amountPaid"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Invoice.balanceDue",
+    "label": "Set default on \"Invoice\".\"balanceDue\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "balanceDue",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"balanceDue\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "balanceDue"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"balanceDue\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\" ALTER COLUMN \"balanceDue\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"balanceDue\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "balanceDue"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Invoice.subtotal",
+    "label": "Set default on \"Invoice\".\"subtotal\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "subtotal",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"subtotal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "subtotal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"subtotal\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\" ALTER COLUMN \"subtotal\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"subtotal\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "subtotal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Invoice.tax",
+    "label": "Set default on \"Invoice\".\"tax\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "tax",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"tax\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "tax"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"tax\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\" ALTER COLUMN \"tax\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"tax\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "tax"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Invoice.total",
+    "label": "Set default on \"Invoice\".\"total\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "total",
+        "table": "Invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"total\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "total"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"total\"",
+        "sql": "ALTER TABLE \"public\".\"Invoice\" ALTER COLUMN \"total\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"total\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Invoice",
+          "total"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payment.amount",
+    "label": "Set default on \"Payment\".\"amount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payment\" ALTER COLUMN \"amount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payment",
+          "amount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PaymentWallet.balance",
+    "label": "Set default on \"PaymentWallet\".\"balance\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "balance",
+        "table": "PaymentWallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"balance\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"balance\"",
+        "sql": "ALTER TABLE \"public\".\"PaymentWallet\" ALTER COLUMN \"balance\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"balance\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PaymentWallet",
+          "balance"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payout.amount",
+    "label": "Set default on \"Payout\".\"amount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "amount",
+        "table": "Payout"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"amount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"amount\"",
+        "sql": "ALTER TABLE \"public\".\"Payout\" ALTER COLUMN \"amount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"amount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payout",
+          "amount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PayrollRun.deductionTotal",
+    "label": "Set default on \"PayrollRun\".\"deductionTotal\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "deductionTotal",
+        "table": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"deductionTotal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "deductionTotal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"deductionTotal\"",
+        "sql": "ALTER TABLE \"public\".\"PayrollRun\" ALTER COLUMN \"deductionTotal\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"deductionTotal\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "deductionTotal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PayrollRun.grossTotal",
+    "label": "Set default on \"PayrollRun\".\"grossTotal\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "grossTotal",
+        "table": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"grossTotal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "grossTotal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"grossTotal\"",
+        "sql": "ALTER TABLE \"public\".\"PayrollRun\" ALTER COLUMN \"grossTotal\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"grossTotal\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "grossTotal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PayrollRun.netTotal",
+    "label": "Set default on \"PayrollRun\".\"netTotal\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "netTotal",
+        "table": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"netTotal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "netTotal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"netTotal\"",
+        "sql": "ALTER TABLE \"public\".\"PayrollRun\" ALTER COLUMN \"netTotal\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"netTotal\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PayrollRun",
+          "netTotal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payslip.grossAmount",
+    "label": "Set default on \"Payslip\".\"grossAmount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "grossAmount",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"grossAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "grossAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"grossAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Payslip\" ALTER COLUMN \"grossAmount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"grossAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "grossAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Payslip.netAmount",
+    "label": "Set default on \"Payslip\".\"netAmount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "netAmount",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"netAmount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "netAmount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"netAmount\"",
+        "sql": "ALTER TABLE \"public\".\"Payslip\" ALTER COLUMN \"netAmount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"netAmount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "netAmount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.PricingPackage.price",
+    "label": "Set default on \"PricingPackage\".\"price\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "price",
+        "table": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"price\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "PricingPackage",
+          "price"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"price\"",
+        "sql": "ALTER TABLE \"public\".\"PricingPackage\" ALTER COLUMN \"price\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"price\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "PricingPackage",
+          "price"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Quote.discount",
+    "label": "Set default on \"Quote\".\"discount\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "discount",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"discount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "discount"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"discount\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\" ALTER COLUMN \"discount\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"discount\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "discount"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Quote.subtotal",
+    "label": "Set default on \"Quote\".\"subtotal\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "subtotal",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"subtotal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "subtotal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"subtotal\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\" ALTER COLUMN \"subtotal\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"subtotal\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "subtotal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Quote.tax",
+    "label": "Set default on \"Quote\".\"tax\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "tax",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"tax\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "tax"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"tax\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\" ALTER COLUMN \"tax\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"tax\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "tax"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Quote.total",
+    "label": "Set default on \"Quote\".\"total\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "total",
+        "table": "Quote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"total\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "total"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"total\"",
+        "sql": "ALTER TABLE \"public\".\"Quote\" ALTER COLUMN \"total\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"total\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Quote",
+          "total"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.SalaryStructure.basicSalary",
+    "label": "Set default on \"SalaryStructure\".\"basicSalary\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "basicSalary",
+        "table": "SalaryStructure"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"basicSalary\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SalaryStructure",
+          "basicSalary"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"basicSalary\"",
+        "sql": "ALTER TABLE \"public\".\"SalaryStructure\" ALTER COLUMN \"basicSalary\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"basicSalary\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "SalaryStructure",
+          "basicSalary"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.Service.priceFrom",
+    "label": "Set default on \"Service\".\"priceFrom\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "priceFrom",
+        "table": "Service"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"priceFrom\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"priceFrom\"",
+        "sql": "ALTER TABLE \"public\".\"Service\" ALTER COLUMN \"priceFrom\" SET DEFAULT 0"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"priceFrom\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "Service",
+          "priceFrom"
+        ]
+      }
+    ]
+  }
+]

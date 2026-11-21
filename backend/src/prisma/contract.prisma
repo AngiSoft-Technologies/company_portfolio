@@ -338,7 +338,7 @@ namespace public {
     projectType        pg.enum(ProjectType)
     details            Jsonb?
     status             pg.enum(BookingStatus) @default("SUBMITTED")
-    priceEstimate      Numeric(18, 2) @default("0.00")
+    priceEstimate      Numeric(18, 2) @default(0)
     assignedToId       String?
     termsAcceptedAt    TimestampString(3)?
     depositPaidAt      TimestampString(3)?
@@ -346,7 +346,7 @@ namespace public {
     updatedAt          TimestampString(3)
     publicReference    String
     trackingToken      String
-    budgetAmount       Numeric(18, 2) @default("0.00")
+    budgetAmount       Numeric(18, 2) @default(0)
     currency           String                 @default("KES")
     currentStage       String                 @default("submitted")
     desiredOutcome     String?
@@ -357,7 +357,7 @@ namespace public {
     pricingType        String?
     productSlug        String?
     productTitle       String?
-    quotedAmount       Numeric(18, 2) @default("0.00")
+    quotedAmount       Numeric(18, 2) @default(0)
     quotedCurrency     String?
     referrerEntityId   String?
     referrerEntityType String?
@@ -578,7 +578,7 @@ namespace public {
     title                   String
     slug                    String
     description             String
-    priceFrom               Numeric(18, 2) @default("0.00")
+    priceFrom               Numeric(18, 2) @default(0)
     images                  String[]?         @noCheck(elementNotNull)
     authorId                String?
     published               Boolean          @default(false)
@@ -945,10 +945,10 @@ namespace public {
     clientId        String?
     createdById     String?
     status          String              @default("draft")
-    subtotal        Numeric(18, 2)      @default("0.00")
-    discount        Numeric(18, 2)      @default("0.00")
-    tax             Numeric(18, 2)      @default("0.00")
-    total           Numeric(18, 2)      @default("0.00")
+    subtotal        Numeric(18, 2)      @default(0)
+    discount        Numeric(18, 2)      @default(0)
+    tax             Numeric(18, 2)      @default(0)
+    total           Numeric(18, 2)      @default(0)
     currency        String              @default("KES")
     validUntil      TimestampString(3)?
     issuedAt        TimestampString(3)?
@@ -1006,11 +1006,11 @@ namespace public {
     clientId        String?
     createdById     String?
     status          String              @default("draft")
-    subtotal        Numeric(18, 2)      @default("0.00")
-    tax             Numeric(18, 2)      @default("0.00")
-    total           Numeric(18, 2)      @default("0.00")
-    amountPaid      Numeric(18, 2)      @default("0.00")
-    balanceDue      Numeric(18, 2)      @default("0.00")
+    subtotal        Numeric(18, 2)      @default(0)
+    tax             Numeric(18, 2)      @default(0)
+    total           Numeric(18, 2)      @default(0)
+    amountPaid      Numeric(18, 2)      @default(0)
+    balanceDue      Numeric(18, 2)      @default(0)
     currency        String              @default("KES")
     issuedAt        TimestampString(3)?
     dueAt           TimestampString(3)?
@@ -1112,7 +1112,7 @@ namespace public {
     id         String                   @id(map: "Payment_pkey")
     bookingId  String?
     clientId   String?
-    amount     Numeric(18, 2) @default("0.00")
+    amount     Numeric(18, 2) @default(0)
     currency   String                   @default("KES")
     provider   pg.enum(PaymentProvider)
     providerId String
@@ -1162,7 +1162,7 @@ namespace public {
     id         String        @id(map: "PaymentWallet_pkey")
     provider   String        @default("PAYHERO")
     walletType String
-    balance    Numeric(18, 2) @default("0.00")
+    balance    Numeric(18, 2) @default(0)
     name       String?
     meta       Jsonb?
     syncedAt   TimestampString(3)?
@@ -1178,7 +1178,7 @@ namespace public {
     provider          String        @default("PAYHERO")
     reference         String
     providerReference String?
-    amount            Numeric(18, 2) @default("0.00")
+    amount            Numeric(18, 2) @default(0)
     currency          String        @default("KES")
     channel           String
     phoneNumber       String?
@@ -1563,7 +1563,7 @@ namespace public {
     id            String    @id(map: "Expense_pkey")
     title         String
     description   String?
-    amount        Numeric(18, 2) @default("0.00")
+    amount        Numeric(18, 2) @default(0)
     currency      String    @default("KES")
     category      String?
     status        String    @default("draft")
@@ -1609,7 +1609,7 @@ namespace public {
     slug          String
     description   String?
     serviceId     String?
-    price         Numeric(18, 2) @default("0.00")
+    price         Numeric(18, 2) @default(0)
     currency      String    @default("KES")
     billingPeriod String?
     features      Jsonb?
@@ -1669,9 +1669,9 @@ namespace public {
     id           String    @id(map: "Payslip_pkey")
     employeeId   String
     period       String
-    grossAmount  Numeric(18, 2) @default("0.00")
+    grossAmount  Numeric(18, 2) @default(0)
     deductions   Jsonb?
-    netAmount    Numeric(18, 2) @default("0.00")
+    netAmount    Numeric(18, 2) @default(0)
     currency     String    @default("KES")
     status       String    @default("draft")
     approvedById String?
@@ -1718,7 +1718,7 @@ namespace public {
 model SalaryStructure {
     id          String    @id(map: "SalaryStructure_pkey")
     employeeId  String
-    basicSalary Numeric(18, 2) @default("0.00")
+    basicSalary Numeric(18, 2) @default(0)
     currency    String    @default("KES")
     allowances  Jsonb?
     deductions  Jsonb?
@@ -1739,9 +1739,9 @@ model SalaryStructure {
     currency        String    @default("KES")
     notes           String?
     payslipCount    Int       @default(0)
-    grossTotal      Numeric(18, 2) @default("0.00")
-    deductionTotal  Numeric(18, 2) @default("0.00")
-    netTotal        Numeric(18, 2) @default("0.00")
+    grossTotal      Numeric(18, 2) @default(0)
+    deductionTotal  Numeric(18, 2) @default(0)
+    netTotal        Numeric(18, 2) @default(0)
     createdById     String?
     completedAt     TimestampString(3)?
     createdAt       TimestampString(3) @default(now())

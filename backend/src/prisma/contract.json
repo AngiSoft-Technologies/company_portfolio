@@ -16130,7 +16130,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -16229,7 +16229,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -16276,7 +16276,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -18760,7 +18760,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -19431,7 +19431,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -19444,7 +19444,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -19556,7 +19556,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -19569,7 +19569,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -19582,7 +19582,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21153,7 +21153,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21481,7 +21481,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21578,7 +21578,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21773,7 +21773,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21786,7 +21786,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21809,7 +21809,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21930,7 +21930,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -21948,7 +21948,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -22344,7 +22344,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -23763,7 +23763,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -23818,7 +23818,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -23831,7 +23831,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -23844,7 +23844,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -24420,7 +24420,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -24595,7 +24595,7 @@
                   "codecId": "pg/numeric@1",
                   "default": {
                     "kind": "literal",
-                    "value": "0.00"
+                    "value": 0
                   },
                   "nativeType": "numeric",
                   "nullable": false,
@@ -26059,7 +26059,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "9baa864354cce1f12ce419a5522ba7086a46b3f0ae05e61f9b5a87701d93d9d9"
+    "storageHash": "01393c828ad0b87d8aedea9902e046bd866f0fe148cf29c8a8fcd77716757ef0"
   },
   "capabilities": {
     "postgres": {
