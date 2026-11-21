@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "vite": "^7.3.3",
+    "vite": "^7.3.7",
     "@types/node": "^24.0.0"
   }
 }
