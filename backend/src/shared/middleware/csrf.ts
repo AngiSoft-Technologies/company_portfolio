@@ -43,6 +43,7 @@ const CSRF_BYPASS_PATHS: RegExp[] = [
   /^\/api\/invite\/accept\/?$/,           // invite acceptance
   /^\/api\/payments\/webhook\/?$/,        // Stripe webhook (signature-verified)
   /^\/api\/chatbot\/?$/,                  // public chatbot
+  /^\/api\/consent\/?$/,                  // privacy + terms acceptance (rate-limited)
   /^\/api\/surveys\/active\/?$/,          // public survey responses
   /^\/api\/leads\/?$/,                    // public lead capture (already role-gated server-side)
 ];

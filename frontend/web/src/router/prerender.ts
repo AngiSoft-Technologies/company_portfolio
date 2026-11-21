@@ -56,6 +56,31 @@ export const PRERENDER_ROUTES: RouteMeta[] = [
     title: 'Industries — AngiSoft Technologies',
     description: 'Industries we serve with purpose-built software.',
   },
+  {
+    path: '/privacy',
+    title: 'Privacy Policy — AngiSoft Technologies',
+    description: 'How AngiSoft Technologies collects, uses and protects your information.',
+  },
+  {
+    path: '/privacy-policy',
+    title: 'Privacy Policy — AngiSoft Technologies',
+    description: 'How AngiSoft Technologies collects, uses and protects your information.',
+  },
+  {
+    path: '/terms',
+    title: 'Terms & Conditions — AngiSoft Technologies',
+    description: 'Terms governing use of AngiSoft Technologies websites, products and services.',
+  },
+  {
+    path: '/terms-conditions',
+    title: 'Terms & Conditions — AngiSoft Technologies',
+    description: 'Terms governing use of AngiSoft Technologies websites, products and services.',
+  },
+  {
+    path: '/consent',
+    title: 'Client Consent — AngiSoft Technologies',
+    description: 'Accept the AngiSoft Privacy Policy and Terms & Conditions before booking or portal access.',
+  },
 ];
 
 export const routeMeta = (path: string): RouteMeta | undefined =>

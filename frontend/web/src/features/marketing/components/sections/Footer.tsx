@@ -36,6 +36,14 @@ const socialIcons: Record<string, typeof FaFacebookF> = {
   github: FaGithub,
 };
 
+// CMS-configured links win, but the legal pages must never disappear when the
+// footer settings are empty or partially configured.
+const DEFAULT_LEGAL_LINKS: FooterLink[] = [
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Terms & Conditions', href: '/terms-conditions' },
+  { label: 'Client Consent', href: '/consent' },
+];
+
 const Footer = () => {
   const [branding, setBranding] = useState<{ logo?: string; siteName?: string } | null>(null);
   const [footer, setFooter] = useState<FooterSettings | null>(null);
@@ -99,6 +107,7 @@ const Footer = () => {
     .filter((item): item is { name: string; href: string; icon: typeof FaFacebookF } => Boolean(item.icon && item.href));
 
   const copyright = (footer?.copyright || '').replace('{year}', String(new Date().getFullYear()));
+  const legalLinks = footer?.legalLinks?.length ? footer.legalLinks : DEFAULT_LEGAL_LINKS;
 
   return (
     <footer className="angi-footer-shell">
@@ -187,7 +196,7 @@ const Footer = () => {
         <div className="angi-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1.5rem', fontSize: '0.8125rem', color: 'rgba(245,247,250,0.4)' }}>
           <div>{copyright}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {(footer?.legalLinks || []).map((link) => (
+            {legalLinks.map((link) => (
               <Link key={link.href} to={link.href} className="angi-footer-link">{link.label}</Link>
             ))}
             <a href="https://admin.angisoft.co.ke/login" className="angi-footer-link" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--footer-ink-soft)' }}>

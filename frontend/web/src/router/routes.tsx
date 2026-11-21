@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { LoadingIndicator } from '@angisoft/ui';
 import { MarketingLayout } from '@/features/marketing/layouts/MarketingLayout';
 import { PortalLayout } from '@/features/client-portal/layouts/PortalLayout';
+import { RequireConsent } from '@/components/RequireConsent';
 import { ClientProtectedRoute } from '@angisoft/auth';
 import Home from '@/features/marketing/pages/Home';
 
@@ -34,6 +35,7 @@ const NewsletterConfirm = lazy(() => import('@/features/marketing/pages/Newslett
 const NewsletterUnsubscribe = lazy(() => import('@/features/marketing/pages/NewsletterUnsubscribe'));
 const Privacy = lazy(() => import('@/features/marketing/pages/Privacy'));
 const Terms = lazy(() => import('@/features/marketing/pages/Terms'));
+const ClientConsent = lazy(() => import('@/features/auth/pages/ClientConsent'));
 const NotFound = lazy(() => import('@/features/marketing/pages/NotFound'));
 
 const Booking = lazy(() => import('@/features/bookings/pages/Booking'));
@@ -84,18 +86,21 @@ export function AppRoutes() {
           <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
           <Route path="/newsletter/unsubscribe" element={<NewsletterUnsubscribe />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/privacy-policy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/book" element={<Booking />} />
-          <Route path="/booking" element={<Booking />} />
+          <Route path="/terms-conditions" element={<Terms />} />
+          <Route path="/consent" element={<ClientConsent />} />
+          <Route path="/book" element={<RequireConsent><Booking /></RequireConsent>} />
+          <Route path="/booking" element={<RequireConsent><Booking /></RequireConsent>} />
           <Route path="/booking/:id" element={<BookingStatus />} />
           <Route path="/bookings" element={<BookingHistory />} />
           <Route path="/bookings/:reference" element={<BookingProgress />} />
           <Route path="/track-booking" element={<BookingLookup />} />
         </Route>
 
-        <Route path="/portal/request" element={<ClientPortalRequest />} />
-        <Route path="/portal/access" element={<ClientPortalAccess />} />
-        <Route element={<ClientProtectedRoute><PortalLayout /></ClientProtectedRoute>}>
+        <Route path="/portal/request" element={<RequireConsent><ClientPortalRequest /></RequireConsent>} />
+        <Route path="/portal/access" element={<RequireConsent><ClientPortalAccess /></RequireConsent>} />
+        <Route element={<RequireConsent><ClientProtectedRoute><PortalLayout /></ClientProtectedRoute></RequireConsent>}>
           <Route path="/portal" element={<ClientDashboard />} />
           <Route path="/portal/projects/:id" element={<ClientProjectTracking />} />
         </Route>

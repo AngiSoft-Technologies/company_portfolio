@@ -28,6 +28,7 @@ import staffDashboardRouter from './modules/identity/routes/staff-dashboard';
 import clientProjectsRouter from './modules/projects/routes/client-projects';
 import clientPortalRouter from './modules/crm/routes/client-portal';
 import healthRouter from './shared/routes/health';
+import consentRouter from './shared/routes/consent';
 import siteRouter from './modules/cms/routes/site';
 import newsletterRouter from './modules/crm/routes/newsletter';
 import faqRouter from './modules/cms/routes/faq';
@@ -312,6 +313,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth/mfa', authRateLimiter, mfaRouter);
 app.use('/api/auth', authRateLimiter, authRouter);
 app.use('/api/invite', inviteRouter(prisma));
+app.use('/api/consent', consentRouter);
 app.use('/api/bookings', bookingsRouter(prisma));
 app.use('/api/payments', paymentsRouter(prisma));
 app.use('/api/admin/payments', paymentConsoleRouter(prisma));
