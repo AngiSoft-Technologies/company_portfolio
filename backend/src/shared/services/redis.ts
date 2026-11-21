@@ -40,7 +40,21 @@ export function redisFamily(): 4 | 6 | undefined {
 export function redisConnectionOptions(): RedisConnectionOptions {
     const url = getRedisUrl();
     if (!url) return {};
-    const opts: RedisConnectionOptions = { url };
+    const opts: RedisConnectionOptions = {};
+    try {
+        // Parse into discrete ioredis fields — BullMQ/ioredis do not reliably
+        // honor a `url` key inside the options object.
+        const u = new URL(url);
+        opts.host = u.hostname;
+        opts.port = u.port ? parseInt(u.port, 10) : 6379;
+        if (u.username) opts.username = decodeURIComponent(u.username);
+        if (u.password) opts.password = decodeURIComponent(u.password);
+        const db = u.pathname.replace('/', '');
+        if (db && /^\d+$/.test(db)) opts.db = parseInt(db, 10);
+        if (u.protocol === 'rediss:') opts.tls = {};
+    } catch {
+        opts.url = url;
+    }
     const family = redisFamily();
     if (family) opts.family = family;
     // Upstash doesn't support naive offline retry loops with lazyConnect quality
@@ -52,8 +66,10 @@ export function redisConnectionOptions(): RedisConnectionOptions {
 export function createRedisClient(): Redis {
     const url = getRedisUrl();
     if (!url) throw new Error('REDIS_URL is not configured');
-    const opts = redisConnectionOptions();
-    const client = new Redis(opts as RedisOptions);
+    // ioredis only honors the connection string as the first constructor arg —
+    // passing `{ url }` inside the options object silently connects nowhere.
+    const { url: _url, ...opts } = redisConnectionOptions();
+    const client = new Redis(url, opts as RedisOptions);
     client.on('error', () => { /* errors observed by each consumer */ });
     return client;
 }
