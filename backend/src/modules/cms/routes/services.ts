@@ -37,7 +37,7 @@ export default function servicesRouter(prisma: Db = db) {
             });
             res.json(services);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -54,7 +54,7 @@ export default function servicesRouter(prisma: Db = db) {
             if (!service) return res.status(404).json({ error: 'Not found' });
             res.json(service);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -76,7 +76,7 @@ export default function servicesRouter(prisma: Db = db) {
             }, req.user);
             res.status(201).json(created);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -104,7 +104,7 @@ export default function servicesRouter(prisma: Db = db) {
             }, req.user);
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -121,7 +121,7 @@ export default function servicesRouter(prisma: Db = db) {
             await servicesController.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -136,7 +136,7 @@ export default function servicesRouter(prisma: Db = db) {
                 .all();
             res.json(services);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -153,7 +153,7 @@ export default function servicesRouter(prisma: Db = db) {
                 .update({ pricing: value });
             res.json({ id: updated!.id, pricing: updated!.pricing });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

@@ -19,13 +19,33 @@ import { issueSession } from '../services/session';
 
 const router = Router();
 
-// per-account limiter (simple) - using email as key to avoid IPv6 issues
+const normalizeEmail = (value: unknown): string =>
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+// Per-account limiter. Normalize the key so case/whitespace variants cannot
+// be used to get fresh attempts.
 const accountLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 6,
-    keyGenerator: (req) => req.body?.email || 'anonymous',
+    limit: 6,
+    keyGenerator: (req) => normalizeEmail(req.body?.email) || 'anonymous',
     message: { status: 429, message: 'Too many attempts' },
-    validate: false  // Disable all validations to avoid IPv6 warning
+    validate: false, // Custom normalized key; app sits behind trusted Fly proxy.
+});
+
+const passwordResetRequestLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    keyGenerator: (req) => `reset:${normalizeEmail(req.body?.email) || req.ip || 'anonymous'}`,
+    message: { status: 429, message: 'Too many password reset requests' },
+    validate: false,
+});
+
+const passwordResetConfirmLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    keyGenerator: (req) => `reset-confirm:${req.ip || 'anonymous'}`,
+    message: { status: 429, message: 'Too many password reset attempts' },
+    validate: false,
 });
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
@@ -42,7 +62,8 @@ const resetSchema = z.object({ token: z.string(), password: z.string().min(8) })
 router.post('/login', accountLimiter, async (req, res) => {
     const parsed = login2FASchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-    const { email, password, totp, remember } = parsed.data;
+    const { password, totp, remember } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
     const emp = await prisma.orm.public.Employee.where({ email }).first();
     if (!emp || !emp.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
     const ok = await bcrypt.compare(password, emp.passwordHash);
@@ -159,50 +180,50 @@ router.post('/revoke/:employeeId', requireAuth, requireAccess('staff.suspend', [
     res.json({ ok: true });
 });
 
-router.post('/forgot', async (req, res) => {
+router.post('/forgot', passwordResetRequestLimiter, async (req, res) => {
     const parsed = forgotSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-    const { email } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
     const emp = await prisma.orm.public.Employee.where({ email }).first();
-    if (!emp) return res.json({ ok: true }); // don't reveal
+    if (!emp) return res.json({ ok: true }); // don't reveal account existence
     const token = createRefreshToken();
+    const tokenHash = hashToken(token);
     const expiry = ts(Date.now() + 1000 * 60 * 60); // 1 hour
-    await prisma.orm.public.Employee.where({ id: emp.id }).update({ resetToken: token, resetExpiry: expiry });
-    // send password reset email via Zoho SMTP
-    await sendMail({ to: email, subject: 'Password reset', html: `<p>Reset here: ${process.env.FRONTEND_URL}/reset?token=${token}</p>`, purpose: 'noreply' });
+    // Only the hash is stored; the emailed token is useless if the DB leaks.
+    await prisma.orm.public.Employee.where({ id: emp.id }).update({ resetToken: tokenHash, resetExpiry: expiry });
+    await sendMail({
+        to: email,
+        subject: 'Password reset',
+        html: `<p>Reset your AngiSoft password here: ${process.env.FRONTEND_URL}/reset?token=${token}</p><p>This link expires in one hour. Ignore it if you did not request it.</p>`,
+        purpose: 'noreply',
+    });
     await logAudit({ action: 'forgot_password', entity: 'Employee', entityId: emp.id });
     res.json({ ok: true });
 });
 
-router.post('/reset', async (req, res) => {
+router.post('/reset', passwordResetConfirmLimiter, async (req, res) => {
     const parsed = resetSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-    const { token, password } = parsed.data;
-    const emp = await prisma.orm.public.Employee.where({ resetToken: token }).first();
-    if (!emp || !emp.resetExpiry || emp.resetExpiry < ts()) return res.status(400).json({ error: 'Invalid or expired token' });
+    const { password } = parsed.data;
+    const tokenHash = hashToken(parsed.data.token);
+    const emp = await prisma.orm.public.Employee.where({ resetToken: tokenHash }).first();
+    if (!emp || !emp.resetExpiry || emp.resetExpiry < ts()) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+    }
     const pw = checkPasswordStrength(password);
     if (!pw.ok) return res.status(400).json({ error: 'Password too weak', feedback: pw.feedback });
     const hash = await bcrypt.hash(password, 10);
-    await prisma.orm.public.Employee.where({ id: emp.id }).update({ passwordHash: hash, resetToken: null, resetExpiry: null });
+    // Atomic single-use claim: concurrent resets cannot both succeed.
+    const claimed = await prisma.orm.public.Employee
+        .where((e) => and(
+            e.id.eq(emp.id),
+            e.resetToken.eq(tokenHash),
+            e.resetExpiry.gt(ts()),
+        ))
+        .updateAndCount({ passwordHash: hash, resetToken: null, resetExpiry: null });
+    if (claimed !== 1) return res.status(400).json({ error: 'Invalid or expired token' });
     await prisma.orm.public.RefreshToken.where({ employeeId: emp.id }).deleteAndCount();
     await logAudit({ action: 'reset_password', entity: 'Employee', entityId: emp.id });
-    res.json({ ok: true });
-});
-
-// Optional explicit backup-code verification endpoint
-router.post('/2fa/backup/verify', async (req, res) => {
-    const { email, code } = req.body;
-    if (!email || !code) return res.status(400).json({ error: 'Missing params' });
-    const emp = await prisma.orm.public.Employee.where({ email }).first();
-    if (!emp) return res.status(404).json({ error: 'Unknown user' });
-    const codes = await prisma.orm.public.TwoFactorBackupCode.where({ employeeId: emp.id, used: false }).all();
-    let matchedId: string | null = null;
-    for (const c of codes) {
-        const ok = await bcrypt.compare(code, c.codeHash);
-        if (ok) { matchedId = c.id; break; }
-    }
-    if (!matchedId) return res.status(400).json({ error: 'Invalid code' });
-    await prisma.orm.public.TwoFactorBackupCode.where({ id: matchedId }).update({ used: true });
     res.json({ ok: true });
 });
 

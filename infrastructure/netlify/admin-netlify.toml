@@ -27,3 +27,16 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Security headers. The admin CSP is deliberately tighter than the public
+# site: hashed Vite assets ('self'), inline theme scripts and React/Tailwind
+# inline styles, CDN/data/blob images, and the Socket.IO connection to
+# api.angisoft.co.ke are the only network sources it needs.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'none'; connect-src 'self' https://api.angisoft.co.ke wss://api.angisoft.co.ke; script-src-attr 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=(), midi=(), accelerometer=(), gyroscope=(), magnetometer=()"
+    X-Frame-Options = "DENY"

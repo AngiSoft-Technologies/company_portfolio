@@ -23,9 +23,8 @@ import '@/styles/marketing/bookings/bookings.css';
 
 /**
  * Customer-facing progress page for a single booking, keyed by publicReference.
- * Access is granted via the secure tracking token (present in the redirect
- * URL after submission) or, if absent, by the customer's email lookup. The
- * backend decides visibility; this page only renders what it receives.
+ * Access requires the secure tracking token returned after submission or sent
+ * by the signed access-link email. Email alone is never accepted.
  */
 const BookingProgress = () => {
     const { reference } = useParams();
@@ -40,16 +39,16 @@ const BookingProgress = () => {
     const [sending, setSending] = useState(false);
 
     const token = searchParams.get('token') || '';
-    const email = searchParams.get('email') || '';
 
     const load = async () => {
+        if (!token) {
+            setAccessError(true);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setAccessError(false);
-        const query = new URLSearchParams();
-        if (token) query.set('token', token);
-        if (email) query.set('email', email);
-        const qs = query.toString();
-        const res = await safeGet(`/bookings/reference/${reference}${qs ? `?${qs}` : ''}`);
+        const res = await safeGet(`/bookings/reference/${reference}?token=${encodeURIComponent(token)}`, token);
         if (res.ok && res.data?.booking) {
             setBooking(res.data.booking);
         } else if (res.status === 401 || res.status === 403 || res.status === 404) {
@@ -63,14 +62,15 @@ const BookingProgress = () => {
     useEffect(() => {
         if (reference) load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reference, token, email]);
+    }, [reference, token]);
 
     const refetch = () => load();
+    const authQuery = token ? `?token=${encodeURIComponent(token)}` : '';
 
     // 'act' = one of the server-allowed actions (or a message/file/action op)
     const runAction = async (action, payload) => {
         setBusy(true);
-        const res = await apiPost(`/bookings/reference/${reference}/actions`, { action, ...payload }, token || null);
+        const res = await apiPost(`/bookings/reference/${reference}/actions${authQuery}`, { action, ...payload }, token || null);
         setBusy(false);
         if (res.ok && res.data?.booking) {
             setBooking(res.data.booking);
@@ -107,17 +107,16 @@ const BookingProgress = () => {
         const form = new FormData();
         Array.from(files).forEach((f) => form.append('files', f));
         try {
-            const res = await fetch(`${API_BASE_URL}/bookings/reference/${reference}/files`, {
+            const res = await fetch(`${API_BASE_URL}/bookings/reference/${reference}/files${authQuery}`, {
                 method: 'POST',
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                 body: form,
             });
             const data = await res.json().catch(() => ({}));
-            if (res.ok && data.booking) {
-                setBooking(data.booking);
+            if (res.ok && data.files) {
                 toast.success('Files added');
             } else {
-                toast.error(data.message || 'Upload failed');
+                toast.error(data.error || data.message || 'Upload failed');
             }
         } finally {
             setUploading(false);
@@ -127,7 +126,7 @@ const BookingProgress = () => {
 
     const handleSend = async (text) => {
         setSending(true);
-        const res = await apiPost(`/bookings/reference/${reference}/messages`, { text }, token || null);
+        const res = await apiPost(`/bookings/reference/${reference}/messages${authQuery}`, { message: text }, token || null);
         setSending(false);
         if (res.ok && res.data?.booking) setBooking(res.data.booking);
         else if (res.ok && res.data?.event) setBooking((b) => ({ ...b, events: [...(b.events || []), res.data.event] }));

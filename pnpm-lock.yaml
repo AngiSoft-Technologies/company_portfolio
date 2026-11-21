@@ -538,6 +538,9 @@ importers:
       vite:
         specifier: ^7.3.3
         version: 7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.1)
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.10.0)(@types/node@24.13.6)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.1))
 
   packages/ai:
     dependencies:

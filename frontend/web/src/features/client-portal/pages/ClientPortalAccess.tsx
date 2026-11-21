@@ -21,8 +21,7 @@ const ClientPortalAccess = () => {
     }
 
     apiPost('/client-portal/session', { token })
-      .then((response) => {
-        localStorage.setItem('clientPortalToken', response.accessToken);
+      .then(() => {
         navigate('/portal', { replace: true });
       })
       .catch(() => {

@@ -197,7 +197,7 @@ export default function approvalsRouter(prisma: Db = db) {
             const names = await employeeNames(prisma, rows.map((r: any) => r.requestedById));
             res.json(rows.map((r: any) => ({ ...r, requester: names.get(r.requestedById) ?? null })));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -235,7 +235,7 @@ export default function approvalsRouter(prisma: Db = db) {
                 canAct,
             });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

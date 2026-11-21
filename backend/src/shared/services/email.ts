@@ -39,10 +39,13 @@ const transporter = nodemailer.createTransport({
     socketTimeout: 30_000,
 });
 
-// Verify SMTP connection on startup (non-blocking)
-transporter.verify()
-    .then(() => console.log('📧 Zoho SMTP connection verified'))
-    .catch((err) => console.warn('⚠️  Zoho SMTP verification failed:', err.message));
+// Verify SMTP connection on startup (non-blocking). Tests and CI must not
+// open a network connection just to import the app module graph.
+if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_SMTP_VERIFY !== '1') {
+    transporter.verify()
+        .then(() => console.log('📧 Zoho SMTP connection verified'))
+        .catch((err) => console.warn('⚠️  Zoho SMTP verification failed:', err.message));
+}
 
 export type EmailPurpose = 'general' | 'support' | 'noreply' | 'updates';
 

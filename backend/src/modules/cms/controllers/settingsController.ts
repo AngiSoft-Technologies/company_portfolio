@@ -1,12 +1,20 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../../../db';
 import { captureException } from '../../../shared/services/monitoring/sentry';
+
+const createSettingSchema = z.object({
+    key: z.string().min(1).max(128).regex(/^[a-zA-Z][a-zA-Z0-9._-]*$/),
+    value: z.unknown(),
+}).strict();
 
 // Settings are typically singletons; manage via a key-value store or fixed ID
 export const settingsController = {
     async create(req: Request, res: Response) {
         try {
-            const { key, value } = req.body;
+            const parsed = createSettingSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+            const { key, value } = parsed.data;
             // For now, settings are managed as a singleton in app config
             // This can be expanded to database storage if needed
             res.status(201).json({ key, value, message: 'Settings would be persisted' });

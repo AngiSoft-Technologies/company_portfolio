@@ -61,6 +61,20 @@ function redisReady(client: Redis | null): client is Redis {
     return Boolean(client && client.status === 'ready');
 }
 
+function isAgentStatus(value: unknown): value is AgentRuntimeStatus {
+    if (!value || typeof value !== 'object') return false;
+    const v = value as Partial<AgentRuntimeStatus>;
+    return typeof v.key === 'string'
+        && ['idle', 'working', 'scheduled', 'unknown'].includes(v.state ?? '')
+        && typeof v.pending === 'number'
+        && typeof v.handled === 'number'
+        && (v.lastEventAt === null || typeof v.lastEventAt === 'string')
+        && (v.currentTask === null || typeof v.currentTask === 'string')
+        && (v.lastRunAt === null || typeof v.lastRunAt === 'string')
+        && (v.nextRunAt === null || typeof v.nextRunAt === 'string')
+        && typeof v.updatedAt === 'string';
+}
+
 export async function writeAgentStatus(agentKey: string, patch: Partial<AgentRuntimeStatus>): Promise<void> {
     const prev = memoryStatus.get(agentKey) ?? {
         key: agentKey, state: 'unknown', pending: -1, handled: 0, lastEventAt: null,
@@ -82,7 +96,14 @@ export async function getWorkforceState(): Promise<Record<string, AgentRuntimeSt
     if (redisReady(client)) {
         try {
             const raw = await client.get(WORKFORCE_STATE_KEY);
-            if (raw) return JSON.parse(raw);
+            if (raw) {
+                const parsed: unknown = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return Object.fromEntries(
+                        Object.entries(parsed).filter(([, value]) => isAgentStatus(value))
+                    ) as Record<string, AgentRuntimeStatus>;
+                }
+            }
         } catch { /* fall through */ }
     }
     if (!memoryStatus.size) return null;
@@ -106,7 +127,10 @@ export async function getAgentRuntimeStatus(agentKey?: string): Promise<AgentRun
         if (redisReady(client)) {
             try {
                 const raw = await client.get(`agent:status:${key}`);
-                if (raw) return JSON.parse(raw) as AgentRuntimeStatus;
+                if (raw) {
+                    const parsed: unknown = JSON.parse(raw);
+                    if (isAgentStatus(parsed)) return parsed;
+                }
             } catch { /* fall through to memory */ }
         }
         return memoryStatus.get(key) ?? null;

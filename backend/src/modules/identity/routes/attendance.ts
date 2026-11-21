@@ -158,7 +158,7 @@ export default function attendanceRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -181,7 +181,7 @@ export default function attendanceRouter(prisma: Db = db) {
             const names = await employeeNames(prisma, rows.map((r: any) => r.employeeId));
             res.json(rows.map((r: any) => ({ ...r, employee: names.get(r.employeeId) ?? null })));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -269,7 +269,7 @@ export default function attendanceRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -355,7 +355,7 @@ export default function attendanceRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -374,7 +374,7 @@ export default function attendanceRouter(prisma: Db = db) {
             const names = await employeeNames(prisma, rows.map((r: any) => r.employeeId));
             res.json(rows.map((r: any) => ({ ...r, employee: names.get(r.employeeId) ?? null })));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -463,7 +463,7 @@ export default function attendanceRouter(prisma: Db = db) {
             })).sort((a, b) => b.records - a.records);
             res.json({ from: from ?? null, to: to ?? null, employees: report });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

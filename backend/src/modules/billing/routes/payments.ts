@@ -1,4 +1,5 @@
 import express, { Router } from 'express';
+import crypto from 'crypto';
 import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { createPaymentIntent, getPaymentIntent } from '../services/payments/stripeService';
@@ -27,6 +28,21 @@ import { has as hasPermission } from '../../identity/services/effectivePermissio
 
 function isStaffOrAdmin(role?: string): boolean {
   return ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER', 'HR', 'DEVELOPER', 'SALES'].includes(role ?? '');
+}
+
+/**
+ * PayHero/M-Pesa callbacks do not carry provider signatures in our current
+ * integration, so they are gated by a shared secret appended to the callback
+ * URL. A missing secret is a configuration error and always fails closed.
+ */
+function callbackSecretValid(req: any, envName: string): boolean {
+    const expected = process.env[envName] || '';
+    if (!expected) return false;
+    const provided = String(req.query?.token ?? req.headers['x-callback-token'] ?? '');
+    const expectedBuffer = Buffer.from(expected);
+    const providedBuffer = Buffer.from(provided);
+    return expectedBuffer.length === providedBuffer.length
+        && crypto.timingSafeEqual(expectedBuffer, providedBuffer);
 }
 
 export default function paymentsRouter(prisma: Db) {
@@ -336,15 +352,14 @@ export default function paymentsRouter(prisma: Db) {
         }
     });
 
-    // ─── PayHero callback (unsigned; authenticated by reference match) ────────
+    // ─── PayHero callback (shared-secret gate; no unsigned fallback) ─────────
     router.post('/payhero/callback', async (req: any, res: any) => {
-        // Optional shared-secret gate (same pattern as the M-Pesa callback).
-        const expectedToken = process.env.PAYHERO_CALLBACK_TOKEN || '';
-        if (expectedToken) {
-            const provided = String(req.query?.token ?? req.headers['x-payhero-token'] ?? '');
-            if (provided !== expectedToken) {
-                return res.status(403).json({ status: false });
-            }
+        if (!process.env.PAYHERO_CALLBACK_TOKEN) {
+            console.error('PayHero callback rejected: PAYHERO_CALLBACK_TOKEN not configured.');
+            return res.status(503).json({ status: false, error: 'Callback not configured' });
+        }
+        if (!callbackSecretValid(req, 'PAYHERO_CALLBACK_TOKEN')) {
+            return res.status(403).json({ status: false });
         }
         res.json({ status: true });
         try {
@@ -409,17 +424,14 @@ export default function paymentsRouter(prisma: Db) {
         }
     });
 
-    // ─── M-Pesa Daraja callback (unsigned; authenticated by reference match) ──
+    // ─── M-Pesa Daraja callback (shared-secret gate; no unsigned fallback) ────
     router.post('/mpesa/callback', async (req: any, res: any) => {
-        // Optional shared-secret gate: when MPESA_CALLBACK_TOKEN is set, the
-        // callback URL must carry it (?token=… or X-M-Pesa-Token header). This
-        // lets us register a secret-suffixed CallBackURL with Daraja.
-        const expectedToken = process.env.MPESA_CALLBACK_TOKEN || '';
-        if (expectedToken) {
-            const provided = String(req.query?.token ?? req.headers['x-mpesa-token'] ?? '');
-            if (provided !== expectedToken) {
-                return res.status(403).json({ ResultCode: 1, ResultDesc: 'Forbidden' });
-            }
+        if (!process.env.MPESA_CALLBACK_TOKEN) {
+            console.error('M-Pesa callback rejected: MPESA_CALLBACK_TOKEN not configured.');
+            return res.status(503).json({ ResultCode: 1, ResultDesc: 'Callback not configured' });
+        }
+        if (!callbackSecretValid(req, 'MPESA_CALLBACK_TOKEN')) {
+            return res.status(403).json({ ResultCode: 1, ResultDesc: 'Forbidden' });
         }
 
         const cb = mpesa.decodeStkCallback(req.body);

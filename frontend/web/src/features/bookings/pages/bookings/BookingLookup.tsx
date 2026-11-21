@@ -1,40 +1,37 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getBookingProgressPath } from '@/lib/marketing/booking/bookingRoutes';
+import { apiPost } from '@/lib/httpClient';
 import { toast } from '@/lib/marketing/toast';
 
 import '@/styles/marketing/bookings/bookings.css';
 
 /**
- * Guest lookup form. The customer enters a public reference (and optionally
- * the email they booked with). On success we route to the progress page; the
- * backend will issue the tracking token implicitly for matches, and the
- * redirect there carries it.
+ * Guest lookup form. Customers enter their reference and booked email; we send
+ * a short-lived signed tracking link to that address. The reference and email
+ * never grant access by themselves.
  */
 const BookingLookup = () => {
-    const navigate = useNavigate();
     const [reference, setReference] = useState('');
     const [email, setEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [sent, setSent] = useState(false);
     const [error, setError] = useState(null);
 
     const submit = async (e) => {
         e.preventDefault();
-        if (!reference.trim()) return;
+        const ref = reference.trim().toUpperCase();
+        const addr = email.trim();
+        if (!ref || !addr) return;
         setSubmitting(true);
         setError(null);
-        const ref = reference.trim().toUpperCase();
-        // We verify the reference server-side; a quick client-side probe keeps
-        // the flow snappy and surfaces obvious typos before navigation.
-        const query = new URLSearchParams();
-        if (email.trim()) query.set('email', email.trim());
+        setSent(false);
         try {
-            // Navigate to progress; the page itself enforces token/email access.
-            navigate(`${getBookingProgressPath(ref)}?${query.toString()}`);
+            await apiPost(`/bookings/reference/${encodeURIComponent(ref)}/access/request`, { email: addr });
+            setSent(true);
         } catch {
-            setError('Could not open that booking.');
-            toast.error('Could not open that booking.');
+            const message = 'Could not send the tracking link. Check the reference and email.';
+            setError(message);
+            toast.error(message);
         } finally {
             setSubmitting(false);
         }
@@ -45,7 +42,7 @@ const BookingLookup = () => {
             <div className="bookings-container booking-lookup-inner">
                 <header className="booking-lookup-header">
                     <h1>Track a Booking</h1>
-                    <p>Enter your booking reference (e.g. ANG-2026-00481) to see its live progress.</p>
+                    <p>Enter your booking reference and the email you booked with. We’ll email you a private link that opens the live progress page.</p>
                 </header>
 
                 <form className="booking-lookup-form glass-card" onSubmit={submit}>
@@ -55,22 +52,24 @@ const BookingLookup = () => {
                             type="text"
                             value={reference}
                             onChange={(e) => setReference(e.target.value)}
-                            placeholder="ANG-2026-00481"
+                            placeholder="ANG-2026-A1B2C3D4"
                             required
                         />
                     </label>
                     <label className="booking-lookup-field">
-                        <span>Email (optional, helps verify)</span>
+                        <span>Email used for the booking</span>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@example.com"
+                            required
                         />
                     </label>
                     {error && <p className="booking-lookup-error">{error}</p>}
+                    {sent && <p className="booking-lookup-success">If the details match, a secure tracking link is on its way.</p>}
                     <button type="submit" className="btn btn-primary" disabled={submitting}>
-                        {submitting ? 'Opening…' : 'Track Booking'}
+                        {submitting ? 'Sending…' : 'Email me a secure link'}
                     </button>
                 </form>
             </div>

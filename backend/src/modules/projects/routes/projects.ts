@@ -21,6 +21,22 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial();
 
+const projectActivitySchema = z.object({
+  type: z.enum([
+    'PROJECT_CREATED', 'STATUS_CHANGED', 'PROGRESS_UPDATED',
+    'MILESTONE_CREATED', 'MILESTONE_UPDATED', 'COMMENT_ADDED',
+    'FILE_UPLOADED', 'DELIVERABLE_ADDED', 'DELIVERABLE_ACCEPTED',
+  ]).default('PROGRESS_UPDATED'),
+  message: z.string().max(5000).default(''),
+  meta: z.record(z.string(), z.unknown()).nullable().default(null),
+  visibleToClient: z.boolean().default(true),
+}).strict();
+
+const teamAssignmentSchema = z.object({
+  employeeId: z.string().min(1),
+  role: z.enum(['MEMBER', 'LEAD', 'DEVELOPER', 'DESIGNER', 'REVIEWER']).default('MEMBER'),
+}).strict();
+
 export default function projectsRouter(prisma: Db = db) {
     const router = Router();
 
@@ -37,7 +53,7 @@ export default function projectsRouter(prisma: Db = db) {
             });
             res.json(projects);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -88,7 +104,7 @@ export default function projectsRouter(prisma: Db = db) {
             if (!project) return res.status(404).json({ error: 'Not found' });
             res.json(project);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -102,7 +118,7 @@ export default function projectsRouter(prisma: Db = db) {
             }, req.user);
             res.status(201).json(created);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -129,7 +145,7 @@ export default function projectsRouter(prisma: Db = db) {
             const updated = await projectsController.update(req.params.id, parsed.data, req.user);
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -146,12 +162,14 @@ export default function projectsRouter(prisma: Db = db) {
             await projectsController.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
     // ── Project activity (progress) ──
     router.post('/:id/activity', requireAuth, requirePermission('projects.add_progress'), async (req: AuthRequest, res) => {
+        const parsed = projectActivitySchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
         const member = await prisma.orm.public.ProjectEmployee
             .where({ projectId: req.params.id, employeeId: req.user!.sub })
             .first();
@@ -164,10 +182,10 @@ export default function projectsRouter(prisma: Db = db) {
             id: newId(),
             portfolioProjectId: req.params.id,
             actorId: req.user?.sub ?? null,
-            _type: ((req.body.type as any) || 'PROGRESS_UPDATED') as any,
-            message: req.body.message ?? '',
-            meta: req.body.meta ?? null,
-            visibleToClient: req.body.visibleToClient ?? true
+            _type: parsed.data.type as any,
+            message: parsed.data.message,
+            meta: parsed.data.meta as any,
+            visibleToClient: parsed.data.visibleToClient,
         });
         const { _type, ...rest } = activity as any;
         res.status(201).json({ ...rest, type: _type });
@@ -175,18 +193,21 @@ export default function projectsRouter(prisma: Db = db) {
 
     // ── Team assignment (admin / lead) ──
     router.post('/:id/team', requireAuth, requirePermission('projects.assign_team'), async (req: AuthRequest, res) => {
+        const parsed = teamAssignmentSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+        const { employeeId, role } = parsed.data;
         const assignment = await prisma.transaction(async (tx) => {
             const existing = await tx.orm.public.ProjectEmployee
-                .where({ projectId: req.params.id, employeeId: req.body.employeeId })
+                .where({ projectId: req.params.id, employeeId })
                 .first();
             if (existing) {
-                return tx.orm.public.ProjectEmployee.where({ id: existing.id }).update({ role: req.body.role ?? 'MEMBER' });
+                return tx.orm.public.ProjectEmployee.where({ id: existing.id }).update({ role });
             }
             return tx.orm.public.ProjectEmployee.create({
                 id: newId(),
                 projectId: req.params.id,
-                employeeId: req.body.employeeId,
-                role: req.body.role ?? 'MEMBER'
+                employeeId,
+                role,
             });
         });
         res.status(201).json(assignment);

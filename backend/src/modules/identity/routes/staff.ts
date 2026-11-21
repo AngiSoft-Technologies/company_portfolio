@@ -45,7 +45,7 @@ export default function staffRouter(prisma: Db) {
                 .all();
             res.json(staff);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -129,7 +129,7 @@ export default function staffRouter(prisma: Db) {
 
             res.json({ ...staffPublic, posts: blogPosts, services, projects, documents, portfolioStudio: studio ?? null });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

@@ -21,6 +21,13 @@ export interface CacheAdapter {
 
 const CACHE_PREFIX = 'cache:';
 
+function isCacheEntry(value: unknown): value is CacheEntry {
+    return Boolean(value)
+        && typeof value === 'object'
+        && Number.isInteger((value as CacheEntry).status)
+        && 'body' in (value as CacheEntry);
+}
+
 // ─── In-memory fallback ─────────────────────────────────────────────────────
 
 class InMemoryCache implements CacheAdapter {
@@ -64,7 +71,10 @@ class RedisCache implements CacheAdapter {
         const raw = await this.client.get(key);
         if (!raw) return undefined;
         try {
-            return JSON.parse(raw) as CacheEntry;
+            const parsed: unknown = JSON.parse(raw);
+            if (isCacheEntry(parsed)) return parsed;
+            await this.client.del(key).catch(() => {});
+            return undefined;
         } catch {
             await this.client.del(key).catch(() => {});
             return undefined;

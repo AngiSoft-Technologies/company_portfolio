@@ -61,7 +61,7 @@ export default function siteRouter(prisma: Db) {
             try {
                 res.json(await getSetting(section.key));
             } catch (err: any) {
-                res.status(500).json({ error: err.message });
+                res.status(500).json({ error: 'Server error' });
             }
         });
 
@@ -70,7 +70,7 @@ export default function siteRouter(prisma: Db) {
                 const result = await upsertSetting(section.key, req.body, req);
                 res.json((result as any).value);
             } catch (err: any) {
-                res.status(500).json({ error: err.message });
+                res.status(500).json({ error: 'Server error' });
             }
         });
     }
@@ -82,7 +82,7 @@ export default function siteRouter(prisma: Db) {
             );
             res.json(Object.fromEntries(entries));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

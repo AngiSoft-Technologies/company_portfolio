@@ -103,7 +103,7 @@ export default function payrollRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -126,7 +126,7 @@ export default function payrollRouter(prisma: Db = db) {
             const names = await employeeNames(prisma, rows.map((r: any) => r.employeeId));
             res.json(rows.map((r: any) => ({ ...r, employee: names.get(r.employeeId) ?? null })));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -445,7 +445,7 @@ ${dedRows}
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -496,7 +496,7 @@ ${dedRows}
                 payslips: payslips.map((p: any) => ({ ...p, employee: names.get(p.employeeId) ?? null })),
             });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -580,7 +580,7 @@ ${dedRows}
             const names = await employeeNames(prisma, rows.map((r: any) => r.employeeId));
             res.json(rows.map((r: any) => ({ ...r, employee: names.get(r.employeeId) ?? null })));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

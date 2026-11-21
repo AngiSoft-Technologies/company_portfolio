@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useMemo } from 'react';
 import { renderContent, parseArticleBlocks, renderTextBlock } from '@/lib/marketing/blog/blogContent';
-import { toEmbedSrc } from './mediaEmbedHelpers';
+import { toEmbedSrc, toSafeHttpUrl } from './mediaEmbedHelpers';
 import { VisualState } from '@angisoft/ui';
 
 // Renders blog content after sanitizing. Supports HTML, markdown and plain
@@ -69,8 +69,8 @@ const BlogArticleContent = React.forwardRef(function BlogArticleContent({ post }
           );
         }
         if (block.kind === 'audio') {
-          const url = block.raw.trim();
-          if (!/^https?:\/\//i.test(url)) return null;
+          const url = toSafeHttpUrl(block.raw);
+          if (!url) return null;
           return (
             <figure key={`a-${i}`} className="blog-inline-media blog-inline-media--audio">
               <audio controls preload="metadata" src={url}>
@@ -80,12 +80,13 @@ const BlogArticleContent = React.forwardRef(function BlogArticleContent({ post }
           );
         }
         if (block.kind === 'link') {
-          const [url, ...rest] = block.raw.split('\n');
-          const label = rest.join(' ').trim() || url.trim();
-          if (!/^https?:\/\//i.test(url.trim())) return null;
+          const [rawUrl, ...rest] = block.raw.split('\n');
+          const url = toSafeHttpUrl(rawUrl);
+          if (!url) return null;
+          const label = rest.join(' ').trim() || rawUrl.trim();
           return (
             <figure key={`l-${i}`} className="blog-inline-media blog-inline-media--link">
-              <a href={url.trim()} target="_blank" rel="noopener noreferrer">
+              <a href={url} target="_blank" rel="noopener noreferrer">
                 <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
                 <span>{label.trim()}</span>
               </a>

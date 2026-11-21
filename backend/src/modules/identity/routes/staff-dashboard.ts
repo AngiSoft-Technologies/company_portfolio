@@ -185,7 +185,7 @@ export default function staffDashboardRouter(prisma: Db) {
             const assignmentCounts = await loadAssignmentCounts(employeeId);
             res.json({ permissions, isSuperAdmin, assignmentCounts });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -235,7 +235,7 @@ export default function staffDashboardRouter(prisma: Db) {
                     },
             });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -248,7 +248,7 @@ export default function staffDashboardRouter(prisma: Db) {
             if (!employee) return res.status(404).json({ error: 'Employee not found' });
             res.json(employee);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -347,7 +347,7 @@ export default function staffDashboardRouter(prisma: Db) {
 
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -373,7 +373,7 @@ export default function staffDashboardRouter(prisma: Db) {
 
             res.json({ file: fileRecord, url: file.path });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -385,7 +385,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 .all();
             res.json(documents);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -414,7 +414,7 @@ export default function staffDashboardRouter(prisma: Db) {
 
             res.json({ file: fileRecord, url: file.path });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -438,7 +438,7 @@ export default function staffDashboardRouter(prisma: Db) {
             });
             res.json(file);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -452,7 +452,7 @@ export default function staffDashboardRouter(prisma: Db) {
             await prisma.orm.public.File.where({ id: existing.id }).delete();
             res.status(204).send();
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -464,7 +464,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 .all();
             res.json(services);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -476,7 +476,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 .all();
             res.json(projects);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -488,7 +488,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 .all();
             res.json(posts);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -504,7 +504,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 .all();
             res.json(bookings);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

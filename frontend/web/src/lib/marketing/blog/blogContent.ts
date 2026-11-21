@@ -32,29 +32,66 @@ export const detectContentType = (content) => {
 
 const SANITIZE_CONFIG = {
   USE_PROFILES: { html: true },
-  ADD_ATTR: ['target'],
+  ADD_ATTR: ['target', 'rel'],
+};
+
+// Only these protocols may survive on an <a href>. Relative URLs resolve to
+// the current origin (https in production), so they are allowed implicitly.
+const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+
+const linkBase = () =>
+  typeof window !== 'undefined' && window.location?.href
+    ? window.location.href
+    : 'https://invalid.example/';
+
+// Keep the flag on the DOMPurify instance so HMR module reloads cannot stack
+// duplicate hooks.
+const LINK_HOOK_FLAG = Symbol.for('angisoft.blogContent.safeLinksHook');
+
+// Runs *after* DOMPurify has stripped unsafe markup. It normalises every link:
+// unsafe protocols lose their href, and every remaining link gets
+// rel="noopener noreferrer" so target="_blank" cannot expose window.opener.
+const enforceSafeLinks = (node) => {
+  if (!node || node.nodeType !== 1 || node.nodeName?.toUpperCase() !== 'A') return;
+  if (typeof node.getAttribute !== 'function' || typeof node.setAttribute !== 'function') return;
+
+  const href = node.getAttribute('href');
+  if (href !== null) {
+    let safe = false;
+    try {
+      const parsed = new URL(href.trim(), linkBase());
+      safe = SAFE_LINK_PROTOCOLS.has(parsed.protocol);
+    } catch {
+      safe = false;
+    }
+    if (!safe) node.removeAttribute('href');
+  }
+
+  const rel = (node.getAttribute('rel') || '')
+    .split(/\s+/)
+    .filter((token) => token && token !== 'noopener' && token !== 'noreferrer');
+  rel.push('noopener', 'noreferrer');
+  node.setAttribute('rel', rel.join(' '));
+};
+
+const ensureLinkHook = () => {
+  if (!DOMPurify || typeof DOMPurify.addHook !== 'function' || DOMPurify[LINK_HOOK_FLAG]) return;
+  DOMPurify.addHook('afterSanitizeAttributes', enforceSafeLinks);
+  DOMPurify[LINK_HOOK_FLAG] = true;
 };
 
 export const sanitizeHtml = (html) => {
-  if (!html) return '';
+  if (!html || typeof html !== 'string') return '';
+  // Fail closed: no DOM / no usable DOMPurify means we emit nothing rather
+  // than trusting a hand-rolled regex stripper.
+  if (!DOMPurify || typeof DOMPurify.sanitize !== 'function' || DOMPurify.isSupported === false) return '';
   try {
+    ensureLinkHook();
     return DOMPurify.sanitize(html, SANITIZE_CONFIG);
   } catch {
-    // DOMPurify needs a DOM; in an edge/test context fall back to a bare strip.
-    return stripUnsafe(html);
+    return '';
   }
 };
-
-// Minimal offline-safe strip used only if DOMPurify is unavailable.
-function stripUnsafe(html) {
-  return String(html)
-    .replace(/<\s*(script|iframe|object|embed|style|link)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
-    .replace(/<\s*(script|iframe|object|embed|style|link)[^>]*\/?>/gi, '')
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
-    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
-    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"');
-}
 
 // Returns a sanitized HTML string suitable for dangerouslySetInnerHTML.
 export const renderContent = (content) => {

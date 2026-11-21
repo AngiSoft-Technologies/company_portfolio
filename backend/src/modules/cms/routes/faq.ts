@@ -25,7 +25,7 @@ export default function faqRouter(prisma: Db) {
                 .all();
             res.json(faqs);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -37,7 +37,7 @@ export default function faqRouter(prisma: Db) {
                 .all();
             res.json(faqs);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -58,7 +58,7 @@ export default function faqRouter(prisma: Db) {
             });
             res.status(201).json(faq);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

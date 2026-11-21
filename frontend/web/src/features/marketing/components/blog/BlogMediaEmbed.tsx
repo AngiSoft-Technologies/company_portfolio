@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import { getContentType, supportsTranscript, formatVisibilityUntil } from '@/lib/marketing/blog/blogTypes';
-import { toEmbedSrc, isExternalMedia } from './mediaEmbedHelpers';
+import { toEmbedSrc, toSafeHttpUrl } from './mediaEmbedHelpers';
 
 // Renders the type-specific media block above (or instead of) the body text.
 const BlogMediaEmbed = ({ post }) => {
@@ -11,6 +11,7 @@ const BlogMediaEmbed = ({ post }) => {
   const transcript = post?.transcript;
 
   const embedSrc = useMemo(() => toEmbedSrc(mediaUrl), [mediaUrl]);
+  const safeMediaUrl = useMemo(() => toSafeHttpUrl(mediaUrl), [mediaUrl]);
 
   if (type.id === 'video' && embedSrc) {
     return (
@@ -34,11 +35,11 @@ const BlogMediaEmbed = ({ post }) => {
     );
   }
 
-  if (type.id === 'audio' && isExternalMedia(mediaUrl)) {
+  if (type.id === 'audio' && safeMediaUrl) {
     return (
       <figure className="blog-media blog-media--audio">
         <div className="blog-media__player">
-          <audio controls preload="metadata" src={mediaUrl}>
+          <audio controls preload="metadata" src={safeMediaUrl}>
             Your browser does not support the audio element.
           </audio>
         </div>
@@ -58,7 +59,7 @@ const BlogMediaEmbed = ({ post }) => {
   }
 
   if (type.id === 'document') {
-    const docSrc = isExternalMedia(mediaUrl) ? mediaUrl : resolveAssetUrl(mediaUrl);
+    const docSrc = safeMediaUrl || resolveAssetUrl(mediaUrl);
     return (
       <figure className="blog-media blog-media--document">
         <a className="blog-media__doc-link" href={docSrc} target="_blank" rel="noopener noreferrer">
@@ -96,7 +97,7 @@ const BlogMediaEmbed = ({ post }) => {
   }
 
   if (type.id === 'job') {
-    const applyUrl = isExternalMedia(mediaUrl) ? mediaUrl : null;
+    const applyUrl = safeMediaUrl;
     return (
       <figure className="blog-media blog-media--job">
         <a

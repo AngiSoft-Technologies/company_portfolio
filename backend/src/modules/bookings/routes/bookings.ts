@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import multer from 'multer';
@@ -12,9 +13,26 @@ import { logBookingEvent, BOOKING_EVENT_TYPES, EVENT_VISIBILITY } from '../../..
 import { toMoney } from '../../billing/utils/money';
 import { createNotification } from '../../notifications/services/notifications';
 import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
+import { sendMail } from '../../../shared/services/email';
+import { signBookingAccessToken, verifyBookingAccessToken } from '../../identity/utils/token';
 // stripe types may not be available until dependency is installed; keep runtime require below
 
-const upload = multer({ dest: 'uploads/' });
+const BOOKING_UPLOAD_MIME_TYPES = new Set([
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+const upload = multer({
+    dest: 'uploads/',
+    limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+    fileFilter: (_req, file, cb) => {
+        if (BOOKING_UPLOAD_MIME_TYPES.has(file.mimetype)) cb(null, true);
+        else cb(new Error('Unsupported file type'));
+    },
+});
+const bookingUpload = (req: any, res: any, next: any) =>
+    upload.array('files', 5)(req, res, (err: any) =>
+        err ? res.status(400).json({ error: 'Upload failed' }) : next());
 
 const stripeSecret = process.env.STRIPE_SECRET || '';
 let stripe: any = null;
@@ -36,6 +54,85 @@ export const SOURCE_VALUES = [
     'custom-cta',
     'repeat-booking',
 ] as const;
+
+const PROJECT_TYPES = [
+    'SOFTWARE', 'DATA_ANALYSIS', 'CYBER_SERVICE', 'ADVERTISING',
+    'INTERNET_SERVICE', 'ENTERTAINMENT', 'RESUME', 'DOCUMENT_EDIT',
+    'REPORT', 'OTHER',
+] as const;
+
+const optionalMoney = z.preprocess(
+    (value) => value === '' || value === null || value === undefined ? undefined : Number(value),
+    z.number().finite().nonnegative().optional(),
+);
+const optionalBoolean = z.preprocess(
+    (value) => value === true || value === 'true' || value === '1' ? true
+        : value === false || value === 'false' || value === '0' ? false : undefined,
+    z.boolean().optional(),
+);
+const optionalDate = z.preprocess(
+    (value) => value === '' || value === null || value === undefined ? undefined : value,
+    z.string().max(50).refine((value) => !Number.isNaN(Date.parse(value)), 'Invalid date').optional(),
+);
+
+/** Allowlist for public booking submission. Unknown fields are stripped, never persisted. */
+const publicBookingSchema = z.object({
+    name: z.string().max(200).optional().default(''),
+    email: z.string().email().max(254),
+    phone: z.string().max(50).optional().default(''),
+    title: z.string().min(1).max(300),
+    description: z.string().max(20000).optional().default(''),
+    projectType: z.string().max(50).optional(),
+    details: z.unknown().optional(),
+    depositRequired: optionalBoolean,
+    depositAmount: optionalMoney,
+    currency: z.string().min(3).max(3).optional().default('KES'),
+    source: z.enum(SOURCE_VALUES).optional().default('direct'),
+    sourcePath: z.string().max(500).optional(),
+    referrerEntityType: z.string().max(50).optional(),
+    referrerEntityId: z.string().max(100).optional(),
+    serviceSlug: z.string().max(200).optional(),
+    serviceTitle: z.string().max(300).optional(),
+    packageSlug: z.string().max(200).optional(),
+    packageTitle: z.string().max(300).optional(),
+    productSlug: z.string().max(200).optional(),
+    productTitle: z.string().max(300).optional(),
+    requestEntityType: z.string().max(50).optional(),
+    requestEntityId: z.string().max(100).optional(),
+    requestEntitySlug: z.string().max(200).optional(),
+    requestType: z.string().max(100).optional(),
+    desiredOutcome: z.string().max(5000).optional(),
+    preferredTimeline: z.string().max(200).optional(),
+    preferredDate: optionalDate,
+    budgetAmount: optionalMoney,
+    quotedAmount: optionalMoney,
+    quotedCurrency: z.string().min(3).max(3).optional(),
+    pricingType: z.string().max(50).optional(),
+}).strip();
+
+const customerMessageSchema = z.object({
+    message: z.string().min(1).max(5000),
+}).strict();
+
+const customerActionSchema = z.object({
+    action: z.string().min(1).max(60),
+}).passthrough();
+
+const reviewSchema = z.object({
+    action: z.enum(['accept', 'reject']),
+    priceEstimate: optionalMoney,
+    assignedToId: z.string().max(100).optional(),
+    notes: z.string().max(5000).optional(),
+}).strict();
+
+const adminEventSchema = z.object({
+    type: z.enum(Object.values(BOOKING_EVENT_TYPES) as [string, ...string[]]),
+    title: z.string().min(1).max(300),
+    description: z.string().max(5000).optional(),
+    stage: z.string().max(60).optional(),
+    visibility: z.enum([EVENT_VISIBILITY.CUSTOMER, EVENT_VISIBILITY.STAFF, EVENT_VISIBILITY.INTERNAL])
+        .default(EVENT_VISIBILITY.STAFF),
+}).strict();
 
 // ─── Stage machine ────────────────────────────────────────────
 // Machine stage values mirror the frontend's canonical workflow order.
@@ -141,12 +238,14 @@ const withEvents = (booking: any) => {
 };
 
 function serializeBooking(booking: any, opts: SerializeOpts = {}) {
-    const base = withEvents(booking);
+    const { trackingToken, ...withoutTrackingToken } = booking ?? {};
+    const base = withEvents(withoutTrackingToken);
     const events = (base.events ?? []).filter((e: any) =>
         opts.includeInternal ? true : e.visibility === EVENT_VISIBILITY.CUSTOMER
     );
     return {
         ...base,
+        ...(opts.includeInternal ? { trackingToken } : {}),
         events,
         availableActions: availableActions(booking.currentStage),
         stageProgress: {
@@ -156,12 +255,54 @@ function serializeBooking(booking: any, opts: SerializeOpts = {}) {
     };
 }
 
-// Resolve a booking for a customer by public reference + token (guest) or email
-// (authenticated/known). Never leak existence on bad token.
+const MAX_BOOKING_DETAILS_BYTES = 32 * 1024;
+const MAX_BOOKING_DETAILS_DEPTH = 6;
+const MAX_BOOKING_DETAILS_NODES = 500;
+const UNSAFE_JSON_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * Bounded JSON deserialization for the public booking form. Accepts a JSON
+ * string or an already-parsed object, rejects prototype-pollution keys and
+ * caps depth/size so malformed input cannot turn into a 500 or persist junk.
+ */
+function parseBookingDetails(raw: unknown): Record<string, unknown> | null {
+    if (raw === undefined || raw === null || raw === '') return null;
+    let value: unknown = raw;
+    if (typeof raw === 'string') {
+        if (Buffer.byteLength(raw, 'utf8') > MAX_BOOKING_DETAILS_BYTES) {
+            throw new Error('Booking details are too large');
+        }
+        value = JSON.parse(raw);
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Booking details must be a JSON object');
+    }
+    let nodes = 0;
+    const walk = (node: unknown, depth: number): void => {
+        if (depth > MAX_BOOKING_DETAILS_DEPTH) throw new Error('Booking details are too deeply nested');
+        if (++nodes > MAX_BOOKING_DETAILS_NODES) throw new Error('Booking details contain too many fields');
+        if (Array.isArray(node)) {
+            node.forEach((item) => walk(item, depth + 1));
+            return;
+        }
+        if (node && typeof node === 'object') {
+            for (const [key, child] of Object.entries(node)) {
+                if (UNSAFE_JSON_KEYS.has(key)) throw new Error('Unsafe booking details key');
+                walk(child, depth + 1);
+            }
+        }
+    };
+    walk(value, 0);
+    return value as Record<string, unknown>;
+}
+
+// Resolve a booking for a customer by public reference + short-lived access
+// token. Email alone is never proof of control. Never leak existence on bad
+// token.
 async function fetchBookingForCustomer(
     prisma: Db,
     publicReference: string,
-    auth: { token?: string; email?: string }
+    auth: { token?: string }
 ) {
     const booking = await prisma.orm.public.Booking
         .where({ publicReference })
@@ -183,9 +324,12 @@ async function fetchBookingForCustomer(
     const normalized = booking as any;
     normalized.clientProject = normalized.clientProject?.[0] ?? null;
 
-    const tokenOk = auth.token && booking.trackingToken === auth.token;
-    const emailOk = auth.email && (booking as any).client.email.toLowerCase() === auth.email.toLowerCase();
-    if (!tokenOk && !emailOk) return null;
+    const rawTokenOk = Boolean(auth.token && booking.trackingToken === auth.token);
+    const signed = auth.token ? verifyBookingAccessToken(auth.token) : null;
+    const signedTokenOk = Boolean(signed
+        && signed.bookingId === booking.id
+        && signed.publicReference === publicReference);
+    if (!rawTokenOk && !signedTokenOk) return null;
     return booking;
 }
 
@@ -207,23 +351,33 @@ export default function bookingsRouter(prisma: Db) {
 
     // POST /api/bookings - create booking (workflow-seeded) with optional files
     // and optionally create a Stripe PaymentIntent for deposit.
-    router.post('/', publicFormLimiter, upload.array('files', 5), async (req, res) => {
+    router.post('/', publicFormLimiter, bookingUpload, async (req, res) => {
         try {
+            const parsed = publicBookingSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Validation failed' });
+            const b = parsed.data;
+            const email = b.email.trim().toLowerCase();
+            const safeSource = b.source;
+            const safeProjectType = PROJECT_TYPES.includes(b.projectType as any)
+                ? b.projectType : 'OTHER';
+            const currency = b.currency?.trim().toUpperCase() || 'KES';
+            const depositAmount = b.depositAmount;
+            const budgetMoney = b.budgetAmount != null ? toMoney(b.budgetAmount) : undefined;
+            const quoteMoney = b.quotedAmount != null ? toMoney(b.quotedAmount) : undefined;
             const {
-                name, email, phone, title, description, projectType, details,
-                depositRequired, depositAmount, currency,
-                // workflow fields
-                source, sourcePath, referrerEntityType, referrerEntityId,
+                name, phone, title, description, sourcePath,
+                referrerEntityType, referrerEntityId,
                 serviceSlug, serviceTitle, packageSlug, packageTitle,
                 productSlug, productTitle, requestEntityType, requestEntityId,
                 requestEntitySlug, requestType, desiredOutcome, preferredTimeline,
-                preferredDate, budgetAmount, quotedAmount, quotedCurrency, pricingType,
-            } = req.body;
-            if (!email || !title) return res.status(400).json({ error: 'Email and title required' });
-
-            const safeSource = SOURCE_VALUES.includes(source) ? source : 'direct';
-            const budgetMoney = budgetAmount != null ? toMoney(budgetAmount) : undefined;
-            const quoteMoney = quotedAmount != null ? toMoney(quotedAmount) : undefined;
+                preferredDate, quotedCurrency, pricingType,
+            } = b;
+            let safeDetails: Record<string, unknown> | null;
+            try {
+                safeDetails = parseBookingDetails(b.details);
+            } catch {
+                return res.status(400).json({ error: 'Invalid booking details' });
+            }
 
             // upsert client
             let client = await prisma.orm.public.Client.where({ email }).first();
@@ -249,8 +403,8 @@ export default function bookingsRouter(prisma: Db) {
                     clientId: client!.id,
                     title,
                     description: description || '',
-                    projectType: (projectType || 'OTHER') as any,
-                    details: details ? JSON.parse(details) : null,
+                    projectType: safeProjectType as any,
+                    details: safeDetails as any,
                     status: 'SUBMITTED',
                     // workflow enrichment
                     publicReference,
@@ -311,7 +465,7 @@ export default function bookingsRouter(prisma: Db) {
             });
 
             // If deposit requested, create Stripe PaymentIntent + Payment record.
-            if (depositRequired && depositAmount) {
+            if (b.depositRequired && depositAmount) {
                 const amount = Math.round(Number(depositAmount) * 100);
                 const curr = currency || 'KES';
                 if (!stripe) return res.status(500).json({ error: 'Payment provider not configured' });
@@ -369,7 +523,38 @@ export default function bookingsRouter(prisma: Db) {
             });
         } catch (err: any) {
             console.error(err);
-            res.status(500).json({ error: 'Server error', details: err.message });
+            res.status(500).json({ error: 'Server error' });
+        }
+    });
+
+    // Send a short-lived signed access link to the email on the booking.
+    // Always returns the same response so references cannot be enumerated.
+    router.post('/reference/:publicReference/access/request', publicFormLimiter, async (req, res) => {
+        const parsed = z.object({ email: z.string().email() }).strict().safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'Valid email required' });
+        try {
+            const email = parsed.data.email.trim().toLowerCase();
+            const booking = await prisma.orm.public.Booking
+                .where({ publicReference: req.params.publicReference })
+                .include('client', (c) => c.select('id', 'email'))
+                .first();
+            const clientEmail = (booking as any)?.client?.email?.toLowerCase?.();
+            if (booking && clientEmail === email) {
+                const token = signBookingAccessToken(booking.id, booking.publicReference);
+                const link = `${process.env.FRONTEND_URL || ''}/bookings/${encodeURIComponent(booking.publicReference)}?token=${encodeURIComponent(token)}`;
+                await sendMail({
+                    to: email,
+                    subject: 'Your secure AngiSoft booking tracking link',
+                    html: `<p>Use this private link to view and manage booking ${booking.publicReference}. It expires in 30 minutes.</p><p><a href="${link}">Open booking</a></p><p>If you did not request this, ignore the email.</p>`,
+                    text: `Your secure booking link: ${link}`,
+                    purpose: 'noreply',
+                });
+                await logAudit({ action: 'booking_access_link', entity: 'Booking', entityId: booking.id });
+            }
+            res.json({ ok: true });
+        } catch (err: any) {
+            console.error(err);
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -377,54 +562,29 @@ export default function bookingsRouter(prisma: Db) {
     router.get('/reference/:publicReference', async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             res.json(serializeBooking(booking));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
-    // GET /api/bookings/my - list bookings for a client by email (history)
-    router.get('/my', async (req, res) => {
-        try {
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : '';
-            if (!email) return res.status(401).json({ error: 'Email verification required' });
-            const rows = await prisma.orm.public.Booking
-                .where((b) => b.client.some((c) => c.email.eq(email)))
-                .orderBy((b) => b.createdAt.desc())
-                .select('id', 'publicReference', 'title', 'serviceTitle', 'productTitle', 'status', 'currentStage', 'source', 'createdAt', 'updatedAt', 'submittedAt')
-                .include('bookingEvents', (e) => e
-                    .orderBy((e2) => e2.createdAt.desc())
-                    .limit(1)
-                    .select('id', 'title', 'createdAt', '_type'))
-                .all();
-            res.json(rows.map((b: any) => {
-                const withE = withEvents(b);
-                return {
-                    ...withE,
-                    latestUpdate: withE.events[0] || null,
-                };
-            }));
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
+    // Email-only booking enumeration was removed. Customers use the signed
+    // tracking link from /reference/:publicReference/access/request instead.
 
     // GET /api/bookings/reference/:publicReference/events - customer-visible timeline
     router.get('/reference/:publicReference/events', async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             const events = ((booking as any).bookingEvents ?? [])
                 .map(serializeEvent)
                 .filter((e: any) => e.visibility === EVENT_VISIBILITY.CUSTOMER);
             res.json(events);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -432,11 +592,11 @@ export default function bookingsRouter(prisma: Db) {
     router.post('/reference/:publicReference/messages', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            const { message } = req.body;
-            if (!message) return res.status(400).json({ error: 'Message required' });
+            const parsed = customerMessageSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Invalid message' });
+            const { message } = parsed.data;
             await logBookingEvent(prisma as any, {
                 bookingId: booking.id,
                 type: BOOKING_EVENT_TYPES.CUSTOMER_REPLIED,
@@ -450,16 +610,15 @@ export default function bookingsRouter(prisma: Db) {
             } as any);
             res.status(201).json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
     // POST /api/bookings/reference/:publicReference/files - upload additional file
-    router.post('/reference/:publicReference/files', publicFormLimiter, upload.array('files', 5), async (req, res) => {
+    router.post('/reference/:publicReference/files', publicFormLimiter, bookingUpload, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             const files = req.files as Express.Multer.File[];
             if (!files || !files.length) return res.status(400).json({ error: 'No files provided' });
@@ -483,7 +642,7 @@ export default function bookingsRouter(prisma: Db) {
             }
             res.status(201).json({ files: created });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -491,10 +650,11 @@ export default function bookingsRouter(prisma: Db) {
     router.post('/reference/:publicReference/actions', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            const { action } = req.body;
+            const parsed = customerActionSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Invalid action' });
+            const { action } = parsed.data;
             const allowed = availableActions(booking.currentStage);
             if (!allowed.includes(action)) {
                 return res.status(400).json({ error: 'Action not permitted at this stage', allowed });
@@ -502,16 +662,15 @@ export default function bookingsRouter(prisma: Db) {
             const updated = await applyCustomerAction(prisma, booking, action, req.body);
             res.json(serializeBooking(updated));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
     // PATCH /api/bookings/reference/:publicReference/cancel - customer cancels (if allowed)
-    router.patch('/reference/:publicReference/cancel', async (req, res) => {
+    router.patch('/reference/:publicReference/cancel', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : undefined;
-            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token, email });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             if (!['request_submitted', 'requirements_review', 'clarification_needed', 'scope_and_quotation', 'awaiting_confirmation', 'scheduled', 'in_progress'].includes(booking.currentStage)) {
                 return res.status(409).json({ error: 'Booking cannot be cancelled at this stage' });
@@ -533,7 +692,7 @@ export default function bookingsRouter(prisma: Db) {
             });
             res.json(serializeBooking(updated));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -548,7 +707,7 @@ export default function bookingsRouter(prisma: Db) {
                 .all();
             res.json(bookings.map((b: any) => withEvents(b)));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -563,41 +722,19 @@ export default function bookingsRouter(prisma: Db) {
                 .all();
             res.json(bookings.map((b: any) => withEvents(b)));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
-    // GET /api/bookings/:id - legacy public lookup by internal id + email (kept for backward compatibility)
-    router.get('/:id', async (req, res) => {
-        try {
-            const email = typeof req.query.email === 'string' ? req.query.email.toLowerCase().trim() : '';
-            if (!email) return res.status(401).json({ error: 'Email verification required' });
-            const booking = await prisma.orm.public.Booking
-                .where({ id: req.params.id })
-                .include('client')
-                .include('files')
-                .include('payments', (p) => p
-                    .orderBy((p2) => p2.createdAt.desc())
-                    .select('id', 'status', 'amount', 'currency', 'createdAt'))
-                .include('bookingEvents', (e) => e.orderBy((e2) => e2.createdAt.asc()))
-                .include('assignedTo', (a) => a.select('id', 'firstName', 'lastName', 'publicTitle', 'avatarUrl'))
-                .include('clientProject', (cp) => cp.select('id', 'title', 'status', 'progress', 'updatedAt'))
-                .first();
-            if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            (booking as any).clientProject = (booking as any).clientProject?.[0] ?? null;
-            if ((booking as any).client.email.toLowerCase() !== email) {
-                return res.status(403).json({ error: 'Unauthorized' });
-            }
-            res.json(serializeBooking(booking));
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
+    // Legacy lookup by internal id + email was removed: internal ids are
+    // guessable and email is self-asserted. Use the signed reference link.
 
     // POST /api/bookings/:id/review - Admin review booking (accept/reject)
     router.post('/:id/review', requireAuth, requireAccess('bookings.update_assigned', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
-            const { action, priceEstimate, assignedToId, notes } = req.body;
+            const parsed = reviewSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Validation failed' });
+            const { action, priceEstimate, assignedToId, notes } = parsed.data;
             const booking = await prisma.orm.public.Booking.where({ id: req.params.id }).first();
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             if (!await canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
@@ -655,7 +792,7 @@ export default function bookingsRouter(prisma: Db) {
             (updated as any).clientProject = (updated as any).clientProject?.[0] ?? null;
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -693,7 +830,7 @@ export default function bookingsRouter(prisma: Db) {
             });
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -738,15 +875,16 @@ export default function bookingsRouter(prisma: Db) {
             }
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
     // POST /api/bookings/admin/:id/events - admin adds an event
     router.post('/admin/:id/events', requireAuth, requireAccess('bookings.add_progress', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
-            const { type, title, description, visibility, stage } = req.body;
-            if (!type || !title) return res.status(400).json({ error: 'type and title required' });
+            const parsed = adminEventSchema.safeParse(req.body);
+            if (!parsed.success) return res.status(400).json({ error: 'Validation failed' });
+            const { type, title, description, visibility, stage } = parsed.data;
             const booking = await prisma.orm.public.Booking.where({ id: req.params.id }).first();
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             if (!await canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
@@ -763,7 +901,7 @@ export default function bookingsRouter(prisma: Db) {
             } as any);
             res.status(201).json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

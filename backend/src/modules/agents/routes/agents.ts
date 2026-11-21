@@ -65,7 +65,7 @@ export default function agentsRouter(prisma: Db) {
                 workforce: await getWorkforceState(),
             });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -81,7 +81,7 @@ export default function agentsRouter(prisma: Db) {
                 .all();
             res.json({ runs });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -102,7 +102,7 @@ export default function agentsRouter(prisma: Db) {
                 .all();
             res.json({ agent: { ...agent, definition: agentDefinition(agent.key) ?? null, charter: agentCharter(agent.key) ?? null }, runs });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -120,7 +120,7 @@ export default function agentsRouter(prisma: Db) {
             const run = await runAgent(prisma, agent, 'manual', req.user?.sub, task);
             res.status(run.status === 'failed' ? 502 : 200).json({ run });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -142,7 +142,7 @@ export default function agentsRouter(prisma: Db) {
             const updated = await prisma.orm.public.Agent.where({ id: agent.id }).update(patch);
             res.json({ agent: updated });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

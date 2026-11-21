@@ -13,9 +13,8 @@ export default function healthRouter(prisma: Db) {
             const plan = prisma.raw.sql`SELECT version() AS version`
                 .returnsRow({ version: prisma.sql.public.AboutSection.columns.id })
                 .build();
-            const result = (await prisma.runtime().query(plan)) as any[];
+            await prisma.runtime().query(plan);
             const dbLatency = Date.now() - start;
-            const pgVersion = result[0]?.version ?? 'unknown';
 
             res.json({
                 status: 'healthy',
@@ -25,17 +24,13 @@ export default function healthRouter(prisma: Db) {
                 database: {
                     status: 'connected',
                     latencyMs: dbLatency,
-                    version: pgVersion,
-                    provider: (process.env.DATABASE_URL || '').includes('.neon.tech')
-                        ? 'neon-serverless'
-                        : 'postgres-direct',
                 },
             });
-        } catch (err: any) {
+        } catch {
             res.status(503).json({
                 status: 'unhealthy',
                 timestamp: new Date().toISOString(),
-                error: err.message,
+                error: 'Database unavailable',
                 database: {
                     status: 'disconnected',
                     latencyMs: Date.now() - start,
@@ -65,8 +60,8 @@ export default function healthRouter(prisma: Db) {
             const plan = prisma.raw.sql`SELECT 1`.affectedCount().build();
             await prisma.runtime().execute(plan);
             dbOk = true;
-        } catch (err: any) {
-            checks.databaseError = err.message;
+        } catch {
+            checks.databaseError = 'Database unavailable';
         }
         checks.database = dbOk;
 
@@ -90,8 +85,8 @@ export default function healthRouter(prisma: Db) {
                 } finally {
                     client.disconnect();
                 }
-            } catch (err: any) {
-                checks.redisError = err.message;
+            } catch {
+                checks.redisError = 'Redis unavailable';
             }
         }
         checks.redis = redisOk;

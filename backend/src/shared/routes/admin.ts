@@ -1,12 +1,24 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import type { Db } from '../../db';
 import { ts, newId } from '../../prisma/db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { logAudit } from '../services/audit';
-import multer from 'multer';
-import { generatePresignedPutUrl } from '../../modules/files/services/storage/s3';
 
-const upload = multer({ dest: 'uploads/' });
+const ASSIGNABLE_ROLES = [
+    'ADMIN', 'MANAGER', 'MARKETING', 'DEVELOPER', 'HR', 'STAFF',
+    'CONTENT_CREATOR', 'BLOG_MANAGER',
+] as const;
+
+const employeeUpdateSchema = z.object({
+    firstName: z.string().min(1).max(100).optional(),
+    lastName: z.string().min(1).max(100).optional(),
+    email: z.string().email().optional(),
+    phone: z.string().max(50).nullable().optional(),
+    role: z.enum(ASSIGNABLE_ROLES).optional(),
+    bio: z.string().max(2000).nullable().optional(),
+    avatarUrl: z.string().url().nullable().optional(),
+}).strip();
 
 export default function adminRouter(prisma: Db) {
     const router = Router();
@@ -16,7 +28,7 @@ export default function adminRouter(prisma: Db) {
 
     // Helper to check admin role
     const requireAdmin = (req: AuthRequest, res: any, next: any) => {
-        if (req.user?.role !== 'ADMIN') {
+        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
             return res.status(403).json({ error: 'Admin access required' });
         }
         next();
@@ -184,7 +196,7 @@ export default function adminRouter(prisma: Db) {
                 recentBookings
             });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -214,7 +226,7 @@ export default function adminRouter(prisma: Db) {
 
             res.json({ bookings, total, page: Number(page), limit: Number(limit) });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -231,7 +243,7 @@ export default function adminRouter(prisma: Db) {
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             res.json(booking);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -244,120 +256,65 @@ export default function adminRouter(prisma: Db) {
                 .all();
             res.json(employees);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
-    router.put('/employees/:id', requireAdmin, async (req, res) => {
+    router.put('/employees/:id', requireAdmin, async (req: AuthRequest, res) => {
+        const parsed = employeeUpdateSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+        }
         try {
-            const { firstName, lastName, email, phone, role, bio, avatarUrl } = req.body;
-            const updated = await prisma.orm.public.Employee.where({ id: req.params.id }).update({
-                firstName,
-                lastName,
-                email,
-                phone,
-                role: role as any,
-                bio,
-                avatarUrl,
-            });
+            const target = await prisma.orm.public.Employee.where({ id: req.params.id }).first();
+            if (!target) return res.status(404).json({ error: 'Employee not found' });
+            // Only SUPER_ADMIN may change roles, and never their own role (lockout risk).
+            if (parsed.data.role !== undefined) {
+                if (req.user?.role !== 'SUPER_ADMIN') {
+                    return res.status(403).json({ error: 'Only SUPER_ADMIN can change roles' });
+                }
+                if (req.params.id === req.user.sub) {
+                    return res.status(403).json({ error: 'Cannot change your own role' });
+                }
+            }
+            if ((target as any).role === 'SUPER_ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
+                return res.status(403).json({ error: 'Cannot modify a SUPER_ADMIN account' });
+            }
+
+            // Deny by default: only explicit, validated fields are written.
+            const patch: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(parsed.data)) {
+                if (value !== undefined) patch[key] = value;
+            }
+            const updated = await prisma.orm.public.Employee.where({ id: req.params.id }).update(patch as any);
             const employee = {
-                id: (updated as any)?.id,
-                firstName: (updated as any)?.firstName,
-                lastName: (updated as any)?.lastName,
-                email: (updated as any)?.email,
-                phone: (updated as any)?.phone,
-                role: (updated as any)?.role,
-                bio: (updated as any)?.bio,
-                avatarUrl: (updated as any)?.avatarUrl
+                id: (updated as any)?.id ?? target.id,
+                firstName: (updated as any)?.firstName ?? (target as any).firstName,
+                lastName: (updated as any)?.lastName ?? (target as any).lastName,
+                email: (updated as any)?.email ?? (target as any).email,
+                phone: (updated as any)?.phone ?? (target as any).phone,
+                role: (updated as any)?.role ?? (target as any).role,
+                bio: (updated as any)?.bio ?? (target as any).bio,
+                avatarUrl: (updated as any)?.avatarUrl ?? (target as any).avatarUrl,
             };
             await logAudit({
                 action: 'update_employee',
                 entity: 'Employee',
                 entityId: employee.id,
                 actorId: req.user?.sub || null,
-                actorRole: req.user?.role || null
+                actorRole: req.user?.role || null,
+                meta: { fields: Object.keys(patch) },
             });
             res.json(employee);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
-    // ========== FILE UPLOADS ==========
-    router.post('/upload', requireAdminOrStaff, upload.single('file'), async (req, res) => {
-        try {
-            const file = req.file;
-            if (!file) return res.status(400).json({ error: 'No file uploaded' });
-
-            // File validation
-            const maxSize = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxSize) {
-                return res.status(400).json({ error: 'File size exceeds 10MB limit' });
-            }
-
-            // Validate file type based on category
-            const { ownerType, ownerId, category } = req.body;
-            const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            const allowedDocTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-            if (category === 'avatar' || category === 'image' || category === 'logo') {
-                if (!allowedImageTypes.includes(file.mimetype)) {
-                    return res.status(400).json({ error: 'Invalid image type. Allowed: JPEG, PNG, GIF, WebP' });
-                }
-            }
-            if (category === 'cv' || category === 'document') {
-                if (!allowedDocTypes.includes(file.mimetype) && !allowedImageTypes.includes(file.mimetype)) {
-                    return res.status(400).json({ error: 'Invalid document type. Allowed: PDF, DOC, DOCX, or images' });
-                }
-            }
-
-            // For now, save to local uploads (in production, use S3/R2)
-            const fileRecord = await prisma.orm.public.File.create({
-                id: newId(),
-                ownerType: ownerType || 'general',
-                ownerId: ownerId || null,
-                filename: file.originalname,
-                url: file.path,
-                mime: file.mimetype,
-                size: file.size,
-                uploadedBy: req.user?.sub || null
-            });
-
-            res.json({ file: fileRecord, url: file.path });
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
-
-    router.post('/upload/sign', requireAdminOrStaff, async (req, res) => {
-        try {
-            const { key, contentType, category } = req.body;
-            const url = await generatePresignedPutUrl(key, contentType || 'application/octet-stream');
-            res.json({ url, key });
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
-
-    router.post('/upload/confirm', requireAdminOrStaff, async (req, res) => {
-        try {
-            const { key, filename, mime, size, ownerType, ownerId, category } = req.body;
-            const url = `${process.env.S3_PUBLIC_BASE_URL || ''}/${key}`.replace(/\\/g, '/');
-            const file = await prisma.orm.public.File.create({
-                id: newId(),
-                ownerType: ownerType || 'general',
-                ownerId: ownerId || null,
-                filename,
-                url,
-                mime: mime || 'application/octet-stream',
-                size: size || 0,
-                uploadedBy: req.user?.sub || null
-            });
-            res.json({ file });
-        } catch (err: any) {
-            res.status(500).json({ error: err.message });
-        }
-    });
+    // Uploads live only in /api/uploads/*, where keys, MIME types, owners and
+    // destinations are validated and authorized. The former /api/admin/upload/*
+    // routes (direct upload, sign, confirm) bypassed those controls and were
+    // removed.
 
     // ========== SETTINGS MANAGEMENT ==========
     router.get('/settings', requireAdmin, async (req, res) => {
@@ -369,7 +326,7 @@ export default function adminRouter(prisma: Db) {
             });
             res.json(settingsObj);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -393,7 +350,7 @@ export default function adminRouter(prisma: Db) {
             });
             res.json(setting);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -409,7 +366,7 @@ export default function adminRouter(prisma: Db) {
             });
             res.json(note);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

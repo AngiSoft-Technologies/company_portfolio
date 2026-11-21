@@ -55,7 +55,7 @@ export default function blogsRouter(prisma: Db = db) {
             const posts = await blogController.list({ where: { published: true } });
             res.json(posts);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -71,7 +71,7 @@ export default function blogsRouter(prisma: Db = db) {
 
             return res.status(404).json({ error: 'Not found' });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -87,7 +87,7 @@ export default function blogsRouter(prisma: Db = db) {
             }, req.user);
             res.status(201).json(created);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -111,7 +111,7 @@ export default function blogsRouter(prisma: Db = db) {
             }, req.user);
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -128,7 +128,7 @@ export default function blogsRouter(prisma: Db = db) {
             await blogController.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

@@ -315,7 +315,7 @@ router.get('/', async (_req, res) => {
             .all();
         res.json(files.filter(isPublicFile));
     } catch (err: any) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -325,7 +325,7 @@ router.get('/:id', async (req, res) => {
         if (!file || !isPublicFile(file)) return res.status(404).json({ error: 'File not found' });
         res.json(file);
     } catch (err: any) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

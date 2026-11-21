@@ -52,20 +52,69 @@ function resolveHsSecret(): string {
 
 const HS_SECRET: string = resolveHsSecret();
 
-export function signAccessToken(payload: object) {
+export type AccessTokenPayload = {
+    sub: string;
+    role?: string | null;
+    type?: 'employee' | 'client' | 'booking';
+    [key: string]: unknown;
+};
+
+/** Employee/client sessions are deliberately type-separated so a client token can never authorize staff routes. */
+export function signAccessToken(payload: AccessTokenPayload) {
+    const claims = { type: 'employee', ...payload };
     if (PRIVATE_KEY) {
         const key: Secret = PRIVATE_KEY as Secret;
         const opts: SignOptions = { algorithm: 'RS256', expiresIn: ACCESS_EXPIRES } as SignOptions;
-        return jwt.sign(payload as any, key, opts);
+        return jwt.sign(claims as any, key, opts);
     }
     const key: Secret = HS_SECRET as Secret;
     const opts: SignOptions = { algorithm: 'HS256', expiresIn: ACCESS_EXPIRES } as SignOptions;
-    return jwt.sign(payload as any, key, opts);
+    return jwt.sign(claims as any, key, opts);
 }
 
-export function verifyAccessToken(token: string) {
-    if (PUBLIC_KEY) return jwt.verify(token, PUBLIC_KEY as Secret, { algorithms: ['RS256'] } as VerifyOptions);
-    return jwt.verify(token, HS_SECRET as Secret, { algorithms: ['HS256'] } as VerifyOptions);
+export function verifyAccessToken(token: string): AccessTokenPayload {
+    const options: VerifyOptions = {
+        algorithms: PUBLIC_KEY ? ['RS256'] : ['HS256'],
+        clockTolerance: 5,
+    };
+    const decoded = PUBLIC_KEY
+        ? jwt.verify(token, PUBLIC_KEY as Secret, options)
+        : jwt.verify(token, HS_SECRET as Secret, options);
+    return decoded as AccessTokenPayload;
+}
+
+const BOOKING_ACCESS_EXPIRES = process.env.BOOKING_ACCESS_EXPIRES || '30m';
+
+/** Short-lived proof-of-email-control token for a single booking. Never accepted by requireAuth. */
+export function signBookingAccessToken(bookingId: string, publicReference: string) {
+    const claims = { type: 'booking' as const, sub: bookingId, ref: publicReference };
+    if (PRIVATE_KEY) {
+        return jwt.sign(claims as any, PRIVATE_KEY as Secret, {
+            algorithm: 'RS256',
+            expiresIn: BOOKING_ACCESS_EXPIRES,
+        } as SignOptions);
+    }
+    return jwt.sign(claims as any, HS_SECRET as Secret, {
+        algorithm: 'HS256',
+        expiresIn: BOOKING_ACCESS_EXPIRES,
+    } as SignOptions);
+}
+
+export function verifyBookingAccessToken(token: string): { bookingId: string; publicReference: string } | null {
+    try {
+        const options: VerifyOptions = {
+            algorithms: PUBLIC_KEY ? ['RS256'] : ['HS256'],
+            clockTolerance: 5,
+        };
+        const decoded = PUBLIC_KEY
+            ? jwt.verify(token, PUBLIC_KEY as Secret, options)
+            : jwt.verify(token, HS_SECRET as Secret, options);
+        const payload = decoded as AccessTokenPayload;
+        if (payload?.type !== 'booking' || typeof payload.sub !== 'string' || typeof payload.ref !== 'string') return null;
+        return { bookingId: payload.sub, publicReference: payload.ref };
+    } catch {
+        return null;
+    }
 }
 
 export function createRefreshToken() {

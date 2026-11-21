@@ -178,7 +178,7 @@ export default function renewalsRouter(prisma: Db) {
             });
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message ?? 'Failed to send renewal reminder' });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

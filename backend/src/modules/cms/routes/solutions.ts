@@ -42,7 +42,7 @@ export default function solutionsRouter(prisma: Db = db) {
                 .all();
             res.json(items);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -54,7 +54,7 @@ export default function solutionsRouter(prisma: Db = db) {
                 .all();
             res.json(items);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -75,7 +75,7 @@ export default function solutionsRouter(prisma: Db = db) {
             });
             res.status(201).json(item);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -94,7 +94,7 @@ export default function solutionsRouter(prisma: Db = db) {
             const item = await prisma.orm.public.Solution.where({ id: req.params.id }).update(payload);
             res.json(item);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -103,7 +103,7 @@ export default function solutionsRouter(prisma: Db = db) {
             await prisma.orm.public.Solution.where({ id: req.params.id }).delete();
             res.status(204).end();
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

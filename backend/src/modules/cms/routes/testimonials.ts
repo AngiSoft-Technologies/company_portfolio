@@ -39,7 +39,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             });
             res.json(list);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -62,7 +62,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             if (!testimonial) return res.status(404).json({ error: 'Not found' });
             res.json(testimonial);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -73,7 +73,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             const created = await testimonialsController.create(parsed.data, req.user);
             res.status(201).json(created);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -84,7 +84,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             const updated = await testimonialsController.update(req.params.id, parsed.data, req.user);
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -136,7 +136,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             await prisma.runtime().execute(plan);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -145,7 +145,7 @@ export default function testimonialsRouter(prisma: Db = db) {
             await testimonialsController.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

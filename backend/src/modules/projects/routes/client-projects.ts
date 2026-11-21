@@ -151,7 +151,7 @@ export default function clientProjectsRouter(prisma: Db) {
                 .first();
             res.json({ project: serializeProject(project) });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

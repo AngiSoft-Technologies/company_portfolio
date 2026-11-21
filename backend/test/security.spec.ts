@@ -266,11 +266,10 @@ describe('HTTP security guards', () => {
             expect(String(res.body?.error ?? '')).not.toMatch(/email verification/i);
         });
 
-        it('GET /api/bookings/:id still demands email proof-of-possession', async () => {
+        it('GET /api/bookings/:id no longer exposes legacy email lookup', async () => {
             const request = (await import('supertest')).default;
             const res = await request(app).get('/api/bookings/9f8c1d4e-1111-4222-8333-444455556666');
-            expect(res.status).toBe(401);
-            expect(String(res.body?.error ?? '')).toMatch(/email verification/i);
+            expect(res.status).toBe(404);
         });
 
         it('GET /api/projects/staff reaches the staff handler, not /:id', async () => {
@@ -279,6 +278,148 @@ describe('HTTP security guards', () => {
             // /:id is public (optionalAuth) and would return 404 for a missing
             // project named "staff"; the staff handler returns 401 instead.
             expect(res.status).toBe(401);
+        });
+    });
+
+    describe('hardened authorization and deserialization', () => {
+        it('rejects a client-portal token on employee-only routes', async () => {
+            const request = (await import('supertest')).default;
+            const { signAccessToken } = await import('../src/modules/identity/utils/token');
+            const token = signAccessToken({ sub: 'client_1', type: 'client' });
+            const res = await request(app)
+                .get('/api/bookings/staff')
+                .set('Authorization', `Bearer ${token}`);
+            expect(res.status).toBe(401);
+            expect(String(res.body?.error)).toMatch(/token type/i);
+        });
+
+        it('does not grant booking access from a self-asserted email', async () => {
+            const request = (await import('supertest')).default;
+            store.Booking = [{
+                id: 'booking_1',
+                publicReference: 'ANG-2026-A1B2C3D4',
+                trackingToken: 'secret-tracking-token',
+                client: { id: 'client_1', email: 'victim@example.com' },
+                bookingEvents: [],
+            }];
+            const noProof = await request(app)
+                .get('/api/bookings/reference/ANG-2026-A1B2C3D4');
+            const withEmail = await request(app)
+                .get('/api/bookings/reference/ANG-2026-A1B2C3D4?email=victim@example.com');
+            const withToken = await request(app)
+                .get('/api/bookings/reference/ANG-2026-A1B2C3D4?token=secret-tracking-token');
+            expect(noProof.status).toBe(404);
+            expect(withEmail.status).toBe(404);
+            expect(withToken.status).toBe(200);
+            expect(withToken.body?.trackingToken).toBeUndefined();
+
+            const { signBookingAccessToken } = await import('../src/modules/identity/utils/token');
+            const signed = await request(app)
+                .get('/api/bookings/reference/ANG-2026-A1B2C3D4')
+                .query({ token: signBookingAccessToken('booking_1', 'ANG-2026-A1B2C3D4') });
+            expect(signed.status).toBe(200);
+        });
+
+        it('rejects a booking access token on employee-only routes', async () => {
+            const request = (await import('supertest')).default;
+            const { signBookingAccessToken } = await import('../src/modules/identity/utils/token');
+            const res = await request(app)
+                .get('/api/bookings/staff')
+                .set('Authorization', `Bearer ${signBookingAccessToken('booking_1', 'ANG-2026-A1B2C3D4')}`);
+            expect(res.status).toBe(401);
+        });
+
+        it('rejects malformed booking details without echoing parser internals', async () => {
+            const request = (await import('supertest')).default;
+            const res = await request(app)
+                .post('/api/bookings')
+                .field('email', 'guest@example.com')
+                .field('title', 'Broken details')
+                .field('details', '{ not-json');
+            expect(res.status).toBe(400);
+            expect(String(res.body?.error)).toBe('Invalid booking details');
+        });
+
+        it('blocks ADMIN privilege escalation through the employee update route', async () => {
+            const request = (await import('supertest')).default;
+            const { signAccessToken } = await import('../src/modules/identity/utils/token');
+            store.Employee = [{
+                id: 'emp_admin_target',
+                role: 'STAFF',
+                firstName: 'Target',
+                lastName: 'User',
+                email: 'target@example.com',
+            }];
+            const token = signAccessToken({ sub: 'emp_admin', role: 'ADMIN' });
+            const res = await request(app)
+                .put('/api/admin/employees/emp_admin_target')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ role: 'HR' });
+            expect(res.status).toBe(403);
+            expect(String(res.body?.error)).toMatch(/SUPER_ADMIN/i);
+            expect(store.Employee[0].role).toBe('STAFF');
+
+            const superToken = signAccessToken({ sub: 'emp_super', role: 'SUPER_ADMIN' });
+            const stripped = await request(app)
+                .put('/api/admin/employees/emp_admin_target')
+                .set('Authorization', `Bearer ${superToken}`)
+                .send({ firstName: 'Renamed', isSuperAdmin: true, passwordHash: 'pwned' });
+            expect(stripped.status).toBe(200);
+            expect((store.Employee[0] as any).firstName).toBe('Renamed');
+            expect((store.Employee[0] as any).isSuperAdmin).toBeUndefined();
+            expect((store.Employee[0] as any).passwordHash).toBeUndefined();
+        });
+
+        it('fails closed when payment callback secrets are not configured', async () => {
+            const request = (await import('supertest')).default;
+            const previousPayhero = process.env.PAYHERO_CALLBACK_TOKEN;
+            const previousMpesa = process.env.MPESA_CALLBACK_TOKEN;
+            delete process.env.PAYHERO_CALLBACK_TOKEN;
+            delete process.env.MPESA_CALLBACK_TOKEN;
+            try {
+                const payhero = await request(app)
+                    .post('/api/payments/payhero/callback')
+                    .send({});
+                const mpesa = await request(app)
+                    .post('/api/payments/mpesa/callback')
+                    .send({});
+                expect(payhero.status).toBe(503);
+                expect(mpesa.status).toBe(503);
+            } finally {
+                if (previousPayhero !== undefined) process.env.PAYHERO_CALLBACK_TOKEN = previousPayhero;
+                if (previousMpesa !== undefined) process.env.MPESA_CALLBACK_TOKEN = previousMpesa;
+            }
+        });
+
+        it('requires the configured payment callback secret', async () => {
+            const request = (await import('supertest')).default;
+            const previous = process.env.PAYHERO_CALLBACK_TOKEN;
+            process.env.PAYHERO_CALLBACK_TOKEN = 'correct-callback-secret';
+            try {
+                const wrong = await request(app)
+                    .post('/api/payments/payhero/callback')
+                    .query({ token: 'wrong-secret' })
+                    .send({});
+                const missing = await request(app)
+                    .post('/api/payments/payhero/callback')
+                    .send({});
+                const correct = await request(app)
+                    .post('/api/payments/payhero/callback')
+                    .query({ token: 'correct-callback-secret' })
+                    .send({});
+                expect(wrong.status).toBe(403);
+                expect(missing.status).toBe(403);
+                expect(correct.status).toBe(200);
+            } finally {
+                if (previous === undefined) delete process.env.PAYHERO_CALLBACK_TOKEN;
+                else process.env.PAYHERO_CALLBACK_TOKEN = previous;
+            }
+        });
+
+        it('signs employee access tokens with an explicit employee type', async () => {
+            const { signAccessToken, verifyAccessToken } = await import('../src/modules/identity/utils/token');
+            const payload = verifyAccessToken(signAccessToken({ sub: 'emp_1' })) as any;
+            expect(payload.type).toBe('employee');
         });
     });
 });

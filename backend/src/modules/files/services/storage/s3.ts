@@ -112,7 +112,45 @@ export function toPublicUrl(key: string) {
     return `${base}/${key.replace(/^\/+/, '')}`;
 }
 
+const SAFE_KEY_PREFIXES = new Set([
+    'public', 'private',
+    'booking', 'client_project', 'project_deliverable', 'project_comment',
+    'employee', 'employee_document', 'general', 'blog-covers',
+]);
+const SAFE_KEY_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,255}$/;
+const ALLOWED_UPLOAD_CONTENT_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'application/pdf',
+    'application/zip',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+
+function assertSafeObjectKey(key: string): void {
+    if (typeof key !== 'string' || key.length > 512) throw new Error('Invalid storage key');
+    const segments = key.split('/');
+    if (segments.length < 2 || segments.length > 5) throw new Error('Invalid storage key');
+    if (!SAFE_KEY_PREFIXES.has(segments[0])) throw new Error('Invalid storage key prefix');
+    if (segments.some((segment) => !SAFE_KEY_SEGMENT.test(segment) || segment === '.' || segment === '..')) {
+        throw new Error('Invalid storage key');
+    }
+}
+
+function assertAllowedContentType(contentType: string, allowSvg = false): void {
+    if (!ALLOWED_UPLOAD_CONTENT_TYPES.has(contentType) && !(allowSvg && contentType === 'image/svg+xml')) {
+        throw new Error('Unsupported upload content type');
+    }
+}
+
 export async function generatePresignedPutUrl(key: string, contentType = 'application/octet-stream', expiresSeconds = 900) {
+    assertSafeObjectKey(key);
+    assertAllowedContentType(contentType);
     const cmd = new PutObjectCommand({ Bucket: getBucket(), Key: key, ContentType: contentType });
     return getSignedUrl(client(), cmd, { expiresIn: expiresSeconds });
 }
@@ -129,6 +167,9 @@ export async function generatePresignedGetUrl(key: string, filename = 'download'
 /** Upload a buffer/stream straight to the bucket (used by multer memory uploads). */
 export async function uploadObject(opts: { key: string; body: Buffer | Uint8Array | string; contentType: string; publicRead?: boolean }) {
     if (!isConfigured()) throw new Error('S3 storage is not configured');
+    assertSafeObjectKey(opts.key);
+    // SVG is allowed here only for internally generated, escaped cover art.
+    assertAllowedContentType(opts.contentType, opts.key.startsWith('blog-covers/'));
     const cmd = new PutObjectCommand({
         Bucket: getBucket(),
         Key: opts.key,

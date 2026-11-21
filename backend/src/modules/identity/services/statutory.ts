@@ -33,9 +33,20 @@ function payeBands(): PayeBand[] {
     const raw = process.env.PAYROLL_PAYE_BANDS;
     if (!raw) return DEFAULT_PAYE_BANDS;
     try {
-        const parsed = JSON.parse(raw) as Array<[number, number]>;
-        if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_PAYE_BANDS;
-        return parsed.map(([upTo, rate]) => ({ upTo, rate }));
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0 || parsed.length > 20) return DEFAULT_PAYE_BANDS;
+        const bands = parsed.map((band: unknown) => {
+            if (!Array.isArray(band) || band.length !== 2) throw new Error('Invalid PAYE band');
+            const [upTo, rate] = band;
+            if (typeof upTo !== 'number' || !Number.isFinite(upTo) || upTo <= 0) throw new Error('Invalid PAYE band ceiling');
+            if (typeof rate !== 'number' || !Number.isFinite(rate) || rate < 0 || rate > 1) throw new Error('Invalid PAYE band rate');
+            return { upTo, rate };
+        });
+        const ordered = [...bands].sort((a, b) => a.upTo - b.upTo);
+        if (ordered[ordered.length - 1].upTo !== Infinity) {
+            ordered.push({ upTo: Infinity, rate: ordered[ordered.length - 1].rate });
+        }
+        return ordered;
     } catch {
         return DEFAULT_PAYE_BANDS;
     }

@@ -29,7 +29,7 @@ export function errorHandler(err: AppError, req: Request, res: Response, next: N
         }
         return res.status(400).json({
             error: 'Database error',
-            message: err.message
+            message: 'The request could not be completed'
         });
     }
 
@@ -49,11 +49,12 @@ export function errorHandler(err: AppError, req: Request, res: Response, next: N
         });
     }
 
-    // Custom application errors
+    // Custom application errors. Never echo internal error text for a 5xx.
     const statusCode = err.statusCode || 500;
-    const message = err.message || 'Internal server error';
+    const message = statusCode >= 500
+        ? 'Internal server error'
+        : (err.message || 'Request failed');
 
-    // Don't leak error details in production
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     res.status(statusCode).json({
@@ -66,10 +67,7 @@ export const asyncHandler = (handler: RequestHandler): RequestHandler => (req, r
     Promise.resolve(handler(req, res, next)).catch(next);
 };
 
-export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
-    res.status(404).json({
-        error: 'Not found',
-        message: `Route ${req.method} ${req.path} not found`
-    });
+export function notFoundHandler(_req: Request, res: Response, _next: NextFunction) {
+    res.status(404).json({ error: 'Not found' });
 }
 

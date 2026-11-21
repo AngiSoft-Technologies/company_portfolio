@@ -37,7 +37,7 @@ export default function pricingPackagesRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -50,7 +50,7 @@ export default function pricingPackagesRouter(prisma: Db = db) {
                 .all();
             res.json(rows);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

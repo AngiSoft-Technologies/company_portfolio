@@ -13,6 +13,11 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     if (parts.length !== 2 || parts[0] !== 'Bearer') return res.status(401).json({ error: 'Invalid authorization' });
     try {
         const payload: any = verifyAccessToken(parts[1]);
+        // Client-portal and booking tokens use the same signer but must never
+        // authenticate an employee/admin route.
+        if (payload?.type && payload.type !== 'employee') {
+            return res.status(401).json({ error: 'Invalid token type' });
+        }
         req.user = { sub: payload.sub, role: payload.role };
         return next();
     } catch (err) {
@@ -29,6 +34,11 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
     }
     try {
         const payload: any = verifyAccessToken(parts[1]);
+        // Client-portal and booking tokens use the same signer but must never
+        // authenticate an employee/admin route.
+        if (payload?.type && payload.type !== 'employee') {
+            return res.status(401).json({ error: 'Invalid token type' });
+        }
         req.user = { sub: payload.sub, role: payload.role };
         return next();
     } catch (err) {

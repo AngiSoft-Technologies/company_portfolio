@@ -1,123 +1,80 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { safeGet } from '@/lib/httpClient';
-import BookingHistoryCard from '@/features/bookings/components/bookings/BookingHistoryCard';
-import BookingHistoryFilters, { statusPredicate } from '@/features/bookings/components/bookings/BookingHistoryFilters';
-import BookingEmptyState from '@/features/bookings/components/bookings/BookingEmptyState';
-import BookingProgressSkeleton from '@/features/bookings/components/bookings/BookingProgressSkeleton';
+import { apiPost } from '@/lib/httpClient';
 import { getBookingLookupPath } from '@/lib/marketing/booking/bookingRoutes';
 import { toast } from '@/lib/marketing/toast';
 
 import '@/styles/marketing/bookings/bookings.css';
-import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
 /**
- * Customer booking history. The customer supplies the email they booked with;
- * the backend returns only bookings matching that email (no auth session
- * required for the guest history view, by design). Persisted email is
- * re-used from localStorage to spare the customer re-typing.
+ * Booking history now uses the same proof-of-email-control flow as guest
+ * tracking. Email alone cannot enumerate bookings; a signed link is sent to
+ * the address on the booking instead.
  */
 const BookingHistory = () => {
-    const [email, setEmail] = useState(() => localStorage.getItem('angi_booking_email') || '');
-    const [submittedEmail, setSubmittedEmail] = useState('');
-    const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [reference, setReference] = useState('');
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [sent, setSent] = useState(false);
     const [error, setError] = useState(null);
-    const [filter, setFilter] = useState('all');
 
-    const lookup = async (addr) => {
-        if (!addr) return;
-        setLoading(true);
-        setError(null);
-        const res = await safeGet(`/bookings/my?email=${encodeURIComponent(addr)}`);
-        setLoading(false);
-        if (res.ok && res.data?.bookings) {
-            setBookings(res.data.bookings);
-            localStorage.setItem('angi_booking_email', addr);
-        } else if (res.status === 404) {
-            setBookings([]);
-        } else {
-            setError(res.data?.message || 'request_failed');
-            toast.error(res.data?.message || '');
-        }
-    };
-
-    useEffect(() => {
-        if (submittedEmail) lookup(submittedEmail);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [submittedEmail]);
-
-    const counts = useMemo(() => ({
-        all: bookings.length,
-        active: bookings.filter(statusPredicate('active')).length,
-        completed: bookings.filter(statusPredicate('completed')).length,
-        cancelled: bookings.filter(statusPredicate('cancelled')).length,
-    }), [bookings]);
-
-    const visible = useMemo(
-        () => bookings.filter(statusPredicate(filter)),
-        [bookings, filter]
-    );
-
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
-        if (!email.trim()) return;
-        setSubmittedEmail(email.trim());
+        const ref = reference.trim().toUpperCase();
+        const addr = email.trim();
+        if (!ref || !addr) return;
+        setSubmitting(true);
+        setError(null);
+        setSent(false);
+        try {
+            await apiPost(`/bookings/reference/${encodeURIComponent(ref)}/access/request`, { email: addr });
+            setSent(true);
+        } catch {
+            const message = 'Could not send the tracking link. Check the reference and email.';
+            setError(message);
+            toast.error(message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
         <main className="bookings-page booking-history-page">
-            <div className="bookings-container">
-                <header className="booking-history-header">
-                    <h1>Your Bookings</h1>
-                    <p>Track the status of work you've requested with AngiSoft Technologies.</p>
+            <div className="bookings-container booking-lookup-inner">
+                <header className="booking-lookup-header">
+                    <h1>Your Booking</h1>
+                    <p>Enter the reference from your confirmation email and the email you booked with. We’ll send a private link to open that booking.</p>
                 </header>
 
-                <form className="booking-history-form" onSubmit={submit}>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter the email you booked with"
-                        required
-                    />
-                    <button type="submit" className="btn btn-primary">View Bookings</button>
-                    <Link to={getBookingLookupPath()} className="booking-history-alt">Have a reference instead?</Link>
+                <form className="booking-lookup-form glass-card" onSubmit={submit}>
+                    <label className="booking-lookup-field">
+                        <span>Booking reference</span>
+                        <input
+                            type="text"
+                            value={reference}
+                            onChange={(e) => setReference(e.target.value)}
+                            placeholder="ANG-2026-A1B2C3D4"
+                            required
+                        />
+                    </label>
+                    <label className="booking-lookup-field">
+                        <span>Email used for the booking</span>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            required
+                        />
+                    </label>
+                    {error && <p className="booking-lookup-error">{error}</p>}
+                    {sent && <p className="booking-lookup-success">If the details match, a secure tracking link is on its way.</p>}
+                    <button type="submit" className="btn btn-primary" disabled={submitting}>
+                        {submitting ? 'Sending…' : 'Email me a secure link'}
+                    </button>
+                    <Link to={getBookingLookupPath()} className="booking-history-alt">Need help finding your reference?</Link>
                 </form>
-
-                {loading && <BookingProgressSkeleton />}
-
-                {!loading && !submittedEmail && (
-                    <BookingEmptyState
-                        title="Find your bookings"
-                        message="Enter your email above to see every request you've made with us."
-                        ctaLabel="Track by reference"
-                        ctaTo={getBookingLookupPath()}
-                    />
-                )}
-
-                {!loading && submittedEmail && !error && bookings.length === 0 && (
-                    <BookingEmptyState
-                        title="No bookings found"
-                        message={`We couldn't find any bookings for ${submittedEmail}. Start a new request below.`}
-                    />
-                )}
-
-                {!loading && error && (
-                    <VisualState variant="error" />
-                )}
-
-                {!loading && visible.length > 0 && (
-                    <>
-                        <BookingHistoryFilters value={filter} onChange={setFilter} counts={counts} />
-                        <div className="booking-history-list">
-                            {visible.map((b) => (
-                                <BookingHistoryCard key={b.publicReference || b.id} booking={b} />
-                            ))}
-                        </div>
-                    </>
-                )}
             </div>
         </main>
     );

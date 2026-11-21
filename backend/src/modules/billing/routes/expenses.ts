@@ -62,7 +62,7 @@ export default function expensesRouter(prisma: Db = db) {
                 .all();
             res.json(rows.map(serialize));
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 

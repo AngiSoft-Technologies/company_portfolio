@@ -43,7 +43,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
             });
             res.json(list);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -57,7 +57,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
             if (!category) return res.status(404).json({ error: 'Not found' });
             res.json(category);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -75,7 +75,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
             }, req.user);
             res.status(201).json(created);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -101,7 +101,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
 
             res.json(updated);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
@@ -113,7 +113,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
             await serviceCategoriesController.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Server error' });
         }
     });
 
