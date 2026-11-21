@@ -1,5 +1,7 @@
+import Redis, { type RedisOptions } from 'ioredis';
 import type { Db } from '../../../db';
 import { ts, tsMs, newId } from '../../../prisma/db';
+import { getRedisUrl, redisConnectionOptions } from '../../../shared/services/redis';
 import { sendMail } from '../../../shared/services/email';
 import type { AgentOutput } from './agentRunner';
 
@@ -50,10 +52,17 @@ export async function ownerEmail(prisma: Db): Promise<string | null> {
 
 // ─── Outreach ledger (AuditLog doubles as the dedupe store) ────────────────
 
-async function ledgerEntries(prisma: Db, action: string, entity?: string, limit = 200): Promise<any[]> {
+async function ledgerEntries(
+    prisma: Db,
+    action: string,
+    entity?: string,
+    limit = 200,
+    entityId?: string,
+): Promise<any[]> {
     try {
         let q: any = prisma.orm.public.AuditLog.where({ action });
         if (entity) q = q.where({ entity });
+        if (entityId) q = q.where({ entityId });
         return (await q.orderBy((a: any) => a.createdAt.desc()).limit(limit).all()) ?? [];
     } catch {
         return [];
@@ -91,7 +100,7 @@ export async function alreadyContacted(
     withinDays = 7
 ): Promise<boolean> {
     const cutoff = Date.now() - withinDays * DAY_MS;
-    const rows = await ledgerEntries(prisma, 'agent.outreach', entityType);
+    const rows = await ledgerEntries(prisma, 'agent.outreach', entityType, 50, entityId);
     return rows.some((r) =>
         r.entityId === entityId &&
         (r.meta?.agentKey === agentKey || r.meta?.agent === agentKey) &&
@@ -127,15 +136,66 @@ const DEPARTMENT_FROM: Record<string, string> = {
     'marketing-growth': '"AngiSoft Marketing" <marketing@angisoft.co.ke>',
     'sales-agent': '"AngiSoft Sales" <sales@angisoft.co.ke>',
     'customer-care': '"AngiSoft Support" <support@angisoft.co.ke>',
+    relationships: '"AngiSoft Partnerships" <sales@angisoft.co.ke>',
 };
 
 function deptFrom(agentKey: string): string {
     return DEPARTMENT_FROM[agentKey] ?? '"AngiSoft Technologies" <info@angisoft.co.ke>';
 }
 
-let emailsSentThisRun = 0;
-export function resetOutboundBudget(): void {
-    emailsSentThisRun = 0;
+/** Per-agent run budgets. The per-agent run claim prevents same-agent overlap. */
+const outboundBudgets = new Map<string, number>();
+export function resetOutboundBudget(agentKey = 'default'): void {
+    outboundBudgets.set(agentKey, 0);
+}
+export function releaseOutboundBudget(agentKey = 'default'): void {
+    outboundBudgets.delete(agentKey);
+}
+
+let outreachRedis: Redis | null | undefined;
+const outreachClaims = new Map<string, number>();
+
+function claimsRedis(): Redis | null {
+    if (outreachRedis !== undefined) return outreachRedis;
+    const url = getRedisUrl();
+    if (!url) {
+        outreachRedis = null;
+        return null;
+    }
+    try {
+        const { url: _u, ...opts } = redisConnectionOptions();
+        outreachRedis = new Redis(url, {
+            ...(opts as RedisOptions),
+            lazyConnect: true,
+            enableOfflineQueue: false,
+            connectTimeout: 3000,
+            maxRetriesPerRequest: 1,
+        });
+        outreachRedis.on('error', () => {});
+        void outreachRedis.connect().catch(() => {});
+    } catch {
+        outreachRedis = null;
+    }
+    return outreachRedis;
+}
+
+/** Atomic-ish outreach claim so two processes can't send the same follow-up. */
+async function claimOutreachTarget(agentKey: string, entityType: string, entityId: string, dedupeDays: number): Promise<boolean> {
+    const key = `agent:outreach:${agentKey}:${entityType}:${entityId}`;
+    const ttlMs = Math.max(60_000, dedupeDays * DAY_MS);
+    const client = claimsRedis();
+    if (client?.status === 'ready') {
+        try {
+            return (await client.set(key, '1', 'PX', ttlMs, 'NX')) === 'OK';
+        } catch {
+            return false;
+        }
+    }
+    const now = Date.now();
+    for (const [k, expires] of outreachClaims) if (expires <= now) outreachClaims.delete(k);
+    if (outreachClaims.has(key)) return false;
+    outreachClaims.set(key, now + ttlMs);
+    return true;
 }
 
 /**
@@ -148,10 +208,13 @@ export async function sendAgentEmail(
     mail: OutboundEmail,
     dedupeDays = 7
 ): Promise<boolean> {
-    if (emailsSentThisRun >= MAX_EMAILS_PER_AGENT_RUN) return false;
+    if ((outboundBudgets.get(agentKey) ?? 0) >= MAX_EMAILS_PER_AGENT_RUN) return false;
     if (!mail.to || !mail.to.includes('@')) return false;
     if (mail.entityType && mail.entityId) {
-        if (await alreadyContacted(prisma, agentKey, mail.entityType, mail.entityId, dedupeDays)) return false;
+        // Scope the query to this entity instead of scanning the global ledger.
+        const rows = await ledgerEntries(prisma, 'agent.outreach', mail.entityType, 50, mail.entityId);
+        if (rows.some((r) => (r.meta?.agentKey === agentKey || r.meta?.agent === agentKey))) return false;
+        if (!(await claimOutreachTarget(agentKey, mail.entityType, mail.entityId, dedupeDays))) return false;
     }
     try {
         await sendMail({
@@ -162,7 +225,7 @@ export async function sendAgentEmail(
             purpose: 'general',
             from: deptFrom(agentKey),
         });
-        emailsSentThisRun += 1;
+        outboundBudgets.set(agentKey, (outboundBudgets.get(agentKey) ?? 0) + 1);
         if (mail.entityType && mail.entityId) {
             await recordLedger(prisma, 'agent.outreach', mail.entityType, mail.entityId, {
                 agentKey,
@@ -281,7 +344,7 @@ export async function notifyOwnerSms(text: string): Promise<boolean> {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
     return s
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

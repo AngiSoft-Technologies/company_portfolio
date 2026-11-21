@@ -59,7 +59,7 @@ answers "where are we?" without reading code.
 | Phase 3 — Portfolio Studio | ✅ Implemented | `EmployeePortfolioConfig` + publish/version flow + studio editor (drag-order, themes, testimonials/featuredWork/caseStudies/certifications/CV editors) + public rendering + moderation |
 | Phase 4 — Automation & Intelligence | ✅ Implemented | Workflow triggers (booking→project, payment→invoice, SLA→alert), approval rules + multi-step approval chains (`ApprovalRequest`), cross-dept reports, AI assist, renewals + automation worker |
 | Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets, security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 11 specs); Lighthouse + admin route×theme sweep remain |
-| **Phase 6 — AI Workforce** | ✅ Implemented | 10-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security) with scheduled runs, structured reports, owner notifications, admin UI at `/agents`, `agents.*` permissions |
+| **Phase 6 — AI Workforce** | ✅ Implemented | 12-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security, PA, relationships/contracts) with 24/7 scheduled runs, structured reports, owner notifications, SUPER_ADMIN AI Boardroom at `/admin/boardroom`, admin UI at `/agents`, `agents.*` permissions |
 
 ### Critical Production Blockers (P0 — must fix before any feature work)
 
@@ -114,13 +114,14 @@ makes access decisions visible in the admin app instead of hardcoded in routes.
 
 ## 2.4 Phase 6 implementation record — AI Workforce (2026-11-21)
 
-The company now fields **automated agents alongside human staff**: up to 10
-agents covering coordination, marketing, sales, customer care, monitoring,
-finance, HR, analytics and security — all reporting to the owner.
+The company now fields **automated agents alongside human staff**: 12 agents
+covering coordination, marketing (content + growth), sales, customer care,
+monitoring, finance, HR, analytics, security, executive assistance and
+relationships/contracts — all reporting to the owner.
 
 | Piece | Implementation | Proof |
 |-------|----------------|-------|
-| Roster | `modules/agents/services/agentRegistry.ts` — 10 typed definitions (key, name, role, department, kind, schedule cadence); `ensureAgentsSeeded()` materializes `Agent` rows idempotently without overwriting admin edits | `test/agents.spec.ts` registry specs |
+| Roster | `modules/agents/services/agentRegistry.ts` — 12 typed definitions (key, name, role, department, kind, schedule cadence); `ensureAgentsSeeded()` materializes `Agent` rows idempotently without overwriting admin edits and staggers first runs | `test/agents.spec.ts` registry specs |
 | Schema | `Agent` + `AgentRun` models in `contract.prisma`; migration `migrations/app/20261120T2340_ai_workforce` (additive, offline-planned) | `npx prisma migration plan` output |
 | Run engine | `modules/agents/services/agentRunner.ts` — deterministic DB collectors per agent → structured `{summary, metrics, highlights, actions, recommendations}`; optional LLM narrative via `aiProvider` when configured; every run writes `AgentRun`, updates `lastRunAt`/`nextRunAt`, and notifies SUPER_ADMIN/ADMIN employees through `createNotification` | `test/agents.spec.ts` run specs |
 | Scheduler | `workers/agentScheduler.ts` — 60s sweep (`AGENT_SCHEDULER_INTERVAL_MS`), runs due agents sequentially with per-agent failure isolation; registered in `index.ts` and `worker.ts` | `startAgentScheduler()` |
@@ -150,7 +151,9 @@ successful run:
   emails on opportunities stale >14 days; customer-care: acknowledgement emails
   to new enquiries (marked `in_review`) + internal AI triage notes on
   unassigned tickets; finance: payment reminders for overdue invoices;
-  hr: stale-leave nudges to reviewers; monitoring: immediate owner alerts.
+  hr: stale-leave nudges to reviewers; monitoring: immediate owner alerts;
+   relationships: internal contract/NDA review checklists on flagged tickets,
+   with every outward document or accepted term queued for owner approval.
 - **SMS** — optional generic HTTPS gateway via `SMS_GATEWAY_URL` /
   `SMS_GATEWAY_TOKEN` / `SMS_TO` env vars; no-op until configured. Voice calls
   are intentionally out of scope (no telephony provider integrated).
@@ -163,15 +166,46 @@ successful run:
   KPIs. Charters are injected into the LLM narrative prompt, exposed on
   `/api/admin/agents` (`charter` field), and rendered in the admin UI as a
   "Role charter & decision rights" disclosure per agent card.
-- **PA agent (`pa` / "Pia")** — 11th roster member, Executive Assistant & AI
+- **PA agent (`pa` / "Pia")** — Executive Assistant & AI
   Workforce Coach (12h cadence). Its collector produces a workforce scorecard
   (per-agent runs/failures/staleness vs. cadence, escalation compliance); its
   proactive routine writes dated coaching notes into an underperforming
   agent's `config.paCoaching` (capped at 8, evidence-cited, charter-referencing)
   and escalates agents that stay at-risk to the owner.
+- **Relationships agent (`relationships` / "Nexus")** — 12th roster member,
+  Relationships & Contracts Officer (12h cadence). It scans enquiries, leads,
+  tickets and opportunities for partnership/NDA/contract signals, prepares
+  structured briefs and internal risk checklists, and drafts NDAs, letters and
+  proposals for review. Its charter forbids sending, signing or amending a
+  binding document without SUPER_ADMIN approval.
 - **24/7** — `fly.toml` now keeps `min_machines_running = 1` so the scheduler
   survives scale-to-zero; sweep cap raised to 20 agents per pass. Cadences run
   around the clock (monitoring 30 min → security weekly).
+
+**Production-readiness hardening (added 2026-11-21).** The run engine now uses
+a Redis-backed per-agent claim plus a global concurrency semaphore, so scheduled,
+event and manual triggers cannot overlap the same employee. The leader lock has
+a heartbeat, stale `running` rows are reaped, each run has a hard deadline and
+failure classification, and manual/event runs no longer postpone the scheduled
+cadence. Outputs carry structured quality signals (`quality`, `proactive`,
+`degraded`, `errorClass`); prompts delimit untrusted data; article drafting is
+gated by a quality/legal check and defaults to a draft plus approval item; and
+`output.completed` is separated from `output.actions` so accomplished work is
+never mirrored back into the Approvals queue. Outreach budgets are per-agent and
+dedupe claims are atomic-ish through Redis with an AuditLog fallback.
+
+**AI Boardroom (added 2026-11-21).** `GET /api/admin/boardroom/sessions`,
+`POST /sessions`, `POST /sessions/:id/messages` and `POST /sessions/:id/finalize`
+are mounted behind `requireAuth`, a strict SUPER_ADMIN role check,
+`agents.manage`, CSRF and a dedicated rate limiter. Sessions are stored as
+`AgentRun` rows with `agentKey='boardroom'` — no migration — and hold the
+transcript, recent agent reports, suggestions, minutes and approval-gated action
+items in `output`. Live events use the existing Socket.IO server and a private
+`boardroom:<sessionId>` room; the admin UI at `/admin/boardroom` offers
+per-agent/whole-board questions, voice input/output via browser Web Speech APIs
+with text fallback, and minute finalization. Agent reports are quoted as
+untrusted context, never instructions; the model cannot call tools or write to
+the database.
 
 **Design rule:** agents observe, report, and take only bounded low-risk
 actions — capped, deduplicated, and ledgered. Financial mutations, publishing,
@@ -615,7 +649,7 @@ mixed into the additive schema change.
 | ~~P2~~ | ✅ Done — both regenerated/refreshed against live routes (2026-11-20/21) | Docs | No stale `frontend/src/**` paths remain |
 | ~~P2~~ | ✅ Done — no `isRole(`/`role !== 'ADMIN'` remains in `bookings.ts` | Backend | Grep clean |
 | ~~P3~~ | ✅ Done — `test/route-coverage.spec.ts` (21 specs) covers bookings staff/admin, client-projects, notifications, uploads, staff-dashboard + employee-profiles auth gates; `test/agents.spec.ts` (9 specs) covers the AI workforce | Backend | Each router has 401/403 + happy-path specs |
-| ~~P6~~ | ✅ Done — AI Workforce: 10-agent roster, scheduler, run engine, `/api/admin/agents`, `/agents` UI (§2.4) | Full stack | Roster seeded; runs notify owner; spec suite green |
+| ~~P6~~ | ✅ Done — AI Workforce: 12-agent roster, scheduler, run engine, `/api/admin/agents`, `/agents` UI, SUPER_ADMIN AI Boardroom (§2.4) | Full stack | Roster seeded; runs notify owner; boardroom minutes mirror into approvals; spec suite green |
 
 ---
 

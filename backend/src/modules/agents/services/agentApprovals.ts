@@ -29,7 +29,9 @@ const ENTITY_TYPE = 'agent_action';
 const STEP_PERMISSION = 'agents.manage';
 
 function normalizeAction(text: string): string {
-    return text.toLowerCase().replace(/\d+/g, '#').replace(/[^a-z#]+/g, ' ').replace(/\s+/g, ' ').trim();
+    // Keep digits: "invoice 1042" and "invoice 2048" are different approvals.
+    // Collapse only whitespace/punctuation so wording changes don't duplicate.
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function actionEntityId(agentKey: string, text: string): string {
@@ -44,7 +46,12 @@ function actionEntityId(agentKey: string, text: string): string {
  */
 export async function syncAgentActions(prisma: Db, agent: any, output: AgentOutput): Promise<number> {
     try {
-        const actions = (output.actions ?? []).map((a) => String(a).trim()).filter(Boolean).slice(0, MAX_ACTIONS_PER_RUN);
+        const completed = new Set((output.completed ?? []).map((a) => String(a).trim().toLowerCase()));
+        const candidates = output.approvalRequired ?? output.actions ?? [];
+        const actions = candidates
+            .map((a) => String(a).trim())
+            .filter((a) => a && !completed.has(a.toLowerCase()))
+            .slice(0, MAX_ACTIONS_PER_RUN);
         if (!actions.length) return 0;
 
         const pending = (await prisma.orm.public.ApprovalRequest

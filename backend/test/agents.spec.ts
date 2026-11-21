@@ -170,16 +170,62 @@ describe('AI workforce: agent registry + runner + admin API', () => {
         AGENT_REGISTRY = (await import('../src/modules/agents/services/agentRegistry')).AGENT_REGISTRY;
     });
 
-    it('registry defines up to 10 agents covering the company departments', () => {
-        expect(AGENT_REGISTRY.length).toBeLessThanOrEqual(12);
-        expect(AGENT_REGISTRY.length).toBeGreaterThanOrEqual(10);
-        const kinds = new Set(AGENT_REGISTRY.map((a) => a.kind));
-        for (const expected of ['coordinator', 'marketing', 'sales', 'support', 'monitoring', 'finance', 'hr']) {
-            expect(kinds.has(expected as any)).toBe(true);
+    it('registry defines the 12-agent workforce covering every department', () => {
+        expect(AGENT_REGISTRY).toHaveLength(12);
+        const keys = new Set(AGENT_REGISTRY.map((a) => a.key));
+        for (const expected of [
+            'coordinator', 'marketing-content', 'marketing-growth', 'sales-agent',
+            'customer-care', 'monitoring', 'finance', 'hr', 'analytics',
+            'security-compliance', 'pa', 'relationships',
+        ]) {
+            expect(keys.has(expected)).toBe(true);
         }
+        expect(AGENT_REGISTRY.find((a) => a.key === 'relationships')?.name).toBe('Nexus');
         for (const agent of AGENT_REGISTRY) {
             expect(agent.scheduleMinutes).toBeGreaterThan(0);
+            expect(agent.role).toBeTruthy();
+            expect(agent.description).toBeTruthy();
         }
+    });
+
+    it('attaches structured quality signals to every successful run', async () => {
+        const res = await request(app)
+            .post('/api/admin/agents/monitoring/run')
+            .set(authed('emp_owner', 'SUPER_ADMIN'))
+            .send({});
+        expect(res.status).toBe(200);
+        expect(res.body.run.output.quality).toMatchObject({
+            grade: 'healthy',
+        });
+        expect(res.body.run.output.quality.score).toBeGreaterThanOrEqual(80);
+        expect(res.body.run.output.quality.durationMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it('Nexus surfaces partnership and contract work for owner review', async () => {
+        store.ContactEnquiry = [
+            { id: 'enq_1', subject: 'Mutual NDA for integration', message: 'Please send your mutual NDA and proposed MSA terms.', status: 'new', createdAt: new Date().toISOString() },
+            { id: 'enq_2', subject: 'General question', message: 'What are your opening hours?', status: 'new', createdAt: new Date().toISOString() },
+        ];
+        const res = await request(app)
+            .post('/api/admin/agents/relationships/run')
+            .set(authed('emp_owner', 'SUPER_ADMIN'))
+            .send({});
+        expect(res.status).toBe(200);
+        expect(res.body.run.output.metrics.relationshipSignals).toBeGreaterThanOrEqual(1);
+        expect(res.body.run.output.metrics.ndaRequests).toBeGreaterThanOrEqual(1);
+        expect(res.body.run.output.actions.join(' ')).toContain('approval');
+    });
+
+    it('does not postpone the scheduled cadence for a manual run', async () => {
+        await request(app).get('/api/admin/agents').set(authed('emp_admin', 'ADMIN'));
+        const agent = store.Agent.find((a) => a.key === 'monitoring');
+        const nextRunAt = agent.nextRunAt;
+        expect(nextRunAt).toBeTruthy();
+        await request(app)
+            .post('/api/admin/agents/monitoring/run')
+            .set(authed('emp_admin', 'ADMIN'))
+            .send({});
+        expect(store.Agent.find((a) => a.key === 'monitoring').nextRunAt).toBe(nextRunAt);
     });
 
     describe('GET /api/admin/agents', () => {

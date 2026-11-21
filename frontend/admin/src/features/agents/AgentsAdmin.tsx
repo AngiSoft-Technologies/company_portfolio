@@ -194,7 +194,7 @@ export function AgentsAdmin() {
     <div>
       <PageHeader
         title="AI Workforce"
-        subtitle="Automated agents that report to the owner — coordinator, marketing, sales, support, monitoring, finance, HR, analytics and security."
+        subtitle="12 automated colleagues covering operations, marketing, sales, care, engineering, finance, people, analytics, security, executive support and partnerships."
         actions={
           <div className="flex gap-2">
             <Link to="/approvals?entityType=agent_action">

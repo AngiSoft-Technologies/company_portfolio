@@ -7,6 +7,8 @@ import {
     alreadyContacted,
     emailShell,
     resetOutboundBudget,
+    releaseOutboundBudget,
+    escapeHtml,
     MAX_EMAILS_PER_AGENT_RUN,
 } from './agentOutreach';
 import type { AgentOutput } from './agentRunner';
@@ -106,8 +108,12 @@ async function growthOutreach(prisma: Db, agent: any, _output: AgentOutput, res:
     const fresh = leads.filter((l) => l.status === 'new' || l.stage === 'new');
     for (const lead of fresh.slice(0, MAX_EMAILS_PER_AGENT_RUN)) {
         if (await alreadyContacted(prisma, agent.key, 'lead', lead.id, 7)) continue;
-        const firstName = String(lead.name ?? '').split(' ')[0] || 'there';
-        const interest = lead.source ? ` about ${lead.source}` : '';
+        const rawFirstName = String(lead.name ?? '').split(' ')[0] || 'there';
+        const firstName = escapeHtml(rawFirstName);
+        const rawSource = String(lead.source ?? '');
+        const source = escapeHtml(rawSource);
+        const interest = rawSource ? ` about ${rawSource}` : '';
+        const safeInterest = source ? ` about ${source}` : '';
         const sent = await sendAgentEmail(prisma, agent.key, {
             to: lead.email,
             subject: `Following up on your interest${interest} — AngiSoft Technologies`,
@@ -117,7 +123,7 @@ async function growthOutreach(prisma: Db, agent: any, _output: AgentOutput, res:
             html: emailShell(
                 'Following up',
                 `<p>Hi ${firstName},</p>
-                 <p>Thanks for reaching out to AngiSoft Technologies${interest}. I'm following up personally to understand what you're building and whether we can help.</p>
+                 <p>Thanks for reaching out to AngiSoft Technologies${safeInterest}. I'm following up personally to understand what you're building and whether we can help.</p>
                  <p>Would a quick 15-minute call this week work? Just reply to this email with a time that suits you.</p>
                  <p>Warm regards,<br>AngiSoft Technologies</p>`
             ),
@@ -174,7 +180,9 @@ async function contentProactive(prisma: Db, agent: any, output: AgentOutput, res
     // write a real article, illustrate it, fill SEO fields and publish.
     const lastPublishedMs = published.reduce((m, p) => Math.max(m, tsMs(p.publishedAt ?? p.createdAt)), 0);
     const calendarDry = Date.now() - lastPublishedMs > 20 * 3600 * 1000;
-    const autoPublish = agent.config?.autoPublish !== false;
+    // Fail closed: only an explicit SUPER_ADMIN config flag allows direct
+    // publishing. Default is a draft plus an approval item.
+    const autoPublish = agent.config?.autoPublish === true;
     if (calendarDry) {
         const serviceNames = services.filter((s) => s.published).map((s) => s.title);
         const productNames = products.filter((p) => p.published).map((p) => p.name);
@@ -184,6 +192,12 @@ async function contentProactive(prisma: Db, agent: any, output: AgentOutput, res
         const topic = pool.length ? pool[dayIndex % pool.length] : 'software development';
         const article = await writeArticle(prisma, topic);
         if (article) {
+            const gateError = validateArticleDraft(article);
+            if (gateError) {
+                res.notes.push(`Article gate rejected today's draft: ${gateError}`);
+                output.degraded = [...(output.degraded ?? []), 'article_gate_rejected'];
+                return;
+            }
             const slug = `${article.slug}-${new Date().toISOString().slice(0, 10)}`;
             const cover = await generateCoverImage(article.title, article.excerpt, slug);
             const words = article.content.split(/\s+/).length;
@@ -210,8 +224,11 @@ async function contentProactive(prisma: Db, agent: any, output: AgentOutput, res
             await ledgerRecord(prisma, 'agent.record_created', 'blog_post', slug, { agentKey: agent.key, topic, published: autoPublish });
             res.notes.push(autoPublish
                 ? `Published "${article.title}" with cover art — live at /blog/${slug}`
-                : `Drafted "${article.title}" — set agent autoPublish or publish manually`);
-            output.actions.push(`Marketing: published daily post "${article.title}"`);
+                : `Drafted "${article.title}" — awaiting owner approval`);
+            output.completed = [...(output.completed ?? []), `Marketing: ${autoPublish ? 'published' : 'drafted'} daily post "${article.title}"`];
+            if (!autoPublish) {
+                output.actions.push(`Marketing: approve and publish draft "${article.title}" (/blog/${slug})`);
+            }
         } else {
             res.notes.push('LLM unavailable — could not draft today\'s post (SEO audit still ran)');
         }
@@ -228,6 +245,19 @@ interface ArticleDraft {
     seoTitle: string;
     seoDescription: string;
     tags: string[];
+}
+
+const BANNED_CLAIMS = /\b(guarantee[d]?|100%\s+(safe|secure|accurate)|best\s+in\s+(kenya|africa|the\s+world)|#1|unbeatable|risk[-\s]free|no\s+questions\s+asked)\b/i;
+
+/** Quality/legal gate for LLM-generated posts. Fails closed on suspect text. */
+function validateArticleDraft(draft: ArticleDraft): string | null {
+    if (!draft.title || draft.title.length > 200) return 'invalid title';
+    if (draft.content.length < 600 || draft.content.length > 12_000) return 'content outside 600-12000 chars';
+    if (/<script|javascript:|on\w+=|<iframe|<object/i.test(draft.content)) return 'unsafe markup detected';
+    if (BANNED_CLAIMS.test(`${draft.title} ${draft.excerpt} ${draft.content}`)) return 'unsupported marketing claim';
+    if (/\b(client|customer)\s+[A-Z][a-z]+\b/.test(draft.content)) return 'possible client name in article';
+    if (!/^[\w-]+$/.test(draft.slug) || draft.slug.length > 80) return 'invalid slug';
+    return null;
 }
 
 /** Ask the configured LLM for a complete, publish-ready article. */
@@ -289,7 +319,7 @@ async function salesOutreach(prisma: Db, agent: any, output: AgentOutput, res: P
             html: emailShell(
                 'Checking in',
                 `<p>Hi ${name},</p>
-                 <p>I wanted to check in on <strong>"${String(opp.title).replace(/</g, '&lt;')}"</strong>. Has anything changed on your side since we last spoke?</p>
+                 <p>I wanted to check in on <strong>"${escapeHtml(String(opp.title ?? ''))}"</strong>. Has anything changed on your side since we last spoke?</p>
                  <p>Happy to pick things up whenever you're ready — even a quick reply helps me plan the team's week.</p>
                  <p>Warm regards,<br>AngiSoft Technologies</p>`
             ),
@@ -320,7 +350,7 @@ async function careProactive(prisma: Db, agent: any, _output: AgentOutput, res: 
             html: emailShell(
                 'Enquiry received',
                 `<p>Hi ${name},</p>
-                 <p>Thanks for getting in touch about <strong>${String(enquiry.subject ?? '').replace(/</g, '&lt;')}</strong>. A member of our team will review it and come back to you shortly — usually within one business day.</p>
+                 <p>Thanks for getting in touch about <strong>${escapeHtml(String(enquiry.subject ?? ''))}</strong>. A member of our team will review it and come back to you shortly — usually within one business day.</p>
                  <p>— AngiSoft Technologies</p>`
             ),
         });
@@ -383,7 +413,7 @@ async function financeProactive(prisma: Db, agent: any, output: AgentOutput, res
             html: emailShell(
                 'Payment reminder',
                 `<p>Hi ${name},</p>
-                 <p>A friendly reminder that invoice <strong>${String(inv.number ?? inv.publicReference ?? '').replace(/</g, '&lt;')}</strong> for <strong>${amount}</strong> was due on ${String(inv.dueAt).slice(0, 10)}.</p>
+                 <p>A friendly reminder that invoice <strong>${escapeHtml(String(inv.number ?? inv.publicReference ?? ''))}</strong> for <strong>${amount}</strong> was due on ${String(inv.dueAt).slice(0, 10)}.</p>
                  <p>If you've already paid, please disregard this note. Otherwise you can pay via the client portal or simply reply to this email.</p>
                  <p>— AngiSoft Technologies</p>`
             ),
@@ -405,6 +435,7 @@ async function hrProactive(prisma: Db, agent: any, _output: AgentOutput, res: Pr
     for (const req of stale.slice(0, 3)) {
         const emp = empById.get(req.employeeId);
         const empName = emp ? `${emp.firstName ?? ''} ${emp.lastName ?? ''}`.trim() : 'A team member';
+        const safeEmpName = escapeHtml(empName);
         for (const reviewer of reviewers.slice(0, 2)) {
             if (!reviewer.email) continue;
             const sent = await sendAgentEmail(prisma, agent.key, {
@@ -417,7 +448,7 @@ async function hrProactive(prisma: Db, agent: any, _output: AgentOutput, res: Pr
                 html: emailShell(
                     'Leave review needed',
                     `<p>Hi,</p>
-                     <p><strong>${empName}</strong> has a ${String(req.type ?? 'leave')} request pending since ${String(req.createdAt).slice(0, 10)} (${String(req.startDate).slice(0, 10)} → ${String(req.endDate).slice(0, 10)}).</p>
+                     <p><strong>${safeEmpName}</strong> has a ${escapeHtml(String(req.type ?? 'leave'))} request pending since ${String(req.createdAt).slice(0, 10)} (${String(req.startDate).slice(0, 10)} → ${String(req.endDate).slice(0, 10)}).</p>
                      <p>Could you review it when you get a chance?</p>
                      <p>— AngiSoft HR agent</p>`
                 ),
@@ -462,7 +493,7 @@ async function paCoach(prisma: Db, agent: any, output: AgentOutput, res: Proacti
         } catch (err: any) {
             console.warn(`[agents] PA coaching write failed for ${member.key}:`, err?.message || err);
         }
-        output.actions.push(`PA coached ${member.name} (${member.key}) — see config.paCoaching`);
+        output.completed = [...(output.completed ?? []), `PA coached ${member.name} (${member.key}) — see config.paCoaching`];
     }
     if (!res.recordsCreated) res.notes.push('Roster healthy — no coaching needed this cycle');
 }
@@ -593,7 +624,8 @@ async function coordinatorProactive(prisma: Db, agent: any, output: AgentOutput,
         }
     }
     if (failing.length) {
-        output.actions.push(`Coordinator: ${failing.length} agent(s) failing repeatedly — directives issued, owner review recommended`);
+        output.completed = [...(output.completed ?? []), `Coordinator: ${failing.length} agent(s) failing repeatedly — directives issued`];
+        output.actions.push(`Coordinator: review ${failing.length} repeatedly failing agent(s) and decide on remediation`);
     }
 
     // Persist cursor.
@@ -601,6 +633,58 @@ async function coordinatorProactive(prisma: Db, agent: any, output: AgentOutput,
     try {
         await prisma.orm.public.Agent.where({ id: agent.id }).update({ config: cfg, updatedAt: ts() });
     } catch { /* best-effort */ }
+}
+
+/** relationships: put a contract-risk checklist into the ticket so a human can act. */
+async function relationshipsProactive(prisma: Db, agent: any, output: AgentOutput, res: ProactiveResult): Promise<void> {
+    const pattern = /\b(nda|non[ -]?disclosure|contract|agreement|msa|sla|terms|vendor|partner|partnership|proposal|letter of intent|lou|moa|collaborat|reseller|supplier|legal)\b/i;
+    const tickets = await rows(prisma, 'SupportTicket', 100);
+    const checklist = [
+        'Relationships review checklist (Nexus):',
+        '1. Parties and signatories confirmed',
+        '2. Scope, deliverables and acceptance criteria',
+        '3. Term, renewal and termination rights',
+        '4. Payment terms, tax and currency',
+        '5. Confidentiality / NDA status',
+        '6. IP ownership and licence rights',
+        '7. Liability cap, indemnities and warranties',
+        '8. Governing law and dispute route',
+        'No document may be sent, signed or amended without SUPER_ADMIN approval.',
+    ].join('\n');
+
+    for (const ticket of tickets.slice(0, 10)) {
+        const text = [ticket.subject, ticket.description, ticket.body].map((v) => String(v ?? '')).join(' ');
+        if (!pattern.test(text)) continue;
+        const entityId = `ticket:${ticket.id}`;
+        if (await hasLedgerEntry(prisma, 'agent.relationship_review', entityId)) continue;
+        try {
+            const existing: any = await prisma.orm.public.TicketMessage
+                .where({ ticketId: ticket.id, internal: true })
+                .first()
+                .catch(() => null);
+            if (!existing) {
+                await prisma.orm.public.TicketMessage.create({
+                    id: newId(),
+                    ticketId: ticket.id,
+                    authorId: null,
+                    body: `AI relationship review requested (${agent.name}).\n\n${checklist}\n\nTicket: ${text.replace(/\s+/g, ' ').slice(0, 500)}`,
+                    internal: true,
+                    createdAt: ts(),
+                });
+                res.recordsCreated += 1;
+            }
+            await ledgerRecord(prisma, 'agent.relationship_review', 'ticket', entityId, {
+                agentKey: agent.key,
+                kind: 'contract_checklist',
+            });
+            res.notes.push(`Contract checklist added to ticket ${ticket.id}`);
+            output.actions.push(`Relationships: review contract/NDA request in ticket ${ticket.id} — owner approval required`);
+        } catch (err: any) {
+            console.warn('[agents] relationship ticket note failed:', err?.message || err);
+        }
+    }
+
+    if (!res.recordsCreated) res.notes.push('No new contract/NDA ticket required an internal review note');
 }
 
 // ─── Entry point ───────────────────────────────────────────────────────────
@@ -615,6 +699,7 @@ const proactiveRoutines: Record<string, (prisma: Db, agent: any, output: AgentOu
     hr: hrProactive,
     monitoring: monitoringProactive,
     pa: paCoach,
+    relationships: relationshipsProactive,
 };
 
 /**
@@ -624,7 +709,7 @@ const proactiveRoutines: Record<string, (prisma: Db, agent: any, output: AgentOu
  */
 export async function runProactive(prisma: Db, agent: any, output: AgentOutput): Promise<ProactiveResult> {
     const res: ProactiveResult = { emailsSent: 0, recordsCreated: 0, alerts: 0, notes: [] };
-    resetOutboundBudget();
+    resetOutboundBudget(String(agent.key ?? 'unknown'));
     try {
         const routine = proactiveRoutines[agent.key];
         if (routine) await routine(prisma, agent, output, res);
@@ -641,5 +726,6 @@ export async function runProactive(prisma: Db, agent: any, output: AgentOutput):
     // Surface routine notes in the run output so operators can see *why* a
     // proactive action did or did not happen (article skipped, dedupe hit…).
     for (const note of res.notes.slice(0, 8)) output.highlights.push(`Note: ${note}`);
+    releaseOutboundBudget(String(agent.key ?? 'unknown'));
     return res;
 }

@@ -263,7 +263,7 @@ describe('AI workforce: proactive outreach layer', () => {
         expect(coached.config.paCoaching[0].failures7d).toBe(3);
         // PA never coaches itself.
         expect(store.Agent.find((a) => a.key === 'pa').config.paCoaching).toBeUndefined();
-        expect(out.actions.join(' ')).toContain('PA coached');
+        expect((out.completed ?? []).join(' ')).toContain('PA coached');
     });
 
     it('pa leaves a healthy roster alone', async () => {

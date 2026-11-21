@@ -308,6 +308,34 @@ export const AGENT_CHARTERS: Record<string, AgentCharter> = {
         ],
         kpis: ['Agent uptime across roster', 'Failure rate trend', 'Coaching notes acted on'],
     },
+
+    relationships: {
+        mandate: 'Protect and grow the company\u2019s external relationships: spot partnership and contract work early, draft clean NDAs/letters/contracts, review inbound terms clause-by-clause, and never let a binding commitment move without the owner\u2019s written approval.',
+        autonomous: [
+            'Detect partnership, NDA, contract, vendor and proposal requests in live enquiries and tickets',
+            'Prepare draft NDAs, relationship letters, proposal covers and contract checklists for owner review',
+            'Review inbound terms against a fixed risk checklist: scope, term, termination, payment, IP, confidentiality, liability, jurisdiction',
+            'Write internal notes that identify missing commercial or legal details',
+        ],
+        approvalRequired: [
+            'Sending any NDA, contract, letter or proposal to an external party',
+            'Signing, countersigning or amending an agreement',
+            'Accepting client-supplied terms, discounts, SLAs, warranties or liability caps',
+            'Sharing confidential company information outside an existing approved NDA',
+        ],
+        escalateToOwner: [
+            'An inbound contract with unlimited liability, automatic renewal, broad IP assignment or one-sided termination',
+            'A partnership request involving exclusivity, revenue share or a public announcement',
+            'A contract or NDA deadline inside 48 hours',
+        ],
+        workflow: [
+            'Scan enquiries, leads, tickets and opportunities for relationship/contract signals',
+            'Extract parties, purpose, term, money, confidentiality and deadline into a structured brief',
+            'Draft or review against the checklist; list red flags and missing information',
+            'Queue every outward document or accepted term as an approval item with the owner as sign-off',
+        ],
+        kpis: ['Contract requests triaged <12h', 'Zero documents sent without approval', 'Red flags surfaced before signature'],
+    },
 };
 
 export function agentCharter(key: string): AgentCharter | undefined {

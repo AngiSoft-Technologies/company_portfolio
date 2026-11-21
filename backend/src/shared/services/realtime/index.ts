@@ -11,6 +11,7 @@ import { getRedisUrl, createRedisClient, probeRedis } from '../redis';
  *   user:<id>     — authenticated user (JWT `sub`). Personal events.
  *   staff         — every authenticated staff/admin socket. Booking/ops events.
  *   booking:<id>  — authorized watchers of one booking (customer or staff).
+ *   boardroom:<id> — SUPER_ADMIN sockets watching one AI boardroom session.
  *
  * Auth model:
  *   - Client passes the access token in `auth.token` on the handshake
@@ -92,6 +93,24 @@ export function initRealtime(server: HttpServer, origins: string[]): Server {
       }
     }
 
+    socket.on('boardroom:join', (payload: any, ack?: (res: { ok: boolean; error?: string }) => void) => {
+      const done = (res: { ok: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(res);
+      };
+      const sessionId = payload?.sessionId;
+      if (auth?.role !== 'SUPER_ADMIN') return done({ ok: false, error: 'forbidden' });
+      if (typeof sessionId !== 'string' || !/^[A-Za-z0-9_-]{6,100}$/.test(sessionId)) {
+        return done({ ok: false, error: 'invalid_payload' });
+      }
+      socket.join(`boardroom:${sessionId}`);
+      return done({ ok: true });
+    });
+
+    socket.on('boardroom:leave', (payload: any) => {
+      const sessionId = payload?.sessionId;
+      if (typeof sessionId === 'string') socket.leave(`boardroom:${sessionId}`);
+    });
+
     socket.on('booking:join', async (payload: any, ack?: (res: { ok: boolean; error?: string }) => void) => {
       const done = (res: { ok: boolean; error?: string }) => {
         if (typeof ack === 'function') ack(res);
@@ -156,6 +175,11 @@ export function emitToStaff(event: string, payload: unknown): void {
 
 export function emitToBooking(bookingId: string, event: string, payload: unknown): void {
   io?.to(`booking:${bookingId}`).emit(event, payload);
+}
+
+/** Boardroom content is private — emit only to the session room, never staff. */
+export function emitToBoardroom(sessionId: string, event: string, payload: unknown): void {
+  io?.to(`boardroom:${sessionId}`).emit(event, payload);
 }
 
 export function closeRealtime(): void {

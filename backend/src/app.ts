@@ -77,6 +77,7 @@ import aiConfigRouter from './modules/ai/routes/ai-config';
 import aiAssistRouter from './modules/ai/routes/ai-assist';
 import renewalsRouter from './modules/crm/routes/renewals';
 import agentsRouter from './modules/agents/routes/agents';
+import boardroomRouter from './modules/boardroom/routes/boardroom';
 
 dotenv.config();
 initSentry();
@@ -332,6 +333,7 @@ app.use('/api/admin', aiConfigRouter(prisma));
 app.use('/api/admin', aiAssistRouter(prisma));
 app.use('/api/admin', renewalsRouter(prisma));
 app.use('/api/admin/agents', agentsRouter(prisma));
+app.use('/api/admin/boardroom', boardroomRouter(prisma));
 app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
 app.use('/api/client-projects', clientProjectsRouter(prisma));
 app.use('/api/client-portal', clientPortalRouter(prisma));

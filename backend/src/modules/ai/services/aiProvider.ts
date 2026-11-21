@@ -330,7 +330,9 @@ function extractContent(kind: ProviderKind, decoded: any): string {
     return parts.join('');
   }
   const message = decoded?.choices?.[0]?.message;
-  return message?.content || message?.reasoning_content || '';
+  // Never use reasoning_content as user-facing output — it is chain-of-thought
+  // style text and can leak instructions or internal deliberation.
+  return typeof message?.content === 'string' ? message.content : '';
 }
 
 function providerErrorMessage(status: number, text: string): string {

@@ -109,6 +109,24 @@ export const TRIAGE_DETECTORS: Record<string, Detector> = {
         const cutoff = Date.now() - 30 * 60 * 1000;
         return runs.filter((r) => r.status === 'failed' && tsMs(r.startedAt) > cutoff).length;
     },
+
+    relationships: async (prisma) => {
+        const pattern = /\b(nda|non[ -]?disclosure|contract|agreement|msa|sla|terms|vendor|partner|partnership|proposal|letter of intent|lou|moa|collaborat|reseller|supplier|legal)\b/i;
+        const tickets = await latest(prisma, 'SupportTicket', 60);
+        const enquiries = await latest(prisma, 'ContactEnquiry', 60);
+        const items = [...tickets, ...enquiries].filter((row) => pattern.test(
+            [row.subject, row.description, row.body, row.message].map((v) => String(v ?? '')).join(' ')
+        ));
+        let reviewed: any[] = [];
+        try {
+            reviewed = (await prisma.orm.public.AuditLog
+                .where({ action: 'agent.relationship_review' })
+                .limit(500)
+                .all()) ?? [];
+        } catch { /* no ledger yet → nothing reviewed */ }
+        const done = new Set(reviewed.map((r: any) => r.entityId));
+        return items.filter((row) => !done.has(`ticket:${row.id}`) && !done.has(`enquiry:${row.id}`)).length;
+    },
 };
 
 const lastEventRun = new Map<string, number>();

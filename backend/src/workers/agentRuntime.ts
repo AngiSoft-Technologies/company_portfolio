@@ -32,8 +32,10 @@ import { runAgent } from '../modules/agents/services/agentRunner';
 const DEFAULT_POLL_MS = 1_000;
 const MIN_POLL_MS = 100;
 const RUNTIME_LOCK_KEY = 'angisoft:agent-runtime:lock';
-const RUNTIME_LOCK_TTL_MS = 30 * 1000;
+const RUNTIME_LOCK_TTL_MS = 60 * 1000;
 const MAX_AGENTS_PER_SWEEP = 20;
+const STALE_RUN_MS = 15 * 60 * 1000;
+let seededThisProcess = false;
 
 export { getAgentRuntimeStatus, getWorkforceState };
 export type { AgentRuntimeStatus };
@@ -65,6 +67,10 @@ function runtimeRedis(): Redis | null {
     return runtimeClient;
 }
 
+function lockHolder(): string {
+    return process.env.FLY_MACHINE_ID ?? `pid-${process.pid}`;
+}
+
 async function acquireRuntimeLock(): Promise<boolean> {
     const client = runtimeRedis();
     if (!client) return true; // no Redis configured (dev/test): single process
@@ -72,7 +78,7 @@ async function acquireRuntimeLock(): Promise<boolean> {
     // Fly machines sweep concurrently and duplicate every agent run.
     if (client.status !== 'ready') return false;
     try {
-        const holder = process.env.FLY_MACHINE_ID ?? `pid-${process.pid}`;
+        const holder = lockHolder();
         // Renew our own hold first — plain SET NX would fail while we hold
         // the key, rotating the lock to a random machine every 30s.
         const current = await Promise.race([
@@ -90,6 +96,54 @@ async function acquireRuntimeLock(): Promise<boolean> {
         return res === 'OK';
     } catch {
         return false; // lock check failed — standby this cycle rather than risk duplicates
+    }
+}
+
+/** Keep the leader lock alive while a long sweep/article generation runs. */
+function startLockHeartbeat(): () => void {
+    const client = runtimeRedis();
+    const holder = lockHolder();
+    const timer = setInterval(() => {
+        if (client?.status !== 'ready') return;
+        void client.get(RUNTIME_LOCK_KEY).then((current) => {
+            if (current === holder) return client.set(RUNTIME_LOCK_KEY, holder, 'PX', RUNTIME_LOCK_TTL_MS);
+        }).catch(() => {});
+    }, Math.max(5_000, Math.floor(RUNTIME_LOCK_TTL_MS / 3)));
+    return () => clearInterval(timer);
+}
+
+async function releaseRuntimeLock(): Promise<void> {
+    const client = runtimeRedis();
+    if (client?.status !== 'ready') return;
+    try {
+        const current = await client.get(RUNTIME_LOCK_KEY);
+        if (current === lockHolder()) await client.del(RUNTIME_LOCK_KEY);
+    } catch { /* TTL will expire */ }
+}
+
+/** Mark runs orphaned by a crash/deploy so they don't look "running" forever. */
+async function reapStaleRuns(): Promise<number> {
+    try {
+        const stale = (await prisma.orm.public.AgentRun
+            .where({ status: 'running' })
+            .limit(100)
+            .all()) as any[];
+        const cutoff = Date.now() - STALE_RUN_MS;
+        let reaped = 0;
+        for (const run of stale) {
+            if (tsMs(run.startedAt) > cutoff) continue;
+            await prisma.orm.public.AgentRun.where({ id: run.id }).update({
+                status: 'failed',
+                error: 'Run reaped after exceeding stale-run deadline',
+                finishedAt: ts(),
+            });
+            reaped += 1;
+        }
+        if (reaped) console.warn(`[agents] reaped ${reaped} stale running agent run(s)`);
+        return reaped;
+    } catch (err: any) {
+        console.warn('[agents] stale-run reaper failed:', err?.message || err);
+        return 0;
     }
 }
 
@@ -131,7 +185,11 @@ async function cycle(): Promise<void> {
     if (inFlight) return; // never overlap cycles — agents stay responsive
     inFlight = true;
     try {
-        await ensureAgentsSeeded(prisma);
+        if (!seededThisProcess) {
+            await ensureAgentsSeeded(prisma);
+            seededThisProcess = true;
+        }
+        await reapStaleRuns();
 
         // 1) Reactive triage — detectors count pending work; event runs fire.
         const outcomes = await triageOnce(prisma, true);
@@ -172,7 +230,12 @@ export function startAgentRuntime(): void {
         while (running) {
             try {
                 if (await acquireRuntimeLock()) {
-                    await cycle();
+                    const stopHeartbeat = startLockHeartbeat();
+                    try {
+                        await cycle();
+                    } finally {
+                        stopHeartbeat();
+                    }
                 }
             } catch (err: any) {
                 console.warn('Agent runtime loop error:', err?.message || err);
@@ -209,6 +272,7 @@ export async function stopAgentRuntime(): Promise<void> {
     }
     wakeSleep?.();
     wakeSleep = null;
+    void releaseRuntimeLock();
     if (loopPromise) {
         await Promise.race([
             loopPromise,

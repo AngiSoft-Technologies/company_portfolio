@@ -46,14 +46,15 @@ async function acquireSweepLock(): Promise<boolean> {
         const res = await client.set(LOCK_KEY, holder, 'PX', LOCK_TTL_MS, 'NX');
         return res === 'OK';
     } catch (err: any) {
-        // Redis unreachable: prefer availability — sweep anyway. Outreach
-        // dedupe (AuditLog ledger) still prevents double-contacting anyone.
-        console.warn('[agents] scheduler lock unavailable, sweeping anyway:', err?.message || err);
-        return true;
+        // Fail closed: a stale/unreachable lock must never allow two machines
+        // to run the same scheduled agents. The continuous runtime is the
+        // active path; this alias is only a compatibility shim.
+        console.warn('[agents] scheduler lock unavailable — standing down:', err?.message || err);
+        return false;
     }
 }
 
-export async function sweepDueAgents(): Promise<number> {
+async function sweepDueAgents(): Promise<number> {
     if (!(await acquireSweepLock())) return 0;
     await ensureAgentsSeeded(prisma);
 

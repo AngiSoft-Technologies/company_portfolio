@@ -31,3 +31,16 @@ export const publicFormLimiter = rateLimit({
     standardHeaders: false,
     legacyHeaders: false,
 });
+
+/**
+ * AI Boardroom mutations generate paid LLM replies and can queue approval
+ * requests. Generous enough for a real meeting, tight enough to stop a stuck
+ * UI or malicious client from burning the owner's budget.
+ */
+export const boardroomLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 20,
+    message: 'Boardroom is busy. Please wait a few minutes before trying again.',
+    standardHeaders: false,
+    legacyHeaders: false,
+});

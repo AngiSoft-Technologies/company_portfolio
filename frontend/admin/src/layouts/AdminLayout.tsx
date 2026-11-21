@@ -10,7 +10,7 @@ import { EffectiveAccessProvider, useEffectiveAccess } from '@/lib/permissions';
  * permission that grants access, and groups with no visible link disappear
  * entirely. A link with no permission is always shown (dashboards, workspace).
  */
-type NavLinkSpec = { to: string; label: string; permission?: string };
+type NavLinkSpec = { to: string; label: string; permission?: string; superAdminOnly?: boolean };
 
 const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
   {
@@ -88,6 +88,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/ai', label: 'AI Config', permission: 'ai_config.view' },
       { to: '/ai-assist', label: 'AI Assist', permission: 'leads.view' },
       { to: '/agents', label: 'AI Workforce', permission: 'agents.view' },
+      { to: '/boardroom', label: 'AI Boardroom', permission: 'agents.manage', superAdminOnly: true },
       { to: '/uploads', label: 'File Uploads', permission: 'media.upload' },
       { to: '/settings', label: 'Site Settings', permission: 'administration.settings' },
       { to: '/system', label: 'System Panel', permission: 'administration.audit' },
@@ -99,7 +100,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
 
 function AdminShell() {
   const { mode, toggleMode } = useContext(AdminThemeContext);
-  const { can, access } = useEffectiveAccess();
+  const { can, access, isSuperAdmin } = useEffectiveAccess();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
 
@@ -110,7 +111,8 @@ function AdminShell() {
 
   const groups = NAV_GROUPS.map((group) => ({
     title: group.title,
-    links: group.links.filter((l) => !l.permission || can(l.permission)),
+    links: group.links.filter((l) =>
+      (!l.permission || can(l.permission)) && (!l.superAdminOnly || isSuperAdmin)),
   })).filter((group) => group.links.length > 0);
 
   const logout = async () => {

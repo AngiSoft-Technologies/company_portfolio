@@ -24,7 +24,8 @@ export type AgentKind =
     | 'hr'
     | 'analytics'
     | 'security'
-    | 'workforce';
+    | 'workforce'
+    | 'relationships';
 
 export interface AgentDefinition {
     key: string;
@@ -168,10 +169,29 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
             'reports workforce health to the owner like a real EA.',
         scheduleMinutes: 12 * 60,
     },
+    {
+        key: 'relationships',
+        name: 'Nexus',
+        role: 'Relationships & Contracts Officer',
+        department: 'Business Development',
+        kind: 'relationships',
+        description:
+            'Owns company-to-company relationships: partnership enquiries, NDAs, ' +
+            'letters, proposals, contract drafting and clause-by-clause review of ' +
+            'inbound agreements. Drafts and risk notes are prepared for owner ' +
+            'approval — Nexus never signs, sends or amends a binding document alone.',
+        scheduleMinutes: 12 * 60,
+    },
 ];
 
 export function agentDefinition(key: string): AgentDefinition | undefined {
     return AGENT_REGISTRY.find((a) => a.key === key);
+}
+
+function hashKey(key: string): number {
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
+    return Math.abs(hash);
 }
 
 /**
@@ -196,7 +216,8 @@ export async function ensureAgentsSeeded(prisma: Db): Promise<void> {
                 description: def.description,
                 status: 'active',
                 scheduleMinutes: def.scheduleMinutes,
-                nextRunAt: ts(),
+                // Spread first runs so a fresh deploy doesn't stampede the DB/LLM.
+                nextRunAt: ts(Date.now() + (hashKey(def.key) % Math.max(60_000, Math.min(def.scheduleMinutes * 60_000, 15 * 60_000)))),
                 updatedAt: ts(),
             });
         } catch (err: any) {
