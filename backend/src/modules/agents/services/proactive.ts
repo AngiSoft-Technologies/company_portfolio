@@ -238,7 +238,7 @@ async function writeArticle(prisma: Db, topic: string): Promise<ArticleDraft | n
         const text = await aiComplete(config, [
             { role: 'system', content: 'You are the content lead of AngiSoft Technologies, a software company in Kenya. Write publish-ready blog posts: accurate, specific, professional, no hype, no pricing claims, no client names. Return ONLY a JSON object.' },
             { role: 'user', content: `Write a blog post about "${topic}" for AngiSoft Technologies' website. JSON shape: {"title": string, "slug": string (kebab-case), "excerpt": string (<=160 chars), "content": string (full markdown article, 600-900 words, with ## sections and a practical takeaway), "seoTitle": string (<=60 chars), "seoDescription": string (<=155 chars), "tags": string[] (3-5)}. Make it useful to a Kenyan business owner evaluating software services.` },
-        ], { maxTokens: 2200, temperature: 0.6 });
+        ], { maxTokens: 3200, temperature: 0.6, timeoutMs: 110000 });
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) return null;
         const parsed = JSON.parse(match[0]) as Partial<ArticleDraft>;

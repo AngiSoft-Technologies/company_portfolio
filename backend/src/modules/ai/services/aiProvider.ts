@@ -340,7 +340,7 @@ function providerErrorMessage(status: number, text: string): string {
 export async function aiComplete(
   config: AIProviderConfig,
   messages: ChatMessage[],
-  opts: { maxTokens?: number; temperature?: number } = {}
+  opts: { maxTokens?: number; temperature?: number; timeoutMs?: number } = {}
 ): Promise<string> {
   const baseUrl = String(config.baseUrl || '').trim().replace(/\/+$/, '');
   const model = String(config.model || '').trim();
@@ -351,21 +351,23 @@ export async function aiComplete(
   const kind = resolveProviderKind(baseUrl, config.kind);
   const maxTokens = Math.min(4096, Math.max(64, Math.round(opts.maxTokens ?? config.maxTokens ?? 1200)));
   const temperature = Math.min(2, Math.max(0, opts.temperature ?? config.temperature ?? 0.3));
-  const timeoutMs = Math.max(1000, Math.min(120000, config.timeoutMs || 25000));
+  const timeoutMs = Math.max(1000, Math.min(180000, opts.timeoutMs || config.timeoutMs || 25000));
 
   const built = buildProviderRequest(kind, baseUrl, model, config.apiKey, messages, maxTokens, temperature);
   let response = await requestJson(built.url, 'POST', built.headers, JSON.stringify(built.payload), timeoutMs);
 
   // NVIDIA NIM may acknowledge a long-running request with 202 + requestId.
-  // Poll its documented status endpoint with the same bearer credential.
+  // Poll its documented status endpoint until it completes or the call's
+  // timeout budget is exhausted (long-form generation can take minutes).
   if (response.status === 202 && built.pollStatus && response.data && response.data.requestId) {
     const requestId = String(response.data.requestId);
     if (/^[A-Za-z0-9-]{1,36}$/.test(requestId)) {
-      for (let attempt = 0; attempt < 5; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+      const deadline = Date.now() + timeoutMs * 2;
+      while (response.status === 202 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const remaining = Math.max(1000, deadline - Date.now());
         const statusUrl = joinEndpoint(baseUrl, `/v1/status/${encodeURIComponent(requestId)}`);
-        response = await requestJson(statusUrl, 'GET', built.headers, null, timeoutMs);
-        if (response.status !== 202) break;
+        response = await requestJson(statusUrl, 'GET', built.headers, null, Math.min(timeoutMs, remaining));
       }
     }
   }
