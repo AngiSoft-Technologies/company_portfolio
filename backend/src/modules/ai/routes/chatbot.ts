@@ -11,6 +11,7 @@ import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 import type { AuthRequest } from '../../../shared/middleware/auth';
 import { sendMail } from '../../../shared/services/email';
 import { loadAIConfig, aiComplete } from '../../../modules/ai/services/aiProvider';
+import { agentCharter } from '../../../modules/agents/services/agentCharters';
 
 async function sendChatbotNotification(opts: {
   type: 'escalation' | 'high_intent';
@@ -76,9 +77,11 @@ async function sendChatbotNotification(opts: {
 
 const ChatMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
-  visitorName: z.string().min(2),
-  visitorEmail: z.string().email(),
-  visitorPhone: z.string().optional(),
+  // Identity is collected lazily — visitors can chat immediately and leave
+  // contact details only when they want a quote, booking or human follow-up.
+  visitorName: z.string().min(1).max(120).optional(),
+  visitorEmail: z.string().email().optional(),
+  visitorPhone: z.string().max(40).optional(),
   deviceFingerprint: z.string().min(8).max(200).optional(),
   message: z.string().min(1).max(5000),
 });
@@ -351,10 +354,17 @@ export default function chatbotRouter(prisma: Db) {
   };
 
   const buildSystemPrompt = (contextText: string) => {
-    const basePrompt = `You are a professional and friendly chatbot for AngiSoft Technologies, a custom software development company based in Kenya.
+    // The public assistant IS the customer-care agent — same mandate,
+    // decision rights and escalation triggers as the workforce member.
+    const care = agentCharter('customer-care');
+    const persona = care
+      ? `You are Care, the customer-care agent on AngiSoft's AI workforce, handling live chat on the public website.\nMandate: ${care.mandate}\nHandle autonomously: ${care.autonomous.join('; ')}.\nNever promise refunds, credits, scope changes, or pricing/security/legal commitments — say a teammate will confirm those.\nEscalate to a human immediately when: ${care.escalateToOwner.join('; ')}.`
+      : 'You are a professional and friendly chatbot for AngiSoft Technologies, a custom software development company based in Kenya.';
+    const basePrompt = `${persona}
 You help clients with inquiries about services, pricing, team expertise, projects, and bookings.
 Use ONLY the facts in the CONTEXT below and the conversation history. If the answer is not in the context, say you don't have that information and offer to connect them with the team.
-Never invent prices, staff counts, or project details. Keep answers concise, helpful, and professional.`;
+Never invent prices, staff counts, or project details. Keep answers concise, helpful, and professional. Refer to what the visitor already said — never ask for information twice. If the visitor gives a one-word reply like "hi" or "ok", respond naturally and keep the conversation moving instead of repeating questions.
+Be proactive like a great consultant: anticipate the visitor's next need, suggest the most relevant next step (a service, a project example, a quote, or a human), and when you sense buying intent, gently move toward collecting their name/email for follow-up. When you don't know something, say so plainly and offer the closest useful alternative rather than repeating yourself.`;
 
     if (!contextText) {
       return `${basePrompt}\nIf no context is provided, ask a clarifying question and suggest contacting the team.`;
@@ -849,22 +859,31 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
           message
         } = req.body;
 
-        // Find or create conversation
+        // Find or create conversation. Guests chat without identity — a
+        // stable placeholder email (derived from the device fingerprint)
+        // keeps threading intact until they choose to share real details.
         let conversation = conversationId
           ? await prisma.orm.public.ChatConversation.where({ id: conversationId }).first()
           : null;
 
-        if (conversation && conversation.visitorEmail !== visitorEmail) {
+        if (conversation && visitorEmail && conversation.visitorEmail !== visitorEmail) {
           conversation = null;
         }
+
+        const resolvedName = visitorName?.trim() || conversation?.visitorName || 'Guest';
+        const resolvedEmail =
+          visitorEmail ??
+          conversation?.visitorEmail ??
+          `guest-${(deviceFingerprint ?? newId()).slice(0, 12)}@guest.local`;
+        const resolvedPhone = visitorPhone ?? conversation?.visitorPhone ?? null;
 
         if (!conversation) {
           conversation = await prisma.orm.public.ChatConversation.create({
             id: newId(),
             updatedAt: ts(),
-            visitorName,
-            visitorEmail,
-            visitorPhone: visitorPhone ?? null,
+            visitorName: resolvedName,
+            visitorEmail: resolvedEmail,
+            visitorPhone: resolvedPhone,
             deviceFingerprint: deviceFingerprint ?? null
           });
         } else if (deviceFingerprint || visitorPhone || visitorName) {
@@ -883,11 +902,12 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
           message
         });
 
-        // Get conversation history
+        // Get conversation history — last 20 messages give the agent real
+        // conversational memory without bloating the prompt.
         const history = await prisma.orm.public.ChatMessage
           .where({ conversationId: conversation.id })
           .orderBy((m: any) => m.createdAt.asc())
-          .limit(10)
+          .limit(20)
           .all();
 
         const conversationHistory = history.map((msg: { sender: string; message: string }) => ({
@@ -895,8 +915,15 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
           content: msg.message,
         }));
 
-        // Build internal context
-        const internalContext = await getInternalContext(message);
+        // Build internal context — context assembly must never take the
+        // chat down; degrade to an empty context on failure.
+        const internalContext = await getInternalContext(message).catch((err) => {
+          console.warn('chatbot context failed:', err?.message || err);
+          return {
+            services: [], projects: [], blogPosts: [], faqs: [], testimonials: [],
+            team: [], categories: [], contact: null, about: null, booking: null,
+          } as InternalContext;
+        });
 
         // Escalate to human if needed
         if (shouldEscalateToHuman(message)) {
@@ -923,9 +950,9 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
             type: 'escalation',
             conversation: {
               id: conversation.id,
-              visitorName,
-              visitorEmail,
-              visitorPhone,
+              visitorName: resolvedName,
+              visitorEmail: resolvedEmail,
+              visitorPhone: resolvedPhone ?? undefined,
               intent: 'support',
             },
             recentMessages: history,
@@ -944,9 +971,9 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
         const externalContext = await getExternalContext({
           message,
           conversationId: conversation.id,
-          visitorName,
-          visitorEmail,
-          visitorPhone
+          visitorName: resolvedName,
+          visitorEmail: resolvedEmail,
+          visitorPhone: resolvedPhone ?? undefined
         });
 
         const contextTextParts = [];
@@ -958,8 +985,8 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
         // Get AI response
         const botResponse = await getAIResponse(message, conversationHistory, contextText, internalContext);
 
-        // Get product recommendations
-        const recommendations = await getRecommendations(message, prisma);
+        // Get product recommendations — non-essential, never fatal.
+        const recommendations = await getRecommendations(message, prisma).catch(() => []);
 
         // Save bot response
         await prisma.orm.public.ChatMessage.create({
@@ -995,9 +1022,9 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
             type: 'high_intent',
             conversation: {
               id: conversation.id,
-              visitorName,
-              visitorEmail,
-              visitorPhone,
+              visitorName: resolvedName,
+              visitorEmail: resolvedEmail,
+              visitorPhone: resolvedPhone ?? undefined,
               intent: 'booking',
             },
             recentMessages: history,
@@ -1098,6 +1125,37 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
     } catch (error) {
       console.error('Error fetching conversation:', error);
       res.status(500).json({ error: 'Failed to fetch conversation' });
+    }
+  });
+
+  // Staff reply — closes the human-handoff loop. Messages are stored with
+  // sender 'agent' so the public widget renders them as team messages.
+  router.post('/conversations/:id/reply', requireAuth, requirePermission('chatbot.respond'), async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { message } = req.body ?? {};
+      const text = String(message ?? '').trim();
+      if (!text || text.length > 5000) {
+        return res.status(400).json({ error: 'message is required (max 5000 chars)' });
+      }
+      const conversation = await prisma.orm.public.ChatConversation.where({ id }).first();
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+
+      const created = await prisma.orm.public.ChatMessage.create({
+        id: newId(),
+        conversationId: id,
+        sender: 'agent',
+        message: text,
+      });
+      // A human reply re-opens the conversation for the visitor.
+      await prisma.orm.public.ChatConversation.where({ id }).update({
+        status: 'open',
+        updatedAt: ts(),
+      });
+      res.status(201).json(created);
+    } catch (error) {
+      console.error('Error posting chat reply:', error);
+      res.status(500).json({ error: 'Failed to send reply' });
     }
   });
 

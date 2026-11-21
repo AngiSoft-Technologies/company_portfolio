@@ -1,104 +1,93 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { useTheme } from '@/lib/theme';
-import { FaTimes, FaPaperPlane, FaHeadset } from 'react-icons/fa';
+import { FaTimes, FaHeadset, FaPaperPlane as SendIcon } from 'react-icons/fa';
 import { apiPost } from '@/lib/httpClient';
 
-const ChatBot = () => {
-  const { colors } = useTheme();
+const SUGGESTIONS = [
+  'What services do you offer?',
+  'How much does a project cost?',
+  'Show me your work',
+  'Talk to a human',
+];
+
+const CareIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 14v-2a9 9 0 0 1 18 0v2" />
+    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+  </svg>
+);
+
+const CareAvatar = ({ size = 40 }) => (
+  <div
+    className="rounded-full flex items-center justify-center flex-shrink-0"
+    style={{
+      width: size,
+      height: size,
+      background: 'var(--gradient-brand)',
+      color: '#fff',
+      boxShadow: '0 4px 14px rgba(8, 117, 255, 0.35)',
+    }}
+  >
+    <CareIcon />
+  </div>
+);
+
+const CareBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [stage, setStage] = useState('contact'); // contact collection first
-  const defaultGreeting = {
-    id: 1,
-    type: 'bot',
-    text: 'Hello! 👋 Welcome to AngiSoft Technologies. To help you better, could you please share your name?',
-    timestamp: new Date()
-  };
-  const [messages, setMessages] = useState([defaultGreeting]);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      type: 'bot',
+      text: "Hi there — I'm Care, from the AngiSoft customer care team. Ask me anything about our services, pricing or projects, and I'll get you the right answer.",
+      timestamp: new Date(),
+    },
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
-
-  // Lead collection state
-  const [visitorInfo, setVisitorInfo] = useState({
-    name: '',
-    email: '',
-    phone: ''
-  });
-  const [contactStep, setContactStep] = useState('name');
+  const [visitorInfo, setVisitorInfo] = useState({ name: '', email: '', phone: '' });
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactDraft, setContactDraft] = useState('');
   const [conversationId, setConversationId] = useState('');
   const [recommendations, setRecommendations] = useState([]);
-  const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [handoffRequested, setHandoffRequested] = useState(false);
+  const [deviceFingerprint, setDeviceFingerprint] = useState('');
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
   const historyLoadedRef = useRef(false);
+  const userMsgCount = useRef(0);
 
-  const generateFingerprint = () => {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return `fp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  };
+  const generateFingerprint = () =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `fp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  // Focus input when chat opens
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 80);
   }, [isOpen]);
 
-  // Load or generate device fingerprint + stored visitor info
   useEffect(() => {
     const storedFingerprint = localStorage.getItem('angisoft_fp');
     if (storedFingerprint) {
       setDeviceFingerprint(storedFingerprint);
     } else {
-      const newFingerprint = generateFingerprint();
-      localStorage.setItem('angisoft_fp', newFingerprint);
-      setDeviceFingerprint(newFingerprint);
+      const fp = generateFingerprint();
+      localStorage.setItem('angisoft_fp', fp);
+      setDeviceFingerprint(fp);
     }
 
     const storedVisitorRaw = localStorage.getItem('angisoft_visitor');
     if (storedVisitorRaw) {
       try {
-        const storedVisitor = JSON.parse(storedVisitorRaw);
-        if (storedVisitor?.name || storedVisitor?.email || storedVisitor?.phone) {
-          setVisitorInfo({
-            name: storedVisitor.name || '',
-            email: storedVisitor.email || '',
-            phone: storedVisitor.phone || ''
-          });
-          if (storedVisitor.name && !storedVisitor.email) {
-            setContactStep('email');
-          } else if (storedVisitor.email && !storedVisitor.phone) {
-            setContactStep('phone');
-          }
-          if (storedVisitor.name && storedVisitor.email) {
-            setStage('chat');
-            setMessages([
-              {
-                id: Date.now(),
-                type: 'bot',
-                text: `Welcome back, ${storedVisitor.name}! How can I help you today?`,
-                timestamp: new Date()
-              }
-            ]);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to parse stored visitor info', error);
-      }
+        const v = JSON.parse(storedVisitorRaw);
+        if (v?.name || v?.email || v?.phone) setVisitorInfo({ name: v.name || '', email: v.email || '', phone: v.phone || '' });
+      } catch { /* ignore */ }
     }
-
     const storedConversationId = localStorage.getItem('angisoft_conversation');
-    if (storedConversationId) {
-      setConversationId(storedConversationId);
-    }
+    if (storedConversationId) setConversationId(storedConversationId);
   }, []);
 
   useEffect(() => {
@@ -108,486 +97,376 @@ const ChatBot = () => {
   }, [visitorInfo]);
 
   useEffect(() => {
-    if (conversationId) {
-      localStorage.setItem('angisoft_conversation', conversationId);
-    }
+    if (conversationId) localStorage.setItem('angisoft_conversation', conversationId);
   }, [conversationId]);
 
   const mapHistoryMessages = (conversations) => {
-    const allMessages = conversations.flatMap((conversation) =>
-      (conversation.messages || []).map((msg) => ({
-        id: msg.id,
-        type: msg.sender === 'visitor' ? 'user' : 'bot',
-        text: msg.message,
-        timestamp: new Date(msg.createdAt)
-      }))
+    const all = conversations.flatMap((conversation) =>
+      (conversation.messages || []).map((msg) => {
+        const sender = String(msg.sender || '').toLowerCase();
+        const type = sender === 'visitor' ? 'user' : sender === 'bot' || sender === 'assistant' ? 'bot' : 'agent';
+        return { id: msg.id, type, text: msg.message, timestamp: new Date(msg.createdAt) };
+      })
     );
-    return allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return all.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   };
 
   const loadHistory = async () => {
     if (historyLoadedRef.current) return;
     if (!deviceFingerprint && !conversationId && !visitorInfo.email) return;
     historyLoadedRef.current = true;
-
     try {
-      // Route through the shared client so the request gets the absolute API
-      // origin. A relative `/api/...` URL lands on the Netlify SPA fallback in
-      // production and silently returns HTML.
       const data = await apiPost('/api/chatbot/history', {
         conversationId: conversationId || undefined,
         deviceFingerprint: deviceFingerprint || undefined,
         visitorName: visitorInfo.name || undefined,
         visitorEmail: visitorInfo.email || undefined,
         visitorPhone: visitorInfo.phone || undefined,
-        limit: 3
+        limit: 3,
       });
-      if (data.latestConversationId && !conversationId) {
-        setConversationId(data.latestConversationId);
-      }
-
+      if (data.latestConversationId && !conversationId) setConversationId(data.latestConversationId);
       if (Array.isArray(data.conversations) && data.conversations.length > 0) {
-        const hasEscalated = data.conversations.some((conversation) => conversation.status === 'escalated');
-        if (hasEscalated) {
-          setHandoffRequested(true);
-        }
+        if (data.conversations.some((c) => c.status === 'escalated')) setHandoffRequested(true);
         const historyMessages = mapHistoryMessages(data.conversations);
         if (historyMessages.length > 0) {
+          userMsgCount.current = historyMessages.filter((m) => m.type === 'user').length;
           setMessages(historyMessages);
-          setStage('chat');
         }
       }
     } catch (error) {
-      console.warn('request_failed:', error);
+      console.warn('chatbot history failed:', error);
     }
   };
 
   useEffect(() => {
-    if (!isOpen) return;
-    if (historyLoadedRef.current) return;
-    loadHistory();
+    if (!isOpen || historyLoadedRef.current) return;
+    void loadHistory();
   }, [isOpen, deviceFingerprint, conversationId, visitorInfo.email, visitorInfo.name, visitorInfo.phone]);
 
-  // Auto-resize textarea
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-    
-    // Reset height to auto to get the correct scrollHeight
-    e.target.style.height = 'auto';
-    
-    // Set new height based on scrollHeight, max 150px
-    const newHeight = Math.min(e.target.scrollHeight, 150);
-    e.target.style.height = `${newHeight}px`;
-  };
+  const pushBot = (text, extra = {}) =>
+    setMessages((prev) => [...prev, { id: Date.now() + Math.random(), type: 'bot', text, timestamp: new Date(), ...extra }]);
 
-  // Handle contact information collection
-  const handleContactSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const sendMessage = async (rawText) => {
+    const text = String(rawText || '').trim();
+    if (!text || isLoading) return;
 
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      text: input,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, { id: Date.now(), type: 'user', text, timestamp: new Date() }]);
     setInput('');
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-    }
-
-    if (contactStep === 'name') {
-      setVisitorInfo(prev => ({ ...prev, name: input }));
-      setContactStep('email');
-      const nextMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: `Nice to meet you, ${input}! 😊 What's your email address?`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, nextMessage]);
-    } else if (contactStep === 'email') {
-      if (!input.includes('@')) {
-        const errorMsg = {
-          id: Date.now() + 1,
-          type: 'bot',
-          text: 'Please enter a valid email address.',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMsg]);
-        return;
-      }
-      setVisitorInfo(prev => ({ ...prev, email: input }));
-      setContactStep('phone');
-      const nextMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: 'Great! And your phone number? (optional, just press enter to skip)',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, nextMessage]);
-    } else if (contactStep === 'phone') {
-      setVisitorInfo(prev => ({ ...prev, phone: input || '' }));
-      setStage('chat');
-      const nextMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: `Thanks, ${visitorInfo.name}! How can I help you today?`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, nextMessage]);
-    }
-  };
-
-  // Handle chat message with AI
-  const handleChatSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      text: input,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-    }
+    if (inputRef.current) inputRef.current.style.height = 'auto';
     setIsLoading(true);
+    userMsgCount.current += 1;
+
+    // After a few exchanges without contact details, offer a lightweight
+    // follow-up card — never block the conversation for it.
+    if (!visitorInfo.email && !handoffRequested && userMsgCount.current === 4) {
+      setContactOpen(true);
+    }
 
     try {
       const data = await apiPost('/api/chatbot/chat', {
         conversationId: conversationId || undefined,
-        visitorName: visitorInfo.name,
-        visitorEmail: visitorInfo.email,
-        visitorPhone: visitorInfo.phone,
+        visitorName: visitorInfo.name || undefined,
+        visitorEmail: visitorInfo.email || undefined,
+        visitorPhone: visitorInfo.phone || undefined,
         deviceFingerprint: deviceFingerprint || undefined,
-        message: input
+        message: text,
       });
-      
-      // Update conversation ID if new
-      if (!conversationId) {
-        setConversationId(data.conversationId);
-      }
-
-      // Save recommendations if provided
-      if (data.recommendations?.length > 0) {
+      if (!conversationId && data.conversationId) setConversationId(data.conversationId);
+      if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
         setRecommendations(data.recommendations);
       }
-
-      if (data.handoff) {
-        setHandoffRequested(true);
-      }
-
-      const botMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: data.message,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, botMessage]);
+      if (data.handoff) setHandoffRequested(true);
+      pushBot(data.message || "Sorry, I didn't catch that — could you rephrase?");
     } catch (error) {
-      console.error('Chat error:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: 'Sorry, I encountered an issue. Please try again or contact us directly at support@angisoft.co.ke',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      console.error('chat error:', error);
+      pushBot("I'm having trouble reaching our systems right now. Please try again in a moment — or leave your email below and the team will follow up.");
+      setContactOpen(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = stage === 'contact' ? handleContactSubmit : handleChatSubmit;
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+    void sendMessage(input);
+  };
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+  };
+
+  const saveContact = () => {
+    const raw = contactDraft.trim();
+    if (!raw) return;
+    const emailMatch = raw.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
+    const email = emailMatch ? emailMatch[0] : '';
+    const namePart = raw.replace(email, '').replace(/[(),;]/g, ' ').trim();
+    setVisitorInfo((prev) => ({
+      name: namePart || prev.name || 'Friend',
+      email: email || prev.email,
+      phone: prev.phone,
+    }));
+    setContactOpen(false);
+    setContactDraft('');
+    if (email) {
+      pushBot(`Thanks${namePart ? `, ${namePart.split(' ')[0]}` : ''} — I've noted your email. The team can follow up anytime.`);
+    }
+  };
+
+  const showChips = messages.length <= 2 && !isLoading;
 
   return (
     <>
-      {/* Chat Window */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 z-100 w-[420px] sm:w-[460px] lg:w-[520px] max-w-[calc(100vw-32px)] h-[620px] max-h-[calc(100vh-96px)] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+          className="fixed bottom-24 right-4 sm:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[400px] h-[min(640px,calc(100vh-120px))] rounded-2xl overflow-hidden flex flex-col"
           style={{
-            background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 28, 0.98) 100%)',
-            backdropFilter: 'blur(12px)',
-            border: `1px solid rgba(255, 255, 255, 0.08)`,
-            boxShadow: '0 25px 80px rgba(8, 12, 24, 0.7)',
-            animation: 'slideUp 0.3s ease-out'
+            background: 'var(--card-bg, var(--bg-secondary))',
+            border: '1px solid var(--border, rgba(148,163,184,0.2))',
+            boxShadow: '0 24px 70px rgba(2, 8, 23, 0.45)',
+            animation: 'careSlideUp 0.28s cubic-bezier(0.21, 1.02, 0.73, 1)',
           }}
+          role="dialog"
+          aria-label="AngiSoft customer care chat"
         >
           {/* Header */}
           <div
-            className="px-6 py-5 flex items-center justify-between flex-shrink-0"
-            style={{
-              background: `linear-gradient(135deg, ${colors.primary}45 0%, ${colors.secondary}35 100%)`,
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-            }}
+            className="px-4 py-3.5 flex items-center gap-3 flex-shrink-0"
+            style={{ borderBottom: '1px solid var(--border, rgba(148,163,184,0.18))', background: 'var(--bg-secondary, transparent)' }}
           >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: `${colors.primary}35`, boxShadow: `0 0 20px ${colors.primary}40` }}
-              >
-                <FaHeadset style={{ color: colors.primary, fontSize: '1.2rem' }} />
+            <CareAvatar />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Care · Customer Care
               </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm">AngiSoft Bot</h3>
-                <div className="text-white/60 text-[11px] flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ background: colors.primary, boxShadow: `0 0 8px ${colors.primary}` }} />
-                  Online • AI Assistant
-                </div>
+              <div className="text-[11px] flex items-center gap-1.5" style={{ color: 'var(--color-success, #27D94B)' }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'currentColor' }} />
+                Online — replies instantly
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-tertiary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               aria-label="Close chat"
             >
-              <FaTimes className="text-white/70 hover:text-white" />
+              <FaTimes />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 chat-scroll ">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ background: 'var(--bg-primary)' }}>
             {handoffRequested && (
-              <div className="rounded-xl border border-yellow-400/30 bg-yellow-500/10 px-4 py-3 text-xs text-yellow-100">
-                A human assistant has been notified and will follow up shortly.
-              </div>
-            )}
-            {messages.map((msg) => (
               <div
-                key={msg.id}
-                className={`flex ${msg.type === 'user' ? 'justify-end mr-5' : 'justify-start ml-5'} animate-fadeIn`}
+                className="rounded-xl px-3.5 py-2.5 text-xs flex items-start gap-2"
+                style={{ background: 'color-mix(in srgb, var(--warning, #F59E0B) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--warning, #F59E0B) 35%, transparent)', color: 'var(--text-primary)' }}
               >
-                <div
-                  className={`max-w-[78%] px-4 py-3 rounded-2xl ${
-                    msg.type === 'user'
-                      ? 'rounded-br-none text-white'
-                      : 'rounded-bl-none text-white/90'
-                  }`}
-                  style={{
-                    background:
-                      msg.type === 'user'
-                        ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
-                        : 'rgba(30, 40, 60, 0.6)',
-                    backdropFilter: msg.type === 'bot' ? 'blur(10px)' : 'none',
-                    border:
-                      msg.type === 'bot'
-                        ? '1px solid rgba(255, 255, 255, 0.15)'
-                        : 'none',
-                    boxShadow:
-                      msg.type === 'user'
-                        ? `0 8px 24px ${colors.primary}35`
-                        : '0 6px 16px rgba(0, 0, 0, 0.25)'
-                  }}
-                >
-                  <p className="text-sm leading-relaxed">{msg.text}</p>
-                </div>
-              </div>
-            ))}
-
-            {/* Recommendations */}
-            {recommendations.length > 0 && (
-              <div className="mt-4 space-y-3 pt-4 border-t border-white/5">
-                <p className="text-xs text-white/60 font-medium px-1">Recommended services:</p>
-                {recommendations.map((service) => (
-                  <div
-                    key={service.id}
-                    className="p-4 rounded-xl"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      border: `1px solid ${colors.primary}40`,
-                      boxShadow: `0 10px 24px ${colors.primary}1a`
-                    }}
-                  >
-                    <p className="text-sm font-semibold text-white">{service.title}</p>
-                    <p className="text-xs text-white/60 mt-1">{service.description?.substring(0, 70)}...</p>
-                  </div>
-                ))}
+                <span aria-hidden="true">🙋</span>
+                <span>A teammate has been notified and will follow up here or by email.</span>
               </div>
             )}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div
-                  className="px-5 py-4 rounded-2xl rounded-bl-none"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
-                >
-                  <div className="flex gap-2">
+
+            {messages.map((msg) => {
+              const isUser = msg.type === 'user';
+              const isAgent = msg.type === 'agent';
+              return (
+                <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2`}>
+                  {!isUser && <CareAvatar size={28} />}
+                  <div className="max-w-[80%]">
+                    {isAgent && (
+                      <div className="text-[10px] mb-1 ml-1" style={{ color: 'var(--text-muted)' }}>AngiSoft team</div>
+                    )}
                     <div
-                      className="w-2 h-2 rounded-full animate-bounce"
-                      style={{ background: colors.primary, animationDelay: '0s' }}
-                    />
-                    <div
-                      className="w-2 h-2 rounded-full animate-bounce"
-                      style={{ background: colors.primary, animationDelay: '0.2s' }}
-                    />
-                    <div
-                      className="w-2 h-2 rounded-full animate-bounce"
-                      style={{ background: colors.primary, animationDelay: '0.4s' }}
-                    />
+                      className={`px-3.5 py-2.5 text-sm leading-relaxed ${
+                        isUser ? 'rounded-2xl rounded-br-md text-white' : 'rounded-2xl rounded-bl-md'
+                      }`}
+                      style={
+                        isUser
+                          ? { background: 'var(--primary, #0875FF)' }
+                          : {
+                              background: 'var(--bg-tertiary, var(--card-bg))',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--border, rgba(148,163,184,0.18))',
+                            }
+                      }
+                    >
+                      {msg.text}
+                    </div>
+                    <div className={`text-[10px] mt-1 ${isUser ? 'text-right' : 'ml-1'}`} style={{ color: 'var(--text-muted)' }}>
+                      {msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </div>
                   </div>
+                </div>
+              );
+            })}
+
+            {isLoading && (
+              <div className="flex justify-start gap-2">
+                <CareAvatar size={28} />
+                <div
+                  className="px-4 py-3 rounded-2xl rounded-bl-md flex items-center gap-1.5"
+                  style={{ background: 'var(--bg-tertiary, var(--card-bg))', border: '1px solid var(--border, rgba(148,163,184,0.18))' }}
+                >
+                  {[0, 0.15, 0.3].map((d, i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full inline-block animate-bounce"
+                      style={{ background: 'var(--primary-light, #3B9AFF)', animationDelay: `${d}s` }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <form
-            onSubmit={handleSubmit}
-            className="px-6 py-5 border-t border-white/10 flex-shrink-0"
-            style={{ background: 'rgba(0, 0, 0, 0.25)' }}
-          >
-            <div className="flex items-end gap-3">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-                placeholder={
-                  stage === 'contact'
-                    ? contactStep === 'phone'
-                      ? 'Your phone (optional)...'
-                      : `Your ${contactStep}...`
-                    : 'Type your message...'
-                }
-                disabled={isLoading}
-                rows={1}
-                className="flex-1 px-4 py-3 rounded-2xl text-sm text-white placeholder-white/30 focus:outline-none transition-all resize-none"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: `1px solid rgba(255, 255, 255, 0.12)`,
-                  boxShadow: 'inset 0 1px 6px rgba(0,0,0,0.35)',
-                  minHeight: '52px',
-                  maxHeight: '150px',
-                  height: 'auto',
-                  overflowY: 'auto',
-                  lineHeight: '1.5'
-                }}
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="h-12 w-12 rounded-2xl font-semibold transition-all hover:scale-105 disabled:opacity-50 flex items-center justify-center"
-                style={{
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                  color: 'white',
-                  boxShadow: `0 10px 24px ${colors.primary}40`
-                }}
-              >
-                <FaPaperPlane />
-              </button>
+          {/* Recommendations */}
+          {recommendations.length > 0 && (
+            <div className="px-4 pt-2 flex-shrink-0">
+              <div className="text-[11px] mb-1.5" style={{ color: 'var(--text-muted)' }}>Relevant from our work:</div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {recommendations.map((service) => (
+                  <button
+                    key={service.id}
+                    onClick={() => void sendMessage(`Tell me more about ${service.title}`)}
+                    className="flex-shrink-0 text-left px-3 py-2 rounded-xl text-xs max-w-[220px] transition-colors"
+                    style={{
+                      background: 'var(--bg-tertiary, var(--card-bg))',
+                      border: '1px solid var(--border, rgba(148,163,184,0.2))',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <span className="font-medium block truncate">{service.title}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Lazy contact capture — optional, never blocks chat */}
+          {contactOpen && !visitorInfo.email && (
+            <div className="px-4 pt-2 flex-shrink-0">
+              <div
+                className="rounded-xl px-3 py-2.5 flex items-center gap-2"
+                style={{ background: 'var(--bg-tertiary, var(--card-bg))', border: '1px solid var(--border, rgba(148,163,184,0.2))' }}
+              >
+                <input
+                  className="flex-1 bg-transparent text-sm outline-none min-w-0"
+                  style={{ color: 'var(--text-primary)' }}
+                  placeholder="Email for follow-up (optional)"
+                  value={contactDraft}
+                  onChange={(e) => setContactDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveContact()}
+                />
+                <button
+                  onClick={saveContact}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+                  style={{ background: 'var(--primary, #0875FF)', color: '#fff' }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setContactOpen(false)}
+                  className="text-xs px-1.5 py-1.5 flex-shrink-0"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Dismiss"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Suggestion chips */}
+          {showChips && (
+            <div className="px-4 pt-2 flex gap-2 overflow-x-auto flex-shrink-0">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => void sendMessage(s)}
+                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full transition-colors"
+                  style={{
+                    border: '1px solid var(--border, rgba(148,163,184,0.25))',
+                    color: 'var(--text-secondary, var(--text-primary))',
+                    background: 'transparent',
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <form onSubmit={handleSubmit} className="px-3 py-3 flex items-end gap-2 flex-shrink-0" style={{ borderTop: '1px solid var(--border, rgba(148,163,184,0.18))' }}>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Ask Care anything…"
+              disabled={isLoading}
+              rows={1}
+              className="flex-1 px-3.5 py-2.5 rounded-2xl text-sm resize-none outline-none"
+              style={{
+                background: 'var(--bg-tertiary, var(--bg-primary))',
+                border: '1px solid var(--border, rgba(148,163,184,0.25))',
+                color: 'var(--text-primary)',
+                maxHeight: '140px',
+                lineHeight: '1.5',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="h-10 w-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 flex-shrink-0"
+              style={{ background: 'var(--primary, #0875FF)', color: '#fff' }}
+              aria-label="Send message"
+            >
+              <SendIcon />
+            </button>
           </form>
 
-          {/* Footer */}
-          <div
-            className="px-6 py-3 text-[11px] text-white/55 flex items-center justify-between border-t border-white/10 flex-shrink-0"
-            style={{ background: 'rgba(0, 0, 0, 0.25)' }}
-          >
-            <span>Powered by AngiSoft AI</span>
-            <span className="text-white/40">We respect your privacy</span>
+          <div className="px-4 pb-2 text-[10px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+            Care is an AI assistant · conversations may be reviewed by our team
           </div>
         </div>
       )}
 
-      {/* Toggle Button */}
+      {/* FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full text-white shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-        style={{
-          background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-          boxShadow: `0 12px 30px ${colors.primary}40`,
-          animation: isOpen ? 'spin 0.3s ease-out' : 'bounce 2s infinite'
-        }}
-        aria-label="Open chat"
+        className="fixed bottom-5 right-5 z-[9998] w-14 h-14 rounded-full text-white flex items-center justify-center transition-transform duration-300 hover:scale-105"
+        style={{ background: 'var(--gradient-brand)', boxShadow: '0 10px 28px rgba(8,117,255,0.4)' }}
+        aria-label={isOpen ? 'Close chat' : 'Chat with Care'}
       >
-        <span
-          className="absolute inset-0 rounded-full"
-          style={{
-            boxShadow: `0 0 0 6px ${colors.primary}20, 0 0 25px ${colors.primary}35`,
-            opacity: isOpen ? 0 : 1,
-            transition: 'opacity 0.3s ease'
-          }}
-        />
-        {isOpen ? (
-          <FaTimes className="text-2xl" />
-        ) : (
-          <FaHeadset className="text-2xl" />
+        {isOpen ? <FaTimes className="text-xl" /> : <FaHeadset className="text-xl" />}
+        {!isOpen && !handoffRequested && (
+          <span
+            className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
+            style={{ background: 'var(--color-success, #27D94B)', borderColor: 'var(--bg-primary, #07142B)' }}
+          />
         )}
       </button>
 
       <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(180deg);
-          }
-        }
-
-        @keyframes bounce {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .chat-scroll::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .chat-scroll::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.04);
-          border-radius: 999px;
-        }
-
-        .chat-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 999px;
+        @keyframes careSlideUp {
+          from { opacity: 0; transform: translateY(14px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </>
   );
 };
 
-export { ChatBot };
-export default ChatBot;
+export const ChatBot = CareBot;
+export default CareBot;
