@@ -73,6 +73,16 @@ async function acquireRuntimeLock(): Promise<boolean> {
     if (client.status !== 'ready') return false;
     try {
         const holder = process.env.FLY_MACHINE_ID ?? `pid-${process.pid}`;
+        // Renew our own hold first — plain SET NX would fail while we hold
+        // the key, rotating the lock to a random machine every 30s.
+        const current = await Promise.race([
+            client.get(RUNTIME_LOCK_KEY),
+            new Promise<null>((r) => setTimeout(() => r(null), 3000)),
+        ]);
+        if (current === holder) {
+            await client.set(RUNTIME_LOCK_KEY, holder, 'PX', RUNTIME_LOCK_TTL_MS);
+            return true;
+        }
         const res = await Promise.race([
             client.set(RUNTIME_LOCK_KEY, holder, 'PX', RUNTIME_LOCK_TTL_MS, 'NX'),
             new Promise<null>((r) => setTimeout(() => r(null), 3000)),
