@@ -1,0 +1,524 @@
+[
+  {
+    "id": "table.MfaChallenge",
+    "label": "Create table \"MfaChallenge\"",
+    "summary": "Creates table \"MfaChallenge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "MfaChallenge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"MfaChallenge\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaChallenge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"MfaChallenge\"",
+        "sql": "CREATE TABLE \"public\".\"MfaChallenge\" (\n  \"attempts\" int4 DEFAULT 0 NOT NULL,\n  \"challenge\" text,\n  \"codeHash\" text,\n  \"consumedAt\" timestamp(3),\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"destination\" text,\n  \"employeeId\" text NOT NULL,\n  \"expiresAt\" timestamp(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"method\" text NOT NULL,\n  CONSTRAINT \"MfaChallenge_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"MfaChallenge\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaChallenge\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.MfaMethod",
+    "label": "Create table \"MfaMethod\"",
+    "summary": "Creates table \"MfaMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "MfaMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"MfaMethod\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"MfaMethod\"",
+        "sql": "CREATE TABLE \"public\".\"MfaMethod\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"credentialId\" text,\n  \"destination\" text,\n  \"employeeId\" text NOT NULL,\n  \"enabled\" bool DEFAULT true NOT NULL,\n  \"id\" text NOT NULL,\n  \"label\" text,\n  \"lastUsedAt\" timestamp(3),\n  \"type\" text NOT NULL,\n  CONSTRAINT \"MfaMethod_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"MfaMethod\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.WebAuthnCredential",
+    "label": "Create table \"WebAuthnCredential\"",
+    "summary": "Creates table \"WebAuthnCredential\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "WebAuthnCredential"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"WebAuthnCredential\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"WebAuthnCredential\"",
+        "sql": "CREATE TABLE \"public\".\"WebAuthnCredential\" (\n  \"backedUp\" bool DEFAULT false NOT NULL,\n  \"counter\" int4 DEFAULT 0 NOT NULL,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"credentialId\" text NOT NULL,\n  \"deviceType\" text,\n  \"employeeId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"publicKey\" text NOT NULL,\n  \"transports\" text[] DEFAULT '{}' NOT NULL,\n  CONSTRAINT \"WebAuthnCredential_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"WebAuthnCredential\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Employee.mfaRequired",
+    "label": "Add column \"mfaRequired\" to \"Employee\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "mfaRequired",
+        "table": "Employee"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"mfaRequired\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Employee",
+          "mfaRequired"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"mfaRequired\"",
+        "sql": "ALTER TABLE \"public\".\"Employee\" ADD COLUMN \"mfaRequired\" bool DEFAULT false NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"mfaRequired\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Employee",
+          "mfaRequired"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.RefreshToken.remember",
+    "label": "Add column \"remember\" to \"RefreshToken\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "remember",
+        "table": "RefreshToken"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"remember\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "RefreshToken",
+          "remember"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"remember\"",
+        "sql": "ALTER TABLE \"public\".\"RefreshToken\" ADD COLUMN \"remember\" bool DEFAULT true NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"remember\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "RefreshToken",
+          "remember"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MfaChallenge.MfaChallenge_employeeId_method_idx",
+    "label": "Create index \"MfaChallenge_employeeId_method_idx\" on \"MfaChallenge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MfaChallenge_employeeId_method_idx",
+        "table": "MfaChallenge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MfaChallenge_employeeId_method_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaChallenge_employeeId_method_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MfaChallenge_employeeId_method_idx\"",
+        "sql": "CREATE INDEX \"MfaChallenge_employeeId_method_idx\" ON \"public\".\"MfaChallenge\" (\"employeeId\", \"method\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MfaChallenge_employeeId_method_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaChallenge_employeeId_method_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MfaMethod.MfaMethod_credentialId_key",
+    "label": "Create index \"MfaMethod_credentialId_key\" on \"MfaMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MfaMethod_credentialId_key",
+        "table": "MfaMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MfaMethod_credentialId_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod_credentialId_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MfaMethod_credentialId_key\"",
+        "sql": "CREATE UNIQUE INDEX \"MfaMethod_credentialId_key\" ON \"public\".\"MfaMethod\" (\"credentialId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MfaMethod_credentialId_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod_credentialId_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.MfaMethod.MfaMethod_employeeId_type_idx",
+    "label": "Create index \"MfaMethod_employeeId_type_idx\" on \"MfaMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "MfaMethod_employeeId_type_idx",
+        "table": "MfaMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"MfaMethod_employeeId_type_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod_employeeId_type_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"MfaMethod_employeeId_type_idx\"",
+        "sql": "CREATE INDEX \"MfaMethod_employeeId_type_idx\" ON \"public\".\"MfaMethod\" (\"employeeId\", \"type\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"MfaMethod_employeeId_type_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"MfaMethod_employeeId_type_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.WebAuthnCredential.WebAuthnCredential_credentialId_key",
+    "label": "Create index \"WebAuthnCredential_credentialId_key\" on \"WebAuthnCredential\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "WebAuthnCredential_credentialId_key",
+        "table": "WebAuthnCredential"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"WebAuthnCredential_credentialId_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential_credentialId_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"WebAuthnCredential_credentialId_key\"",
+        "sql": "CREATE UNIQUE INDEX \"WebAuthnCredential_credentialId_key\" ON \"public\".\"WebAuthnCredential\" (\"credentialId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"WebAuthnCredential_credentialId_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential_credentialId_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.WebAuthnCredential.WebAuthnCredential_employeeId_idx",
+    "label": "Create index \"WebAuthnCredential_employeeId_idx\" on \"WebAuthnCredential\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "WebAuthnCredential_employeeId_idx",
+        "table": "WebAuthnCredential"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"WebAuthnCredential_employeeId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential_employeeId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"WebAuthnCredential_employeeId_idx\"",
+        "sql": "CREATE INDEX \"WebAuthnCredential_employeeId_idx\" ON \"public\".\"WebAuthnCredential\" (\"employeeId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"WebAuthnCredential_employeeId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WebAuthnCredential_employeeId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.MfaChallenge.MfaChallenge_employeeId_fkey",
+    "label": "Add foreign key \"MfaChallenge_employeeId_fkey\" on \"MfaChallenge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "MfaChallenge_employeeId_fkey",
+        "table": "MfaChallenge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"MfaChallenge_employeeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "MfaChallenge_employeeId_fkey",
+          "public",
+          "\"public\".\"MfaChallenge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"MfaChallenge_employeeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"MfaChallenge\"\nADD CONSTRAINT \"MfaChallenge_employeeId_fkey\"\nFOREIGN KEY (\"employeeId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"MfaChallenge_employeeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "MfaChallenge_employeeId_fkey",
+          "public",
+          "\"public\".\"MfaChallenge\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.MfaMethod.MfaMethod_employeeId_fkey",
+    "label": "Add foreign key \"MfaMethod_employeeId_fkey\" on \"MfaMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "MfaMethod_employeeId_fkey",
+        "table": "MfaMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"MfaMethod_employeeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "MfaMethod_employeeId_fkey",
+          "public",
+          "\"public\".\"MfaMethod\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"MfaMethod_employeeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"MfaMethod\"\nADD CONSTRAINT \"MfaMethod_employeeId_fkey\"\nFOREIGN KEY (\"employeeId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"MfaMethod_employeeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "MfaMethod_employeeId_fkey",
+          "public",
+          "\"public\".\"MfaMethod\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.WebAuthnCredential.WebAuthnCredential_employeeId_fkey",
+    "label": "Add foreign key \"WebAuthnCredential_employeeId_fkey\" on \"WebAuthnCredential\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "WebAuthnCredential_employeeId_fkey",
+        "table": "WebAuthnCredential"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"WebAuthnCredential_employeeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "WebAuthnCredential_employeeId_fkey",
+          "public",
+          "\"public\".\"WebAuthnCredential\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"WebAuthnCredential_employeeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"WebAuthnCredential\"\nADD CONSTRAINT \"WebAuthnCredential_employeeId_fkey\"\nFOREIGN KEY (\"employeeId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"WebAuthnCredential_employeeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "WebAuthnCredential_employeeId_fkey",
+          "public",
+          "\"public\".\"WebAuthnCredential\""
+        ]
+      }
+    ]
+  }
+]
