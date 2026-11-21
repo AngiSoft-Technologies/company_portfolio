@@ -1,5 +1,7 @@
+import type Redis from 'ioredis';
 import prisma from '../db';
 import { ts } from '../prisma/db';
+import { createRedisClient, getRedisUrl } from '../shared/services/redis';
 import { ensureAgentsSeeded } from '../modules/agents/services/agentRegistry';
 import { runAgent } from '../modules/agents/services/agentRunner';
 
@@ -15,7 +17,44 @@ import { runAgent } from '../modules/agents/services/agentRunner';
 const DEFAULT_INTERVAL_MS = 60 * 1000;
 const MAX_AGENTS_PER_SWEEP = 20;
 
+// Multiple Fly machines each run this scheduler; a Redis lock ensures only one
+// sweeps at a time so agents don't double-run (duplicate reports/runs). The
+// lock expires on its own if the holder dies mid-sweep.
+const LOCK_KEY = 'angisoft:agent-scheduler:lock';
+const LOCK_TTL_MS = 90 * 1000;
+let lockClient: Redis | null | undefined;
+
+function schedulerLockClient(): Redis | null {
+    if (lockClient !== undefined) return lockClient;
+    if (!getRedisUrl()) {
+        lockClient = null;
+        return null;
+    }
+    try {
+        lockClient = createRedisClient();
+    } catch {
+        lockClient = null;
+    }
+    return lockClient;
+}
+
+async function acquireSweepLock(): Promise<boolean> {
+    const client = schedulerLockClient();
+    if (!client) return true; // no Redis (dev/test): single process, no contention
+    try {
+        const holder = process.env.FLY_MACHINE_ID ?? `pid-${process.pid}`;
+        const res = await client.set(LOCK_KEY, holder, 'PX', LOCK_TTL_MS, 'NX');
+        return res === 'OK';
+    } catch (err: any) {
+        // Redis unreachable: prefer availability — sweep anyway. Outreach
+        // dedupe (AuditLog ledger) still prevents double-contacting anyone.
+        console.warn('[agents] scheduler lock unavailable, sweeping anyway:', err?.message || err);
+        return true;
+    }
+}
+
 export async function sweepDueAgents(): Promise<number> {
+    if (!(await acquireSweepLock())) return 0;
     await ensureAgentsSeeded(prisma);
 
     const now = ts();
