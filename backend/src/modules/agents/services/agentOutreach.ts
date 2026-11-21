@@ -29,8 +29,11 @@ const OWNER_REPORT_MIN_INTERVAL_MS = 20 * 60 * 60 * 1000; // ~daily digest throt
 let cachedOwnerEmail: string | null = null;
 
 export async function ownerEmail(prisma: Db): Promise<string | null> {
-    if (process.env.ADMIN_EMAIL) return process.env.ADMIN_EMAIL;
+    // CEO reporting address — OWNER_EMAIL/CEO_EMAIL win over the generic
+    // ADMIN_EMAIL so workforce reports land in the owner's personal inbox.
     if (process.env.OWNER_EMAIL) return process.env.OWNER_EMAIL;
+    if (process.env.CEO_EMAIL) return process.env.CEO_EMAIL;
+    if (process.env.ADMIN_EMAIL) return process.env.ADMIN_EMAIL;
     if (cachedOwnerEmail) return cachedOwnerEmail;
     try {
         const admins = (await prisma.orm.public.Employee
@@ -114,6 +117,22 @@ export interface OutboundEmail {
     entityId?: string;
 }
 
+/**
+ * Department identity for outbound mail. Send-as is enabled in Zoho, so
+ * agents send *from* their department mailbox — prospects see
+ * "AngiSoft Sales <sales@angisoft.co.ke>" and replies land in that inbox.
+ */
+const DEPARTMENT_FROM: Record<string, string> = {
+    'marketing-content': '"AngiSoft Marketing" <marketing@angisoft.co.ke>',
+    'marketing-growth': '"AngiSoft Marketing" <marketing@angisoft.co.ke>',
+    'sales-agent': '"AngiSoft Sales" <sales@angisoft.co.ke>',
+    'customer-care': '"AngiSoft Support" <support@angisoft.co.ke>',
+};
+
+function deptFrom(agentKey: string): string {
+    return DEPARTMENT_FROM[agentKey] ?? '"AngiSoft Technologies" <info@angisoft.co.ke>';
+}
+
 let emailsSentThisRun = 0;
 export function resetOutboundBudget(): void {
     emailsSentThisRun = 0;
@@ -141,6 +160,7 @@ export async function sendAgentEmail(
             html: mail.html,
             text: mail.text,
             purpose: 'general',
+            from: deptFrom(agentKey),
         });
         emailsSentThisRun += 1;
         if (mail.entityType && mail.entityId) {
@@ -180,6 +200,8 @@ export async function emailOwnerReport(
         to,
         subject: `${agent.name} (${agent.role}) — ${new Date().toDateString()}`,
         purpose: 'general',
+        senderName: 'AngiSoft AI Workforce',
+        replyTo: to,
         text: `${output.summary}\n\n${(output.actions ?? []).join('\n')}`,
         html: `
           <div style="font-family:system-ui,sans-serif;max-width:640px">
@@ -214,6 +236,8 @@ export async function alertOwner(
             to,
             subject: `[Agent alert] ${subject}`,
             purpose: 'general',
+            senderName: 'AngiSoft Monitoring',
+            replyTo: to,
             text: body,
             html: `<div style="font-family:system-ui,sans-serif"><h3>${escapeHtml(subject)}</h3><p>${escapeHtml(body)}</p><p style="color:#94a3b8;font-size:12px">Sent by agent "${escapeHtml(agentKey)}"</p></div>`,
         });

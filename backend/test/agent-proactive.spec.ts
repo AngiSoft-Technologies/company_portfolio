@@ -214,11 +214,17 @@ describe('AI workforce: proactive outreach layer', () => {
     });
 
     it('monitoring pages the owner when agent runs are failing', async () => {
+        store.AgentRun = [
+            { id: 'run_failed_1', agentKey: 'sales-agent', status: 'failed', startedAt: iso(0), error: 'boom' },
+        ];
         const out = output();
         out.metrics.failedAgentRuns = 3;
         await runProactive(prisma, agent('monitoring'), out);
-        const alert = sentMails.find((m) => m.to === 'owner@example.com' && m.subject.includes('agent run'));
+        const alert = sentMails.find((m) => m.to === 'owner@example.com' && /agent run/i.test(m.subject));
         expect(alert).toBeTruthy();
+        // Dedupe: a second proactive pass must not re-page for the same run.
+        await runProactive(prisma, agent('monitoring'), out);
+        expect(sentMails.filter((m) => m.to === 'owner@example.com' && /agent run/i.test(m.subject))).toHaveLength(1);
     });
 
     it('pa writes a coaching note into an underperforming agent\'s config', async () => {

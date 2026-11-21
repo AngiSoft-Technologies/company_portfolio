@@ -4,9 +4,9 @@ import { sendMailDirect } from '../shared/services/email';
 export function startEmailWorker() {
     try {
         const worker = createWorker('emails', async (job: any) => {
-            const { to, subject, html, text, purpose } = job.data;
+            const { to, subject, html, text, purpose, from, senderName, replyTo } = job.data;
             console.log(`📧 Processing email job: ${job.id} → ${to}`);
-            await sendMailDirect({ to, subject, html, text, purpose });
+            await sendMailDirect({ to, subject, html, text, purpose, from, senderName, replyTo });
         });
         return worker;
     } catch (err) {

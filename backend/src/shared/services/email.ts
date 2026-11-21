@@ -64,6 +64,14 @@ interface MailOptions {
     text?: string;
     /** Which Zoho address to send from (default: 'general' → info@) */
     purpose?: EmailPurpose;
+    /** Full From override (e.g. '"AngiSoft Sales" <sales@angisoft.co.ke>') —
+     *  requires the address to be a verified send-as alias in Zoho. */
+    from?: string;
+    /** Override the display name while keeping the verified From address,
+     *  e.g. senderName 'AngiSoft Sales' → "AngiSoft Sales" <info@...> */
+    senderName?: string;
+    /** Where replies should land (e.g. the department mailbox). */
+    replyTo?: string;
 }
 
 /**
@@ -87,13 +95,15 @@ export async function sendMail(opts: MailOptions) {
  * and as the direct-send fallback).
  */
 export async function sendMailDirect(opts: MailOptions) {
-    const from = resolveFrom(opts.purpose);
+    const base = opts.from ?? resolveFrom(opts.purpose);
+    const from = !opts.from && opts.senderName ? base.replace(/"[^"]*"/, `"${opts.senderName.replace(/"/g, '')}"`) : base;
     const info = await transporter.sendMail({
         from,
         to: opts.to,
         subject: opts.subject,
         text: opts.text,
         html: opts.html,
+        ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
     });
     console.log(`✅ Email sent → ${opts.to} (messageId: ${info.messageId})`);
     return info;

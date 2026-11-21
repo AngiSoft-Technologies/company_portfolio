@@ -78,18 +78,15 @@ export async function sweepDueAgents(): Promise<number> {
     return ran;
 }
 
+/**
+ * @deprecated Timed sweeps are replaced by the continuous agent runtime
+ * (agentRuntime.ts) — agents poll for work every AGENT_POLL_MS instead of
+ * sleeping until a cadence fires. Kept as an alias so existing wiring
+ * (index.ts / worker.ts) needs no changes.
+ */
 export function startAgentScheduler(): NodeJS.Timeout | null {
-    const intervalMs = Number(process.env.AGENT_SCHEDULER_INTERVAL_MS ?? DEFAULT_INTERVAL_MS);
-    if (!Number.isFinite(intervalMs) || intervalMs <= 0) return null;
-
-    const timer = setInterval(() => {
-        sweepDueAgents().catch((err) => console.warn('Agent scheduler sweep failed:', err?.message || err));
-    }, intervalMs);
-    timer.unref?.();
-    // Stagger the boot sweep so it doesn't collide with the other monitors.
-    const boot = setTimeout(() => {
-        sweepDueAgents().catch((err) => console.warn('Agent scheduler boot sweep failed:', err?.message || err));
-    }, 120_000);
-    boot.unref?.();
-    return timer;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { startAgentRuntime } = require('./agentRuntime');
+    startAgentRuntime();
+    return null;
 }

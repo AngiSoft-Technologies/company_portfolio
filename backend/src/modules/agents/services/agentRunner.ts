@@ -2,6 +2,7 @@ import type { Db } from '../../../db';
 import { ts, tsMs, newId } from '../../../prisma/db';
 import { createNotification } from '../../notifications/services/notifications';
 import { loadAIConfig, aiComplete } from '../../ai/services/aiProvider';
+import { getWorkforceState, describeWorkforce, writeAgentStatus } from './agentStatus';
 import { agentDefinition } from './agentRegistry';
 import { agentCharter } from './agentCharters';
 import { runProactive } from './proactive';
@@ -29,6 +30,7 @@ export interface AgentOutput {
     highlights: string[];
     actions: string[];
     recommendations: string[];
+    task?: string;
 }
 
 type Collector = (prisma: Db, agent: any) => Promise<AgentOutput>;
@@ -422,9 +424,11 @@ async function polishSummary(prisma: Db, agent: any, output: AgentOutput): Promi
         const charterLine = charter
             ? `\nCharter: ${charter.mandate}\nDecision rights — autonomous: ${charter.autonomous.join('; ')}. Escalate to owner: ${charter.escalateToOwner.join('; ')}.`
             : '';
+        const workforce = describeWorkforce(await getWorkforceState());
+        const taskLine = output.task ? `\nAssigned task: ${output.task}` : '';
         const text = await aiComplete(config, [
-            { role: 'system', content: 'You are a trained operations professional writing a report for your CEO. Be concise, factual, and honest about what needs escalation. No preamble.' },
-            { role: 'user', content: `Agent: ${agent.name} — ${agent.role}${charterLine}\nFacts:\n${facts}` },
+            { role: 'system', content: 'You are a trained operations professional writing a report for your CEO. You can see your colleagues\' live state — coordinate, don\'t duplicate their work. Be concise, factual, and honest about what needs escalation. No preamble.' },
+            { role: 'user', content: `Agent: ${agent.name} — ${agent.role}${charterLine}${taskLine}\nYour colleagues right now:\n${workforce}\nFacts:\n${facts}` },
         ], { maxTokens: 220, temperature: 0.3 });
         return text.trim() || output.summary;
     } catch {
@@ -436,11 +440,22 @@ export async function runAgent(
     prisma: Db,
     agent: any,
     trigger: 'schedule' | 'manual' | 'event' = 'schedule',
-    actorId?: string
+    actorId?: string,
+    task?: string
 ): Promise<any> {
     const def = agentDefinition(agent.key);
     const collector = collectors[agent.key];
     if (!collector) throw new Error(`No collector registered for agent "${agent.key}"`);
+
+    // Publish the current assignment so colleagues/admins see it live.
+    if (task) {
+        try {
+            const cfg = (agent.config && typeof agent.config === 'object' ? { ...agent.config } : {}) as any;
+            cfg.activeTask = task;
+            await prisma.orm.public.Agent.where({ id: agent.id }).update({ config: cfg, updatedAt: ts() });
+            await writeAgentStatus(agent.key, { currentTask: task, state: 'working' });
+        } catch { /* status is best-effort */ }
+    }
 
     const run = await prisma.orm.public.AgentRun.create({
         id: newId(),
@@ -454,6 +469,7 @@ export async function runAgent(
     const started = Date.now();
     try {
         const output = await collector(prisma, agent);
+        if (task) output.task = task;
         output.summary = await polishSummary(prisma, agent, output);
         await runProactive(prisma, agent, output);
         const finished = await prisma.orm.public.AgentRun
@@ -464,14 +480,20 @@ export async function runAgent(
                 output: output as any,
                 finishedAt: ts(),
             });
+        const isEvent = trigger === 'event';
         await prisma.orm.public.Agent
             .where({ id: agent.id })
             .update({
                 lastRunAt: ts(),
-                nextRunAt: ts(Date.now() + (def?.scheduleMinutes ?? agent.scheduleMinutes ?? 1440) * 60 * 1000),
+                // Event runs react to live work; they must not push the
+                // scheduled report cadence out — nextRunAt stays untouched.
+                ...(isEvent ? {} : { nextRunAt: ts(Date.now() + (def?.scheduleMinutes ?? agent.scheduleMinutes ?? 1440) * 60 * 1000) }),
                 updatedAt: ts(),
             });
-        void notifyOwners(prisma, agent, { ...finished, status: 'success' }, output);
+        // Event runs can fire every few seconds — don't spam the in-app
+        // notification feed; scheduled/manual runs still notify on success.
+        if (!isEvent) void notifyOwners(prisma, agent, { ...finished, status: 'success' }, output);
+        if (task) void clearActiveTask(prisma, agent);
         console.log(`[agents] ${agent.key} run ${run.id} succeeded in ${Date.now() - started}ms`);
         return { ...finished, output };
     } catch (err: any) {
@@ -479,11 +501,12 @@ export async function runAgent(
         const failed = await prisma.orm.public.AgentRun
             .where({ id: run.id })
             .update({ status: 'failed', error: message, finishedAt: ts() });
+        const isEvent = trigger === 'event';
         await prisma.orm.public.Agent
             .where({ id: agent.id })
             .update({
                 lastRunAt: ts(),
-                nextRunAt: ts(Date.now() + (def?.scheduleMinutes ?? agent.scheduleMinutes ?? 1440) * 60 * 1000),
+                ...(isEvent ? {} : { nextRunAt: ts(Date.now() + (def?.scheduleMinutes ?? agent.scheduleMinutes ?? 1440) * 60 * 1000) }),
                 updatedAt: ts(),
             });
         void notifyOwners(prisma, agent, { ...failed, status: 'failed', error: message }, {
@@ -491,6 +514,16 @@ export async function runAgent(
             metrics: {}, highlights: [], actions: [], recommendations: ['Owner: check backend logs for the agent failure.'],
         });
         console.warn(`[agents] ${agent.key} run ${run.id} failed:`, message);
+        if (task) void clearActiveTask(prisma, agent);
         return { ...failed, output: null };
     }
+}
+
+async function clearActiveTask(prisma: Db, agent: any): Promise<void> {
+    try {
+        const cfg = (agent.config && typeof agent.config === 'object' ? { ...agent.config } : {}) as any;
+        delete cfg.activeTask;
+        await prisma.orm.public.Agent.where({ id: agent.id }).update({ config: cfg, updatedAt: ts() });
+        await writeAgentStatus(agent.key, { currentTask: null, state: 'idle' });
+    } catch { /* best-effort */ }
 }

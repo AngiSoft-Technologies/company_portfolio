@@ -54,11 +54,11 @@ export const AGENT_CHARTERS: Record<string, AgentCharter> = {
         mandate: 'Own the editorial calendar and on-page SEO: keep services, products and posts accurate, discoverable and worth reading.',
         autonomous: [
             'Audit published content for missing meta titles/descriptions',
-            'Create draft blog posts when the calendar runs dry',
+            'Write, illustrate and publish routine blog posts on company topics (owner directive: daily content ships automatically)',
             'Recommend refreshes for stale high-traffic pages',
         ],
         approvalRequired: [
-            'Publishing any post or page change',
+            'Publishing posts that mention pricing, contracts, client names, or legal/security claims',
             'Changing pricing or service descriptions',
             'Taking down or archiving published content',
         ],
@@ -69,8 +69,8 @@ export const AGENT_CHARTERS: Record<string, AgentCharter> = {
         workflow: [
             'Check calendar: anything unpublished >14 days?',
             'Run the SEO-gap audit across services/products/posts',
-            'Draft one scaffold post if the calendar is empty',
-            'Hand the finished draft to a human for edit + publish',
+            'Write a full article on the strongest service/topic, generate a branded cover, fill SEO fields and publish',
+            'Report the published URL to the owner',
         ],
         kpis: ['Posts published per month', 'SEO-gap count trending down', 'Zero published drafts left stale'],
     },

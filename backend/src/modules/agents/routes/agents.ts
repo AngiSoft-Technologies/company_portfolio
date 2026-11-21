@@ -7,6 +7,7 @@ import { requireAccess } from '../../../shared/middleware/roles';
 import { AGENT_REGISTRY, agentDefinition, ensureAgentsSeeded } from '../services/agentRegistry';
 import { agentCharter } from '../services/agentCharters';
 import { runAgent } from '../services/agentRunner';
+import { getAgentRuntimeStatus, getWorkforceState } from '../services/agentStatus';
 
 /**
  * AI Workforce admin API — mounted at /api/admin/agents.
@@ -51,13 +52,17 @@ export default function agentsRouter(prisma: Db) {
                 .orderBy((a: any) => a.key.asc())
                 .all()) as any[];
             const latest = await latestRunsByAgent(prisma);
+            const statusMap = await getAgentRuntimeStatus() as any[] | null;
+            const byKey = new Map((statusMap ?? []).map((s: any) => [s.agentKey ?? s.key, s]));
             res.json({
                 agents: agents.map((a) => ({
                     ...a,
                     definition: agentDefinition(a.key) ?? null,
                     charter: agentCharter(a.key) ?? null,
                     lastRun: latest.get(a.key) ?? null,
+                    runtime: byKey.get(a.key) ?? null,
                 })),
+                workforce: await getWorkforceState(),
             });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
@@ -109,7 +114,10 @@ export default function agentsRouter(prisma: Db) {
             if (agent.status !== 'active' && req.body?.force !== true) {
                 return res.status(409).json({ error: 'Agent is paused — pass { force: true } to run anyway' });
             }
-            const run = await runAgent(prisma, agent, 'manual', req.user?.sub);
+            const task = typeof req.body?.task === 'string' && req.body.task.trim()
+                ? req.body.task.trim().slice(0, 300)
+                : undefined;
+            const run = await runAgent(prisma, agent, 'manual', req.user?.sub, task);
             res.status(run.status === 'failed' ? 502 : 200).json({ run });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
