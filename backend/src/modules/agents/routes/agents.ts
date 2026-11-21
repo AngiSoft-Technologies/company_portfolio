@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { Db } from '../../../db';
-import { ts } from '../../../prisma/db';
+import { ts, tsMs } from '../../../prisma/db';
 import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { AGENT_REGISTRY, agentDefinition, ensureAgentsSeeded } from '../services/agentRegistry';
@@ -127,7 +127,7 @@ export default function agentsRouter(prisma: Db) {
             if (parsed.data.scheduleMinutes) {
                 patch.scheduleMinutes = parsed.data.scheduleMinutes;
                 // Recompute the next due time from the new cadence.
-                const base = agent.lastRunAt ? new Date(String(agent.lastRunAt)).getTime() : Date.now();
+                const base = agent.lastRunAt ? tsMs(agent.lastRunAt) : Date.now();
                 patch.nextRunAt = ts(Math.max(Date.now(), base + parsed.data.scheduleMinutes * 60 * 1000));
             }
             if (parsed.data.config) patch.config = parsed.data.config;

@@ -96,6 +96,13 @@ vi.mock('../src/prisma/db', () => ({
     default: ormFacade(),
     ts: (value?: any) =>
         typeof value === 'string' ? value : new Date(value ?? Date.now()).toISOString(),
+    tsMs: (value?: any) => {
+        if (value == null) return 0;
+        const s = String(value);
+        const iso = s.includes('T') ? s : `${s.replace(' ', 'T')}Z`;
+        const ms = new Date(iso).getTime();
+        return Number.isFinite(ms) ? ms : 0;
+    },
     newId: () => `test_${Math.random().toString(36).slice(2)}`,
 }));
 

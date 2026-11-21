@@ -1,6 +1,6 @@
 import type Redis from 'ioredis';
 import prisma from '../db';
-import { ts } from '../prisma/db';
+import { tsMs } from '../prisma/db';
 import { createRedisClient, getRedisUrl } from '../shared/services/redis';
 import { ensureAgentsSeeded } from '../modules/agents/services/agentRegistry';
 import { runAgent } from '../modules/agents/services/agentRunner';
@@ -57,7 +57,7 @@ export async function sweepDueAgents(): Promise<number> {
     if (!(await acquireSweepLock())) return 0;
     await ensureAgentsSeeded(prisma);
 
-    const now = ts();
+    const nowMs = Date.now();
     const due = (await prisma.orm.public.Agent
         .where({ status: 'active' })
         .orderBy((a: any) => a.nextRunAt.asc())
@@ -67,7 +67,7 @@ export async function sweepDueAgents(): Promise<number> {
     let ran = 0;
     for (const agent of due) {
         // nextRunAt null means "due now" (freshly seeded rows).
-        if (agent.nextRunAt && String(agent.nextRunAt) > now) continue;
+        if (agent.nextRunAt && tsMs(agent.nextRunAt) > nowMs) continue;
         try {
             await runAgent(prisma, agent, 'schedule');
             ran += 1;

@@ -35,6 +35,19 @@ export function ts(value: Date | string | number = new Date()): TimestampString<
 }
 
 /**
+ * Epoch ms for contract timestamps. Rows read back as "YYYY-MM-DD HH:MM:SS.mmm"
+ * (space separator, no zone) while ts() emits ISO "T"/"Z" — never compare the
+ * raw strings; this normalizes both forms before parsing.
+ */
+export function tsMs(value: unknown): number {
+    if (value == null) return 0;
+    const s = String(value);
+    const iso = s.includes('T') ? s : `${s.replace(' ', 'T')}Z`;
+    const ms = new Date(iso).getTime();
+    return Number.isFinite(ms) ? ms : 0;
+}
+
+/**
  * Primary key for new rows. The inferred contract has no execution default on
  * `id` (the live DB never had one — Prisma 7 supplied uuid() client-side), so
  * every create() must pass an id explicitly.

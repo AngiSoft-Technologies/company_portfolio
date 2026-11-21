@@ -1,5 +1,5 @@
 import type { Db } from '../../../db';
-import { ts, newId } from '../../../prisma/db';
+import { ts, tsMs, newId } from '../../../prisma/db';
 import { createNotification } from '../../notifications/services/notifications';
 import { loadAIConfig, aiComplete } from '../../ai/services/aiProvider';
 import { agentDefinition } from './agentRegistry';
@@ -60,7 +60,7 @@ function since(days: number): string {
 }
 
 function isAfter(iso: string | null | undefined, cutoff: string): boolean {
-    return !!iso && String(iso) >= cutoff;
+    return !!iso && tsMs(iso) >= tsMs(cutoff);
 }
 
 // ─── Collectors ────────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ const collectors: Record<string, Collector> = {
     async finance(prisma) {
         const invoices = await recentRows(prisma, 'Invoice', 200);
         const issued = invoices.filter((i) => ['issued', 'partially_paid', 'overdue'].includes(i.status));
-        const overdue = issued.filter((i) => i.dueAt && String(i.dueAt) < ts() && Number(i.balanceDue ?? 0) > 0);
+        const overdue = issued.filter((i) => i.dueAt && tsMs(i.dueAt) < Date.now() && Number(i.balanceDue ?? 0) > 0);
         const outstanding = issued.reduce((s, i) => s + Number(i.balanceDue ?? 0), 0);
         const [pendingExpenses, payments24h] = await Promise.all([
             countWhere(prisma, 'Expense', { status: 'submitted' }),
@@ -332,7 +332,7 @@ const collectors: Record<string, Collector> = {
             const mine = recent.filter((r) => r.agentKey === a.key);
             const failures = mine.filter((r) => r.status === 'failed').length;
             const cadenceMin = Number(a.scheduleMinutes ?? agentDefinition(a.key)?.scheduleMinutes ?? 1440);
-            const staleMs = a.lastRunAt ? Date.now() - new Date(String(a.lastRunAt)).getTime() : Number.POSITIVE_INFINITY;
+            const staleMs = a.lastRunAt ? Date.now() - tsMs(a.lastRunAt) : Number.POSITIVE_INFINITY;
             const stale = staleMs > cadenceMin * 60 * 1000 * 2.5;
             const lastSuccess = mine.filter((r) => r.status === 'success').sort((x, y) => String(y.startedAt).localeCompare(String(x.startedAt)))[0];
             const escalated = lastSuccess?.output

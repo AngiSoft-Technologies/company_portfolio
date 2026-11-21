@@ -1,5 +1,5 @@
 import type { Db } from '../../../db';
-import { ts, newId } from '../../../prisma/db';
+import { ts, tsMs, newId } from '../../../prisma/db';
 import { sendMail } from '../../../shared/services/email';
 import type { AgentOutput } from './agentRunner';
 
@@ -92,7 +92,7 @@ export async function alreadyContacted(
     return rows.some((r) =>
         r.entityId === entityId &&
         (r.meta?.agentKey === agentKey || r.meta?.agent === agentKey) &&
-        new Date(String(r.createdAt)).getTime() > cutoff
+        tsMs(r.createdAt) > cutoff
     );
 }
 
@@ -100,7 +100,7 @@ export async function alreadyContacted(
 export async function ownerReportDue(prisma: Db, agentKey: string): Promise<boolean> {
     const cutoff = Date.now() - OWNER_REPORT_MIN_INTERVAL_MS;
     const rows = await ledgerEntries(prisma, 'agent.report_emailed', 'agent', 100);
-    return !rows.some((r) => r.entityId === agentKey && new Date(String(r.createdAt)).getTime() > cutoff);
+    return !rows.some((r) => r.entityId === agentKey && tsMs(r.createdAt) > cutoff);
 }
 
 // ─── Senders ───────────────────────────────────────────────────────────────

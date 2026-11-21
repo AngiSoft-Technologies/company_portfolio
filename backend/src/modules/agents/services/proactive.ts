@@ -1,5 +1,5 @@
 import type { Db } from '../../../db';
-import { ts, newId } from '../../../prisma/db';
+import { ts, tsMs, newId } from '../../../prisma/db';
 import {
     sendAgentEmail,
     emailOwnerReport,
@@ -158,7 +158,7 @@ async function contentProactive(prisma: Db, agent: any, output: AgentOutput, res
     // Keep the editorial calendar alive: if nothing published in 14 days and no
     // draft is waiting, create a draft outline post for human review.
     const twoWeeksAgo = since(14);
-    const recentPublished = published.filter((p) => String(p.publishedAt ?? p.createdAt) >= twoWeeksAgo);
+    const recentPublished = published.filter((p) => tsMs(p.publishedAt ?? p.createdAt) >= tsMs(twoWeeksAgo));
     const hasDraft = posts.some((p) => !p.published);
     if (recentPublished.length === 0 && !hasDraft) {
         const serviceNames = services.filter((s) => s.published).map((s) => s.title).slice(0, 5);
@@ -189,7 +189,7 @@ async function contentProactive(prisma: Db, agent: any, output: AgentOutput, res
 async function salesOutreach(prisma: Db, agent: any, output: AgentOutput, res: ProactiveResult): Promise<void> {
     const opportunities = await rows(prisma, 'Opportunity', 100);
     const stale = opportunities.filter((o) =>
-        !['won', 'lost'].includes(String(o.stage)) && String(o.updatedAt) < since(STALE_DAYS)
+        !['won', 'lost'].includes(String(o.stage)) && tsMs(o.updatedAt) < tsMs(since(STALE_DAYS))
     );
     const clients = await rows(prisma, 'Client', 200);
     const leads = await rows(prisma, 'Lead', 200);
@@ -285,7 +285,7 @@ async function financeProactive(prisma: Db, agent: any, output: AgentOutput, res
     const invoices = await rows(prisma, 'Invoice', 200);
     const overdue = invoices.filter((i) =>
         ['issued', 'partially_paid', 'overdue'].includes(String(i.status)) &&
-        i.dueAt && String(i.dueAt) < ts() && Number(i.balanceDue ?? 0) > 0
+        i.dueAt && tsMs(i.dueAt) < Date.now() && Number(i.balanceDue ?? 0) > 0
     );
     const clients = await rows(prisma, 'Client', 200);
     const clientById = new Map(clients.map((c) => [c.id, c]));
@@ -319,7 +319,7 @@ async function financeProactive(prisma: Db, agent: any, output: AgentOutput, res
 /** hr: nudge stale pending leave requests toward the reviewers. */
 async function hrProactive(prisma: Db, agent: any, _output: AgentOutput, res: ProactiveResult): Promise<void> {
     const requests = await rows(prisma, 'LeaveRequest', 100);
-    const stale = requests.filter((r) => r.status === 'pending' && String(r.createdAt) < since(3));
+    const stale = requests.filter((r) => r.status === 'pending' && tsMs(r.createdAt) < tsMs(since(3)));
     const employees = await rows(prisma, 'Employee', 200);
     const empById = new Map(employees.map((e) => [e.id, e]));
     const reviewers = employees.filter((e) => e.role === 'SUPER_ADMIN' || e.role === 'ADMIN' || e.role === 'HR');
@@ -353,14 +353,14 @@ async function paCoach(prisma: Db, agent: any, output: AgentOutput, res: Proacti
     const roster = (await rows(prisma, 'Agent', 50)).filter((a) => a.status === 'active' && a.key !== 'pa');
     const runs = await rows(prisma, 'AgentRun', 300, 'startedAt');
     const weekAgo = since(7);
-    const recent = runs.filter((r) => String(r.startedAt) >= weekAgo);
+    const recent = runs.filter((r) => tsMs(r.startedAt) >= tsMs(weekAgo));
 
     for (const member of roster) {
         const mine = recent.filter((r) => r.agentKey === member.key);
         const failures = mine.filter((r) => r.status === 'failed');
         const cadenceMin = Number(member.scheduleMinutes ?? 1440);
         const stale = member.lastRunAt
-            ? Date.now() - new Date(String(member.lastRunAt)).getTime() > cadenceMin * 60 * 1000 * 2.5
+            ? Date.now() - tsMs(member.lastRunAt) > cadenceMin * 60 * 1000 * 2.5
             : mine.length === 0;
         if (!failures.length && !stale) continue;
 
