@@ -1,0 +1,119 @@
+[
+  {
+    "id": "table.Office",
+    "label": "Create table \"Office\"",
+    "summary": "Creates table \"Office\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Office"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Office\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Office\"",
+        "sql": "CREATE TABLE \"public\".\"Office\" (\n  \"addressLine\" text,\n  \"city\" text,\n  \"country\" text DEFAULT 'Kenya' NOT NULL,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"email\" text,\n  \"hours\" jsonb,\n  \"id\" text NOT NULL,\n  \"isHeadquarters\" bool DEFAULT false NOT NULL,\n  \"mapUrl\" text,\n  \"name\" text NOT NULL,\n  \"phone\" text,\n  \"published\" bool DEFAULT false NOT NULL,\n  \"slug\" text NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Office_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Office\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Office.Office_published_sortOrder_idx",
+    "label": "Create index \"Office_published_sortOrder_idx\" on \"Office\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Office_published_sortOrder_idx",
+        "table": "Office"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Office_published_sortOrder_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office_published_sortOrder_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Office_published_sortOrder_idx\"",
+        "sql": "CREATE INDEX \"Office_published_sortOrder_idx\" ON \"public\".\"Office\" (\"published\", \"sortOrder\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Office_published_sortOrder_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office_published_sortOrder_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Office.Office_slug_key",
+    "label": "Create index \"Office_slug_key\" on \"Office\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Office_slug_key",
+        "table": "Office"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Office_slug_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office_slug_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Office_slug_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Office_slug_key\" ON \"public\".\"Office\" (\"slug\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Office_slug_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Office_slug_key\""
+        ]
+      }
+    ]
+  }
+]

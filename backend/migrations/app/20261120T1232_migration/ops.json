@@ -1,0 +1,200 @@
+[
+  {
+    "id": "table.PricingPackage",
+    "label": "Create table \"PricingPackage\"",
+    "summary": "Creates table \"PricingPackage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"PricingPackage\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"PricingPackage\"",
+        "sql": "CREATE TABLE \"public\".\"PricingPackage\" (\n  \"billingPeriod\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"description\" text,\n  \"features\" jsonb,\n  \"highlighted\" bool DEFAULT false NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"price\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"published\" bool DEFAULT false NOT NULL,\n  \"serviceId\" text,\n  \"slug\" text NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"PricingPackage_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"PricingPackage\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.PricingPackage.PricingPackage_published_sortOrder_idx",
+    "label": "Create index \"PricingPackage_published_sortOrder_idx\" on \"PricingPackage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "PricingPackage_published_sortOrder_idx",
+        "table": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"PricingPackage_published_sortOrder_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_published_sortOrder_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"PricingPackage_published_sortOrder_idx\"",
+        "sql": "CREATE INDEX \"PricingPackage_published_sortOrder_idx\" ON \"public\".\"PricingPackage\" (\"published\", \"sortOrder\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"PricingPackage_published_sortOrder_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_published_sortOrder_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.PricingPackage.PricingPackage_serviceId_idx",
+    "label": "Create index \"PricingPackage_serviceId_idx\" on \"PricingPackage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "PricingPackage_serviceId_idx",
+        "table": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"PricingPackage_serviceId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_serviceId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"PricingPackage_serviceId_idx\"",
+        "sql": "CREATE INDEX \"PricingPackage_serviceId_idx\" ON \"public\".\"PricingPackage\" (\"serviceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"PricingPackage_serviceId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_serviceId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.PricingPackage.PricingPackage_slug_key",
+    "label": "Create index \"PricingPackage_slug_key\" on \"PricingPackage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "PricingPackage_slug_key",
+        "table": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"PricingPackage_slug_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_slug_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"PricingPackage_slug_key\"",
+        "sql": "CREATE UNIQUE INDEX \"PricingPackage_slug_key\" ON \"public\".\"PricingPackage\" (\"slug\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"PricingPackage_slug_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PricingPackage_slug_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.PricingPackage.PricingPackage_serviceId_fkey",
+    "label": "Add foreign key \"PricingPackage_serviceId_fkey\" on \"PricingPackage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "PricingPackage_serviceId_fkey",
+        "table": "PricingPackage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"PricingPackage_serviceId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "PricingPackage_serviceId_fkey",
+          "public",
+          "\"public\".\"PricingPackage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"PricingPackage_serviceId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"PricingPackage\"\nADD CONSTRAINT \"PricingPackage_serviceId_fkey\"\nFOREIGN KEY (\"serviceId\")\nREFERENCES \"public\".\"Service\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"PricingPackage_serviceId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "PricingPackage_serviceId_fkey",
+          "public",
+          "\"public\".\"PricingPackage\""
+        ]
+      }
+    ]
+  }
+]

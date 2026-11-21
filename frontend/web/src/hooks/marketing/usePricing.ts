@@ -54,9 +54,10 @@ export function usePricing() {
         if (force) setLoading(true);
 
         try {
-            const [pricingRes, servicesRes] = await Promise.allSettled([
+            const [pricingRes, servicesRes, packagesRes] = await Promise.allSettled([
                 apiGet('/site/pricing'),
                 apiGet('/services'),
+                apiGet('/pricing-packages'),
             ]);
 
             const sitePricing =
@@ -76,7 +77,12 @@ export function usePricing() {
                 (s) => s.published !== false
             );
 
-            const next = buildPricingModel({ sitePricing, services });
+            const rawPackages =
+                packagesRes.status === 'fulfilled' && Array.isArray(packagesRes.value)
+                    ? packagesRes.value
+                    : [];
+
+            const next = buildPricingModel({ sitePricing, services, packages: rawPackages });
             writeCache(next);
             setModel(next);
             setError(null);
@@ -92,14 +98,15 @@ export function usePricing() {
         (async () => {
             // Paint from cache instantly, then validate in the background.
             if (readCache()) {
-                const data = await Promise.allSettled([apiGet('/site/pricing'), apiGet('/services')]);
+                const data = await Promise.allSettled([apiGet('/site/pricing'), apiGet('/services'), apiGet('/pricing-packages')]);
                 if (!active) return;
                 const sitePricing = data[0].status === 'fulfilled' ? data[0].value : null;
                 const rawServices = data[1].status === 'fulfilled'
                     ? (Array.isArray(data[1].value) ? data[1].value : (data[1].value?.services || []))
                     : [];
+                const rawPackages = data[2].status === 'fulfilled' && Array.isArray(data[2].value) ? data[2].value : [];
                 const services = (normalizeServices(rawServices) || []).filter((s) => s.published !== false);
-                const next = buildPricingModel({ sitePricing, services });
+                const next = buildPricingModel({ sitePricing, services, packages: rawPackages });
                 writeCache(next);
                 setModel(next);
                 setLoading(false);
@@ -119,6 +126,7 @@ export function usePricing() {
         services: model?.services || [],
         pricedServices: model?.pricedServices || [],
         unpricedServices: model?.unpricedServices || [],
+        packages: model?.packages || [],
         hasContent: model?.hasContent || false,
         hasServiceData: model?.hasServiceData || false,
         loading,

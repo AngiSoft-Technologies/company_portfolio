@@ -1,0 +1,158 @@
+[
+  {
+    "id": "table.ApprovalRequest",
+    "label": "Create table \"ApprovalRequest\"",
+    "summary": "Creates table \"ApprovalRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ApprovalRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ApprovalRequest\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ApprovalRequest\"",
+        "sql": "CREATE TABLE \"public\".\"ApprovalRequest\" (\n  \"amount\" numeric(18,2),\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text,\n  \"decidedAt\" timestamp(3),\n  \"entityId\" text NOT NULL,\n  \"entityType\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"requestedById\" text NOT NULL,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"steps\" jsonb NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"ApprovalRequest_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ApprovalRequest\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ApprovalRequest.ApprovalRequest_entity_idx",
+    "label": "Create index \"ApprovalRequest_entity_idx\" on \"ApprovalRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ApprovalRequest_entity_idx",
+        "table": "ApprovalRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ApprovalRequest_entity_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_entity_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ApprovalRequest_entity_idx\"",
+        "sql": "CREATE INDEX \"ApprovalRequest_entity_idx\" ON \"public\".\"ApprovalRequest\" (\"entityType\", \"entityId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ApprovalRequest_entity_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_entity_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ApprovalRequest.ApprovalRequest_requestedById_idx",
+    "label": "Create index \"ApprovalRequest_requestedById_idx\" on \"ApprovalRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ApprovalRequest_requestedById_idx",
+        "table": "ApprovalRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ApprovalRequest_requestedById_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_requestedById_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ApprovalRequest_requestedById_idx\"",
+        "sql": "CREATE INDEX \"ApprovalRequest_requestedById_idx\" ON \"public\".\"ApprovalRequest\" (\"requestedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ApprovalRequest_requestedById_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_requestedById_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ApprovalRequest.ApprovalRequest_status_idx",
+    "label": "Create index \"ApprovalRequest_status_idx\" on \"ApprovalRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ApprovalRequest_status_idx",
+        "table": "ApprovalRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ApprovalRequest_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ApprovalRequest_status_idx\"",
+        "sql": "CREATE INDEX \"ApprovalRequest_status_idx\" ON \"public\".\"ApprovalRequest\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ApprovalRequest_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ApprovalRequest_status_idx\""
+        ]
+      }
+    ]
+  }
+]

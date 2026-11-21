@@ -3,6 +3,7 @@
 .blog-detail-page {
   --blog-primary: var(--color-secondary);
   --blog-secondary: var(--color-accent-2);
+  --blog-accent: var(--color-accent);
   --blog-bg: var(--bg-primary);
   --blog-surface: var(--surface);
   --blog-surface-2: var(--surface);

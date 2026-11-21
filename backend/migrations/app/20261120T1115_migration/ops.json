@@ -1,0 +1,647 @@
+[
+  {
+    "id": "table.EmployeePortfolioConfig",
+    "label": "Create table \"EmployeePortfolioConfig\"",
+    "summary": "Creates table \"EmployeePortfolioConfig\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "EmployeePortfolioConfig"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"EmployeePortfolioConfig\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"EmployeePortfolioConfig\"",
+        "sql": "CREATE TABLE \"public\".\"EmployeePortfolioConfig\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"draftConfig\" jsonb,\n  \"employeeId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"layout\" text DEFAULT 'standard' NOT NULL,\n  \"published\" bool DEFAULT false NOT NULL,\n  \"publishedConfig\" jsonb,\n  \"sections\" jsonb,\n  \"theme\" text DEFAULT 'default' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  \"version\" int4 DEFAULT 1 NOT NULL,\n  \"versionHistory\" jsonb,\n  CONSTRAINT \"EmployeePortfolioConfig_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"EmployeePortfolioConfig\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.Expense",
+    "label": "Create table \"Expense\"",
+    "summary": "Creates table \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Expense\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Expense\"",
+        "sql": "CREATE TABLE \"public\".\"Expense\" (\n  \"amount\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"category\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"receiptFileId\" text,\n  \"reviewNote\" text,\n  \"reviewedAt\" timestamp(3),\n  \"reviewedById\" text,\n  \"status\" text DEFAULT 'draft' NOT NULL,\n  \"submittedById\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Expense_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Expense\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.LeaveRequest",
+    "label": "Create table \"LeaveRequest\"",
+    "summary": "Creates table \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"LeaveRequest\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"LeaveRequest\"",
+        "sql": "CREATE TABLE \"public\".\"LeaveRequest\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"employeeId\" text NOT NULL,\n  \"endDate\" timestamp(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"reason\" text,\n  \"reviewNote\" text,\n  \"reviewedAt\" timestamp(3),\n  \"reviewedById\" text,\n  \"startDate\" timestamp(3) NOT NULL,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"type\" text DEFAULT 'annual' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"LeaveRequest_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"LeaveRequest\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.SupportTicket.slaBreachedAt",
+    "label": "Add column \"slaBreachedAt\" to \"SupportTicket\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "slaBreachedAt",
+        "table": "SupportTicket"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"slaBreachedAt\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SupportTicket",
+          "slaBreachedAt"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"slaBreachedAt\"",
+        "sql": "ALTER TABLE \"public\".\"SupportTicket\" ADD COLUMN \"slaBreachedAt\" timestamp(3)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"slaBreachedAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SupportTicket",
+          "slaBreachedAt"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.EmployeePortfolioConfig.EmployeePortfolioConfig_employeeId_key",
+    "label": "Add unique constraint on \"EmployeePortfolioConfig\" (employeeId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "EmployeePortfolioConfig_employeeId_key",
+        "table": "EmployeePortfolioConfig"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"EmployeePortfolioConfig_employeeId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "EmployeePortfolioConfig_employeeId_key",
+          "public",
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"EmployeePortfolioConfig_employeeId_key\"",
+        "sql": "ALTER TABLE \"public\".\"EmployeePortfolioConfig\" ADD CONSTRAINT \"EmployeePortfolioConfig_employeeId_key\" UNIQUE (\"employeeId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"EmployeePortfolioConfig_employeeId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "EmployeePortfolioConfig_employeeId_key",
+          "public",
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Expense.Expense_reviewedById_idx_e2835478",
+    "label": "Create index \"Expense_reviewedById_idx_e2835478\" on \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Expense_reviewedById_idx_e2835478",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Expense_reviewedById_idx_e2835478\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_reviewedById_idx_e2835478\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Expense_reviewedById_idx_e2835478\"",
+        "sql": "CREATE INDEX \"Expense_reviewedById_idx_e2835478\" ON \"public\".\"Expense\" (\"reviewedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Expense_reviewedById_idx_e2835478\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_reviewedById_idx_e2835478\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Expense.Expense_status_idx",
+    "label": "Create index \"Expense_status_idx\" on \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Expense_status_idx",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Expense_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Expense_status_idx\"",
+        "sql": "CREATE INDEX \"Expense_status_idx\" ON \"public\".\"Expense\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Expense_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_status_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Expense.Expense_submittedById_idx",
+    "label": "Create index \"Expense_submittedById_idx\" on \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Expense_submittedById_idx",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Expense_submittedById_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_submittedById_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Expense_submittedById_idx\"",
+        "sql": "CREATE INDEX \"Expense_submittedById_idx\" ON \"public\".\"Expense\" (\"submittedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Expense_submittedById_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Expense_submittedById_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LeaveRequest.LeaveRequest_employeeId_idx",
+    "label": "Create index \"LeaveRequest_employeeId_idx\" on \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LeaveRequest_employeeId_idx",
+        "table": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LeaveRequest_employeeId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_employeeId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LeaveRequest_employeeId_idx\"",
+        "sql": "CREATE INDEX \"LeaveRequest_employeeId_idx\" ON \"public\".\"LeaveRequest\" (\"employeeId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LeaveRequest_employeeId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_employeeId_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LeaveRequest.LeaveRequest_reviewedById_idx_e2835478",
+    "label": "Create index \"LeaveRequest_reviewedById_idx_e2835478\" on \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LeaveRequest_reviewedById_idx_e2835478",
+        "table": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LeaveRequest_reviewedById_idx_e2835478\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_reviewedById_idx_e2835478\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LeaveRequest_reviewedById_idx_e2835478\"",
+        "sql": "CREATE INDEX \"LeaveRequest_reviewedById_idx_e2835478\" ON \"public\".\"LeaveRequest\" (\"reviewedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LeaveRequest_reviewedById_idx_e2835478\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_reviewedById_idx_e2835478\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LeaveRequest.LeaveRequest_status_idx",
+    "label": "Create index \"LeaveRequest_status_idx\" on \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LeaveRequest_status_idx",
+        "table": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LeaveRequest_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LeaveRequest_status_idx\"",
+        "sql": "CREATE INDEX \"LeaveRequest_status_idx\" ON \"public\".\"LeaveRequest\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LeaveRequest_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LeaveRequest_status_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.EmployeePortfolioConfig.EmployeePortfolioConfig_employeeId_fkey",
+    "label": "Add foreign key \"EmployeePortfolioConfig_employeeId_fkey\" on \"EmployeePortfolioConfig\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "EmployeePortfolioConfig_employeeId_fkey",
+        "table": "EmployeePortfolioConfig"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"EmployeePortfolioConfig_employeeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "EmployeePortfolioConfig_employeeId_fkey",
+          "public",
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"EmployeePortfolioConfig_employeeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"EmployeePortfolioConfig\"\nADD CONSTRAINT \"EmployeePortfolioConfig_employeeId_fkey\"\nFOREIGN KEY (\"employeeId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"EmployeePortfolioConfig_employeeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "EmployeePortfolioConfig_employeeId_fkey",
+          "public",
+          "\"public\".\"EmployeePortfolioConfig\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Expense.Expense_submittedById_fkey",
+    "label": "Add foreign key \"Expense_submittedById_fkey\" on \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Expense_submittedById_fkey",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Expense_submittedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Expense_submittedById_fkey",
+          "public",
+          "\"public\".\"Expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Expense_submittedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Expense\"\nADD CONSTRAINT \"Expense_submittedById_fkey\"\nFOREIGN KEY (\"submittedById\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Expense_submittedById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Expense_submittedById_fkey",
+          "public",
+          "\"public\".\"Expense\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Expense.Expense_reviewedById_fkey",
+    "label": "Add foreign key \"Expense_reviewedById_fkey\" on \"Expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Expense_reviewedById_fkey",
+        "table": "Expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Expense_reviewedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Expense_reviewedById_fkey",
+          "public",
+          "\"public\".\"Expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Expense_reviewedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Expense\"\nADD CONSTRAINT \"Expense_reviewedById_fkey\"\nFOREIGN KEY (\"reviewedById\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Expense_reviewedById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Expense_reviewedById_fkey",
+          "public",
+          "\"public\".\"Expense\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LeaveRequest.LeaveRequest_employeeId_fkey",
+    "label": "Add foreign key \"LeaveRequest_employeeId_fkey\" on \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LeaveRequest_employeeId_fkey",
+        "table": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LeaveRequest_employeeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LeaveRequest_employeeId_fkey",
+          "public",
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LeaveRequest_employeeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LeaveRequest\"\nADD CONSTRAINT \"LeaveRequest_employeeId_fkey\"\nFOREIGN KEY (\"employeeId\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE CASCADE\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LeaveRequest_employeeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LeaveRequest_employeeId_fkey",
+          "public",
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LeaveRequest.LeaveRequest_reviewedById_fkey",
+    "label": "Add foreign key \"LeaveRequest_reviewedById_fkey\" on \"LeaveRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LeaveRequest_reviewedById_fkey",
+        "table": "LeaveRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LeaveRequest_reviewedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LeaveRequest_reviewedById_fkey",
+          "public",
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LeaveRequest_reviewedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LeaveRequest\"\nADD CONSTRAINT \"LeaveRequest_reviewedById_fkey\"\nFOREIGN KEY (\"reviewedById\")\nREFERENCES \"public\".\"Employee\" (\"id\")\nON DELETE SET NULL\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LeaveRequest_reviewedById_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LeaveRequest_reviewedById_fkey",
+          "public",
+          "\"public\".\"LeaveRequest\""
+        ]
+      }
+    ]
+  }
+]

@@ -12,6 +12,10 @@ import { validateDatabaseConnection, disconnectDatabase } from './db';
 import { startEmailWorker } from './workers/emailWorker';
 import { startFileProcessor } from './workers/fileProcessor';
 import { startReconciliationWorker } from './workers/reconciliationWorker';
+import { startSlaMonitor } from './workers/slaMonitor';
+import { startRenewalMonitor } from './workers/renewalMonitor';
+import { startAttendanceDeriveMonitor } from './workers/attendanceDerive';
+import { startAgentScheduler } from './workers/agentScheduler';
 import { closeWorkers, getWorkers } from './queue';
 
 async function bootstrap() {
@@ -25,6 +29,10 @@ async function bootstrap() {
     ['email', startEmailWorker],
     ['file processor', startFileProcessor],
     ['reconciliation', startReconciliationWorker],
+    ['sla monitor', () => { startSlaMonitor(); }],
+    ['renewal monitor', () => { startRenewalMonitor(); }],
+    ['attendance derive monitor', () => { startAttendanceDeriveMonitor(); }],
+    ['agent scheduler', () => { startAgentScheduler(); }],
   ] as const) {
     try {
       start();

@@ -224,6 +224,27 @@
 .industry-related__name { font-weight: 700; }
 .industry-related__more { margin-top: auto; color: var(--ind-accent); font-size: 0.85rem; }
 
+/* Project cards inside industry detail — media-led proof cards */
+.industry-related__card--project { padding: 0; overflow: hidden; }
+.industry-related__media {
+    display: block;
+    aspect-ratio: 16 / 9;
+    background-size: cover;
+    background-position: center;
+}
+.industry-related__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.1rem 1.2rem;
+    flex: 1;
+}
+.industry-related__body strong { color: var(--ind-text); font-size: 0.98rem; line-height: 1.35; }
+.industry-related__body span { color: var(--ind-muted); font-size: 0.85rem; line-height: 1.5; }
+.industry-related__head { margin-bottom: 1.25rem; }
+.industry-related__title { margin: 0; font-family: 'Sora', system-ui, sans-serif; font-size: clamp(1.3rem, 3vw, 1.7rem); color: var(--ind-text); }
+.industry-related__sub { margin: 0.4rem 0 0; color: var(--ind-muted); font-size: 0.95rem; }
+
 /* ---------- CTA ---------- */
 .industry-cta__panel {
     padding: clamp(1.8rem, 4vw, 3rem);

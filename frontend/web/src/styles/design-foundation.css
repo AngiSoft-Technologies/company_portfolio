@@ -1,11 +1,11 @@
 :root {
   color-scheme: dark;
-  --color-primary: #0875FF;
-  --color-primary-light: #3B9AFF;
-  --color-primary-dark: #003BCE;
-  --color-secondary: #00AFFF;
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-secondary: var(--color-secondary);
   --color-secondary-dark: #0088CC;
-  --color-accent: #18D8FF;
+  --color-accent: var(--color-accent);
   --color-success: #27D94B;
   --color-success-dark: #1EB83D;
   --color-warning: #F59E0B;
@@ -27,9 +27,9 @@
   /* NOTE: --hero-* are owned exclusively by HeroSlider.css. Declaring them here
      too collided with that file (equal specificity) and the winner depended on
      bundler order, which is how the light hero ended up with a flat wash. */
-  --gradient-primary: #0875FF;
-  --gradient-secondary: #00AFFF;
-  --gradient-brand: #0875FF;
+  --gradient-primary: var(--color-primary);
+  --gradient-secondary: var(--color-secondary);
+  --gradient-brand: var(--color-primary);
   --font-display: 'Sora', 'DM Sans', system-ui, sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --type-display: clamp(2.75rem, 5vw, 4.25rem);
@@ -87,7 +87,7 @@ html[data-theme='light'] {
   --footer-link: #334A6B;
   --footer-ink: #07142B;
   --footer-ink-soft: #4A6385;
-  --footer-ink-strong: #003BCE;
+  --footer-ink-strong: var(--color-primary-dark);
   --footer-hairline: rgba(8, 117, 255, 0.24);
   /* Light CTA band: pale brand tint (blue -> azure -> green) with navy ink, so
      it is unmistakably a different surface from the navy footer below it. */
@@ -97,11 +97,11 @@ html[data-theme='light'] {
   /* Brand ramp. Every colour in the AngiSoft palette gets a job here so the
      page is not a single-hue blue wash. Text gradients run royal -> bright
      blue -> azure -> cyan, which is exactly the logo's hue run. */
-  --brand-ramp: linear-gradient(96deg, #00156A 0%, #123DFF 26%, #00AFFF 62%, #02CCFC 100%);
-  --brand-ramp-soft: linear-gradient(96deg, #003BCE 0%, #0875FF 34%, #00AFFF 72%, #02CCFC 100%);
-  --brand-cta: linear-gradient(120deg, #0875FF 0%, #00AFFF 100%);
-  --brand-progress: linear-gradient(90deg, #123DFF 0%, #00AFFF 55%, #02CCFC 100%);
-  --brand-accent-ink: #003BCE;
+  --brand-ramp: linear-gradient(96deg, #00156A 0%, #123DFF 26%, var(--color-secondary) 62%, #02CCFC 100%);
+  --brand-ramp-soft: linear-gradient(96deg, var(--color-primary-dark) 0%, var(--color-primary) 34%, var(--color-secondary) 72%, #02CCFC 100%);
+  --brand-cta: linear-gradient(120deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --brand-progress: linear-gradient(90deg, #123DFF 0%, var(--color-secondary) 55%, #02CCFC 100%);
+  --brand-accent-ink: var(--color-primary-dark);
   --brand-accent-ink-strong: #00156A;
   --brand-green-ink: #1B8A38;
   --brand-tint-azure: #E6F7FF;
@@ -126,18 +126,18 @@ html:not([data-theme='light']) {
   --footer-surface-2: rgba(255, 255, 255, 0.07);
   --footer-ink: #EAF2FF;
   --footer-ink-soft: rgba(203, 213, 225, 0.72);
-  --footer-ink-strong: #18D8FF;
+  --footer-ink-strong: var(--color-accent);
   --footer-hairline: rgba(0, 175, 255, 0.18);
   /* Dark CTA band: brand navy with light ink. */
   --band-ink: #F5F7FA;
   --band-ink-soft: rgba(226, 240, 255, 0.78);
   --band-cta-surface: #050F1F;
   /* On navy the ramp runs cyan-forward so it stays luminous. */
-  --brand-ramp: linear-gradient(96deg, #18D8FF 0%, #02CCFC 30%, #00AFFF 66%, #123DFF 100%);
-  --brand-ramp-soft: linear-gradient(96deg, #18D8FF 0%, #00AFFF 44%, #0875FF 100%);
-  --brand-cta: linear-gradient(120deg, #0875FF 0%, #00AFFF 100%);
-  --brand-progress: linear-gradient(90deg, #123DFF 0%, #00AFFF 55%, #02CCFC 100%);
-  --brand-accent-ink: #18D8FF;
+  --brand-ramp: linear-gradient(96deg, var(--color-accent) 0%, #02CCFC 30%, var(--color-secondary) 66%, #123DFF 100%);
+  --brand-ramp-soft: linear-gradient(96deg, var(--color-accent) 0%, var(--color-secondary) 44%, var(--color-primary) 100%);
+  --brand-cta: linear-gradient(120deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --brand-progress: linear-gradient(90deg, #123DFF 0%, var(--color-secondary) 55%, #02CCFC 100%);
+  --brand-accent-ink: var(--color-accent);
   --brand-accent-ink-strong: #02CCFC;
   --brand-green-ink: #24B947;
   --brand-tint-azure: #0A1E3A;
@@ -372,15 +372,10 @@ html .angi-btn-secondary:hover {
 html .angi-section-subtitle { color: var(--text-secondary); }
 
 html .angi-section-title,
-/* The accent half of every section heading runs the brand ramp. It used to be
-   flattened to `background: none`, which is why neither theme showed any
-   gradient or brand colour in its headings. */
+/* Restrained solid accent for the highlighted half of a section heading.
+   Design rules prohibit gradient text; a single accent colour carries meaning. */
 html .angi-section-title-gradient {
-  background: var(--brand-ramp);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--color-primary);
 }
 
 html h1, html h2, html h3, html h4, html h5, html h6 {
@@ -644,12 +639,12 @@ html:not([data-theme='light']) {
 /* Primary action: the one place solid brand blue belongs. */
 html .angi-btn-primary,
 .angi-hero-slider__cta--primary {
-  background: var(--brand-cta);
+  background: var(--color-primary);
   border-color: transparent;
   box-shadow: 0 10px 26px color-mix(in srgb, var(--color-primary) 32%, transparent);
 }
 html .angi-btn-primary:hover {
-  background: linear-gradient(120deg, var(--color-primary-dark) 0%, var(--color-secondary-dark) 100%);
+  background: var(--color-primary-dark);
 }
 
 /* Green = growth, uptime, "available", deltas. */
@@ -806,7 +801,7 @@ html[data-theme='light'] .angi-home > .angi-services-section .angi-section-subti
   text-shadow: none;
 }
 html[data-theme='light'] .angi-home > .angi-services-section .angi-section-title-gradient {
-  color: #003BCE;
+  color: var(--color-primary-dark);
   background: none;
   -webkit-text-fill-color: currentColor;
 }

@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AdminThemeContext } from '@/styles/theme';
 import { apiFetch } from '@/lib/adminApi';
+import { NotificationBell } from '@/components/NotificationBell';
 import { EffectiveAccessProvider, useEffectiveAccess } from '@/lib/permissions';
 
 /**
@@ -17,7 +18,9 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
     links: [
       { to: '/', label: 'Dashboard' },
       { to: '/workspace', label: 'My Workspace' },
+      { to: '/workspace/portfolio-studio', label: 'Portfolio Studio' },
       { to: '/staff-dashboard', label: 'Staff Dashboard' },
+      { to: '/reports', label: 'Reports', permission: 'administration.audit' },
     ],
   },
   {
@@ -25,6 +28,11 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
     links: [
       { to: '/contacts', label: 'Contacts', permission: 'enquiries.view_all' },
       { to: '/chat', label: 'Chat Conversations', permission: 'chatbot.view_all' },
+      { to: '/renewals', label: 'Renewals', permission: 'client_projects.view_all' },
+      { to: '/support-tickets', label: 'Support Tickets', permission: 'support_tickets.view' },
+      { to: '/newsletters', label: 'Newsletters', permission: 'newsletters.view' },
+      { to: '/surveys', label: 'Surveys', permission: 'surveys.view' },
+      { to: '/product-inquiries', label: 'Product Inquiries', permission: 'product_inquiries.view' },
     ],
   },
   {
@@ -42,6 +50,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/client-projects', label: 'Client Projects', permission: 'client_projects.view_all' },
       { to: '/bookings', label: 'Bookings', permission: 'bookings.view_all' },
       { to: '/payments', label: 'Payments', permission: 'payments.view_all' },
+      { to: '/expenses', label: 'Expenses', permission: 'expenses.create' },
     ],
   },
   {
@@ -52,13 +61,17 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/services', label: 'Services', permission: 'services.view' },
       { to: '/service-categories', label: 'Service Categories', permission: 'service_categories.view' },
       { to: '/sections', label: 'Home Sections', permission: 'pages.update_home' },
+      { to: '/announcements', label: 'Announcements', permission: 'pages.update_announcements' },
+      { to: '/company-stats', label: 'Company Stats', permission: 'company_stats.view' },
       { to: '/testimonials', label: 'Testimonials', permission: 'reviews.moderate' },
       { to: '/faqs', label: 'FAQs', permission: 'faqs.view' },
       { to: '/industries', label: 'Industries', permission: 'industries.view' },
       { to: '/solutions', label: 'Solutions', permission: 'solutions.view' },
       { to: '/careers', label: 'Careers', permission: 'careers.view' },
       { to: '/pricing', label: 'Pricing', permission: 'services.manage_pricing' },
+      { to: '/pricing-packages', label: 'Pricing Packages', permission: 'services.manage_pricing' },
       { to: '/about', label: 'About Sections', permission: 'pages.update_about' },
+      { to: '/offices', label: 'Offices', permission: 'pages.update_contact' },
     ],
   },
   {
@@ -66,11 +79,19 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
     links: [
       { to: '/staff', label: 'Staff Management', permission: 'staff.view' },
       { to: '/staff-access', label: 'Staff Access', permission: 'staff.assign_permissions' },
+      { to: '/portfolio-approvals', label: 'Portfolio Approvals', permission: 'staff.view' },
+      { to: '/leave-requests', label: 'Leave Requests', permission: 'leave.request' },
+      { to: '/attendance', label: 'Attendance', permission: 'attendance.record' },
+      { to: '/payroll', label: 'Payroll', permission: 'payroll.view' },
+      { to: '/approvals', label: 'Approvals', permission: 'approvals.view' },
       { to: '/settings/roles', label: 'Roles & Permissions', permission: 'administration.roles' },
       { to: '/ai', label: 'AI Config', permission: 'ai_config.view' },
+      { to: '/ai-assist', label: 'AI Assist', permission: 'leads.view' },
+      { to: '/agents', label: 'AI Workforce', permission: 'agents.view' },
       { to: '/uploads', label: 'File Uploads', permission: 'media.upload' },
       { to: '/settings', label: 'Site Settings', permission: 'administration.settings' },
       { to: '/system', label: 'System Panel', permission: 'administration.audit' },
+      { to: '/audit-log', label: 'Audit Log', permission: 'administration.audit' },
     ],
   },
 ];
@@ -191,6 +212,7 @@ function AdminShell() {
             <Link to="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               View site ↗
             </Link>
+            <NotificationBell />
             <button
               onClick={toggleMode}
               aria-label="Toggle theme"

@@ -196,12 +196,7 @@
 }
 .angi-hero-title-highlight {
   display: block;
-  background: linear-gradient(135deg, var(--hero-primary, var(--color-primary)) 0%, var(--hero-secondary, var(--color-secondary)) 50%, var(--color-accent) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  text-shadow: 0 0 80px color-mix(in srgb, var(--color-accent-2) 30%, transparent);
+  color: var(--hero-primary, var(--color-primary));
 }
 
 .angi-hero-subheadline {
@@ -347,11 +342,7 @@
   font-weight: 800;
   font-size: clamp(1.5rem, 4vw, 2.25rem);
   line-height: 1;
-  background: linear-gradient(135deg, var(--hero-primary, var(--color-primary)) 0%, var(--hero-secondary, var(--color-secondary)) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--hero-primary, var(--color-primary));
 }
 .angi-hero-stat-label {
   margin: 0;

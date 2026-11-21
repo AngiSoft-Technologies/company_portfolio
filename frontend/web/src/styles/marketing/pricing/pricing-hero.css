@@ -14,11 +14,7 @@
     color: var(--pricing-text);
 }
 .pricing-hero__title .pricing-hero__hl {
-    background: linear-gradient(90deg, var(--pricing-accent), var(--pricing-accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: var(--pricing-accent);
 }
 .pricing-hero__subtitle {
     margin: 1.1rem 0 0;

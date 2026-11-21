@@ -74,6 +74,7 @@ export default function staffRouter(prisma: Db) {
                     .select('id', 'title', 'slug', 'description', 'images', 'techStack')
                     .orderBy((p) => p.createdAt.desc())
                     .limit(5))
+                .include('portfolioConfig')
                 .first();
 
             if (!staffMember) {
@@ -96,8 +97,37 @@ export default function staffRouter(prisma: Db) {
             const docsById = new Map(docRows.map((d: any) => [d.id, d]));
             const documents = docIds.map((id) => docsById.get(id)).filter(Boolean);
 
-            const { blogPosts, services, projects, ...staffPublic } = staffMember as any;
-            res.json({ ...staffPublic, posts: blogPosts, services, projects, documents });
+            const { blogPosts, services, projects, portfolioConfig, ...staffPublic } = staffMember as any;
+
+            // Phase 3 Portfolio Studio: a published config drives section
+            // order/visibility/custom titles on the public profile. Unpublished
+            // or absent configs leave the frontend defaults untouched.
+            let studio: Record<string, unknown> | undefined;
+            if (portfolioConfig?.published) {
+                const sections = Array.isArray(portfolioConfig.sections)
+                    ? portfolioConfig.sections as Array<{ key?: string; visible?: boolean; title?: string | null }>
+                    : [];
+                const sectionOrder = sections.map((s) => s.key).filter((k): k is string => typeof k === 'string');
+                const sectionSettings: Record<string, unknown> = {};
+                for (const s of sections) {
+                    if (!s.key) continue;
+                    sectionSettings[s.key] = {
+                        enabled: s.visible !== false,
+                        visibility: 'PUBLIC',
+                        customTitle: s.title ?? '',
+                    };
+                }
+                studio = {
+                    theme: portfolioConfig.theme,
+                    layout: portfolioConfig.layout,
+                    version: portfolioConfig.version,
+                    sectionOrder,
+                    sectionSettings,
+                    config: portfolioConfig.publishedConfig ?? {},
+                };
+            }
+
+            res.json({ ...staffPublic, posts: blogPosts, services, projects, documents, portfolioStudio: studio ?? null });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }

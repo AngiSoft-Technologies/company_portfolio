@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requirePermission } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -62,7 +63,7 @@ export default function staffBlogsRouter(prisma: Db = db) {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.orm.public.StaffBlog.where({ id: req.params.id }).first();
         if (!blog) return res.status(404).json({ error: 'Not found' });
-        if (blog.employeeId !== req.user.sub && !['ADMIN', 'BLOG_MANAGER'].includes(req.user.role ?? '')) {
+        if (blog.employeeId !== req.user.sub && !(await hasPermission({ employeeId: req.user.sub, systemRole: req.user.role }, 'publications.review'))) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         const parsed = updateSchema.safeParse(req.body);
@@ -78,7 +79,7 @@ export default function staffBlogsRouter(prisma: Db = db) {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.orm.public.StaffBlog.where({ id: req.params.id }).first();
         if (!blog) return res.status(404).json({ error: 'Not found' });
-        if (blog.employeeId !== req.user.sub && !['ADMIN', 'BLOG_MANAGER'].includes(req.user.role ?? '')) {
+        if (blog.employeeId !== req.user.sub && !(await hasPermission({ employeeId: req.user.sub, systemRole: req.user.role }, 'publications.review'))) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         await prisma.orm.public.StaffBlog.where({ id: req.params.id }).delete();

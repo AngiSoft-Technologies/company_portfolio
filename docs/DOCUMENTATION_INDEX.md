@@ -28,11 +28,11 @@ plan, the plan wins.
 |-------|---------|-------|-----------|
 | 🟢 **CANONICAL** | Normative now | 3 | `ANGISOFT_DIGITAL_HQ_PLAN.md`, `ANGISOFT_DESIGN_SYSTEM_RULES.md`, `REVAMP_PLAN.md` |
 | 🎯 **TARGET** | Normative target; partly implemented | 3 | `ANGISOFT_PERMISSION_ASSIGNMENT_MODEL.md`, `ANGISOFT_ASSIGNMENT_SCOPE_MATRIX.md`, `ANGISOFT_DASHBOARD_WIDGET_MATRIX.md` |
-| 🔄 **REGENERATE** | Useful structure; must be rebuilt against current code | 5 | `ANGISOFT_CAPABILITY_MAP.md`, `ANGISOFT_PERMISSION_CATALOGUE.md`, `PUBLIC_CONTENT_ADMIN_MATRIX.md`, `ANGISOFT_CURRENT_DEPARTMENTS.md`, `ANGISOFT_POSITION_REQUIREMENTS.md` |
+| 🔄 **REGENERATE** | Useful structure; must be rebuilt against current code | 4 | `ANGISOFT_CAPABILITY_MAP.md`, `PUBLIC_CONTENT_ADMIN_MATRIX.md`, `ANGISOFT_CURRENT_DEPARTMENTS.md`, `ANGISOFT_POSITION_REQUIREMENTS.md` |
 | 📜 **HISTORICAL** | Read-only baseline; do not cite for current status | 6 | `ADMIN_AND_STAFF_CODEBASE_AUDIT.md`, `SYSTEM_REVIEW_AND_ROADMAP.md`, `SYSTEM_ARCHITECTURE.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `IMPLEMENTATION_ROADMAP.md` |
 | 💡 **HYPOTHESIS** | Ideation / content backlog only | 3 | `BRAND_EXPANSION_STRATEGY.md`, `CHATBOT_GUIDE.md`, `SERVICES_DATABASE.md` |
-| ✅ **COMPLETE** | Frozen milestone summary | 6 | `MILESTONE_PHASE_2.md`, `PHASE_2_COMPLETION.md`, `SESSION_SUMMARY.md`, `VERIFICATION_CHECKLIST.md`, `PROJECT_STATUS.md`, `CHANGELOG.md` |
-| 🛠 **OPERATIONAL** | Current reference / runbook | 15 | `NETLIFY.md`, `TESTING_GUIDE.md`, `QUICK_REFERENCE.md`, `QUICK_START_PHASE_3.md`, `DOCUMENTATION_GUIDE.md`, `DESIGN_PROVENANCE.md`, `about-page-backend.md`, `about-page-data-matrix.md`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, `REDIS_REMOVAL.md`, plus this index |
+| ✅ **COMPLETE** | Frozen milestone summary | 8 | `MILESTONE_PHASE_2.md`, `PHASE_2_COMPLETION.md`, `SESSION_SUMMARY.md`, `VERIFICATION_CHECKLIST.md`, `PROJECT_STATUS.md`, `CHANGELOG.md`, `DOCUMENTATION_GUIDE.md`, `REDIS_REMOVAL.md` |
+| 🛠 **OPERATIONAL** | Current reference / runbook | 15 | `NETLIFY.md`, `BACKUP_RESTORE.md`, `TESTING_GUIDE.md`, `QUICK_REFERENCE.md`, `QUICK_START_PHASE_3.md`, `DESIGN_PROVENANCE.md`, `ANGISOFT_PERMISSION_CATALOGUE.md`, `about-page-backend.md`, `about-page-data-matrix.md`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, plus this index |
 
 Full rules: `ANGISOFT_DIGITAL_HQ_PLAN.md` §11 (Reconciliation Rules) and §15 (Document Migration Checklist).
 

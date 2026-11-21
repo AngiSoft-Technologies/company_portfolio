@@ -18,3 +18,16 @@ export const contactLimiter = rateLimit({
 
 // Alias to satisfy the contact-enquiries route import shape.
 export const gContactLimiter = contactLimiter;
+
+/**
+ * Public unauthenticated form endpoints (bookings, inquiries, newsletter
+ * subscribe, survey responses, portal magic-link, chatbot). Generous enough
+ * for legitimate multi-step flows, tight enough to blunt spam/abuse.
+ */
+export const publicFormLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 30, // requests per IP per window
+    message: 'Too many requests. Please wait a few minutes before trying again.',
+    standardHeaders: false,
+    legacyHeaders: false,
+});

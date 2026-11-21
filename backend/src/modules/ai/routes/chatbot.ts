@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { validateRequest } from '../../../shared/middleware/validation';
 import { requireAuth } from '../../../shared/middleware/auth';
 import { requirePermission } from '../../../shared/middleware/roles';
+import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 import type { AuthRequest } from '../../../shared/middleware/auth';
 import { sendMail } from '../../../shared/services/email';
 import { loadAIConfig, aiComplete } from '../../../modules/ai/services/aiProvider';
@@ -835,6 +836,7 @@ Never invent prices, staff counts, or project details. Keep answers concise, hel
   // Send chat message
   router.post(
     '/chat',
+    publicFormLimiter,
     validateRequest(ChatMessageSchema),
     async (req: Request<{}, {}, ChatMessageRequest>, res: Response) => {
       try {

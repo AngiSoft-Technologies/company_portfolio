@@ -1,0 +1,89 @@
+/* Pricing — package cards (PricingPackage records) */
+.pricing-packages__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.1rem;
+}
+.pricing-package {
+    position: relative;
+    border: 1px solid var(--pricing-border);
+    border-radius: var(--pricing-radius);
+    background: var(--pricing-surface);
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.pricing-package:hover { border-color: var(--pricing-border-strong); transform: translateY(-2px); }
+.pricing-package--highlighted {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+.pricing-package__badge {
+    position: absolute;
+    top: -0.7rem;
+    left: 1.25rem;
+    background: var(--color-accent);
+    color: var(--color-white, #fff);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+.pricing-package__name {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    color: var(--pricing-text);
+    font-size: 1.2rem;
+}
+.pricing-package__service {
+    margin: 0;
+    color: var(--pricing-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.pricing-package__price {
+    margin: 0;
+    color: var(--pricing-text);
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+.pricing-package__period {
+    color: var(--pricing-muted);
+    font-size: 0.85rem;
+}
+.pricing-package__desc {
+    margin: 0;
+    color: var(--pricing-muted);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+.pricing-package__features {
+    list-style: none;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.pricing-package__features li {
+    color: var(--pricing-text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding-left: 1.1rem;
+    position: relative;
+}
+.pricing-package__features li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+}

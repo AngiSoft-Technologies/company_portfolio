@@ -102,27 +102,50 @@ export function withPricing(service) {
     };
 }
 
+/** Normalize one PricingPackage row from /api/pricing-packages. */
+function normalizePackage(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const price = raw.price != null ? Number(raw.price) : null;
+    return {
+        name: raw.name || '',
+        slug: raw.slug || '',
+        description: raw.description || '',
+        price: Number.isFinite(price) ? price : null,
+        priceLabel: formatKsh(price),
+        currency: raw.currency || 'KES',
+        billingPeriod: raw.billingPeriod || null,
+        features: asArray(raw.features).map((x) => (typeof x === 'string' ? x : x?.label || x?.title || '')).filter(Boolean),
+        highlighted: Boolean(raw.highlighted),
+        serviceTitle: raw.service && raw.service.published !== false ? raw.service.title || '' : '',
+    };
+}
+
 /**
  * Build the complete Pricing view model.
- * @param {{ sitePricing?: object|null, services?: object[] }} input
+ * @param {{ sitePricing?: object|null, services?: object[], packages?: object[] }} input
  * @returns {{
  *   content: object|null,
  *   services: object[],
  *   pricedServices: object[],
  *   unpricedServices: object[],
+ *   packages: object[],
  *   loadingRanges: boolean,
  *   hasServiceData: boolean
  * }}
  */
-export function buildPricingModel({ sitePricing, services = [] } = {}) {
+export function buildPricingModel({ sitePricing, services = [], packages = [] } = {}) {
     const content = normalizeSitePricing(sitePricing);
     const priced = services.map(withPricing);
+    const normalizedPackages = (Array.isArray(packages) ? packages : [])
+        .map(normalizePackage)
+        .filter((p) => p && p.name);
 
     return {
         content,
         services: priced,
         pricedServices: priced.filter((s) => s.hasPrice),
         unpricedServices: priced.filter((s) => !s.hasPrice),
+        packages: normalizedPackages,
         hasContent: Boolean(content),
         hasServiceData: Boolean(services.length),
     };

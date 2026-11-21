@@ -259,10 +259,7 @@ const CategoryDetail = () => {
         }}>
           {content.headline.split(' ').map((word, i, arr) =>
             i === arr.length - 1 ? (
-              <span key={i} style={{
-                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>{word}</span>
+              <span key={i} style={{ color: colors.primary }}>{word}</span>
             ) : <span key={i}>{word} </span>
           )}
         </h1>
@@ -303,7 +300,7 @@ const CategoryDetail = () => {
             padding: '0.875rem 1.75rem', borderRadius: '0.75rem',
             fontSize: '0.9375rem', fontWeight: 600,
             color: '#fff', textDecoration: 'none',
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
+            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || 'var(--color-secondary)'})`,
             boxShadow: `0 4px 16px ${colors.primary}25`,
             transition: 'transform 0.2s',
           }}
@@ -335,10 +332,7 @@ const CategoryDetail = () => {
               fontFamily: "'Sora', sans-serif", fontSize: '1.25rem', fontWeight: 700,
               marginBottom: '1.25rem',
             }}>
-              Related <span style={{
-                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary || '#00AFFF'})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>Projects</span>
+              Related <span style={{ color: colors.primary }}>Projects</span>
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
               {relatedProjects.map((p, i) => (

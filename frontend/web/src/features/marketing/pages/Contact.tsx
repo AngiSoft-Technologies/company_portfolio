@@ -5,6 +5,7 @@ import { useContactPage } from '@/hooks/marketing/useContactPage';
 import { useContactEntryContext } from '@/hooks/marketing/useContactEntryContext';
 import { useContactForm } from '@/hooks/marketing/useContactForm';
 import { useContactSubmission } from '@/hooks/marketing/useContactSubmission';
+import { useOffices } from '@/hooks/marketing/useOffices';
 
 import ContactHero from '../components/contact/ContactHero';
 import ContactIntentSelector from '../components/contact/ContactIntentSelector';
@@ -12,6 +13,7 @@ import ContactMethods from '../components/contact/ContactMethods';
 import ContactContextCard from '../components/contact/ContactContextCard';
 import ContactForm from '../components/contact/ContactForm';
 import ContactDetails from '../components/contact/ContactDetails';
+import ContactOffices from '../components/contact/ContactOffices';
 import ContactMap from '../components/contact/ContactMap';
 import ContactResponseGuide from '../components/contact/ContactResponseGuide';
 import ContactFaqs from '../components/contact/ContactFaqs';
@@ -24,6 +26,7 @@ import '@/styles/marketing/contact/contact-methods.css';
 import '@/styles/marketing/contact/contact-form.css';
 import '@/styles/marketing/contact/contact-context.css';
 import '@/styles/marketing/contact/contact-details.css';
+import '@/styles/marketing/contact/contact-offices.css';
 import '@/styles/marketing/contact/contact-map.css';
 import '@/styles/marketing/contact/contact-success.css';
 import '@/styles/marketing/contact/contact-responsive.css';
@@ -32,6 +35,7 @@ import { LoadingIndicator, VisualState } from '@angisoft/ui';
 export default function Contact() {
     const { colors, mode } = useTheme();
     const { contact, loading } = useContactPage();
+    const { offices } = useOffices();
     const entryContext = useContactEntryContext();
 
     const [context, setContext] = useState(entryContext);
@@ -138,6 +142,7 @@ export default function Contact() {
             </section>
 
             <ContactDetails contact={contact} />
+            <ContactOffices offices={offices} />
             <ContactResponseGuide />
             <ContactMap contact={contact} />
             <ContactFaqs />
@@ -154,6 +159,7 @@ function defaultSubjectInline(type) {
         support: 'Support request',
         partnership: 'Partnership enquiry',
         careers: 'Careers enquiry',
+        idea: 'Idea / project pitch',
         general: 'General enquiry',
     };
     return map[type] || map.general;

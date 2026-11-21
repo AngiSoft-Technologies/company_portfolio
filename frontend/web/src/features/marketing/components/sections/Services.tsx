@@ -31,13 +31,13 @@ const Services = () => {
 
     const getCategoryMeta = (service) => {
         const category = (service.categoryRef?.name || service.category || '').toLowerCase();
-        if (category.includes('mobile')) return { icon: FaMobileAlt, gradient: 'from-[#00AFFF] to-[#0875FF]' };
-        if (category.includes('data')) return { icon: FaChartLine, gradient: 'from-[#00AFFF] to-[#27D94B]' };
-        if (category.includes('cyber') || category.includes('security')) return { icon: FaShieldAlt, gradient: 'from-[#27D94B] to-[#00AFFF]' };
-        if (category.includes('advert')) return { icon: FaBullhorn, gradient: 'from-[#00AFFF] to-[#0875FF]' };
-        if (category.includes('automation') || category.includes('debug')) return { icon: FaCogs, gradient: 'from-[#00AFFF] to-[#0875FF]' };
-        if (category.includes('software') || category.includes('web') || category.includes('system')) return { icon: FaLaptopCode, gradient: 'from-[#0875FF] to-[#00AFFF]' };
-        return { icon: FaCogs, gradient: 'from-[#0875FF] to-[#00AFFF]' };
+        if (category.includes('mobile')) return { icon: FaMobileAlt, gradient: 'from-[var(--color-secondary)] to-[var(--color-primary)]' };
+        if (category.includes('data')) return { icon: FaChartLine, gradient: 'from-[var(--color-secondary)] to-[#27D94B]' };
+        if (category.includes('cyber') || category.includes('security')) return { icon: FaShieldAlt, gradient: 'from-[#27D94B] to-[var(--color-secondary)]' };
+        if (category.includes('advert')) return { icon: FaBullhorn, gradient: 'from-[var(--color-secondary)] to-[var(--color-primary)]' };
+        if (category.includes('automation') || category.includes('debug')) return { icon: FaCogs, gradient: 'from-[var(--color-secondary)] to-[var(--color-primary)]' };
+        if (category.includes('software') || category.includes('web') || category.includes('system')) return { icon: FaLaptopCode, gradient: 'from-[var(--color-primary)] to-[var(--color-secondary)]' };
+        return { icon: FaCogs, gradient: 'from-[var(--color-primary)] to-[var(--color-secondary)]' };
     };
 
     useEffect(() => {
@@ -118,12 +118,7 @@ const Services = () => {
                         {sectionCopy.title && (
                             <h2 
                                 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                                style={{
-                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                    backgroundClip: "text"
-                                }}
+                                style={{ color: 'var(--text-primary)' }}
                             >
                                 {sectionCopy.title}
                             </h2>

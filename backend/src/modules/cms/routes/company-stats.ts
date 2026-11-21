@@ -39,7 +39,7 @@ export default function companyStatsRouter(prisma: Db = db) {
         res.json(stats);
     }));
 
-    router.post('/', requireAuth, requireAccess('company_stats.update', ['ADMIN', 'MARKETING']), asyncHandler(async (req: AuthRequest, res) => {
+    const createHandler = asyncHandler(async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const stat = await prisma.orm.public.CompanyStat.create({
@@ -57,21 +57,30 @@ export default function companyStatsRouter(prisma: Db = db) {
             published: parsed.data.published
         });
         res.status(201).json(stat);
-    }));
+    });
 
-    router.put('/:id', requireAuth, requireAccess('company_stats.update', ['ADMIN', 'MARKETING']), asyncHandler(async (req: AuthRequest, res) => {
+    const updateHandler = asyncHandler(async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const stat = await prisma.orm.public.CompanyStat.where({ id: req.params.id }).update(payload);
         res.json(stat);
-    }));
+    });
 
-    router.delete('/:id', requireAuth, requireAccess('company_stats.delete', ['ADMIN']), asyncHandler(async (req: AuthRequest, res) => {
+    const deleteHandler = asyncHandler(async (req: AuthRequest, res) => {
         await prisma.orm.public.CompanyStat.where({ id: req.params.id }).delete();
         res.json({ ok: true });
-    }));
+    });
+
+    const guardWrite = requireAccess('company_stats.update', ['ADMIN', 'MARKETING']);
+    const guardDelete = requireAccess('company_stats.delete', ['ADMIN']);
+    router.post('/', requireAuth, guardWrite, createHandler);
+    router.post('/admin', requireAuth, guardWrite, createHandler);
+    router.put('/:id', requireAuth, guardWrite, updateHandler);
+    router.put('/admin/:id', requireAuth, guardWrite, updateHandler);
+    router.delete('/:id', requireAuth, guardDelete, deleteHandler);
+    router.delete('/admin/:id', requireAuth, guardDelete, deleteHandler);
 
     return router;
 }

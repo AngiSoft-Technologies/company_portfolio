@@ -110,11 +110,7 @@ const Contacts = () => {
                         </div>
                         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
                             Let's Start{' '}
-                            <span style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                            }}>Your Project</span>
+                            <span style={{ color: colors.primary }}>Your Project</span>
                         </h2>
                         <p
                             className="text-lg max-w-2xl mx-auto"

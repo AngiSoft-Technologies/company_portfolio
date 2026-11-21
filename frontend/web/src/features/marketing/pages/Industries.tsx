@@ -17,7 +17,7 @@ export default function Industries() {
 
       <Section>
         {industries.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+          <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
         ) : null}
         {!industries.loading && (!industries.data || industries.data.length === 0) ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
@@ -29,12 +29,12 @@ export default function Industries() {
             {industries.data.map((industry) => (
               <Link key={industry.id} to={`/industries/${industry.slug}`}>
                 <Card hoverable className="h-full p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0875FF]/10 text-xl text-[#0875FF]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-xl text-[var(--color-primary)]">
                     {industry.icon ? industry.icon : industry.name.charAt(0)}
                   </div>
                   <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">{industry.name}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{industry.description}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#0875FF]">
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)]">
                     Learn more →
                   </span>
                 </Card>

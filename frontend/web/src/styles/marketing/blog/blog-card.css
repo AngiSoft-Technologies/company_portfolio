@@ -48,7 +48,7 @@
 .blog-card__subtitle {
   margin: 0.2rem 0 0;
   font-size: 0.86rem;
-  color: var(--blog-text-muted);
+  color: var(--blog-muted);
 }
 
 /* Per-type accent on the card edge (subtle left border tint) */

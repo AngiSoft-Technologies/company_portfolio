@@ -1,0 +1,119 @@
+[
+  {
+    "id": "table.SalaryStructure",
+    "label": "Create table \"SalaryStructure\"",
+    "summary": "Creates table \"SalaryStructure\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "SalaryStructure"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"SalaryStructure\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"SalaryStructure\"",
+        "sql": "CREATE TABLE \"public\".\"SalaryStructure\" (\n  \"allowances\" jsonb,\n  \"basicSalary\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"deductions\" jsonb,\n  \"employeeId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"SalaryStructure_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"SalaryStructure\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.SalaryStructure.SalaryStructure_employeeId_key",
+    "label": "Create index \"SalaryStructure_employeeId_key\" on \"SalaryStructure\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "SalaryStructure_employeeId_key",
+        "table": "SalaryStructure"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"SalaryStructure_employeeId_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure_employeeId_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"SalaryStructure_employeeId_key\"",
+        "sql": "CREATE UNIQUE INDEX \"SalaryStructure_employeeId_key\" ON \"public\".\"SalaryStructure\" (\"employeeId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"SalaryStructure_employeeId_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure_employeeId_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.SalaryStructure.SalaryStructure_isActive_idx",
+    "label": "Create index \"SalaryStructure_isActive_idx\" on \"SalaryStructure\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "SalaryStructure_isActive_idx",
+        "table": "SalaryStructure"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"SalaryStructure_isActive_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure_isActive_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"SalaryStructure_isActive_idx\"",
+        "sql": "CREATE INDEX \"SalaryStructure_isActive_idx\" ON \"public\".\"SalaryStructure\" (\"isActive\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"SalaryStructure_isActive_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SalaryStructure_isActive_idx\""
+        ]
+      }
+    ]
+  }
+]

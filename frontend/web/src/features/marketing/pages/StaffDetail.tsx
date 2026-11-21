@@ -28,6 +28,7 @@ import {
   FaNewspaper,
   FaPhoneAlt,
   FaProjectDiagram,
+  FaStar,
   FaTools,
   FaTwitter,
   FaUser,
@@ -50,6 +51,9 @@ const DEFAULT_SECTION_ORDER = [
   'about',
   'experience',
   'projects',
+  'featuredWork',
+  'caseStudies',
+  'cv',
   'services',
   'skills',
   'education',
@@ -57,6 +61,7 @@ const DEFAULT_SECTION_ORDER = [
   'achievements',
   'articles',
   'documents',
+  'testimonials',
   'contact',
 ];
 
@@ -74,6 +79,21 @@ const SECTION_DEFINITIONS = {
   projects: {
     label: 'Projects',
     icon: FaProjectDiagram,
+  },
+
+  featuredWork: {
+    label: 'Featured Work',
+    icon: FaProjectDiagram,
+  },
+
+  caseStudies: {
+    label: 'Case Studies',
+    icon: FaProjectDiagram,
+  },
+
+  cv: {
+    label: 'CV / Resume',
+    icon: FaDownload,
   },
 
   services: {
@@ -111,6 +131,11 @@ const SECTION_DEFINITIONS = {
     icon: FaDownload,
   },
 
+  testimonials: {
+    label: 'Testimonials',
+    icon: FaStar,
+  },
+
   contact: {
     label: 'Contact',
     icon: FaEnvelope,
@@ -127,10 +152,9 @@ const StaffDetail = () => {
 
   const navigate = useNavigate();
 
-  const template =
-    searchParams.get('view') === 'spotlight'
-      ? 'spotlight'
-      : 'editorial';
+  // Portfolio Studio layout wins unless the visitor explicitly picked a view.
+  const viewParam =
+    searchParams.get('view');
 
   const [staff, setStaff] =
     useState(null);
@@ -298,6 +322,34 @@ const StaffDetail = () => {
     };
   }, [publicSections]);
 
+  // Portfolio Studio 3.5 — SEO: per-portfolio title + meta description.
+  useEffect(() => {
+    if (!staff?.fullName) {
+      return;
+    }
+
+    const title =
+      `${staff.fullName}${staff.publicTitle ? ` — ${staff.publicTitle}` : ''} | AngiSoft Team`;
+    document.title = title;
+
+    const description =
+      staff.publicSummary ||
+      staff.bio ||
+      `${staff.fullName}${staff.publicTitle ? `, ${staff.publicTitle}` : ''} — AngiSoft team portfolio.`;
+
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', description.slice(0, 300));
+
+    return () => {
+      document.title = 'AngiSoft — Software & Digital Products';
+    };
+  }, [staff?.fullName, staff?.publicTitle, staff?.publicSummary, staff?.bio]);
+
   if (loading) {
     return (
       <PortfolioLoading />
@@ -317,6 +369,30 @@ const StaffDetail = () => {
       />
     );
   }
+
+  // Portfolio Studio: published layout/theme drive the public render unless
+  // the visitor explicitly picked a `?view=` template.
+  const studio =
+    staff?.portfolioStudio || null;
+
+  const template =
+    viewParam === 'spotlight' ||
+    viewParam === 'editorial'
+      ? viewParam
+      : studio?.layout === 'spotlight'
+        ? 'spotlight'
+        : 'editorial';
+
+  const studioTheme =
+    studio?.theme === 'dark' ||
+    studio?.theme === 'light'
+      ? studio.theme
+      : '';
+
+  const studioLayoutClass =
+    studio?.layout === 'compact'
+      ? 'staff-portfolio--compact'
+      : '';
 
   const scrollToSection = (
     sectionKey
@@ -393,7 +469,7 @@ const StaffDetail = () => {
 
   if (template === 'spotlight') {
     return (
-      <main className="staff-portfolio staff-portfolio--spotlight">
+      <main className={`staff-portfolio staff-portfolio--spotlight${studioTheme ? ` staff-portfolio--theme-${studioTheme}` : ''}${studioLayoutClass ? ` ${studioLayoutClass}` : ''}`}>
         <section className="staff-spotlight-hero">
           <div className="container">
             <div className="staff-spotlight-hero-top">
@@ -481,7 +557,7 @@ const StaffDetail = () => {
   }
 
   return (
-    <main className="staff-portfolio">
+    <main className={`staff-portfolio${studioTheme ? ` staff-portfolio--theme-${studioTheme}` : ''}${studioLayoutClass ? ` ${studioLayoutClass}` : ''}`}>
       <section className="staff-portfolio-hero">
         <div className="container">
           <div className="staff-portfolio-hero-top">
@@ -621,6 +697,28 @@ const PortfolioSectionRenderer = ({
         />
       );
 
+    case 'featuredWork':
+      return (
+        <FeaturedWorkSection
+          {...commonProps}
+          items={
+            staff.portfolioStudio
+              ?.config?.featuredWork
+          }
+        />
+      );
+
+    case 'caseStudies':
+      return (
+        <CaseStudiesSection
+          {...commonProps}
+          items={
+            staff.portfolioStudio
+              ?.config?.caseStudies
+          }
+        />
+      );
+
     case 'services':
       return (
         <ServicesSection
@@ -694,6 +792,29 @@ const PortfolioSectionRenderer = ({
           items={
             staff.documents
           }
+        />
+      );
+
+    case 'testimonials':
+      return (
+        <TestimonialsSection
+          {...commonProps}
+          items={
+            staff.portfolioStudio
+              ?.config?.testimonials
+          }
+        />
+      );
+
+    case 'cv':
+      return (
+        <CvSection
+          {...commonProps}
+          cvUrl={
+            staff.portfolioStudio
+              ?.config?.cvUrl
+          }
+          staff={staff}
         />
       );
 
@@ -1244,6 +1365,244 @@ const DocumentsSection = ({
   </PortfolioSection>
 );
 
+const FeaturedWorkSection = ({
+  items,
+  ...props
+}) => {
+  const list = Array.isArray(items)
+    ? items.filter((item) => item && (item.title || item.summary || item.client))
+    : [];
+
+  if (list.length === 0) {
+    return null;
+  }
+
+  return (
+    <PortfolioSection {...props}>
+      <div className="staff-project-list">
+        {list.map((item, index) => {
+          const tags = Array.isArray(item.tags)
+            ? item.tags.filter(Boolean)
+            : [];
+          const body = (
+            <article className="staff-project-item">
+              <div>
+                <h3 className="staff-project-title">
+                  {item.title || 'Featured work'}
+                </h3>
+
+                {item.client && (
+                  <p className="staff-project-role">
+                    {item.client}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                {item.summary && (
+                  <p className="staff-project-summary">
+                    {item.summary}
+                  </p>
+                )}
+
+                {tags.length > 0 && (
+                  <div className="staff-project-technologies">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="staff-project-technology"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+
+          return item.url ? (
+            <a
+              key={item.id || index}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="staff-featured-work-link"
+            >
+              {body}
+            </a>
+          ) : (
+            <div key={item.id || index}>{body}</div>
+          );
+        })}
+      </div>
+    </PortfolioSection>
+  );
+};
+
+const CaseStudiesSection = ({
+  items,
+  ...props
+}) => {
+  const list = Array.isArray(items)
+    ? items.filter((item) => item && (item.title || item.outcome || item.challenge))
+    : [];
+
+  if (list.length === 0) {
+    return null;
+  }
+
+  return (
+    <PortfolioSection {...props}>
+      <div className="staff-project-list">
+        {list.map((item, index) => {
+          const body = (
+            <article className="staff-project-item">
+              <div>
+                <h3 className="staff-project-title">
+                  {item.title || 'Case study'}
+                </h3>
+
+                {item.client && (
+                  <p className="staff-project-role">
+                    {item.client}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                {item.challenge && (
+                  <p className="staff-project-summary">
+                    <strong>Challenge:</strong> {item.challenge}
+                  </p>
+                )}
+                {item.approach && (
+                  <p className="staff-project-summary">
+                    <strong>Approach:</strong> {item.approach}
+                  </p>
+                )}
+                {item.outcome && (
+                  <p className="staff-project-summary">
+                    <strong>Outcome:</strong> {item.outcome}
+                  </p>
+                )}
+              </div>
+            </article>
+          );
+
+          return item.url ? (
+            <a
+              key={item.id || index}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="staff-featured-work-link"
+            >
+              {body}
+            </a>
+          ) : (
+            <div key={item.id || index}>{body}</div>
+          );
+        })}
+      </div>
+    </PortfolioSection>
+  );
+};
+
+const TestimonialsSection = ({
+  items,
+  ...props
+}) => {
+  const list = Array.isArray(items)
+    ? items
+    : [];
+
+  if (list.length === 0) {
+    return null;
+  }
+
+  return (
+    <PortfolioSection {...props}>
+      <div className="staff-testimonial-list">
+        {list.map((item, index) => (
+          <figure
+            key={item.id || index}
+            className="staff-testimonial-item"
+          >
+            <FaStar
+              className="staff-testimonial-star"
+              aria-hidden="true"
+            />
+
+            <blockquote>
+              {item.quote ||
+                item.text}
+            </blockquote>
+
+            <figcaption>
+              <strong>
+                {item.author ||
+                  item.name}
+              </strong>
+
+              {(item.role ||
+                item.company) && (
+                <span>
+                  {[
+                    item.role,
+                    item.company,
+                  ]
+                    .filter(Boolean)
+                    .join(' • ')}
+                </span>
+              )}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </PortfolioSection>
+  );
+};
+
+const CvSection = ({
+  cvUrl,
+  staff,
+  ...props
+}) => {
+  if (!cvUrl) return null;
+  return (
+    <PortfolioSection {...props}>
+      <div className="staff-contact-panel">
+        <div>
+          <h3>
+            Download{' '}
+            {staff.firstName ||
+              staff.fullName}
+            {'\u2019s'} CV
+          </h3>
+          <p>
+            A PDF resume curated for
+            public portfolios —
+            download it to review
+            experience, skills and
+            credentials offline.
+          </p>
+        </div>
+        <div className="staff-contact-actions">
+          <a
+            href={cvUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <FaDownload />
+            Download CV
+          </a>
+        </div>
+      </div>
+    </PortfolioSection>
+  );
+};
+
 const ContactSection = ({
   staff,
   ...props
@@ -1623,8 +1982,11 @@ const normalizeStaffPortfolio = (
     record?.username ||
     'AngiSoft Team Member';
 
+  const studio = record?.portfolioStudio || null;
+
   const sectionSettings =
     normalizeSectionSettings(
+      studio?.sectionSettings ||
       record?.sectionSettings ||
       record?.publicSections ||
       {}
@@ -1632,6 +1994,7 @@ const normalizeStaffPortfolio = (
 
   const sectionOrder =
     normalizeSectionOrder(
+      studio?.sectionOrder ||
       record?.sectionOrder,
       sectionSettings
     );
@@ -1706,7 +2069,13 @@ const normalizeStaffPortfolio = (
 
     certifications:
       normalizeCertifications(
-        record?.certifications
+        (Array.isArray(
+          studio?.config?.certifications
+        ) &&
+        studio.config.certifications
+          .length > 0
+          ? studio.config.certifications
+          : record?.certifications)
       ),
 
     achievements:
@@ -1854,6 +2223,28 @@ const sectionHasContent = (
         staff.projects.length > 0
       );
 
+    case 'featuredWork':
+      return (
+        Array.isArray(
+          staff.portfolioStudio
+            ?.config?.featuredWork
+        ) &&
+        staff.portfolioStudio
+          .config.featuredWork
+          .length > 0
+      );
+
+    case 'caseStudies':
+      return (
+        Array.isArray(
+          staff.portfolioStudio
+            ?.config?.caseStudies
+        ) &&
+        staff.portfolioStudio
+          .config.caseStudies
+          .length > 0
+      );
+
     case 'services':
       return (
         staff.services.length > 0
@@ -1891,6 +2282,23 @@ const sectionHasContent = (
     case 'documents':
       return (
         staff.documents.length > 0
+      );
+
+    case 'testimonials':
+      return (
+        Array.isArray(
+          staff.portfolioStudio
+            ?.config?.testimonials
+        ) &&
+        staff.portfolioStudio
+          .config.testimonials
+          .length > 0
+      );
+
+    case 'cv':
+      return Boolean(
+        staff.portfolioStudio
+          ?.config?.cvUrl
       );
 
     case 'contact':

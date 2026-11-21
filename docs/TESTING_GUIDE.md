@@ -392,3 +392,24 @@ If all tests pass:
 
 ---
 
+
+---
+
+## 🤖 Automated Browser E2E (Playwright)
+
+The `e2e/` suite runs the real Vite dev servers (`web` :5173, `admin` :5174)
+with every `/api/**` call stubbed via `page.route` — no backend or database
+required.
+
+```bash
+pnpm test:e2e                              # all specs (web + admin projects)
+pnpm test:e2e -- --project=web             # public site + portal only
+pnpm test:e2e -- e2e/tests/web-booking.spec.ts   # single spec file
+```
+
+Coverage: homepage hero + theme toggle, services/pricing/contact data
+rendering, the 3-step booking submit → redirect, client-portal magic-link →
+dashboard, admin login → dashboard, auth-guard redirect, payroll screen data,
+and the admin theme toggle + profile persistence. Stub handlers live in
+`e2e/fixtures/mockApi.ts` (`'METHOD /api/path'` → JSON body, `*` suffix for
+prefixes, `{status, body}` envelope for non-200s).

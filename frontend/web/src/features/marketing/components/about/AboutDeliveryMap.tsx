@@ -151,10 +151,10 @@ const AboutDeliveryMap = () => {
       rings.forEach((ring) => {
         L.circle(NAIROBI, {
           radius: ring.radius,
-          color: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#0875FF',
+          color: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || 'var(--color-primary)',
           weight: ring.weight,
           opacity: 0.55,
-          fillColor: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#0875FF',
+          fillColor: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || 'var(--color-primary)',
           fillOpacity: 0.04,
           dashArray: ring.radius > 1000 ? '4 6' : undefined,
         })

@@ -133,14 +133,7 @@ const CTASection = () => {
           >
             Ready to Transform
             <br />
-            <span
-              style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 50%, ${colors.success} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}
-            >
+            <span style={{ color: colors.secondary }}>
               Your Business?
             </span>
           </h2>
@@ -224,12 +217,7 @@ const CTASection = () => {
                 </div>
                 <div
                   className="text-2xl md:text-3xl font-bold"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}
+                  style={{ color: colors.primary }}
                 >
                   <AnimatedCounter
                     end={badge.value}

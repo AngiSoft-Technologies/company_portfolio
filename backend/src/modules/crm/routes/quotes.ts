@@ -3,6 +3,8 @@ import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { CrmError } from '../services/errors';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { approvalRuleFor, requiresApproval } from '../services/approvalRules';
 import {
   convertQuoteToInvoice,
   createQuote,
@@ -64,7 +66,26 @@ export default function quotesRouter(prisma: Db = db) {
 
   router.patch('/:id', requirePermission('quotes.update'), async (req: AuthRequest, res) => {
     try {
-      const quote = await updateQuote(prisma, req.params.id, req.body as UpdateQuoteInput);
+      const body = req.body as UpdateQuoteInput;
+      // Approval rules engine (Phase 4.2): sending a quote at or above the
+      // configured threshold requires the elevated `quotes.approve` grant in
+      // addition to `quotes.update`. Other transitions are unaffected.
+      if (body.status === 'sent') {
+        const existing = await getQuote(prisma, req.params.id);
+        if (existing && requiresApproval('quote', existing.total)) {
+          const rule = approvalRuleFor('quote');
+          const allowed = await hasPermission(
+            { employeeId: req.user?.sub ?? '', systemRole: req.user?.role },
+            rule.requiredPermission,
+          );
+          if (!allowed) {
+            return res.status(403).json({
+              error: `Quotes at or above the approval threshold require the '${rule.requiredPermission}' permission`,
+            });
+          }
+        }
+      }
+      const quote = await updateQuote(prisma, req.params.id, body);
       res.json(quote);
     } catch (err) {
       fail(res, err);

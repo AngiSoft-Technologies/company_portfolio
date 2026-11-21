@@ -5,6 +5,10 @@ import { getAllowedOrigins } from './shared/config/origins';
 import { startEmailWorker } from './workers/emailWorker';
 import { startFileProcessor } from './workers/fileProcessor';
 import { startReconciliationWorker } from './workers/reconciliationWorker';
+import { startSlaMonitor } from './workers/slaMonitor';
+import { startRenewalMonitor } from './workers/renewalMonitor';
+import { startAttendanceDeriveMonitor } from './workers/attendanceDerive';
+import { startAgentScheduler } from './workers/agentScheduler';
 import { closeWorkers } from './queue';
 
 const PORT = Number.parseInt(process.env.PORT || '5000', 10);
@@ -30,6 +34,10 @@ async function bootstrap() {
   try { startEmailWorker(); console.log('✅ Email worker started'); } catch (err: any) { console.warn('⚠️ Email worker:', err.message); }
   try { startFileProcessor(); console.log('✅ File processor started'); } catch (err: any) { console.warn('⚠️ File processor:', err.message); }
   try { startReconciliationWorker(); console.log('✅ Reconciliation worker started'); } catch (err: any) { console.warn('⚠️ Reconciliation worker:', err.message); }
+  try { startSlaMonitor(); console.log('✅ SLA monitor started'); } catch (err: any) { console.warn('⚠️ SLA monitor:', err.message); }
+  try { startRenewalMonitor(); console.log('✅ Renewal monitor started'); } catch (err: any) { console.warn('⚠️ Renewal monitor:', err.message); }
+  try { startAttendanceDeriveMonitor(); console.log('✅ Attendance derive monitor started'); } catch (err: any) { console.warn('⚠️ Attendance derive monitor:', err.message); }
+  try { startAgentScheduler(); console.log('✅ Agent scheduler started'); } catch (err: any) { console.warn('⚠️ Agent scheduler:', err.message); }
 
   // Graceful shutdown on SIGTERM / SIGINT
   const shutdown = async (signal: string) => {

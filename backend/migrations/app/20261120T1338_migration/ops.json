@@ -1,0 +1,200 @@
+[
+  {
+    "id": "table.PayrollRun",
+    "label": "Create table \"PayrollRun\"",
+    "summary": "Creates table \"PayrollRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"PayrollRun\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"PayrollRun\"",
+        "sql": "CREATE TABLE \"public\".\"PayrollRun\" (\n  \"completedAt\" timestamp(3),\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"createdById\" text,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"deductionTotal\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"grossTotal\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text,\n  \"netTotal\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"notes\" text,\n  \"payslipCount\" int4 DEFAULT 0 NOT NULL,\n  \"period\" text NOT NULL,\n  \"status\" text DEFAULT 'draft' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"PayrollRun_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"PayrollRun\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Payslip.payrollRunId",
+    "label": "Add column \"payrollRunId\" to \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "payrollRunId",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"payrollRunId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "payrollRunId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"payrollRunId\"",
+        "sql": "ALTER TABLE \"public\".\"Payslip\" ADD COLUMN \"payrollRunId\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"payrollRunId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Payslip",
+          "payrollRunId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.PayrollRun.PayrollRun_period_key",
+    "label": "Create index \"PayrollRun_period_key\" on \"PayrollRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "PayrollRun_period_key",
+        "table": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"PayrollRun_period_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun_period_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"PayrollRun_period_key\"",
+        "sql": "CREATE UNIQUE INDEX \"PayrollRun_period_key\" ON \"public\".\"PayrollRun\" (\"period\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"PayrollRun_period_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun_period_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.PayrollRun.PayrollRun_status_idx",
+    "label": "Create index \"PayrollRun_status_idx\" on \"PayrollRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "PayrollRun_status_idx",
+        "table": "PayrollRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"PayrollRun_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"PayrollRun_status_idx\"",
+        "sql": "CREATE INDEX \"PayrollRun_status_idx\" ON \"public\".\"PayrollRun\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"PayrollRun_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"PayrollRun_status_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Payslip.Payslip_payrollRunId_idx",
+    "label": "Create index \"Payslip_payrollRunId_idx\" on \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Payslip_payrollRunId_idx",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Payslip_payrollRunId_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_payrollRunId_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Payslip_payrollRunId_idx\"",
+        "sql": "CREATE INDEX \"Payslip_payrollRunId_idx\" ON \"public\".\"Payslip\" (\"payrollRunId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Payslip_payrollRunId_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_payrollRunId_idx\""
+        ]
+      }
+    ]
+  }
+]

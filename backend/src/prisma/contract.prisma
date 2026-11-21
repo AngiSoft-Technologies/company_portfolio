@@ -18,6 +18,46 @@ namespace public {
   @@map("AboutSection")
 }
 
+  model Agent {
+    id              String               @id(map: "Agent_pkey")
+    key             String
+    name            String
+    role            String
+    department      String?
+    kind            String
+    description     String?
+    status          String               @default("active")
+    scheduleMinutes Int                  @default(1440)
+    config          Jsonb?
+    lastRunAt       TimestampString(3)?
+    nextRunAt       TimestampString(3)?
+    createdAt       TimestampString(3)   @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([key], map: "Agent_key_key", unique: true)
+    @@index([status, nextRunAt], map: "Agent_status_nextRunAt_idx")
+  @@map("Agent")
+}
+
+  model AgentRun {
+    id          String               @id(map: "AgentRun_pkey")
+    agentId     String
+    agentKey    String
+    _trigger    String               @default("schedule") @map("trigger")
+    status      String               @default("running")
+    summary     String?
+    output      Jsonb?
+    error       String?
+    startedAt   TimestampString(3)   @default(now())
+    finishedAt  TimestampString(3)?
+    createdById String?
+
+    @@index([agentId, startedAt], map: "AgentRun_agentId_startedAt_idx")
+    @@index([agentKey, startedAt], map: "AgentRun_agentKey_startedAt_idx")
+    @@index([status], map: "AgentRun_status_idx")
+  @@map("AgentRun")
+}
+
   model AnalyticsEvent {
     id        String       @id(map: "AnalyticsEvent_pkey")
     _type     String       @map("type")
@@ -153,6 +193,7 @@ namespace public {
     portfolioUrl            String?
     experienceJson          Jsonb?
     educationJson           Jsonb?
+    preferences             Jsonb?
     resumePublished         Boolean                    @default(false)
     department              String?
     featured                Boolean                    @default(false)
@@ -168,8 +209,13 @@ namespace public {
     contactEnquiries        ContactEnquiry[]
     employeePermissions     EmployeePermission[]
     employeePortfolioItems  EmployeePortfolioItem[]
+    portfolioConfig          EmployeePortfolioConfig?
     employeeProfileStats    EmployeeProfileStat[]
     employeeRoleAssignments EmployeeRoleAssignment[]
+    expensesSubmitted        Expense[]                @relation("ExpenseSubmitter")
+    expensesReviewed         Expense[]                @relation("ExpenseReviewer")
+    leaveRequests            LeaveRequest[]           @relation("LeaveEmployee")
+    leaveReviews             LeaveRequest[]           @relation("LeaveReviewer")
     productTeamMembers      ProductTeamMember[]
     projects                Project[]
     projectActivities       ProjectActivity[]
@@ -552,6 +598,7 @@ namespace public {
     author                  Employee?        @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_authorId_fkey", index: false)
     categoryServiceCategory ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Service_categoryId_fkey", index: false)
     quoteLineItems      QuoteLineItem[]
+    pricingPackages     PricingPackage[]
 
     @@index([slug], map: "Service_slug_key", unique: true)
   @@map("Service")
@@ -632,6 +679,24 @@ namespace public {
 
     @@index([employeeId, published], map: "EmployeePortfolioItem_employeeId_published_idx")
   @@map("EmployeePortfolioItem")
+}
+
+  model EmployeePortfolioConfig {
+    id              String       @id(map: "EmployeePortfolioConfig_pkey")
+    employeeId      String       @unique(map: "EmployeePortfolioConfig_employeeId_key")
+    theme           String       @default("default")
+    layout          String       @default("standard")
+    sections        Jsonb?
+    draftConfig     Jsonb?
+    publishedConfig Jsonb?
+    versionHistory  Jsonb?
+    published       Boolean      @default(false)
+    version         Int          @default(1)
+    createdAt       TimestampString(3) @default(now())
+    updatedAt       TimestampString(3)
+    employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeePortfolioConfig_employeeId_fkey")
+
+    @@map("EmployeePortfolioConfig")
 }
 
   model EmployeeProfileStat {
@@ -1439,6 +1504,7 @@ namespace public {
     status         String          @default("open")
     priority       String          @default("normal")
     assignedToId   String?
+    slaBreachedAt  TimestampString(3)?
     createdAt      TimestampString(3)    @default(now())
     updatedAt      TimestampString(3)
     ticketMessages TicketMessage[]
@@ -1491,6 +1557,219 @@ namespace public {
     createdAt  TimestampString(3) @default(now())
     employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "TwoFactorBackupCode_employeeId_fkey", index: false)
   @@map("TwoFactorBackupCode")
+}
+
+  model Expense {
+    id            String    @id(map: "Expense_pkey")
+    title         String
+    description   String?
+    amount        Numeric(18, 2) @default("0.00")
+    currency      String    @default("KES")
+    category      String?
+    status        String    @default("draft")
+    receiptFileId String?
+    submittedById String
+    reviewedById  String?
+    reviewedAt    TimestampString(3)?
+    reviewNote    String?
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+    submittedBy   Employee  @relation("ExpenseSubmitter", fields: [submittedById], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Expense_submittedById_fkey")
+    reviewedBy    Employee? @relation("ExpenseReviewer", fields: [reviewedById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Expense_reviewedById_fkey")
+
+    @@index([status], map: "Expense_status_idx")
+    @@index([submittedById], map: "Expense_submittedById_idx")
+  @@map("Expense")
+}
+
+  model LeaveRequest {
+    id           String    @id(map: "LeaveRequest_pkey")
+    employeeId   String
+    type         String    @default("annual")
+    startDate    TimestampString(3)
+    endDate      TimestampString(3)
+    reason       String?
+    status       String    @default("pending")
+    reviewedById String?
+    reviewedAt   TimestampString(3)?
+    reviewNote   String?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+    employee     Employee  @relation("LeaveEmployee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "LeaveRequest_employeeId_fkey")
+    reviewedBy   Employee? @relation("LeaveReviewer", fields: [reviewedById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "LeaveRequest_reviewedById_fkey")
+
+    @@index([employeeId], map: "LeaveRequest_employeeId_idx")
+    @@index([status], map: "LeaveRequest_status_idx")
+  @@map("LeaveRequest")
+}
+
+  model PricingPackage {
+    id            String    @id(map: "PricingPackage_pkey")
+    name          String
+    slug          String
+    description   String?
+    serviceId     String?
+    price         Numeric(18, 2) @default("0.00")
+    currency      String    @default("KES")
+    billingPeriod String?
+    features      Jsonb?
+    highlighted   Boolean   @default(false)
+    published     Boolean   @default(false)
+    sortOrder     Int       @default(0)
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+    service       Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "PricingPackage_serviceId_fkey", index: false)
+
+    @@index([slug], map: "PricingPackage_slug_key", unique: true)
+    @@index([published, sortOrder], map: "PricingPackage_published_sortOrder_idx")
+    @@index([serviceId], map: "PricingPackage_serviceId_idx")
+  @@map("PricingPackage")
+}
+
+  model Office {
+    id             String    @id(map: "Office_pkey")
+    name           String
+    slug           String
+    addressLine    String?
+    city           String?
+    country        String    @default("Kenya")
+    phone          String?
+    email          String?
+    hours          Jsonb?
+    mapUrl         String?
+    isHeadquarters Boolean   @default(false)
+    published      Boolean   @default(false)
+    sortOrder      Int       @default(0)
+    createdAt      TimestampString(3) @default(now())
+    updatedAt      TimestampString(3)
+
+    @@index([slug], map: "Office_slug_key", unique: true)
+    @@index([published, sortOrder], map: "Office_published_sortOrder_idx")
+  @@map("Office")
+}
+
+  model AttendanceRecord {
+    id          String    @id(map: "AttendanceRecord_pkey")
+    employeeId  String
+    workDate    TimestampString(3)
+    checkInAt   TimestampString(3)?
+    checkOutAt  TimestampString(3)?
+    status      String    @default("present")
+    source      String    @default("manual")
+    notes       String?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([employeeId, workDate], map: "AttendanceRecord_employeeId_workDate_idx")
+    @@index([workDate], map: "AttendanceRecord_workDate_idx")
+  @@map("AttendanceRecord")
+}
+
+  model Payslip {
+    id           String    @id(map: "Payslip_pkey")
+    employeeId   String
+    period       String
+    grossAmount  Numeric(18, 2) @default("0.00")
+    deductions   Jsonb?
+    netAmount    Numeric(18, 2) @default("0.00")
+    currency     String    @default("KES")
+    status       String    @default("draft")
+    approvedById String?
+    approvedAt   TimestampString(3)?
+    paidAt       TimestampString(3)?
+    payrollRunId String?
+    notes        String?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+
+    @@index([employeeId, period], map: "Payslip_employeeId_period_key", unique: true)
+    @@index([status], map: "Payslip_status_idx")
+    @@index([period], map: "Payslip_period_idx")
+    @@index([payrollRunId], map: "Payslip_payrollRunId_idx")
+  @@map("Payslip")
+}
+
+  model Holiday {
+    id         String    @id(map: "Holiday_pkey")
+    date       TimestampString(3)
+    name       String
+    isHalfDay  Boolean   @default(false)
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+
+    @@index([date], map: "Holiday_date_key", unique: true)
+  @@map("Holiday")
+}
+
+  model WorkSchedule {
+    id           String    @id(map: "WorkSchedule_pkey")
+    employeeId   String
+    weekday      Int
+    startTime    String?
+    endTime      String?
+    isWorkingDay Boolean   @default(true)
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+
+    @@index([employeeId, weekday], map: "WorkSchedule_employeeId_weekday_key", unique: true)
+  @@map("WorkSchedule")
+}
+
+model SalaryStructure {
+    id          String    @id(map: "SalaryStructure_pkey")
+    employeeId  String
+    basicSalary Numeric(18, 2) @default("0.00")
+    currency    String    @default("KES")
+    allowances  Jsonb?
+    deductions  Jsonb?
+    isActive    Boolean   @default(true)
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([employeeId], map: "SalaryStructure_employeeId_key", unique: true)
+    @@index([isActive], map: "SalaryStructure_isActive_idx")
+  @@map("SalaryStructure")
+}
+
+  model PayrollRun {
+    id              String    @id(map: "PayrollRun_pkey")
+    period          String
+    name            String?
+    status          String    @default("draft")
+    currency        String    @default("KES")
+    notes           String?
+    payslipCount    Int       @default(0)
+    grossTotal      Numeric(18, 2) @default("0.00")
+    deductionTotal  Numeric(18, 2) @default("0.00")
+    netTotal        Numeric(18, 2) @default("0.00")
+    createdById     String?
+    completedAt     TimestampString(3)?
+    createdAt       TimestampString(3) @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([period], map: "PayrollRun_period_key", unique: true)
+    @@index([status], map: "PayrollRun_status_idx")
+  @@map("PayrollRun")
+}
+
+  model ApprovalRequest {
+    id            String    @id(map: "ApprovalRequest_pkey")
+    entityType    String
+    entityId      String
+    title         String
+    amount        Numeric(18, 2)?
+    currency      String?
+    requestedById String
+    status        String    @default("pending")
+    steps         Jsonb
+    decidedAt     TimestampString(3)?
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([entityType, entityId], map: "ApprovalRequest_entity_idx")
+    @@index([status], map: "ApprovalRequest_status_idx")
+    @@index([requestedById], map: "ApprovalRequest_requestedById_idx")
+  @@map("ApprovalRequest")
 }
 
   native_enum BookingStatus {

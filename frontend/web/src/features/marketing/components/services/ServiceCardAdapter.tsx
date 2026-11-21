@@ -16,7 +16,7 @@ const ServiceCardAdapter = ({ service, index = 0 }) => {
         <Link
             to={getServiceRoute(service)}
             aria-label={`View ${service.title}`}
-            className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#18D8FF] rounded-3xl"
+            className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-3xl"
         >
             <ModernServiceCard
                 icon={service.category?.icon}

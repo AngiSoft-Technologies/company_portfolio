@@ -54,11 +54,12 @@ answers "where are we?" without reading code.
 | Phase | Status | Remaining |
 |-------|--------|-----------|
 | **Phase 0 — Security Foundation** | ✅ Implemented | Deploy, then verify in production (§17) |
-| **Phase 1 — Unified Identity & Workspace Shell** | ✅ Implemented (1.7 deferred) | User preferences need an `Employee` preferences column |
-| Phase 2 — Department Workspaces | 🔄 In progress (design) | §5.5 data-model delta written; schema + money migration to follow |
-| Phase 3 — Portfolio Studio | ⬜ Not started | Persistent portfolio config model |
-| Phase 4 — Automation & Intelligence | ⬜ Not started | — |
-| Phase 5 — Production Hardening | 🔄 Partial | CI gate added; perf/SEO/E2E remain |
+| **Phase 1 — Unified Identity & Workspace Shell** | ✅ Implemented | `Employee.preferences` JSONB column live; theme persists server-side |
+| Phase 2 — Department Workspaces | ✅ Implemented | All department workspaces + permission registry live; CRM/invoicing/expenses/leave/attendance/payroll-v1 shipped |
+| Phase 3 — Portfolio Studio | ✅ Implemented | `EmployeePortfolioConfig` + publish/version flow + studio editor (drag-order, themes, testimonials/featuredWork/caseStudies/certifications/CV editors) + public rendering + moderation |
+| Phase 4 — Automation & Intelligence | ✅ Implemented | Workflow triggers (booking→project, payment→invoice, SLA→alert), approval rules + multi-step approval chains (`ApprovalRequest`), cross-dept reports, AI assist, renewals + automation worker |
+| Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets, security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 11 specs); Lighthouse + admin route×theme sweep remain |
+| **Phase 6 — AI Workforce** | ✅ Implemented | 10-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security) with scheduled runs, structured reports, owner notifications, admin UI at `/agents`, `agents.*` permissions |
 
 ### Critical Production Blockers (P0 — must fix before any feature work)
 
@@ -104,10 +105,78 @@ makes access decisions visible in the admin app instead of hardcoded in routes.
 | 1.4 | Staff Access screen complete | `StaffAccess.tsx` now renders the **full registry catalogue** with tri-state `Inherit / Grant / Deny` per permission, plus identity (department, position, seniority, public title) and assignment scopes. | Plan §14 Phase 1 metric |
 | 1.5 | Nav + guards wired to effective permissions | `lib/permissions.tsx` provides `EffectiveAccessProvider` / `useCan()` over `/api/staff-dashboard/effective-access`. `AdminLayout` nav links declare the permission they need; empty groups disappear. `can()` treats unknown as allowed but DENY as final, so the shell never blanks out. | `AdminLayout.tsx`, `permissions.tsx` |
 | 1.6 | Unified `/workspace` shell | `features/dashboard/Workspace.tsx` renders server-provided widgets with real assignment counts; a granted permission with zero records shows an empty state + CTA instead of hiding the module (plan §8). | `Workspace.tsx` |
-| 1.7 | Preferences & theme persistence | ⏳ **Deferred.** The payload already returns `preferences`, and the theme toggle works, but persistence needs an `Employee.preferences` (JSON) column. Tracked in §13. | — |
+| 1.7 | Preferences & theme persistence | ✅ Done. `Employee.preferences` JSONB column exists (migration `20261119T2153`, verified live); `GET /api/staff-dashboard/effective-access` returns normalized `preferences`; `PUT /api/staff-dashboard/profile` merges preference patches; admin `theme.tsx` restores the server theme on login and persists `theme` on toggle. | `staff-dashboard.ts`, `theme.tsx` |
 | + | Legacy grants keep working during migration | `canonicalKey()` is applied on both sides of the resolver (`effectivePermissions.ts`, legacy `permissions.ts`), so a grant stored as `content.manage` still satisfies a guard checking `publications.review`. | `permissionRegistry.spec.ts` alias specs |
 | + | Role fallback cannot bypass DENY | `requireAccess` checks `isDenied()` **before** the role fallback, so an explicit DENY blocks even a fallback role and even `SUPER_ADMIN`. Precedence is now true for every route, migrated or not. | `test/require-access.spec.ts` (7 specs) |
 | + | Dashboard contract | `/api/staff-dashboard/permissions` now returns `assignmentCounts`; new `/api/staff-dashboard/effective-access` returns the versioned §8 payload (permissions with source/scope, counts, widgets, preferences). | `staff-dashboard.ts` |
+
+---
+
+## 2.4 Phase 6 implementation record — AI Workforce (2026-11-21)
+
+The company now fields **automated agents alongside human staff**: up to 10
+agents covering coordination, marketing, sales, customer care, monitoring,
+finance, HR, analytics and security — all reporting to the owner.
+
+| Piece | Implementation | Proof |
+|-------|----------------|-------|
+| Roster | `modules/agents/services/agentRegistry.ts` — 10 typed definitions (key, name, role, department, kind, schedule cadence); `ensureAgentsSeeded()` materializes `Agent` rows idempotently without overwriting admin edits | `test/agents.spec.ts` registry specs |
+| Schema | `Agent` + `AgentRun` models in `contract.prisma`; migration `migrations/app/20261120T2340_ai_workforce` (additive, offline-planned) | `npx prisma migration plan` output |
+| Run engine | `modules/agents/services/agentRunner.ts` — deterministic DB collectors per agent → structured `{summary, metrics, highlights, actions, recommendations}`; optional LLM narrative via `aiProvider` when configured; every run writes `AgentRun`, updates `lastRunAt`/`nextRunAt`, and notifies SUPER_ADMIN/ADMIN employees through `createNotification` | `test/agents.spec.ts` run specs |
+| Scheduler | `workers/agentScheduler.ts` — 60s sweep (`AGENT_SCHEDULER_INTERVAL_MS`), runs due agents sequentially with per-agent failure isolation; registered in `index.ts` and `worker.ts` | `startAgentScheduler()` |
+| Admin API | `/api/admin/agents` — list roster+latest run, run history (`?agentKey=`), agent detail, `POST /:key/run` (manual, `force` overrides pause), `PATCH /:key` (status/schedule/config). Guards: `agents.view`/`agents.run`/`agents.manage` with ADMIN fallback | `test/agents.spec.ts` HTTP specs |
+| Permissions | `agents.view` (LOW), `agents.run` (MEDIUM), `agents.manage` (HIGH) added to the canonical registry under group **AI Workforce**; ADMIN gets all, MARKETING + HR get `agents.view`; catalogue regenerated (163 keys / 35 groups) | `test/permission-registry.spec.ts` |
+| Admin UI | `features/agents/AgentsAdmin.tsx` at `/agents` — roster cards (status, schedule, last-run summary), Run now / Pause / Resume actions, recent-runs feed; nav item gated by `agents.view` | `AgentsAdmin.tsx`, `AdminLayout.tsx` |
+| Proactive layer | `modules/agents/services/proactive.ts` + `agentOutreach.ts` — after each successful report, agents act within hard bounds (below) | `test/agent-proactive.spec.ts` (7 specs) |
+
+**Proactive operating model (added 2026-11-22).** Collectors stay read-only;
+a separate proactive phase executes bounded outward actions after every
+successful run:
+
+- **Owner reporting** — every agent emails its report to the owner's personal
+  inbox (`ADMIN_EMAIL`/`OWNER_EMAIL`, falling back to the first
+  SUPER_ADMIN/ADMIN employee), throttled to ~one digest per agent per day via
+  the `agent.report_emailed` ledger. Anomalies (e.g. failing agent runs) page
+  the owner immediately via `alertOwner`.
+- **Outreach email** — human-voiced, first-person templates sent through the
+  existing Zoho `sendMail` queue. Hard cap of 5 outbound emails per agent per
+  run; every send is deduplicated for 7 days per (agent, entity) through
+  `AuditLog` rows (`agent.outreach`), so a 2-hourly agent never double-pings
+  the same person.
+- **Per-agent actions** — marketing-growth: intro/follow-up emails to fresh
+  leads + auto-creates `Opportunity` records for qualified leads;
+  marketing-content: SEO-gap audit (missing `seoTitle`/`seoDesc`) + creates a
+  draft `BlogPost` when the editorial calendar runs dry; sales-agent: follow-up
+  emails on opportunities stale >14 days; customer-care: acknowledgement emails
+  to new enquiries (marked `in_review`) + internal AI triage notes on
+  unassigned tickets; finance: payment reminders for overdue invoices;
+  hr: stale-leave nudges to reviewers; monitoring: immediate owner alerts.
+- **SMS** — optional generic HTTPS gateway via `SMS_GATEWAY_URL` /
+  `SMS_GATEWAY_TOKEN` / `SMS_TO` env vars; no-op until configured. Voice calls
+  are intentionally out of scope (no telephony provider integrated).
+
+**Training & 24/7 operation (added 2026-11-22).**
+
+- **Charters** — `modules/agents/services/agentCharters.ts` is the written
+  training manual for every agent: mandate, explicit decision rights
+  (autonomous / approval-required / escalate-to-owner), standard workflow and
+  KPIs. Charters are injected into the LLM narrative prompt, exposed on
+  `/api/admin/agents` (`charter` field), and rendered in the admin UI as a
+  "Role charter & decision rights" disclosure per agent card.
+- **PA agent (`pa` / "Pia")** — 11th roster member, Executive Assistant & AI
+  Workforce Coach (12h cadence). Its collector produces a workforce scorecard
+  (per-agent runs/failures/staleness vs. cadence, escalation compliance); its
+  proactive routine writes dated coaching notes into an underperforming
+  agent's `config.paCoaching` (capped at 8, evidence-cited, charter-referencing)
+  and escalates agents that stay at-risk to the owner.
+- **24/7** — `fly.toml` now keeps `min_machines_running = 1` so the scheduler
+  survives scale-to-zero; sweep cap raised to 20 agents per pass. Cadences run
+  around the clock (monitoring 30 min → security weekly).
+
+**Design rule:** agents observe, report, and take only bounded low-risk
+actions — capped, deduplicated, and ledgered. Financial mutations, publishing,
+and anything consequential remain recommendations for the owner or the
+Approvals queue.
 
 ---
 
@@ -192,7 +261,7 @@ A staff member can:
 | 5.5 | Performance: Lighthouse budgets, self-hosted fonts, image dimensions, reduced-motion, no sourcemaps in prod |
 | 5.6 | Prerender execution at build time; per-page `<title>`/OG/JSON-LD from `router/prerender.ts` |
 | 5.7 | Vite-imagetools/AVIF pipeline; scoped per-feature CSS polish; admin MUI DataGrid adoption |
-| 5.8 | Documentation consolidation: single canonical reference per domain |
+| 5.8 | ~~Documentation consolidation: single canonical reference per domain~~ ✅ Done — permission catalogue regenerated from live registry (160 keys), content matrix + quick reference refreshed, index reclassified |
 
 ---
 
@@ -379,11 +448,11 @@ guards.
 | About | `AboutSection` | `/api/site/about` | `/api/about-sections` | `AboutAdmin` | `pages.update_about` | ✅ Exists | ✅ Exists |
 | Services List | `Service`, `ServiceCategory` | `/api/services`, `/api/service-categories` | `/api/services/admin`, `/api/service-categories` | `ServicesAdmin`, `ServiceCategoriesAdmin` | `services.update` | ✅ Exists | ✅ Exists |
 | Service Detail | `Service`, `ServiceFaq` | `/api/services/:slug` | `/api/services/:id`, `/api/service-faqs` | `ServicesAdmin`, `FaqsAdmin` | `services.update` | ✅ Exists | ✅ Exists |
-| Pricing | `Service.pricing` (JSON) | `/api/services` | `/api/services/:id` | `ServicesAdmin` (JSON editor) | `services.manage_pricing` | ⚠️ JSON only | ⚠️ No package model |
+| Pricing | `PricingPackage`, `Service.pricing` (JSON legacy) | `/api/pricing-packages`, `/api/services` | `/api/pricing-packages/admin`, `/api/services/:id/pricing` | `PricingPackagesAdmin`, `PricingAdmin`, `ServicesAdmin` | `services.manage_pricing` | ✅ Exists | ✅ Exists |
 | Products List | `Product` | `/api/products` | `/api/products/admin` | `ProductsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
 | Product Detail | `Product`, `ProductFaq` | `/api/products/:slug` | `/api/products/:id`, `/api/product-faqs` | `ProductsAdmin`, `ProductFaqsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
-| Blog List | `BlogPost` | `/api/blogs` | `/api/blogs/admin` | `BlogsAdmin` | `publications.review` | ✅ Exists | ✅ Exists |
-| Staff List | `Employee` | `/api/staff` | `/api/admin/staff` | `StaffManagement` | `staff.view` | ⚠️ No dept/pos UI | ✅ Exists |
+| Blog List | `BlogPost` | `/api/blogs` | `/api/blogs/admin` | `BlogAdmin` | `publications.review` | ✅ Exists | ✅ Exists |
+| Staff List | `Employee` | `/api/staff` | `/api/admin/staff` | `StaffManagement`, `StaffAccess` | `staff.view` | ✅ Dept/pos via StaffAccess | ✅ Exists |
 | Staff Detail | `Employee`, `EmployeePortfolioItem` | `/api/staff/:usernameOrId` | `/api/employee-profiles` | `StaffDashboard` (self) | `profile.update_own` | ✅ Self only | ✅ Exists |
 | Industries | `Industry` | `/api/industries` | `/api/industries/admin` | `IndustriesAdmin` | `pages.update_industries` | ✅ Exists | ✅ Exists |
 | Solutions | `Solution` | `/api/solutions` | `/api/solutions/admin` | `SolutionsAdmin` | `pages.update_solutions` | ✅ Exists | ✅ Exists |
@@ -391,11 +460,11 @@ guards.
 | Testimonials | `Testimonial` | `/api/testimonials` | `/api/testimonials/admin` | `TestimonialsAdmin` | `reviews.moderate` | ✅ Exists | ✅ Exists |
 | FAQs | `Faq`, `ServiceFaq` | `/api/faqs` | `/api/faqs`, `/api/service-faqs` | `FaqsAdmin` | `services.manage_faqs` | ✅ Exists | ✅ Exists |
 | Careers | `JobPosting` | `/api/careers` | `/api/careers/admin` | `CareersAdmin` | `careers.manage` | ✅ Exists | ✅ Exists |
-| Announcements | `Announcement` | `/api/announcements` | **Missing** | **Missing** | `pages.update_announcements` | ❌ Missing | ✅ Exists |
-| Company Stats | `CompanyStat` | `/api/company-stats` | **Missing** | **Missing** | `pages.update_home` | ❌ Missing | ✅ Exists |
-| Contact | `ContactEnquiry` | `POST /api/contact-enquiries` | `/api/contact-enquiries/admin` | **Missing** | `enquiries.view_all` | ❌ Missing | ✅ Exists |
+| Announcements | `Announcement` | `/api/announcements` | `/api/announcements/admin` | `AnnouncementsAdmin` | `pages.update_announcements` | ✅ Exists | ✅ Exists |
+| Company Stats | `CompanyStat` | `/api/company-stats` | `/api/company-stats/admin` | `CompanyStatsAdmin` | `company_stats.view` | ✅ Exists | ✅ Exists |
+| Contact | `ContactEnquiry` | `POST /api/contact-enquiries` | `/api/contact-enquiries/admin` | `ContactsAdmin` | `enquiries.view_all` | ✅ Exists | ✅ Exists |
 | Client Portal | `ClientAccessToken`, `ClientProject` | `/api/client-portal/*` | `/api/client-projects/admin` | `ClientProjectsManagement` | `client_projects.view_all` | ✅ Partial | ✅ Exists |
-| AI Chatbot | `ChatConversation` | `/api/chatbot/*` | `/api/chatbot/conversations` | **Missing** | `chatbot.view_all` | ❌ Missing | ✅ Exists |
+| AI Chatbot | `ChatConversation` | `/api/chatbot/*` | `/api/chatbot/conversations` | `ChatConversationsAdmin` | `chatbot.view_all` | ✅ Exists | ✅ Exists |
 
 **Legend:** ✅ = Live & complete, ⚠️ = Partial/needs work, ❌ = Missing entirely
 
@@ -496,7 +565,7 @@ Every document in the repository must carry one of these status badges at the to
 |-------|---------|-----------|
 | `🟢 CANONICAL` | Normative now; conflicts resolved in favor of this doc | `ANGISOFT_DESIGN_SYSTEM_RULES.md`, `ANGISOFT_DIGITAL_HQ_PLAN.md` (this doc) |
 | `🎯 TARGET` | Normative target; partially implemented | `ANGISOFT_PERMISSION_ASSIGNMENT_MODEL.md`, `ANGISOFT_ASSIGNMENT_SCOPE_MATRIX.md`, `ANGISOFT_DASHBOARD_WIDGET_MATRIX.md` |
-| `🔄 REGENERATE` | Useful structure; must be regenerated against current code | `ANGISOFT_CAPABILITY_MAP.md`, `ANGISOFT_PERMISSION_CATALOGUE.md`, `PUBLIC_CONTENT_ADMIN_MATRIX.md`, `ANGISOFT_CURRENT_DEPARTMENTS.md`, `ANGISOFT_POSITION_REQUIREMENTS.md` |
+| `🔄 REGENERATE` | Useful structure; must be regenerated against current code | `ANGISOFT_CAPABILITY_MAP.md`, `PUBLIC_CONTENT_ADMIN_MATRIX.md`, `ANGISOFT_CURRENT_DEPARTMENTS.md`, `ANGISOFT_POSITION_REQUIREMENTS.md` |
 | `📜 HISTORICAL` | Read-only baseline; do not cite for current status | `ADMIN_AND_STAFF_CODEBASE_AUDIT.md`, `SYSTEM_REVIEW_AND_ROADMAP.md`, `SYSTEM_ARCHITECTURE.md`, `ARCHITECTURE.md` |
 | `💡 HYPOTHESIS` | Commercial ideation / content backlog only | `BRAND_EXPANSION_STRATEGY.md`, `CHATBOT_GUIDE.md`, `SERVICES_DATABASE.md` |
 | `✅ COMPLETE` | Milestone summary; frozen | `MILESTONE_PHASE_2.md`, `PHASE_2_COMPLETION.md`, `SESSION_SUMMARY.md`, `VERIFICATION_CHECKLIST.md`, `PROJECT_STATUS.md` |
@@ -542,10 +611,11 @@ mixed into the additive schema change.
 | **P1 (2.4)** | Commit D — verification: totals check, payment round-trip, re-seed | Backend | §17 checklist green |
 | P2 (2.5) | Sales pipeline routes + permissions (`opportunities.*`, `quotes.*`, `invoices.*`, `sales.pipeline.view`) | Backend | Each route has a 401/403 spec |
 | P2 (2.6) | Sales workspace UI on the `/workspace` shell (pipeline board, quote editor, invoice list) | Frontend (admin) | Widgets driven by `effective-access` only |
-| P1 (1.7) | Add `Employee.preferences` JSON column and persist `theme` / `layout` from `effective-access` | Backend + Frontend (admin) | Preference survives reload |
-| P2 | Regenerate `PUBLIC_CONTENT_ADMIN_MATRIX.md` + `ANGISOFT_CAPABILITY_MAP.md` against live routes | Docs | No stale `frontend/src/**` paths remain |
-| P2 | Replace `isRole(req, [...])` response shaping and the inline `req.user?.role !== 'ADMIN'` checks in `bookings/routes/bookings.ts` with permission checks | Backend | Grep for `isRole(` / `role !== 'ADMIN'` only in helper definitions |
-| P3 | Add DB-mock route specs to the previously-unguarded routers (`bookings/staff`, `bookings/admin`, `client-projects`, `notifications`, `files/uploads`) | Backend | Each has at least one 401/403 spec |
+| ~~P1 (1.7)~~ | ✅ Done — `Employee.preferences` JSONB column live; theme/layout persist via `effective-access` + `PUT /profile` | Backend + Frontend (admin) | Preference survives reload |
+| ~~P2~~ | ✅ Done — both regenerated/refreshed against live routes (2026-11-20/21) | Docs | No stale `frontend/src/**` paths remain |
+| ~~P2~~ | ✅ Done — no `isRole(`/`role !== 'ADMIN'` remains in `bookings.ts` | Backend | Grep clean |
+| ~~P3~~ | ✅ Done — `test/route-coverage.spec.ts` (21 specs) covers bookings staff/admin, client-projects, notifications, uploads, staff-dashboard + employee-profiles auth gates; `test/agents.spec.ts` (9 specs) covers the AI workforce | Backend | Each router has 401/403 + happy-path specs |
+| ~~P6~~ | ✅ Done — AI Workforce: 10-agent roster, scheduler, run engine, `/api/admin/agents`, `/agents` UI (§2.4) | Full stack | Roster seeded; runs notify owner; spec suite green |
 
 ---
 
@@ -570,10 +640,10 @@ mixed into the additive schema change.
 | `ANGISOFT_PERMISSION_ASSIGNMENT_MODEL.md` | Amend precedence (DENY > SYSTEM for SUPER_ADMIN); add `🎯 TARGET` badge | 🎯 TARGET |
 | `ANGISOFT_ASSIGNMENT_SCOPE_MATRIX.md` | Update to current fields/models; add `🎯 TARGET` badge | 🎯 TARGET |
 | `ANGISOFT_DASHBOARD_WIDGET_MATRIX.md` | Align keys to canonical registry; add `🎯 TARGET` badge | 🎯 TARGET |
-| `ANGISOFT_CAPABILITY_MAP.md` | Regenerate against live routes/schema/admin; add `🔄 REGENERATE` badge | 🔄 REGENERATE |
-| `ANGISOFT_PERMISSION_CATALOGUE.md` | Convert to canonical registry + key migration map; add `🔄 REGENERATE` badge | 🔄 REGENERATE |
-| `PUBLIC_CONTENT_ADMIN_MATRIX.md` | Regenerate from current routes (table in §6); add `🔄 REGENERATE` badge | 🔄 REGENERATE |
-| `ANGISOFT_CURRENT_DEPARTMENTS.md` | Update to seeded departments; add `🔄 REGENERATE` badge | 🔄 REGENERATE |
+| `ANGISOFT_CAPABILITY_MAP.md` | Maintained as the live capability ledger (kept current per shipped feature) | 🔄 REGENERATE |
+| `ANGISOFT_PERMISSION_CATALOGUE.md` | ✅ Done — regenerated as a mirror of `permissionRegistry.ts` (160 keys, 35 groups); `🛠 OPERATIONAL` | 🛠 OPERATIONAL |
+| `PUBLIC_CONTENT_ADMIN_MATRIX.md` | ✅ Regenerated 2026-11-20 against live routes; refreshed for shipped admin UIs | ✅ Regenerated |
+| `ANGISOFT_CURRENT_DEPARTMENTS.md` | Callouts updated; seeded departments are the live registry (rationale doc retained) | 🔄 REGENERATE |
 | `ANGISOFT_POSITION_REQUIREMENTS.md` | Align to seeded positions + canonical permissions; add `🔄 REGENERATE` badge | 🔄 REGENERATE |
 | `ADMIN_AND_STAFF_CODEBASE_AUDIT.md` | Add `📜 HISTORICAL` badge; do not modify body | 📜 HISTORICAL |
 | `SYSTEM_REVIEW_AND_ROADMAP.md` | Add `📜 HISTORICAL` badge; extract unresolved risks to this plan | 📜 HISTORICAL |

@@ -57,7 +57,7 @@ export default function ClientPortalAccess() {
               <Link to="/portal/request" className="w-full">
                 <Button className="w-full">Request a new link</Button>
               </Link>
-              <Link to="/" className="text-sm font-medium text-[#0875FF] hover:underline">
+              <Link to="/" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
                 Back to home
               </Link>
             </div>

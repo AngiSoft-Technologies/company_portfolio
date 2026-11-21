@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { isRole, requireAccess } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { testimonialsController } from '../controllers/testimonialsController';
 import db, { type Db } from '../../../db';
 import { newId } from '../../../prisma/db';
@@ -26,9 +27,13 @@ const updateSchema = createSchema.partial();
 export default function testimonialsRouter(prisma: Db = db) {
     const router = Router();
 
+    const permCtx = (req: AuthRequest) =>
+        req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'reviews.moderate') : false;
             const list = await testimonialsController.list({
                 where: includeAll ? {} : { confirmed: true, rejected: false }
             });
@@ -49,7 +54,8 @@ export default function testimonialsRouter(prisma: Db = db) {
 
     router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'reviews.moderate') : false;
             const testimonial = await testimonialsController.get(req.params.id, {
                 where: includeAll ? { id: req.params.id } : { id: req.params.id, confirmed: true }
             });

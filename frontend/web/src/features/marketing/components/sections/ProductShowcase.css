@@ -391,7 +391,7 @@ html[data-theme='light'] .angi-home .product-showcase__system-status {
   border-color: rgba(39, 217, 75, 0.52);
 }
 html[data-theme='light'] .angi-home .product-showcase__system-rows span:last-child {
-  background: linear-gradient(90deg, #0875FF 0%, #00AFFF 54%, #27D94B 100%);
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 54%, #27D94B 100%);
 }
 html[data-theme='light'] .angi-home .product-showcase__feature-content {
   color: #F5F7FA;
@@ -401,7 +401,7 @@ html[data-theme='light'] .angi-home .product-showcase__feature-content h3 {
   text-shadow: 0 2px 16px rgba(6, 19, 36, 0.62);
 }
 html[data-theme='light'] .angi-home .product-showcase__feature-content .product-showcase__tagline {
-  color: #18D8FF;
+  color: var(--color-accent);
 }
 html[data-theme='light'] .angi-home .product-showcase__feature-content .product-showcase__description {
   color: rgba(226, 240, 255, 0.86);

@@ -48,6 +48,23 @@ const normalizeStringArray = (value: unknown) => {
     return [];
 };
 
+const normalizePreferences = (value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const v = value as Record<string, unknown>;
+    const theme = ['system', 'light', 'dark'].includes(String(v.theme))
+        ? String(v.theme)
+        : undefined;
+    const layout =
+        typeof v.layout === 'string' && v.layout.trim()
+            ? v.layout.trim().slice(0, 50)
+            : undefined;
+    if (!theme && !layout) return null;
+    return {
+        ...(theme ? { theme } : {}),
+        ...(layout ? { layout } : {}),
+    };
+};
+
 const normalizeOptionalUrl = (value: unknown) => {
     if (!value) return null;
     const text = String(value).trim();
@@ -186,7 +203,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 loadAssignmentCounts(employeeId),
                 prisma.orm.public.Employee
                     .where({ id: employeeId })
-                    .select('departmentId', 'positionId')
+                    .select('departmentId', 'positionId', 'preferences')
                     .first(),
             ]);
 
@@ -211,9 +228,11 @@ export default function staffDashboardRouter(prisma: Db) {
                 permissions,
                 assignmentCounts,
                 widgets: deriveWidgets(granted, isSuperAdmin),
-                // Per-user preferences persist in Phase 1.7 (needs an Employee
-                // preferences column); these are the documented defaults.
-                preferences: { theme: 'system', layout: 'default' },
+                preferences:
+                    normalizePreferences(employee?.preferences) ?? {
+                        theme: 'system',
+                        layout: 'default',
+                    },
             });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
@@ -254,7 +273,23 @@ export default function staffDashboardRouter(prisma: Db) {
                 publicEmail,
                 publicPhone,
                 profilePublished,
+                preferences,
             } = req.body;
+
+            let mergedPreferences: Record<string, unknown> | undefined;
+            if (preferences !== undefined) {
+                const patch = normalizePreferences(preferences);
+                if (patch) {
+                    const current = await prisma.orm.public.Employee
+                        .where({ id: req.user?.sub as string })
+                        .select('preferences')
+                        .first();
+                    mergedPreferences = {
+                        ...((current?.preferences as Record<string, unknown>) ?? {}),
+                        ...patch,
+                    };
+                }
+            }
 
             const updated = await prisma.orm.public.Employee.where({ id: req.user?.sub as string }).update({
                 firstName,
@@ -275,6 +310,7 @@ export default function staffDashboardRouter(prisma: Db) {
                 publicEmail,
                 publicPhone,
                 profilePublished: profilePublished !== false,
+                ...(mergedPreferences ? { preferences: mergedPreferences as any } : {}),
             });
             res.json(projectProfile(updated));
         } catch (err: any) {

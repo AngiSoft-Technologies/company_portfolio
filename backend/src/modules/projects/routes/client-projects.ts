@@ -4,6 +4,7 @@ import { ts, newId } from '../../../prisma/db';
 import { or } from '@prisma/orm-postgres/orm-client';
 import { z } from 'zod';
 import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { logAudit } from '../../../shared/services/audit';
 
 const listQuerySchema = z.object({
@@ -46,8 +47,10 @@ const createDeliverableSchema = deliverableSchema.extend({
     title: z.string().min(2)
 });
 
-function canManageAll(role?: string) {
-    return role === 'ADMIN';
+async function canManageAll(req: AuthRequest) {
+    if (!req.user?.sub) return false;
+    const ctx = { employeeId: req.user.sub, systemRole: req.user.role };
+    return hasPermission(ctx, 'client_projects.view_all');
 }
 
 async function requireProjectAccess(prisma: Db, req: AuthRequest, projectId: string) {
@@ -57,7 +60,7 @@ async function requireProjectAccess(prisma: Db, req: AuthRequest, projectId: str
         .first();
 
     if (!project) return null;
-    if (canManageAll(req.user?.role)) return project;
+    if (await canManageAll(req)) return project;
     if (project.ownerId === req.user?.sub || (project as any).booking.assignedToId === req.user?.sub) return project;
     return false;
 }
@@ -90,7 +93,7 @@ export default function clientProjectsRouter(prisma: Db) {
             let q: any = prisma.orm.public.ClientProject;
             if (query.status) q = q.where((p: any) => p.status.eq(query.status));
             if (query.clientId) q = q.where((p: any) => p.clientId.eq(query.clientId));
-            if (query.assignedToMe === 'true' || !canManageAll(req.user?.role)) {
+            if (query.assignedToMe === 'true' || !await canManageAll(req)) {
                 q = q.where((p: any) => or(p.ownerId.eq(req.user?.sub), p.booking.some((b: any) => b.assignedToId.eq(req.user?.sub))));
             }
             const rows = await q

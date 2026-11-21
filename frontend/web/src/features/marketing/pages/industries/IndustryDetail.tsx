@@ -7,6 +7,7 @@ import { useIndustries } from '@/hooks/marketing/useIndustries';
 import IndustryDetailHero from '../../components/industries/IndustryDetailHero';
 import IndustryCapabilities from '../../components/industries/IndustryCapabilities';
 import RelatedIndustries from '../../components/industries/RelatedIndustries';
+import IndustryProjects from '../../components/industries/IndustryProjects';
 import IndustryContactCTA from '../../components/industries/IndustryContactCTA';
 import IndustryDetailSkeleton from '../../components/industries/IndustryDetailSkeleton';
 import IndustryDetailError from './IndustryDetailError';
@@ -29,6 +30,7 @@ export default function IndustryDetail() {
             <IndustryDetailHero industry={industry} />
             <div className="industries-container industries-detail__flow">
                 <IndustryCapabilities industry={industry} />
+                <IndustryProjects industry={industry} />
                 <RelatedIndustries industries={industries} currentSlug={industry.slug} />
                 <IndustryContactCTA industry={industry} />
             </div>

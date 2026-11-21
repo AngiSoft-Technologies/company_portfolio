@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -26,7 +27,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
     const router = Router();
     router.use(requireAuth);
 
-    router.get('/', async (req: AuthRequest, res) => {
+    router.get('/', requirePermission('support_tickets.view'), async (req: AuthRequest, res) => {
         const { status, assignedToMe } = req.query;
         const where: any = {};
         if (status) where.status = status;
@@ -44,7 +45,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
         }));
     });
 
-    router.get('/:id', async (req: AuthRequest, res) => {
+    router.get('/:id', requirePermission('support_tickets.view'), async (req: AuthRequest, res) => {
         const ticket = await prisma.orm.public.SupportTicket
             .where({ id: req.params.id })
             .include('client', (c: any) => c.select('id', 'name', 'email'))
@@ -55,7 +56,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
         res.json({ ...rest, messages: ticketMessages });
     });
 
-    router.post('/', async (req: AuthRequest, res) => {
+    router.post('/', requirePermission('support_tickets.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const ticket = await prisma.orm.public.SupportTicket
@@ -72,16 +73,27 @@ export default function supportTicketsRouter(prisma: Db = db) {
         res.status(201).json({ ...rest, messages: ticketMessages });
     });
 
-    router.put('/:id', async (req: AuthRequest, res) => {
+    router.put('/:id', requirePermission('support_tickets.update'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
+        // Reopened tickets get a fresh SLA window: clear the breach marker so
+        // the monitor can alert again if the new cycle also breaches.
+        if (typeof payload.status === 'string' && ['open', 'in_progress', 'pending'].includes(payload.status)) {
+            const current = await prisma.orm.public.SupportTicket
+                .where({ id: req.params.id })
+                .select('status')
+                .first();
+            if (current && ['resolved', 'closed'].includes(String((current as any).status))) {
+                payload.slaBreachedAt = null;
+            }
+        }
         const ticket = await prisma.orm.public.SupportTicket.where({ id: req.params.id }).update(payload);
         res.json(ticket);
     });
 
-    router.post('/:id/messages', async (req: AuthRequest, res) => {
+    router.post('/:id/messages', requirePermission('support_tickets.respond'), async (req: AuthRequest, res) => {
         const parsed = messageSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const message = await prisma.orm.public.TicketMessage.create({

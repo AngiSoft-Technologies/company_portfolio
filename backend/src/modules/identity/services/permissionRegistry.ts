@@ -44,6 +44,11 @@ export type PermissionGroup =
     | 'Surveys'
     | 'Product Inquiries'
     | 'Support Tickets'
+    | 'Expenses'
+    | 'Leave'
+    | 'Attendance'
+    | 'Payroll'
+    | 'Approvals'
     | 'Projects'
     | 'Clients'
     | 'Careers'
@@ -56,6 +61,7 @@ export type PermissionGroup =
     | 'Pages'
     | 'Analytics'
     | 'Chatbot'
+    | 'AI Workforce'
     | 'Administration';
 
 export type PermissionRisk = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -168,6 +174,7 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'quotes.create', display: 'Create Quotes', description: 'Create quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 21 },
     { key: 'quotes.update', display: 'Edit Quotes', description: 'Edit quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 22 },
     { key: 'quotes.send', display: 'Send Quotes', description: 'Send quotations to clients', group: 'Sales Pipeline', risk: 'MEDIUM', order: 23 },
+    { key: 'quotes.approve', display: 'Approve Quotes', description: 'Approve quotations above the configured approval threshold', group: 'Sales Pipeline', risk: 'HIGH', order: 23.5 },
     { key: 'quotes.accept', display: 'Accept Quotes', description: 'Mark quotations accepted by the client', group: 'Sales Pipeline', risk: 'MEDIUM', order: 24 },
     { key: 'quotes.delete', display: 'Delete Quotes', description: 'Delete quotations', group: 'Sales Pipeline', risk: 'MEDIUM', order: 25 },
     { key: 'invoices.view', display: 'View Invoices', description: 'View invoices', group: 'Sales Pipeline', risk: 'LOW', order: 30 },
@@ -200,6 +207,35 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'support_tickets.create', display: 'Create Support Tickets', description: 'Open support tickets', group: 'Support Tickets', risk: 'LOW', order: 11 },
     { key: 'support_tickets.update', display: 'Edit Support Tickets', description: 'Update ticket status and assignment', group: 'Support Tickets', risk: 'MEDIUM', order: 12 },
     { key: 'support_tickets.respond', display: 'Respond to Support Tickets', description: 'Reply on support tickets', group: 'Support Tickets', risk: 'MEDIUM', order: 13 },
+
+    // ── Expenses ─────────────────────────────────────────────────────────
+    { key: 'expenses.view', display: 'View Expenses', description: 'View expense reports', group: 'Expenses', risk: 'LOW', order: 10 },
+    { key: 'expenses.create', display: 'Create Expenses', description: 'Submit expense claims', group: 'Expenses', risk: 'LOW', order: 11 },
+    { key: 'expenses.update', display: 'Edit Expenses', description: 'Edit expense drafts and details', group: 'Expenses', risk: 'MEDIUM', order: 12 },
+    { key: 'expenses.approve', display: 'Approve Expenses', description: 'Approve expense claims (required above APPROVAL_THRESHOLD_EXPENSE)', group: 'Expenses', risk: 'HIGH', order: 13 },
+    { key: 'expenses.mark_paid', display: 'Mark Expenses Paid', description: 'Record expense reimbursement', group: 'Expenses', risk: 'MEDIUM', order: 14 },
+    { key: 'expenses.delete', display: 'Delete Expenses', description: 'Delete expense records', group: 'Expenses', risk: 'MEDIUM', order: 15 },
+
+    // ── Leave ────────────────────────────────────────────────────────────
+    { key: 'leave.request', display: 'Request Leave', description: 'Submit and cancel own leave requests', group: 'Leave', risk: 'LOW', order: 10 },
+    { key: 'leave.view', display: 'View Leave Requests', description: 'View all leave requests', group: 'Leave', risk: 'MEDIUM', order: 11 },
+    { key: 'leave.approve', display: 'Approve Leave', description: 'Approve or reject leave requests', group: 'Leave', risk: 'MEDIUM', order: 12 },
+
+    // ── Attendance ───────────────────────────────────────────────────────
+    { key: 'attendance.record', display: 'Record Attendance', description: 'Check in/out and view own attendance', group: 'Attendance', risk: 'LOW', order: 10 },
+    { key: 'attendance.view', display: 'View Attendance', description: 'View all staff attendance records', group: 'Attendance', risk: 'MEDIUM', order: 11 },
+    { key: 'attendance.manage', display: 'Manage Attendance', description: 'Create, edit and delete attendance records', group: 'Attendance', risk: 'MEDIUM', order: 12 },
+
+    // ── Payroll ──────────────────────────────────────────────────────────
+    { key: 'payroll.view', display: 'View Payslips', description: 'View all employee payslips', group: 'Payroll', risk: 'HIGH', order: 10 },
+    { key: 'payroll.manage', display: 'Manage Payslips', description: 'Create and edit payslips', group: 'Payroll', risk: 'HIGH', order: 11 },
+    { key: 'payroll.approve', display: 'Approve Payslips', description: 'Approve payslips for payment', group: 'Payroll', risk: 'HIGH', order: 12 },
+    { key: 'payroll.mark_paid', display: 'Mark Payslips Paid', description: 'Record payslip payment', group: 'Payroll', risk: 'HIGH', order: 13 },
+
+    // ── Approvals ────────────────────────────────────────────────────────
+    { key: 'approvals.view', display: 'View Approvals', description: 'View approval requests and the permission catalogue', group: 'Approvals', risk: 'LOW', order: 10 },
+    { key: 'approvals.manage', display: 'Manage Approvals', description: 'Create and cancel approval requests', group: 'Approvals', risk: 'MEDIUM', order: 11 },
+    { key: 'approvals.respond', display: 'Respond to Approvals', description: 'Approve or reject steps on approval requests', group: 'Approvals', risk: 'MEDIUM', order: 12 },
 
     // ── Projects ─────────────────────────────────────────────────────────
     { key: 'projects.view', display: 'View Projects', description: 'View all showcase projects', group: 'Projects', risk: 'LOW', order: 40 },
@@ -279,6 +315,11 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'payments.reconcile', display: 'Reconcile Payments', description: 'Run payment reconciliation and payouts', group: 'Administration', risk: 'HIGH', order: 15 },
     { key: 'ai_config.view', display: 'View AI Configuration', description: 'See AI provider and model configuration', group: 'Administration', risk: 'MEDIUM', order: 16 },
     { key: 'ai_config.update', display: 'Edit AI Configuration', description: 'Change AI provider keys and models', group: 'Administration', risk: 'HIGH', order: 17 },
+
+    // ── AI Workforce ─────────────────────────────────────────────────────
+    { key: 'agents.view', display: 'View AI Agents', description: 'See the automated agent roster, run history and reports', group: 'AI Workforce', risk: 'LOW', order: 10 },
+    { key: 'agents.run', display: 'Run AI Agents', description: 'Trigger an agent run manually', group: 'AI Workforce', risk: 'MEDIUM', order: 11 },
+    { key: 'agents.manage', display: 'Manage AI Agents', description: 'Pause/resume agents and change their schedules', group: 'AI Workforce', risk: 'HIGH', order: 12 },
 ];
 
 export const PERMISSION_KEYS: readonly string[] = PERMISSIONS.map((p) => p.key);
@@ -308,6 +349,11 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     'Surveys',
     'Product Inquiries',
     'Support Tickets',
+    'Expenses',
+    'Leave',
+    'Attendance',
+    'Payroll',
+    'Approvals',
     'Projects',
     'Clients',
     'Careers',
@@ -320,6 +366,7 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     'Pages',
     'Analytics',
     'Chatbot',
+    'AI Workforce',
     'Administration',
 ];
 
@@ -441,6 +488,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Readonly<Record<string, readonly _KnownKe
         'enquiries.view_all', 'enquiries.respond', 'enquiries.close',
         'support_tickets.view', 'support_tickets.respond',
         'careers.view',
+        'agents.view',
     ],
     CONTENT_CREATOR: [
         'profile.view_own', 'profile.update_own',
@@ -475,6 +523,12 @@ export const ROLE_DEFAULT_PERMISSIONS: Readonly<Record<string, readonly _KnownKe
         'careers.view', 'careers.create', 'careers.update', 'careers.delete',
         'careers.applications.view', 'careers.applications.respond', 'careers.update_content',
         'certifications.view', 'certifications.create', 'certifications.update', 'certifications.delete',
+        'leave.request', 'leave.view', 'leave.approve',
+        'expenses.view', 'expenses.create', 'expenses.update', 'expenses.approve', 'expenses.mark_paid', 'expenses.delete',
+        'attendance.record', 'attendance.view', 'attendance.manage',
+        'payroll.view', 'payroll.manage', 'payroll.approve', 'payroll.mark_paid',
+        'approvals.view', 'approvals.manage', 'approvals.respond',
+        'agents.view',
     ],
     DEVELOPER: [
         'profile.view_own', 'profile.update_own', 'profile.manage_visibility_own', 'profile.manage_gallery_own',
@@ -486,6 +540,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Readonly<Record<string, readonly _KnownKe
     ],
     STAFF: [
         'profile.view_own', 'profile.update_own', 'profile.manage_visibility_own', 'profile.manage_gallery_own',
+        'leave.request', 'expenses.create', 'attendance.record',
+        // Approval chains are transparent internally; the per-step permission
+        // still decides who may actually sign off.
+        'approvals.view', 'approvals.respond',
     ],
 };
 

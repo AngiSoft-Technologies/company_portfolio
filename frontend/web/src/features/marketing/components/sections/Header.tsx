@@ -61,7 +61,7 @@ const barAccent = 'var(--header-ink-accent)';
 const panelSurface = isDark ? 'rgba(9, 26, 52, 0.98)' : 'rgba(255, 255, 255, 0.98)';
 const panelInk = isDark ? '#EAF2FF' : '#07142B';
 const panelInkMuted = isDark ? 'rgba(214, 232, 255, 0.7)' : '#334A6B';
-const panelAccent = isDark ? '#18D8FF' : '#003BCE';
+const panelAccent = isDark ? 'var(--color-accent)' : 'var(--color-primary-dark)';
 
 useEffect(() => {setSidebarOpen(false);setActiveMega(null);setMobileExpanded(null);setSearchOpen(false);}, [location.pathname]);
 
@@ -178,7 +178,7 @@ return (<>
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                <menu.icon style={{ fontSize: '0.875rem', color: '#0875FF' }} />
+                <menu.icon style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }} />
                 {menu.label}
               </span>
               <FaChevronDown style={{
@@ -201,7 +201,7 @@ return (<>
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,117,255,0.06)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <Icon style={{ fontSize: '0.75rem', color: '#0875FF', flexShrink: 0 }} />
+                      <Icon style={{ fontSize: '0.75rem', color: 'var(--color-primary)', flexShrink: 0 }} />
                       {item.label}
                     </Link>
                   );
@@ -355,7 +355,7 @@ return (<>
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               flexShrink: 0, marginTop: '0.1rem',
                             }}>
-                              <Icon style={{ fontSize: '0.8125rem', color: '#0875FF' }} />
+                              <Icon style={{ fontSize: '0.8125rem', color: 'var(--color-primary)' }} />
                             </div>
                             <div style={{ minWidth: 0 }}>
                               <div style={{
@@ -591,8 +591,8 @@ return (<>
               background: r.type === 'Service' ? 'rgba(8,117,255,0.12)'
                 : r.type === 'Project' ? 'rgba(0,175,255,0.12)'
                 : 'rgba(251,191,36,0.12)',
-              color: r.type === 'Service' ? '#0875FF'
-                : r.type === 'Project' ? '#00AFFF'
+              color: r.type === 'Service' ? 'var(--color-primary)'
+                : r.type === 'Project' ? 'var(--color-secondary)'
                 : '#FBBF24',
             }}>
               {r.type}

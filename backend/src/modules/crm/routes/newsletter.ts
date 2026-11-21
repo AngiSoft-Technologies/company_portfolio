@@ -7,6 +7,7 @@ import { sendMail } from '../../../shared/services/email';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
+import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 
 const subscribeSchema = z.object({
     email: z.string().email(),
@@ -23,7 +24,7 @@ export default function newsletterRouter(prisma: Db) {
     const router = Router();
 
     // ─── Public: Subscribe ──────────────────────────────────────────
-    router.post('/subscribe', async (req, res) => {
+    router.post('/subscribe', publicFormLimiter, async (req, res) => {
         const parsed = subscribeSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
 

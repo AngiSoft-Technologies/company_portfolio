@@ -7,6 +7,8 @@ import * as paystack from './paystackService';
 import * as mpesa from './mpesaService';
 import * as payhero from './payheroService';
 import { toMoney, type MoneyInput } from '../../utils/money';
+import { recordInvoicePayment } from '../../../crm/services/invoices';
+import { createNotification } from '../../../notifications/services/notifications';
 
 /**
  * Payment gateway — one internal API, interchangeable providers, all feeding
@@ -158,6 +160,7 @@ export interface PaymentOutcomeInput {
     metadata?: any;
     bookingId?: string;
     clientId?: string;
+    invoiceId?: string;
 }
 
 /**
@@ -173,6 +176,7 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
 
     let payment: any;
     let depositActivated = false;
+    let invoiceApplied = false;
 
     try {
         const outcome = await prisma.transaction(async (tx) => {
@@ -210,6 +214,24 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                 row = await tx.orm.public.Payment.where({ id: before.id }).update(patch);
             }
 
+            // Phase 4.1 — payment→invoice trigger: a succeeded payment carrying
+            // `invoiceId` (in outcome metadata or the explicit field) settles
+            // the invoice inside the same transaction. Idempotent because this
+            // block only runs on a real PENDING→SUCCEEDED transition.
+            const invoiceId = input.invoiceId ?? meta?.invoiceId ?? meta?.metadata?.invoiceId ?? null;
+            const transitioned = !before || before.status !== 'SUCCEEDED';
+            let invoiceApplied = false;
+            if (status === 'SUCCEEDED' && transitioned && invoiceId && row) {
+                try {
+                    await recordInvoicePayment(tx as any, String(invoiceId), row.amount);
+                    invoiceApplied = true;
+                } catch (err: any) {
+                    // Invoice may be draft/void/paid or deleted — the payment
+                    // ledger still stands; staff can reconcile manually.
+                    console.warn('Invoice settlement skipped', invoiceId, err?.message);
+                }
+            }
+
             const activate = status === 'SUCCEEDED' && row?.bookingId && (!before || before.status !== 'SUCCEEDED');
             if (activate) {
                 try {
@@ -219,10 +241,11 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                     // Booking may have been deleted; payment ledger still stands.
                 }
             }
-            return { row, activate };
+            return { row, activate, invoiceApplied };
         });
         payment = outcome.row;
         depositActivated = outcome.activate;
+        invoiceApplied = outcome.invoiceApplied;
     } catch (err: any) {
         console.error('applyPaymentOutcome failed', err?.message);
         return null;
@@ -244,6 +267,25 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                 providerId: payment.providerId,
                 depositActivated,
             });
+            // Notify the booking owner (fire-and-forget).
+            void prisma.orm.public.Booking
+                .where({ id: payment.bookingId })
+                .select('id', 'assignedToId', 'publicReference', 'title')
+                .first()
+                .then((b: any) => {
+                    if (b?.assignedToId) {
+                        return createNotification(
+                            b.assignedToId,
+                            'payment.received',
+                            `Payment received — ${b.publicReference || b.title}`,
+                            `${payment.currency} ${payment.amount} via ${payment.providerId}.`,
+                            '/bookings',
+                            { bookingId: payment.bookingId, paymentId: payment.id }
+                        );
+                    }
+                    return null;
+                })
+                .catch(() => undefined);
         });
     } else if (payment?.bookingId) {
         setImmediate(() => {
@@ -253,6 +295,18 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                 amount: payment.amount,
                 currency: payment.currency,
                 providerId: payment.providerId,
+            });
+        });
+    }
+
+    if (invoiceApplied) {
+        setImmediate(() => {
+            emitToStaff('invoice:payment', {
+                invoiceId: input.invoiceId ?? meta?.invoiceId ?? meta?.metadata?.invoiceId ?? null,
+                paymentId: payment?.id,
+                amount: payment?.amount,
+                currency: payment?.currency,
+                providerId: payment?.providerId,
             });
         });
     }

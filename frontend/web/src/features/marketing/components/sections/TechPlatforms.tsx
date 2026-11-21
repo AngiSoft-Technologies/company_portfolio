@@ -93,8 +93,8 @@ const TechPlatforms = () => {
           name: group?.name || group?.title || `Category ${gi + 1}`,
           items: (group?.items || []).map((item, ii) => {
             const svc = typeof item === 'string'
-              ? { name: item, icon: FaDatabase, color: '#00AFFF' }
-              : { ...item, icon: resolveIcon(item.icon), color: item.color || '#00AFFF' };
+              ? { name: item, icon: FaDatabase, color: 'var(--color-secondary)' }
+              : { ...item, icon: resolveIcon(item.icon), color: item.color || 'var(--color-secondary)' };
             return { ...svc, id: svc.id || `${slugify(group?.name)}-${ii}` };
           }),
         }));

@@ -1,0 +1,275 @@
+[
+  {
+    "id": "table.Agent",
+    "label": "Create table \"Agent\"",
+    "summary": "Creates table \"Agent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Agent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Agent\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Agent\"",
+        "sql": "CREATE TABLE \"public\".\"Agent\" (\n  \"config\" jsonb,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"department\" text,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"key\" text NOT NULL,\n  \"kind\" text NOT NULL,\n  \"lastRunAt\" timestamp(3),\n  \"name\" text NOT NULL,\n  \"nextRunAt\" timestamp(3),\n  \"role\" text NOT NULL,\n  \"scheduleMinutes\" int4 DEFAULT 1440 NOT NULL,\n  \"status\" text DEFAULT 'active' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Agent_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Agent\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.AgentRun",
+    "label": "Create table \"AgentRun\"",
+    "summary": "Creates table \"AgentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "AgentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"AgentRun\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"AgentRun\"",
+        "sql": "CREATE TABLE \"public\".\"AgentRun\" (\n  \"agentId\" text NOT NULL,\n  \"agentKey\" text NOT NULL,\n  \"createdById\" text,\n  \"error\" text,\n  \"finishedAt\" timestamp(3),\n  \"id\" text NOT NULL,\n  \"output\" jsonb,\n  \"startedAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"status\" text DEFAULT 'running' NOT NULL,\n  \"summary\" text,\n  \"trigger\" text DEFAULT 'schedule' NOT NULL,\n  CONSTRAINT \"AgentRun_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"AgentRun\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Agent.Agent_key_key",
+    "label": "Create index \"Agent_key_key\" on \"Agent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Agent_key_key",
+        "table": "Agent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Agent_key_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent_key_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Agent_key_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Agent_key_key\" ON \"public\".\"Agent\" (\"key\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Agent_key_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent_key_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Agent.Agent_status_nextRunAt_idx",
+    "label": "Create index \"Agent_status_nextRunAt_idx\" on \"Agent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Agent_status_nextRunAt_idx",
+        "table": "Agent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Agent_status_nextRunAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent_status_nextRunAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Agent_status_nextRunAt_idx\"",
+        "sql": "CREATE INDEX \"Agent_status_nextRunAt_idx\" ON \"public\".\"Agent\" (\"status\", \"nextRunAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Agent_status_nextRunAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Agent_status_nextRunAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentRun.AgentRun_agentId_startedAt_idx",
+    "label": "Create index \"AgentRun_agentId_startedAt_idx\" on \"AgentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentRun_agentId_startedAt_idx",
+        "table": "AgentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentRun_agentId_startedAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_agentId_startedAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentRun_agentId_startedAt_idx\"",
+        "sql": "CREATE INDEX \"AgentRun_agentId_startedAt_idx\" ON \"public\".\"AgentRun\" (\"agentId\", \"startedAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentRun_agentId_startedAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_agentId_startedAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentRun.AgentRun_agentKey_startedAt_idx",
+    "label": "Create index \"AgentRun_agentKey_startedAt_idx\" on \"AgentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentRun_agentKey_startedAt_idx",
+        "table": "AgentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentRun_agentKey_startedAt_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_agentKey_startedAt_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentRun_agentKey_startedAt_idx\"",
+        "sql": "CREATE INDEX \"AgentRun_agentKey_startedAt_idx\" ON \"public\".\"AgentRun\" (\"agentKey\", \"startedAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentRun_agentKey_startedAt_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_agentKey_startedAt_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentRun.AgentRun_status_idx",
+    "label": "Create index \"AgentRun_status_idx\" on \"AgentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentRun_status_idx",
+        "table": "AgentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentRun_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentRun_status_idx\"",
+        "sql": "CREATE INDEX \"AgentRun_status_idx\" ON \"public\".\"AgentRun\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentRun_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentRun_status_idx\""
+        ]
+      }
+    ]
+  }
+]

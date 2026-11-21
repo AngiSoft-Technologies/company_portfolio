@@ -3,7 +3,8 @@ import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { ts } from '../../../prisma/db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { isRole, requireAccess, requirePermission } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { blogController } from '../controllers/blogController';
 
 const createSchema = z.object({
@@ -30,13 +31,24 @@ const updateSchema = createSchema.partial();
 export default function blogsRouter(prisma: Db = db) {
     const router = Router();
 
+    const permCtx = (req: AuthRequest) =>
+        req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+    const canReview = async (req: AuthRequest) => {
+        const ctx = permCtx(req);
+        return ctx ? hasPermission(ctx, 'publications.review') : false;
+    };
+    const canAuthor = async (req: AuthRequest) => {
+        const ctx = permCtx(req);
+        return ctx ? hasPermission(ctx, 'publications.create') : false;
+    };
+
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            if (isRole(req, ['ADMIN', 'MARKETING'])) {
+            if (await canReview(req)) {
                 const posts = await blogController.list({});
                 return res.json(posts);
             }
-            if (isRole(req, ['DEVELOPER'])) {
+            if (await canAuthor(req)) {
                 const posts = await blogController.list({ where: { authorId: req.user?.sub } });
                 return res.json(posts);
             }
@@ -54,8 +66,8 @@ export default function blogsRouter(prisma: Db = db) {
 
             if (post.published) return res.json(post);
 
-            if (isRole(req, ['ADMIN', 'MARKETING'])) return res.json(post);
-            if (isRole(req, ['DEVELOPER']) && post.authorId === req.user?.sub) return res.json(post);
+            if (await canReview(req)) return res.json(post);
+            if ((await canAuthor(req)) && post.authorId === req.user?.sub) return res.json(post);
 
             return res.status(404).json({ error: 'Not found' });
         } catch (err: any) {
@@ -86,7 +98,7 @@ export default function blogsRouter(prisma: Db = db) {
             const existing = await prisma.orm.public.BlogPost.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
 
-            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const canManageAll = await canReview(req);
             if (!canManageAll && existing.authorId !== req.user?.sub) {
                 return res.status(403).json({ error: 'Not authorized' });
             }
@@ -108,7 +120,7 @@ export default function blogsRouter(prisma: Db = db) {
             const existing = await prisma.orm.public.BlogPost.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
 
-            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const canManageAll = await canReview(req);
             if (!canManageAll && existing.authorId !== req.user?.sub) {
                 return res.status(403).json({ error: 'Not authorized' });
             }

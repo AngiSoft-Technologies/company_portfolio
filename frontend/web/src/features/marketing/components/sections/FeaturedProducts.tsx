@@ -118,14 +118,7 @@ const FeaturedProducts = () => {
               className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
             >
               Powerful Software{' '}
-              <span
-                style={{
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
+              <span style={{ color: colors.secondary }}>
                 Solutions
               </span>
             </h2>

@@ -1,4 +1,5 @@
 import AIConfigAdmin from './AIConfigAdmin';
+import AiAssist from './AiAssist';
 
-export { AIConfigAdmin };
+export { AIConfigAdmin, AiAssist };
 export default AIConfigAdmin;

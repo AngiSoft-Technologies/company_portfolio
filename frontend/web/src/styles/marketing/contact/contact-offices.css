@@ -1,0 +1,77 @@
+/* Contact — structured offices/locations */
+.contact-offices {
+    padding: clamp(2rem, 5vw, 3.5rem) 0;
+}
+.contact-offices__heading {
+    margin: 0 0 1.5rem;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    color: var(--contact-text);
+}
+.contact-offices__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+.contact-office {
+    border: 1px solid var(--contact-border);
+    border-radius: 14px;
+    background: var(--contact-surface);
+    padding: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.contact-office__name {
+    margin: 0;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 1.1rem;
+    color: var(--contact-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.contact-office__hq {
+    color: var(--contact-primary);
+    font-size: 0.85rem;
+}
+.contact-office__line {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--contact-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.contact-office__line a {
+    color: var(--contact-text);
+    text-decoration: none;
+}
+.contact-office__line a:hover { color: var(--contact-primary); }
+.contact-office__line svg { color: var(--contact-primary); flex-shrink: 0; }
+.contact-office__hours {
+    list-style: none;
+    margin: 0.25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.contact-office__hours li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--contact-muted);
+    font-size: 0.85rem;
+}
+.contact-office__hours svg { color: var(--contact-primary); flex-shrink: 0; font-size: 0.75rem; }
+.contact-office__map {
+    margin-top: auto;
+    padding-top: 0.5rem;
+    color: var(--contact-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.contact-office__map:hover { text-decoration: underline; }

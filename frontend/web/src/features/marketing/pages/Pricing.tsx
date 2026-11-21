@@ -8,6 +8,7 @@ import PricingIntro from '../components/pricing/PricingIntro';
 import PricingFactors from '../components/pricing/PricingFactors';
 import PricingRanges from '../components/pricing/PricingRanges';
 import PricingEngagementModels from '../components/pricing/PricingEngagementModels';
+import PricingPackages from '../components/pricing/PricingPackages';
 import PricingProcess from '../components/pricing/PricingProcess';
 import PricingFaqs from '../components/pricing/PricingFaqs';
 import PricingServiceGrid from '../components/pricing/PricingServiceGrid';
@@ -22,18 +23,19 @@ import '@/styles/marketing/pricing/pricing-intro.css';
 import '@/styles/marketing/pricing/pricing-factors.css';
 import '@/styles/marketing/pricing/pricing-ranges.css';
 import '@/styles/marketing/pricing/pricing-engagement.css';
+import '@/styles/marketing/pricing/pricing-packages.css';
 import '@/styles/marketing/pricing/pricing-process.css';
 import '@/styles/marketing/pricing/pricing-faqs.css';
 import '@/styles/marketing/pricing/pricing-service-card.css';
 
 export default function Pricing() {
-    const { content, services, loading, error, refetch, hasContent, hasServiceData } = usePricing();
+    const { content, services, packages, loading, error, refetch, hasContent, hasServiceData } = usePricing();
     const filters = usePricingFilters(services);
     const { mode } = useTheme();
 
     if (loading) return <PricingSkeleton />;
     if (error) return <PricingError error={error} onRetry={refetch} />;
-    if (!hasContent && !hasServiceData) return <PricingEmptyState />;
+    if (!hasContent && !hasServiceData && !packages.length) return <PricingEmptyState />;
 
     return (
         <main className={`pricing-page${mode === 'light' ? ' is-light' : ''}`}>
@@ -57,6 +59,12 @@ export default function Pricing() {
                 title="Engagement models"
                 subtitle="Pick the way of working that fits the moment."
                 models={content?.engagementModels}
+            />
+
+            <PricingPackages
+                title="Ready-made packages"
+                subtitle="Fixed-scope packages with clear deliverables. Custom work is scoped on request."
+                packages={packages}
             />
 
             <PricingProcess

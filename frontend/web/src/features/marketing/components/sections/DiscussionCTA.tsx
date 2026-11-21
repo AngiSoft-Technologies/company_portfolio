@@ -44,11 +44,7 @@ const DiscussionCTA = () => {
             style={{ color: isDark ? '#F5F7FA' : '#07142B' }}
           >
             Discuss Your Project{' '}
-            <span style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>With Our Team</span>
+            <span style={{ color: colors.primary }}>With Our Team</span>
           </h2>
           <p
             className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"

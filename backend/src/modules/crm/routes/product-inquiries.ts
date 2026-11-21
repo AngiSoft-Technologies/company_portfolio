@@ -4,6 +4,7 @@ import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
+import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 
 const createSchema = z.object({
     productId: z.string().min(1),
@@ -26,7 +27,7 @@ export default function productInquiriesRouter(prisma: Db = db) {
         res.json(inquiries);
     });
 
-    router.post('/', async (req, res) => {
+    router.post('/', publicFormLimiter, async (req, res) => {
         const parsed = createSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         const inquiry = await prisma.orm.public.ProductInquiry.create({

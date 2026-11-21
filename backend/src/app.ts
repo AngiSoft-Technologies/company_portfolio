@@ -13,6 +13,8 @@ import paymentConsoleRouter from './modules/billing/routes/payment-console';
 import authRouter from './modules/identity/routes/auth';
 import uploadsRouter from './modules/files/routes/uploads';
 import servicesRouter from './modules/cms/routes/services';
+import pricingPackagesRouter from './modules/cms/routes/pricing-packages';
+import officesRouter from './modules/cms/routes/offices';
 import projectsRouter from './modules/projects/routes/projects';
 import blogsRouter from './modules/cms/routes/blogs';
 import testimonialsRouter from './modules/cms/routes/testimonials';
@@ -20,6 +22,7 @@ import serviceCategoriesRouter from './modules/cms/routes/service-categories';
 import settingsRouter from './modules/cms/routes/settings';
 import staffRouter from './modules/identity/routes/staff';
 import adminRouter from './shared/routes/admin';
+import approvalsRouter from './shared/routes/approvals';
 import staffDashboardRouter from './modules/identity/routes/staff-dashboard';
 import clientProjectsRouter from './modules/projects/routes/client-projects';
 import clientPortalRouter from './modules/crm/routes/client-portal';
@@ -57,6 +60,10 @@ import productInquiriesRouter from './modules/crm/routes/product-inquiries';
 import opportunitiesRouter from './modules/crm/routes/opportunities';
 import quotesRouter from './modules/crm/routes/quotes';
 import invoicesRouter from './modules/crm/routes/invoices';
+import expensesRouter from './modules/billing/routes/expenses';
+import leaveRequestsRouter from './modules/identity/routes/leave-requests';
+import attendanceRouter from './modules/identity/routes/attendance';
+import payrollRouter from './modules/identity/routes/payroll';
 import staffAccessRouter from './modules/identity/routes/staff-access';
 import productFaqsRouter from './modules/cms/routes/product-faqs';
 import contactEnquiriesRouter from './modules/crm/routes/contact-enquiries';
@@ -65,12 +72,36 @@ import solutionsRouter from './modules/cms/routes/solutions';
 import rolesRouter from './modules/identity/routes/roles';
 import employeeProfilesRouter from './modules/identity/routes/employee-profiles';
 import aiConfigRouter from './modules/ai/routes/ai-config';
+import aiAssistRouter from './modules/ai/routes/ai-assist';
+import renewalsRouter from './modules/crm/routes/renewals';
+import agentsRouter from './modules/agents/routes/agents';
 
 dotenv.config();
 initSentry();
 const app = express();
 // gzip/deflate compression for all responses
 app.use(compression());
+// Slow-request observability (Phase 5.4): emit a structured JSON log line for
+// any request exceeding SLOW_REQUEST_MS (default 1000ms) so latency regressions
+// are greppable in Fly logs without a full APM.
+const SLOW_REQUEST_MS = Math.max(100, Number(process.env.SLOW_REQUEST_MS ?? 1000));
+app.use((req, res, next) => {
+    const start = process.hrtime.bigint();
+    res.on('finish', () => {
+        const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+        if (durationMs >= SLOW_REQUEST_MS) {
+            console.warn(JSON.stringify({
+                level: 'warn',
+                type: 'slow_request',
+                method: req.method,
+                path: req.originalUrl?.split('?')[0],
+                status: res.statusCode,
+                durationMs: Math.round(durationMs),
+            }));
+        }
+    });
+    next();
+});
 // security middlewares
 app.use(helmet({
     contentSecurityPolicy: {
@@ -284,6 +315,8 @@ app.use('/api/payments', paymentsRouter(prisma));
 app.use('/api/admin/payments', paymentConsoleRouter(prisma));
 app.use('/api/uploads', uploadsRouter());
 app.use('/api/services', servicesRouter());
+app.use('/api/pricing-packages', pricingPackagesRouter(prisma));
+app.use('/api/offices', officesRouter(prisma));
 app.use('/api/projects', projectsRouter());
 app.use('/api/blogs', blogsRouter());
 app.use('/api/testimonials', testimonialsRouter());
@@ -292,6 +325,9 @@ app.use('/api/settings', requireAuth, settingsRouter());
 app.use('/api/staff', staffRouter(prisma));
 app.use('/api/admin', adminRouter(prisma));
 app.use('/api/admin', aiConfigRouter(prisma));
+app.use('/api/admin', aiAssistRouter(prisma));
+app.use('/api/admin', renewalsRouter(prisma));
+app.use('/api/admin/agents', agentsRouter(prisma));
 app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
 app.use('/api/client-projects', clientProjectsRouter(prisma));
 app.use('/api/client-portal', clientPortalRouter(prisma));
@@ -319,6 +355,11 @@ app.use('/api/product-inquiries', productInquiriesRouter());
 app.use('/api/opportunities', opportunitiesRouter());
 app.use('/api/quotes', quotesRouter());
 app.use('/api/invoices', invoicesRouter());
+app.use('/api/expenses', expensesRouter(prisma));
+app.use('/api/leave-requests', leaveRequestsRouter(prisma));
+app.use('/api/attendance', attendanceRouter(prisma));
+app.use('/api/payroll', payrollRouter(prisma));
+app.use('/api/approvals', approvalsRouter(prisma));
 app.use('/api/product-faqs', productFaqsRouter());
 app.use('/api/contact-enquiries', contactEnquiriesRouter());
 app.use('/api/industries', industriesRouter());

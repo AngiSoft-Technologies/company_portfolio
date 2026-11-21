@@ -83,10 +83,7 @@ html, body {
 }
 
 .angi-section-title-gradient {
-  background: linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 .angi-section-subtitle {
@@ -312,12 +309,13 @@ html, body {
   font-weight: 700;
   color: white;
   transition: all 0.3s;
-  background: linear-gradient(135deg, #0875FF 0%, #00AFFF 100%);
+  background: var(--color-primary, #0875FF);
   box-shadow: 0 4px 15px rgba(8, 117, 255, 0.4);
 }
 
 .angi-btn-primary:hover {
   transform: translateY(-2px);
+  background: var(--color-primary-dark, #0658D6);
   box-shadow: 0 8px 25px rgba(8, 117, 255, 0.5);
 }
 
@@ -708,17 +706,11 @@ section {
 
 /* Gradient Text */
 .gradient-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 .gradient-text-brand {
-  background: linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 /* Glass Morphism */
@@ -958,10 +950,7 @@ section {
 
 .hero .name {
   @apply text-5xl md:text-7xl font-bold my-6;
-  background: linear-gradient(135deg, #18D8FF 0%, #0875FF 45%, #003BCE 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 .hero h2 { @apply text-3xl md:text-5xl font-semibold text-white mb-4; }
@@ -1163,10 +1152,7 @@ section {
 
 .stat-number {
   @apply text-4xl md:text-5xl font-bold mb-2;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 .stat-label {
@@ -1747,10 +1733,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .angi-section-title-gradient {
-  background: var(--gradient-accent);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
 }
 
 .angi-section-subtitle {
@@ -1866,10 +1849,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Sora', sans-serif;
   font-size: 2.5rem;
   font-weight: 800;
-  background: var(--gradient-accent);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-primary, #0875FF);
   line-height: 1;
 }
 

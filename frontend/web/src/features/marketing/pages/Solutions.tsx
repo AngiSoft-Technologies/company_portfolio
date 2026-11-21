@@ -17,7 +17,7 @@ export default function Solutions() {
 
       <Section>
         {solutions.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+          <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
         ) : null}
         {!solutions.loading && (!solutions.data || solutions.data.length === 0) ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
@@ -28,7 +28,7 @@ export default function Solutions() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {solutions.data.map((solution) => (
               <Card key={solution.id} hoverable className="p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00AFFF]/10 text-xl text-[#00AFFF]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-secondary)]/10 text-xl text-[var(--color-secondary)]">
                   {solution.icon ? solution.icon : solution.name.charAt(0)}
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">{solution.name}</h3>

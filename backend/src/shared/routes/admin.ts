@@ -30,6 +30,125 @@ export default function adminRouter(prisma: Db) {
         next();
     };
 
+    // ========== AUDIT LOG (Phase 5.4 observability) ==========
+    router.get('/audit-logs', requireAdmin, async (req, res) => {
+        try {
+            const { entity, action, actorId, page = '1', limit = '50' } = req.query;
+            const where: Record<string, string> = {};
+            if (entity) where.entity = String(entity);
+            if (action) where.action = String(action);
+            if (actorId) where.actorId = String(actorId);
+
+            const take = Math.min(Math.max(Number(limit) || 50, 1), 200);
+            const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
+
+            let query = prisma.orm.public.AuditLog;
+            let countQuery = prisma.orm.public.AuditLog;
+            if (Object.keys(where).length > 0) {
+                query = query.where(where as any);
+                countQuery = countQuery.where(where as any);
+            }
+            const [rows, total] = await Promise.all([
+                query.orderBy((a: any) => a.createdAt.desc()).offset(skip).limit(take).all(),
+                countQuery.count(),
+            ]);
+            res.json({ logs: rows, total, page: Number(page), limit: take });
+        } catch (err) {
+            res.status(500).json({ error: 'Failed to load audit logs' });
+        }
+    });
+
+    // ========== CROSS-DEPARTMENT REPORTING (Phase 4.4) ==========
+    // Aggregates pipeline, delivery, finance and satisfaction into one payload.
+    // Row sets are small enough to aggregate in-process; every query is
+    // projected to the fields actually used.
+    router.get('/reports/overview', requireAdmin, async (req, res) => {
+        try {
+            const [leads, opportunities, projects, invoices, payments, testimonials, tickets] = await Promise.all([
+                prisma.orm.public.Lead.select('id', 'status', 'stage', 'createdAt').all(),
+                prisma.orm.public.Opportunity.select('id', 'stage', 'value', 'currency', 'createdAt').all(),
+                prisma.orm.public.ClientProject.select('id', 'status', 'progress', 'createdAt', 'deliveredAt', 'completedAt').all(),
+                prisma.orm.public.Invoice.select('id', 'status', 'total', 'amountPaid', 'balanceDue', 'currency').all(),
+                prisma.orm.public.Payment.select('id', 'status', 'amount', 'currency', 'provider', 'createdAt').all(),
+                prisma.orm.public.Testimonial.select('id', 'rating', 'confirmed', 'rejected', 'createdAt').all(),
+                prisma.orm.public.SupportTicket.select('id', 'status', 'createdAt').all(),
+            ]);
+
+            const countBy = (rows: any[], key: string) =>
+                rows.reduce<Record<string, number>>((acc, r) => {
+                    const k = String(r[key] ?? 'unknown');
+                    acc[k] = (acc[k] ?? 0) + 1;
+                    return acc;
+                }, {});
+
+            const sumBy = (rows: any[], key: string) =>
+                rows.reduce<Record<string, number>>((acc, r) => {
+                    const cur = String(r.currency ?? 'KES');
+                    acc[cur] = (acc[cur] ?? 0) + Number(r[key] ?? 0);
+                    return acc;
+                }, {});
+
+            const confirmedRatings = testimonials.filter((t: any) => t.confirmed && !t.rejected && t.rating != null);
+            const avgRating = confirmedRatings.length
+                ? confirmedRatings.reduce((s: number, t: any) => s + Number(t.rating), 0) / confirmedRatings.length
+                : null;
+
+            const now = Date.now();
+            const last30 = (rows: any[]) =>
+                rows.filter((r) => r.createdAt && now - new Date(r.createdAt).getTime() < 30 * 86400_000).length;
+
+            res.json({
+                pipeline: {
+                    leadsByStage: countBy(leads, 'stage'),
+                    leadsByStatus: countBy(leads, 'status'),
+                    opportunitiesByStage: countBy(opportunities, 'stage'),
+                    opportunityValueByCurrency: sumBy(
+                        opportunities.filter((o: any) => !['lost', 'rejected', 'closed_lost'].includes(String(o.stage ?? '').toLowerCase())),
+                        'value',
+                    ),
+                    newLast30d: {
+                        leads: last30(leads),
+                        opportunities: last30(opportunities),
+                        tickets: last30(tickets),
+                    },
+                },
+                delivery: {
+                    projectsByStatus: countBy(projects, 'status'),
+                    avgProgress: projects.length
+                        ? Math.round(projects.reduce((s: number, p: any) => s + Number(p.progress ?? 0), 0) / projects.length)
+                        : 0,
+                    deliveredLast30d: projects.filter((p: any) => p.deliveredAt && now - new Date(p.deliveredAt).getTime() < 30 * 86400_000).length,
+                },
+                finance: {
+                    invoicesByStatus: countBy(invoices, 'status'),
+                    invoicedByCurrency: sumBy(invoices, 'total'),
+                    collectedByCurrency: sumBy(invoices, 'amountPaid'),
+                    outstandingByCurrency: sumBy(invoices, 'balanceDue'),
+                    paymentsByStatus: countBy(payments, 'status'),
+                    paymentsByProvider: countBy(payments, 'provider'),
+                    paymentVolumeByCurrency: sumBy(
+                        payments.filter((p: any) => p.status === 'SUCCEEDED'),
+                        'amount',
+                    ),
+                },
+                satisfaction: {
+                    testimonialsByRating: confirmedRatings.reduce<Record<string, number>>((acc, t: any) => {
+                        const k = String(t.rating);
+                        acc[k] = (acc[k] ?? 0) + 1;
+                        return acc;
+                    }, {}),
+                    averageRating: avgRating === null ? null : Math.round(avgRating * 100) / 100,
+                    confirmedTestimonials: confirmedRatings.length,
+                    pendingModeration: testimonials.filter((t: any) => !t.confirmed && !t.rejected).length,
+                    ticketsByStatus: countBy(tickets, 'status'),
+                },
+                generatedAt: new Date().toISOString(),
+            });
+        } catch (err) {
+            res.status(500).json({ error: 'Failed to build reports overview' });
+        }
+    });
+
     // ========== DASHBOARD STATISTICS ==========
     router.get('/dashboard/stats', requireAdmin, async (req, res) => {
         try {
@@ -120,7 +239,7 @@ export default function adminRouter(prisma: Db) {
     router.get('/employees', requireAdmin, async (req, res) => {
         try {
             const employees = await prisma.orm.public.Employee
-                .select('id', 'firstName', 'lastName', 'email', 'phone', 'role', 'bio', 'avatarUrl', 'acceptedAt', 'createdAt')
+                .select('id', 'firstName', 'lastName', 'email', 'phone', 'role', 'bio', 'avatarUrl', 'username', 'publicTitle', 'departmentId', 'positionId', 'acceptedAt', 'createdAt')
                 .orderBy((e) => e.createdAt.desc())
                 .all();
             res.json(employees);

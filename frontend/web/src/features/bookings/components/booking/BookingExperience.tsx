@@ -342,7 +342,7 @@ const BookingExperience = (props = {}) => {
                                 {(heroCopy.title || heroCopy.highlight) && (
                                     <h1 className="text-4xl md:text-5xl font-bold mb-6">
                                         {heroCopy.title && <span style={{ color: colors.text }}>{heroCopy.title} </span>}
-                                        {heroCopy.highlight && <span style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{heroCopy.highlight}</span>}
+                                        {heroCopy.highlight && <span style={{ color: colors.primary }}>{heroCopy.highlight}</span>}
                                     </h1>
                                 )}
                             </ScrollReveal>

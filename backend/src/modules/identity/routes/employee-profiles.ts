@@ -21,6 +21,18 @@ const portfolioSchema = z.object({
     order: z.number().default(0)
 });
 
+const portfolioConfigSchema = z.object({
+    theme: z.string().min(1).max(64).optional(),
+    layout: z.string().min(1).max(64).optional(),
+    sections: z.array(z.object({
+        key: z.string().min(1).max(64),
+        visible: z.boolean().default(true),
+        title: z.string().max(200).nullish()
+    })).max(50).optional(),
+    draftConfig: z.record(z.string(), z.unknown()).optional(),
+    publishedConfig: z.record(z.string(), z.unknown()).optional()
+});
+
 const statSchema = z.object({
     employeeId: z.string().optional(),
     label: z.string().min(1),
@@ -163,6 +175,115 @@ export default function employeeProfilesRouter(prisma: Db = db) {
         await prisma.orm.public.EmployeeProfileStat.where({ id: stat.id }).delete();
         await audit(req, 'employeeProfileStat.delete', 'EmployeeProfileStat', stat.id);
         res.json({ ok: true });
+    });
+
+    // ── Portfolio Studio config (Phase 3) ──
+    // Public read: published snapshot only.
+    router.get('/portfolio-config/public/:employeeId', async (req, res) => {
+        const config = await prisma.orm.public.EmployeePortfolioConfig
+            .where({ employeeId: req.params.employeeId, published: true })
+            .first();
+        if (!config) return res.json(null);
+        res.json({
+            theme: config.theme,
+            layout: config.layout,
+            sections: config.sections,
+            config: config.publishedConfig,
+            version: config.version
+        });
+    });
+
+    // Admin moderation list: every employee's studio config (Phase 3.5).
+    router.get('/portfolio-config/admin/all', requireAuth, requireAccess('staff.view', ['ADMIN', 'HR', 'MANAGER']), async (_req: AuthRequest, res) => {
+        const rows = await prisma.orm.public.EmployeePortfolioConfig
+            .include('employee', (e: any) => e.select('id', 'firstName', 'lastName', 'username', 'email'))
+            .orderBy((c: any) => c.updatedAt.desc())
+            .all();
+        res.json(rows);
+    });
+
+    // Authenticated read: full row incl. draft (owner or privileged role).
+    router.get('/portfolio-config/:employeeId', requireAuth, async (req: AuthRequest, res) => {
+        const config = await prisma.orm.public.EmployeePortfolioConfig
+            .where({ employeeId: req.params.employeeId })
+            .first();
+        if (!config) return res.json(null);
+        if (!canManageEmployee(req, config.employeeId)) return res.status(403).json({ error: 'Not authorized' });
+        res.json(config);
+    });
+
+    router.put('/portfolio-config/:employeeId', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
+        const employeeId = req.params.employeeId;
+        if (!canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
+        const parsed = portfolioConfigSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+
+        const existing = await prisma.orm.public.EmployeePortfolioConfig
+            .where({ employeeId })
+            .first();
+
+        const payload: any = { updatedAt: ts() };
+        for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
+
+        let saved;
+        if (existing) {
+            saved = await prisma.orm.public.EmployeePortfolioConfig.where({ id: existing.id }).update(payload);
+        } else {
+            saved = await prisma.orm.public.EmployeePortfolioConfig.create({
+                id: newId(),
+                employeeId,
+                theme: parsed.data.theme ?? 'default',
+                layout: parsed.data.layout ?? 'standard',
+                ...payload
+            });
+        }
+        await audit(req, 'employeePortfolioConfig.update', 'EmployeePortfolioConfig', saved?.id);
+        res.json(saved);
+    });
+
+    router.post('/portfolio-config/:employeeId/publish', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
+        const employeeId = req.params.employeeId;
+        if (!canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
+        const config = await prisma.orm.public.EmployeePortfolioConfig
+            .where({ employeeId })
+            .first();
+        if (!config) return res.status(404).json({ error: 'No portfolio config to publish' });
+        const nextVersion = config.version + 1;
+        const snapshot = {
+            version: nextVersion,
+            publishedAt: ts(),
+            theme: config.theme,
+            layout: config.layout,
+            sections: config.sections,
+            config: config.draftConfig ?? config.publishedConfig ?? {}
+        };
+        const history = Array.isArray(config.versionHistory)
+            ? [...(config.versionHistory as unknown[]), snapshot].slice(-20)
+            : [snapshot];
+        const updated = await prisma.orm.public.EmployeePortfolioConfig.where({ id: config.id }).update({
+            publishedConfig: snapshot.config as any,
+            versionHistory: history as any,
+            published: true,
+            version: nextVersion,
+            updatedAt: ts()
+        });
+        await audit(req, 'employeePortfolioConfig.publish', 'EmployeePortfolioConfig', config.id);
+        res.json(updated);
+    });
+
+    router.post('/portfolio-config/:employeeId/unpublish', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
+        const employeeId = req.params.employeeId;
+        if (!canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
+        const config = await prisma.orm.public.EmployeePortfolioConfig
+            .where({ employeeId })
+            .first();
+        if (!config) return res.status(404).json({ error: 'Not found' });
+        const updated = await prisma.orm.public.EmployeePortfolioConfig.where({ id: config.id }).update({
+            published: false,
+            updatedAt: ts()
+        });
+        await audit(req, 'employeePortfolioConfig.unpublish', 'EmployeePortfolioConfig', config.id);
+        res.json(updated);
     });
 
     return router;

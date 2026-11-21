@@ -1,0 +1,275 @@
+[
+  {
+    "id": "table.AttendanceRecord",
+    "label": "Create table \"AttendanceRecord\"",
+    "summary": "Creates table \"AttendanceRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "AttendanceRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"AttendanceRecord\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"AttendanceRecord\"",
+        "sql": "CREATE TABLE \"public\".\"AttendanceRecord\" (\n  \"checkInAt\" timestamp(3),\n  \"checkOutAt\" timestamp(3),\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"employeeId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"notes\" text,\n  \"source\" text DEFAULT 'manual' NOT NULL,\n  \"status\" text DEFAULT 'present' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  \"workDate\" timestamp(3) NOT NULL,\n  CONSTRAINT \"AttendanceRecord_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"AttendanceRecord\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.Payslip",
+    "label": "Create table \"Payslip\"",
+    "summary": "Creates table \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Payslip\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Payslip\"",
+        "sql": "CREATE TABLE \"public\".\"Payslip\" (\n  \"approvedAt\" timestamp(3),\n  \"approvedById\" text,\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'KES' NOT NULL,\n  \"deductions\" jsonb,\n  \"employeeId\" text NOT NULL,\n  \"grossAmount\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"id\" text NOT NULL,\n  \"netAmount\" numeric(18,2) DEFAULT '0.00'::numeric(18,2) NOT NULL,\n  \"notes\" text,\n  \"paidAt\" timestamp(3),\n  \"period\" text NOT NULL,\n  \"status\" text DEFAULT 'draft' NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Payslip_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Payslip\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AttendanceRecord.AttendanceRecord_employeeId_workDate_idx",
+    "label": "Create index \"AttendanceRecord_employeeId_workDate_idx\" on \"AttendanceRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AttendanceRecord_employeeId_workDate_idx",
+        "table": "AttendanceRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AttendanceRecord_employeeId_workDate_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord_employeeId_workDate_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AttendanceRecord_employeeId_workDate_idx\"",
+        "sql": "CREATE INDEX \"AttendanceRecord_employeeId_workDate_idx\" ON \"public\".\"AttendanceRecord\" (\"employeeId\", \"workDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AttendanceRecord_employeeId_workDate_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord_employeeId_workDate_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AttendanceRecord.AttendanceRecord_workDate_idx",
+    "label": "Create index \"AttendanceRecord_workDate_idx\" on \"AttendanceRecord\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AttendanceRecord_workDate_idx",
+        "table": "AttendanceRecord"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AttendanceRecord_workDate_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord_workDate_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AttendanceRecord_workDate_idx\"",
+        "sql": "CREATE INDEX \"AttendanceRecord_workDate_idx\" ON \"public\".\"AttendanceRecord\" (\"workDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AttendanceRecord_workDate_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AttendanceRecord_workDate_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Payslip.Payslip_employeeId_period_key",
+    "label": "Create index \"Payslip_employeeId_period_key\" on \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Payslip_employeeId_period_key",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Payslip_employeeId_period_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_employeeId_period_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Payslip_employeeId_period_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Payslip_employeeId_period_key\" ON \"public\".\"Payslip\" (\"employeeId\", \"period\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Payslip_employeeId_period_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_employeeId_period_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Payslip.Payslip_period_idx",
+    "label": "Create index \"Payslip_period_idx\" on \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Payslip_period_idx",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Payslip_period_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_period_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Payslip_period_idx\"",
+        "sql": "CREATE INDEX \"Payslip_period_idx\" ON \"public\".\"Payslip\" (\"period\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Payslip_period_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_period_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Payslip.Payslip_status_idx",
+    "label": "Create index \"Payslip_status_idx\" on \"Payslip\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Payslip_status_idx",
+        "table": "Payslip"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Payslip_status_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_status_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Payslip_status_idx\"",
+        "sql": "CREATE INDEX \"Payslip_status_idx\" ON \"public\".\"Payslip\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Payslip_status_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Payslip_status_idx\""
+        ]
+      }
+    ]
+  }
+]

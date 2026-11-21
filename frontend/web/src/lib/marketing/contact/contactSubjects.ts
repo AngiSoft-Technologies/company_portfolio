@@ -10,6 +10,7 @@ export const ENQUIRY_TYPES = [
     { value: 'support', cardLabel: 'Support', label: 'Support', helper: 'Get help with something you already have with us.' },
     { value: 'partnership', cardLabel: 'Partnership', label: 'Partnership', helper: 'Explore collaboration, reseller or joint opportunities.' },
     { value: 'careers', cardLabel: 'Careers', label: 'Careers', helper: 'Ask about open roles or how to join AngiSoft.' },
+    { value: 'idea', cardLabel: 'Pitch an Idea', label: 'Pitch an Idea', helper: 'Have a product or business idea? Tell us the problem and who it is for — we will tell you honestly if we can build it.' },
     { value: 'general', cardLabel: 'General', label: 'Something Else', helper: 'Anything else you would like to discuss.' },
 ];
 
@@ -20,6 +21,7 @@ export const DEFAULT_SUBJECT = {
     support: 'Support request',
     partnership: 'Partnership enquiry',
     careers: 'Careers enquiry',
+    idea: 'Idea / project pitch',
     general: 'General enquiry',
 };
 

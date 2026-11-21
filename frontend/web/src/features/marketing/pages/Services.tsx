@@ -18,7 +18,7 @@ export default function Services() {
 
       <Section>
         {services.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+          <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
         ) : null}
         {!services.loading && (!services.data || services.data.length === 0) ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
@@ -29,7 +29,7 @@ export default function Services() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {services.data.map((service) => (
               <Card key={service.id} hoverable className="p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0875FF]/10 text-xl text-[#0875FF]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-xl text-[var(--color-primary)]">
                   {service.icon ? service.icon : service.title.charAt(0)}
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">{service.title}</h3>
@@ -46,7 +46,7 @@ export default function Services() {
             Frequently asked questions
           </h2>
           {faqs.loading ? (
-            <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+            <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
           ) : null}
           {!faqs.loading && (!faqs.data || faqs.data.length === 0) ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
@@ -62,7 +62,7 @@ export default function Services() {
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-[var(--text-primary)]">
                     {faq.question}
-                    <span className="text-[#0875FF] transition-transform group-open:rotate-45">＋</span>
+                    <span className="text-[var(--color-primary)] transition-transform group-open:rotate-45">＋</span>
                   </summary>
                   <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{faq.answer}</p>
                 </details>

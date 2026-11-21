@@ -28,7 +28,7 @@ export default function ClientPortalRequest() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4">
         <Card className="w-full max-w-md p-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0875FF]/10 text-2xl text-[#0875FF]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-2xl text-[var(--color-primary)]">
             ✓
           </div>
           <h1 className="mt-5 text-2xl font-bold text-[var(--text-primary)]">Check your email/mobile</h1>
@@ -39,7 +39,7 @@ export default function ClientPortalRequest() {
             <Button onClick={() => setSuccess(false)} variant="ghost">
               Request another link
             </Button>
-            <Link to="/" className="text-sm font-medium text-[#0875FF] hover:underline">
+            <Link to="/" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
               Back to home
             </Link>
           </div>
@@ -52,7 +52,7 @@ export default function ClientPortalRequest() {
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4 py-16">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6">
-          <span className="inline-flex items-center rounded-full border border-[#00AFFF]/30 px-3 py-1 text-xs font-medium text-[#0875FF]">
+          <span className="inline-flex items-center rounded-full border border-[var(--color-secondary)]/30 px-3 py-1 text-xs font-medium text-[var(--color-primary)]">
             Client Portal
           </span>
           <h1 className="mt-4 text-2xl font-bold text-[var(--text-primary)]">Request portal access</h1>
@@ -69,7 +69,7 @@ export default function ClientPortalRequest() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[#0875FF]"
+              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
@@ -79,7 +79,7 @@ export default function ClientPortalRequest() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+254 700 000 000"
-              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[#0875FF]"
+              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--color-primary)]"
             />
           </label>
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
@@ -88,7 +88,7 @@ export default function ClientPortalRequest() {
           </Button>
         </form>
         <div className="mt-6 text-center">
-          <Link to="/" className="text-sm font-medium text-[#0875FF] hover:underline">
+          <Link to="/" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
             Back to home
           </Link>
         </div>

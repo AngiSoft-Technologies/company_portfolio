@@ -164,10 +164,7 @@ const About = () => {
                             style={{
                                 fontSize: getResponsiveValue({ 360: '2rem', 420: '2.25rem', 475: '2.5rem', 575: '2.75rem', 768: '3rem', 900: '3.5rem', 1024: '4rem', 1366: '4.5rem', 1440: '5rem', 1920: '5.5rem' }),
                                 marginBottom: getResponsiveValue({ 360: '0.75rem', 420: '0.875rem', 475: '1rem', 575: '1.125rem', 768: '1.25rem', 900: '1.375rem', 1024: '1.5rem', 1366: '1.75rem', 1440: '1.875rem', 1920: '2rem' }),
-                                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text"
+                                color: 'var(--text-primary)'
                             }}
                         >
                             {headerTitle}
@@ -419,10 +416,7 @@ const About = () => {
                                                 className="font-bold"
                                                 style={{
                                                     fontSize: getResponsiveValue({ 360: '1.25rem', 420: '1.35rem', 475: '1.5rem', 575: '1.65rem', 768: '1.8rem', 900: '2rem', 1024: '2.2rem', 1366: '2.4rem', 1440: '2.6rem', 1920: '2.8rem' }),
-                                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                                    WebkitBackgroundClip: "text",
-                                                    WebkitTextFillColor: "transparent",
-                                                    backgroundClip: "text"
+                                                    color: colors.primary
                                                 }}
                                             >
                                                 {stat.prefix}<AnimatedCounter end={stat.value} valueType={stat.valueType || stat.type || 'plain'} />{stat.suffix || ''}

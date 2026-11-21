@@ -14,8 +14,9 @@ export const testimonialsController = {
     },
     async list(options: any = {}) {
         const { where, take, skip, ...rest } = options;
-        let query = prisma.orm.public.Testimonial.orderBy((t) => t.createdAt.desc());
+        let query: any = prisma.orm.public.Testimonial;
         if (where) query = query.where(where);
+        query = query.orderBy((t: any) => t.createdAt.desc());
         if (skip) query = query.offset(Number(skip));
         if (take) query = query.limit(Number(take));
         let rows: Awaited<ReturnType<typeof query.all>> = [];

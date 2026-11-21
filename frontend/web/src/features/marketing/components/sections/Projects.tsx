@@ -143,12 +143,7 @@ const Projects = () => {
                         {sectionCopy.title && (
                             <h2 
                                 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
-                                style={{
-                                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                    backgroundClip: "text"
-                                }}
+                                style={{ color: 'var(--text-primary)' }}
                             >
                                 {sectionCopy.title}
                             </h2>

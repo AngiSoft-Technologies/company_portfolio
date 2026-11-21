@@ -89,11 +89,7 @@ const Privacy = () => {
                     <ScrollReveal animation="fadeUp" delay={100}>
                         <h1 className="text-5xl md:text-7xl font-bold mb-6">
                             <span style={{ color: colors.text }}>Privacy </span>
-                            <span style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
+                            <span style={{ color: colors.primary }}>
                                 Policy
                             </span>
                         </h1>

@@ -1,0 +1,158 @@
+[
+  {
+    "id": "table.Holiday",
+    "label": "Create table \"Holiday\"",
+    "summary": "Creates table \"Holiday\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Holiday"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Holiday\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Holiday\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Holiday\"",
+        "sql": "CREATE TABLE \"public\".\"Holiday\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"date\" timestamp(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"isHalfDay\" bool DEFAULT false NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  CONSTRAINT \"Holiday_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Holiday\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Holiday\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.WorkSchedule",
+    "label": "Create table \"WorkSchedule\"",
+    "summary": "Creates table \"WorkSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "WorkSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"WorkSchedule\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WorkSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"WorkSchedule\"",
+        "sql": "CREATE TABLE \"public\".\"WorkSchedule\" (\n  \"createdAt\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"employeeId\" text NOT NULL,\n  \"endTime\" text,\n  \"id\" text NOT NULL,\n  \"isWorkingDay\" bool DEFAULT true NOT NULL,\n  \"startTime\" text,\n  \"updatedAt\" timestamp(3) NOT NULL,\n  \"weekday\" int4 NOT NULL,\n  CONSTRAINT \"WorkSchedule_pkey\" PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"WorkSchedule\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WorkSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Holiday.Holiday_date_key",
+    "label": "Create index \"Holiday_date_key\" on \"Holiday\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Holiday_date_key",
+        "table": "Holiday"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Holiday_date_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Holiday_date_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Holiday_date_key\"",
+        "sql": "CREATE UNIQUE INDEX \"Holiday_date_key\" ON \"public\".\"Holiday\" (\"date\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Holiday_date_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Holiday_date_key\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.WorkSchedule.WorkSchedule_employeeId_weekday_key",
+    "label": "Create index \"WorkSchedule_employeeId_weekday_key\" on \"WorkSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "WorkSchedule_employeeId_weekday_key",
+        "table": "WorkSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"WorkSchedule_employeeId_weekday_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WorkSchedule_employeeId_weekday_key\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"WorkSchedule_employeeId_weekday_key\"",
+        "sql": "CREATE UNIQUE INDEX \"WorkSchedule_employeeId_weekday_key\" ON \"public\".\"WorkSchedule\" (\"employeeId\", \"weekday\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"WorkSchedule_employeeId_weekday_key\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"WorkSchedule_employeeId_weekday_key\""
+        ]
+      }
+    ]
+  }
+]

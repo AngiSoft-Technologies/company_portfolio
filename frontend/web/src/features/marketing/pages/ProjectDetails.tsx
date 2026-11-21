@@ -269,11 +269,7 @@ const ProjectDetails = () => {
                             <ScrollReveal animation="fadeUp" delay={100}>
                                 <h1 
                                     className="text-4xl md:text-5xl font-bold mb-4"
-                                    style={{ 
-                                        background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                        WebkitBackgroundClip: 'text',
-                                        WebkitTextFillColor: 'transparent'
-                                    }}
+                                    style={{ color: 'var(--text-primary)' }}
                                 >
                                     {project.title}
                                 </h1>

@@ -1,127 +1,94 @@
 # AngiSoft Capability Map
 
-> **🔄 REGENERATE** — Useful structure; must be regenerated against current code, Prisma contract, and admin routes.<br>
-> **Obsolete derivation paths:** pre-restructure `backend/src/routes/`, `frontend/src/pages/**`, `frontend/src/admin/**`.<br>
-> **Current structure per `AGENTS.md`:** `backend/src/modules/**/routes`, `frontend/web/src/features/**`, `frontend/admin/src/features/**`.<br>
-> **False status claims to correct:**
-> - Product assignment (`ProductTeamMember`) exists
-> - Enquiry assignment (`ContactEnquiry.assigneeId`) exists
-> - Departments & Positions are relational entities (seeded)
-> - Industries, Solutions, Pricing admin UIs exist in `frontend/admin/src/app.tsx`
-> - Billing, Notifications, AI, Realtime, Files modules exist
-> - `BlogPost` and `StaffBlog` are separate publication models
-> Regenerate with explicit states: `Live`, `Partial`, `Legacy`, `Planned`, `Removed`. Preserve gap analysis as backlog input.<br>
-> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §6 (Content Coverage Ledger) and §4 (Phased Delivery).
-
-Every platform capability, mapped to real pages, models, endpoints, and current UI.
-Derived from `backend/src/routes/*.ts`, `backend/prisma/schema.prisma`, `frontend/src/pages/**`, `frontend/src/admin/**`.
+> **✅ REGENERATED 2026-11-20** against `backend/src/app.ts` route mounts, `backend/src/prisma/contract.prisma`, `frontend/web/src`, and `frontend/admin/src/app.tsx`. Supersedes the version derived from deleted `frontend/src/**` paths.
+>
+> States: **Live** = shipped and verified · **Partial** = works with known gaps · **Planned** = in the canonical plan, not built.
+> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md`. Content↔admin detail: `PUBLIC_CONTENT_ADMIN_MATRIX.md`.
 
 ---
 
-## Capability: Service Management
-- **Public pages:** `pages/services/ServicesList.jsx`, `pages/services/ServiceDetail.jsx`, `pages/Pricing.jsx`
-- **Models:** `Service`, `ServiceCategory`, `ServicePricing`(via JSON on Service), `ServiceFaq`
-- **Public endpoint:** `GET /api/services`, `GET /api/services/:slug`, `GET /api/service-categories`
-- **Admin endpoint:** `GET/POST /api/services/admin`, `PUT /api/services/:id`, `DELETE /api/services/:id` (`routes/services.ts`)
-- **Current admin UI:** `admin/crud/ServicesAdmin.jsx`, `admin/crud/ServiceCategoriesAdmin.jsx`, `admin/crud/FaqsAdmin.jsx`
-- **Staff responsibilities:** create/update service content
-- **Permissions:** `services.view`, `services.create`, `services.update`, `services.publish`, `services.manage_pricing`, `services.manage_faqs`, `services.archive`
-- **Related products:** n/a
-- **Status:** Implemented; PUT only `requireAuth` (gap — see audit §6.1)
-- **Missing:** pricing-packages CRUD tied to a `ServicePricing` model (today pricing is loose JSON on `Service.pricing`/`features`).
+## Public marketing site (`frontend/web`)
 
-## Capability: Product Management
-- **Public pages:** `pages/Products.jsx`, `pages/ProductDetail.jsx`, `pages/products/{PetroFlow,DukaFlow,KejaLink,AngiTunes}.jsx`
-- **Models:** `Product`, `ProductFaq`, `ProductInquiry`
-- **Public endpoint:** `GET /api/products`, `GET /api/products/:slug`, `GET /api/product-faqs`, `GET /api/product-inquiries`
-- **Admin endpoint:** `routes/products.ts` (`GET /admin`, `POST/PUT/DELETE`)
-- **Current admin UI:** `admin/crud/ProductsAdmin.jsx`, `admin/crud/ProductFaqsAdmin.jsx`
-- **Staff responsibilities:** update assigned product, manage product media, publish product updates
-- **Permissions:** `products.view`, `products.view_assigned`, `products.update`, `products.update_assigned`, `products.publish`, `products.manage_media`, `products.archive`
-- **Status:** Implemented; **no product→team relation** (no `ProductTeamMember`). Assignment cannot be expressed today.
-- **Missing:** team/assignment model, product-update feed.
+| Capability | Public surface | Data source | State |
+|---|---|---|---|
+| Home / hero / sections | `/`, CMS-driven sections | `/api/site/*`, `/api/company-stats` | Live |
+| About | `/about` | `/api/site/about`, `/api/about-sections` | Live |
+| Services catalogue + detail | `/services`, `/services/:slug` | `/api/services`, `/api/service-categories` | Live — cards carry CMS imagery |
+| Industries list + detail | `/industries`, `/industries/:slug` | `/api/site/industries`, `/api/projects` (filtered by `industry`) | Live — "Work in {industry}" project strip added |
+| Solutions | `/solutions` | `/api/solutions` | Live — seeded 2026-11-20 |
+| Projects | `/projects`, `/project/:slug` | `/api/projects` | Live — seeded with real product work |
+| Pricing | `/pricing` | `/api/pricing-packages`, `/api/site/pricing`, service JSON | Live — `PricingPackage` model + admin CRUD + public package cards on `/pricing` |
+| Products | `/products`, `/products/:slug` | `/api/products`, `/api/product-faqs` | Live (PetroFlow, DukaFlow, KejaLink, AngiTunes) |
+| Blog / Learning | `/blog`, `/blog/:slug` | `/api/blogs` | Live |
+| Staff directory + portfolios | `/staff`, `/staff/:slug` | `/api/staff`, `/api/staff/:usernameOrId` | Partial — Portfolio Studio editor shipped (`EmployeePortfolioConfig` + `/workspace/portfolio-studio`); theme/layout templates, drag ordering, print/PDF pending |
+| Careers | `/careers` | `/api/careers` | Live |
+| Contact + pitch-an-idea | `/contact` | `POST /api/contact-enquiries` (`idea` intent) | Live |
+| Booking flow | `/book`, tracking | `/api/bookings` | Live |
+| Legal | `/privacy`, `/terms` | static | Partial — not CMS-driven |
+| Offices/locations | `/contact` | `/api/offices` (+ `site_contact` fallback) | Live — `Office` model + admin CRUD + `ContactOffices` cards |
 
-## Capability: Project / Portfolio Management
-- **Public pages:** `pages/ProjectLists.jsx`, `pages/ProjectDetails.jsx`
-- **Models:** `Project`, `ProjectEmployee`, `ProjectMilestone`, `ProjectActivity`, `ProjectComment`, `ProjectDeliverable`, `ClientProject`
-- **Public endpoint:** `GET /api/projects`
-- **Admin endpoint:** `routes/projects.ts`, `routes/client-projects.ts`
-- **Current admin UI:** `admin/crud/ProjectsAdmin.jsx`, `admin/ClientProjectsManagement.jsx`
-- **Staff responsibilities:** contribute to assigned projects, post progress
-- **Permissions:** `projects.view_all`, `projects.view_assigned`, `projects.update_assigned`, `projects.assign_team`, `projects.add_progress`, `projects.publish_public_info`
-- **Status:** `ProjectEmployee` join exists (assignment works for projects).
+## Client portal (`frontend/web` portal routes)
 
-## Capability: Booking Operations
-- **Public pages:** `pages/Booking.jsx`, `pages/bookings/BookingProgress.jsx`, `pages/bookings/BookingHistory.jsx`, `pages/bookings/BookingLookup.jsx`
-- **Models:** `Booking`, `BookingEvent`, `Payment`, `Note`, `Quotation`(via JSON on details), `File`
-- **Public endpoint:** `POST /api/bookings`, `GET /api/bookings/track/:token`, `GET /api/bookings/lookup`
-- **Admin endpoint:** `routes/bookings.ts` (`/admin`, `/admin/:id/stage`, `/admin/:id/status`, `/admin/:id/events`, `/:id/review`)
-- **Current admin UI:** `admin/BookingsManagement.jsx`
-- **Staff responsibilities:** handle assigned bookings, advance stage, message customer
-- **Permissions:** `bookings.view_all`, `bookings.view_assigned`, `bookings.update_assigned`, `bookings.change_stage`, `bookings.add_progress`, `bookings.message_customer`, `bookings.create_quotation`, `bookings.complete`, `bookings.cancel`
-- **Status:** Booking has `assignedToId` → `Employee` (assignment works). Stage machine in `routes/bookings.ts` (`STAGE_ORDER`).
-- **Missing:** full enquiries→booking conversion workflow, quotation model.
+| Capability | Surface | State |
+|---|---|---|
+| Client auth (magic-link/token) | `/portal/request`, `/portal/access` via `ClientAccessToken` | Live |
+| Project tracking | `/portal`, `/portal/projects/:id` (milestones, activities, comments, deliverables) | Live |
+| Booking follow-up | `/portal/bookings` + dashboard booking cards | Live |
+| Billing visibility | `/portal#billing` — quotes + invoices via `/api/client-portal/{quotes,invoices}` | Live |
+| Projects list | `/portal#projects` via `/api/client-portal/projects` | Live |
+| Testimonial submission | `/portal#feedback` → `POST /api/client-portal/testimonials` (moderated) | Live |
+| Invoice payment | `/portal#billing` → `POST /api/client-portal/invoices/:id/pay` (MPESA/PAYHERO STK, PAYSTACK redirect; settles invoice via `applyPaymentOutcome`) | Live |
+| Payments | payment intents via `/api/payments` | Partial — no portal payment actions yet |
+| Renewal flows | — | Planned — quotes/invoices visible; no recurring-renewal workflow |
 
-## Capability: Publications (Blog)
-- **Public pages:** `pages/BlogList.jsx`, `pages/blog/BlogDetail.jsx`
-- **Models:** `BlogPost`
-- **Public endpoint:** `GET /api/blogs`, `GET /api/blogs/:slug`
-- **Admin endpoint:** `routes/blogs.ts`, `routes/staff-blogs.ts` (`/my`, POST/PUT/DELETE own)
-- **Current admin UI:** `admin/crud/BlogAdmin.jsx`
-- **Staff responsibilities:** draft, submit for review, own-author edit
-- **Permissions:** `publications.view_own`, `publications.create`, `publications.update_own`, `publications.submit_review`, `publications.publish`, `publications.archive`
-- **Status:** `staff-blogs` already scopes by author; PUT only `requireAuth`.
+## Staff operating system (`frontend/admin`)
 
-## Capability: Enquiries & Contact
-- **Public pages:** `pages/Contact.jsx`
-- **Models:** `ContactEnquiry`, `ProductInquiry`
-- **Public endpoint:** `POST /api/contact-enquiries`, `POST /api/product-inquiries`
-- **Admin endpoint:** `routes/contact-enquiries.ts`, `routes/product-inquiries.ts`
-- **Permissions:** `enquiries.view_all`, `enquiries.view_assigned`, `enquiries.respond`, `enquiries.convert_to_booking`, `enquiries.close`
-- **Status:** Implemented; assignment not yet modeled (no assignee FK on `ContactEnquiry`).
+| Capability | Surface | Permissions | State |
+|---|---|---|---|
+| Dashboard + workspace widgets | `/`, `/workspace`, `/dashboard` | `effective-access` driven | Live |
+| Permission registry + tri-state grants | `/staff-access`, `/settings/roles` | `staff.assign_permissions`, `administration.roles` | Live — 123 canonical keys |
+| Staff management | `/staff` | `staff.*` | Partial — dept/pos via StaffAccess |
+| Content CMS | blogs, services, products, industries, solutions, FAQs, careers, testimonials, sections, about, pricing, announcements, company-stats | per-content keys | Live |
+| Bookings ops | `/bookings` | `bookings.*` | Live |
+| Client projects | `/client-projects` | `client_projects.*` | Live |
+| Sales pipeline | `/opportunities`, `/quotes`, `/invoices` | `opportunities/quotes/invoices.*` | Live |
+| Contacts/enquiries | `/contacts` | `enquiries.*` | Live |
+| Chatbot conversations | `/chat` | `chatbot.view_all` | Live |
+| Payments console | `/payments` | `payments.*` | Live |
+| AI config | `/ai` | `ai_config.*` | Live |
+| AI assist | `/ai-assist` | endpoint-mirrored (`leads.view`, `support_tickets.view`, `publications.create`, `ai_config.view`) | Live — lead scoring, ticket triage, content suggestions, diff review via `POST /api/admin/ai-assist/*` (`services/aiAssist.ts`, provider-agnostic, JSON-only output, unparseable/disabled → 502) |
+| File uploads | `/uploads` | `media.*` | Live |
+| Site settings | `/settings` | `administration.settings`, `pages.update_*` | Live |
+| Audit log | `/audit-log` | `administration.audit` (`GET /api/admin/audit-logs`, filters + pagination) | Live |
+| Cross-department reports | `/reports` | `administration.audit` (`GET /api/admin/reports/overview` — pipeline/delivery/finance/satisfaction aggregates) | Live |
+| Client renewals | `/renewals` | `client_projects.view_all` (`GET /api/admin/renewals` health rollup; `POST /api/admin/renewals/remind` — client notification + audit, 30-day cooldown via `RENEWAL_REMINDER_COOLDOWN_DAYS`) | Live — derived health (`renewal_due`/`at_risk`/`active`), window `RENEWAL_WINDOW_DAYS` (default 90) |
+| Staff notifications | bell in admin header → `/api/notifications` (poll 30s, mark-read) | booking status changes + payment receipts via `createNotification` | Live |
+| Newsletter admin | `/newsletters` | `newsletters.*` | Live — campaigns CRUD/send/stats (`/api/newsletters*`) |
+| Surveys admin | `/surveys` | `surveys.*` | Live — builder, activate/close, responses (`/api/surveys*`) |
+| Support tickets admin | `/support-tickets` | `support_tickets.*` | Live — queue, SLA breach badge, reply/internal notes, status/priority (`/api/support-tickets*`) |
+| Product inquiries admin | `/product-inquiries` | `product_inquiries.*` | Live — list + status workflow (`/api/product-inquiries/admin`) |
+| Expenses | `/expenses` | `expenses.*` (scoped: own drafts for submitters, all for `expenses.view`) | Live — draft→submitted→approved/rejected→paid; approval above `APPROVAL_THRESHOLD_EXPENSE` needs `expenses.approve`, below needs `expenses.update`; self-review blocked; reviewer notified (`/api/expenses*`) |
+| Leave requests | `/leave-requests` | `leave.request`/`leave.view`/`leave.approve` | Live — request/cancel own, review queue; approval above `APPROVAL_THRESHOLD_LEAVE_DAYS` needs `leave.approve` (`/api/leave-requests*`) |
+| Attendance | `/attendance` | `attendance.record`/`attendance.view`/`attendance.manage` | Live — self check-in/check-out + own schedule (`/api/attendance/check-in|check-out|me|me/schedule`), admin list w/ employee names + date/employee filters, CRUD (`/api/attendance/admin*`), audit-logged; statuses present/absent/leave/remote/holiday; company holidays CRUD + per-employee weekly `WorkSchedule` replace-all API + per-employee aggregate report (`/api/attendance/admin/report` — status counts + hours worked over a range) (`/api/attendance/admin/holidays*`, `/api/attendance/admin/schedules*`, `/api/attendance/admin/report`) with `AttendanceAdmin` UI |
+| Payroll | `/payroll` | `payroll.view`/`payroll.manage`/`payroll.approve`/`payroll.mark_paid` | Live — own payslips `/api/payroll/me`; admin CRUD + approve (self-approval blocked) + mark-paid state machine draft→approved→paid, net = gross − deductions auto-calc, employee notifications + audit logs; payroll runs (`PayrollRun` + `Payslip.payrollRunId`, migration `20261120T1338` applied 2026-11-20): one run per period (unique), payslips join draft runs only and period must match, `POST /runs/:id/complete` (`payroll.approve`) snapshots payslipCount/gross/deduction/net totals, cancel draft-only (`payroll.manage`); runs table + detail modal + run-link select in `/payroll` |
+| Approvals | `/approvals` | `approvals.view`/`approvals.manage`/`approvals.respond` | Live — multi-step chains on `ApprovalRequest` (migration `20261120T1319`, applied 2026-11-20): sequential permission-gated steps, self-decision blocked, `?mine=1` "waiting on me" queue, reject fails chain, requester/manager cancel, step-decider + requester notifications, audit logs (`/api/approvals*`) |
 
-## Capability: Reviews / Testimonials
-- **Models:** `Testimonial`, `ReviewReaction`
-- **Public endpoint:** `GET /api/testimonials`
-- **Admin endpoint:** `routes/testimonials.ts` (approve/reject/feature/reply)
-- **Permissions:** `reviews.moderate`, `reviews.reply`, `reviews.publish`, `reviews.feature`
-- **Status:** Implemented; no user-submitted review create flow (only testimonials seeded by admin).
+## Backend modules (`backend/src/modules`)
 
-## Capability: Staff Profiles
-- **Models:** `Employee`, `EmployeePortfolioItem`, `EmployeeProfileStat`, `Certification`, `EmployeeEducationItem`
-- **Public endpoint:** `GET /api/staff`, `GET /api/staff/:usernameOrId`
-- **Admin endpoint:** `routes/employee-profiles.ts`, `routes/certifications.ts`
-- **Current admin UI:** `admin/StaffManagement.jsx` (role only)
-- **Staff self-service:** `admin/StaffDashboard.jsx`
-- **Permissions:** `profile.update_own`, `profile.manage_visibility_own`, `staff.assign_department`, `staff.assign_position`, `staff.assign_permissions`
-- **Status:** Profile data rich; **no department/position/seniority as relational entities** (only free-text `department`, `seniorityLevel`, `publicTitle` strings on `Employee`).
+`identity` (auth, JWT+refresh, 2FA, employees, permissions, staff-dashboard, leave-requests, attendance, payroll) · `crm` (leads, opportunities, quotes, invoices, contact-enquiries, newsletters, support-tickets, renewals) · `projects` (projects, client-projects) · `bookings` (bookings, events, tracking) · `cms` (services, categories, blogs, staff-blogs, products, product-faqs, industries, solutions, faqs, testimonials, careers, announcements, company-stats, home/about sections, site settings, certifications) · `billing` (payments, payment-console, payouts, wallets, expenses) · `files` (uploads → Tigris/S3) · `notifications` · `ai` (chatbot, ai-config, ai-assist) · `analytics`.
 
-## Capability: Page Content
-- **Models:** `WebContent`(home/about via sections), `HomeSection`, `AboutSection`, `CompanyStat`, `Announcement`, `SiteSettings`, `Navigation`
-- **Admin endpoint:** `routes/site.ts`, `routes/home-sections.ts`, `routes/about-sections.ts`, `routes/company-stats.ts`, `routes/announcements.ts`, `routes/settings.ts`
-- **Permissions:** `pages.update_home`, `pages.update_about`, `pages.update_contact`, `pages.update_footer`, `pages.update_navigation`, `pages.publish`
-- **Status:** Implemented across many small routers.
+All route guards use `requireAccess(permission, fallbackRoles)` or `requirePermission`; response shaping uses `has()` from `effectivePermissions` — explicit DENY precedes every grant path.
 
-## Capability: Media / Uploads
-- **Models:** `File`, `MediaAsset`(if present)
-- **Admin endpoint:** `routes/uploads.ts`, `routes/admin.ts` upload, `admin/FileUpload*.jsx`
-- **Permissions:** `media.upload`, `media.update_own`, `media.delete_any`
-- **Status:** S3 + local upload both present; admin upload requires `requireAdminOrStaff`.
+## Planned (canonical plan, not yet built)
 
-## Capability: Careers
-- **Models:** `JobPosting`
-- **Admin endpoint:** `routes/careers.ts` (`/admin`, CRUD)
-- **Permissions:** `roles`-guarded by ADMIN/HR/MANAGER today (transition to `staff.assign_*` / hiring permission)
-- **Status:** Implemented; hiring workflow not connected to staff pipeline.
-
-## Capability: CRM — Clients & Support
-- **Models:** `Client`, `SupportTicket`, `ClientProject`, `ClientAccessToken`
-- **Admin endpoint:** `routes/client-projects.ts`, `routes/support-tickets.ts`, `routes/leads.ts`
-- **Permissions:** `bookings.message_customer`, `enquiries.respond`
-- **Status:** Client portal exists (`pages/ClientDashboard.jsx`, `ClientPortalAccess`).
-
-## Capability: Analytics
-- **Models:** `PageView`, `AuditLog`(via `services/audit.ts`)
-- **Admin endpoint:** `routes/admin.ts /dashboard/stats`
-- **Permissions:** `analytics.view_dashboard`, `analytics.view_bookings`
-- **Status:** Basic dashboard counts only; no content/enquiry/publication analytics.
+- **Phase 3 — Portfolio Studio (mostly complete):** `EmployeePortfolioConfig` model + migration `20261120T1115` (APPLIED 2026-11-20 via Neon MCP — sandbox cannot reach Neon directly; `refs/db.json` advanced to post-migration contract), `/api/employee-profiles/portfolio-config*` endpoints, `PortfolioStudio` editor at `/workspace/portfolio-studio` with drag-and-drop ordering, theme/layout consumed by public `/staff/:slug`, publish/version flow with `versionHistory` snapshots (capped at 20) shown in the editor, `PortfolioApprovals` moderation screen (`/portfolio-approvals`), SEO title/meta on staff pages, print CSS. Live preview wireframe, structured testimonials + featured-work editors, and version-history restore shipped; `featuredWork`, `caseStudies`, and a `certifications` override render publicly via `draftConfig.*` (featured: title/client/summary/url/tags; case studies: title/client/url/challenge/approach/outcome; certifications: title/issuer/issuedAt/credentialUrl — overrides profile data when non-empty) with structured admin editors, all section order/visibility/custom-title aware. The `cv` section renders a download link from `draftConfig.cvUrl` (public-facing, external `target=_blank` link). Phase 3 structured blocks are complete.
+- **Client portal:** billing visibility (quotes/invoices), projects list, profile endpoint, moderated testimonial submission, invoice payment initiation (`POST /api/client-portal/invoices/:id/pay` → MPESA/PAYHERO/PAYSTACK; `applyPaymentOutcome` settles invoices idempotently), client notifications (`GET/POST /api/client-portal/notifications*`, rendered on the dashboard), and renewal flows (`/api/admin/renewals` + `/renewals` screen + reminder → client notification) shipped, plus recurring automation via `workers/renewalMonitor.ts` (6h sweep, `RENEWAL_MONITOR_INTERVAL_MS`, auto-notifies `renewal_due` clients sharing the manual cooldown).
+- **Phase 5.5/5.7 performance:** sourcemaps disabled in prod builds; reduced-motion global; route-level code splitting in BOTH apps — admin entry chunk 227 kB → **37 kB** (every screen now a 1–11 kB lazy chunk), web entry 112 kB; vendor chunks (`vendor-react` ~261 kB, `vendor-lib`, `vendor-icons`, `vendor-mui`) shared; zero bundled raster assets (all imagery CDN/Tigris runtime → image pipeline N/A by design); per-route prerender HTML (5.6). Bundle budgets enforced via `pnpm perf:budget` (`scripts/check-bundle-budget.mjs` — per-app entry/chunk/vendor ceilings, currently all green). MUI DataGrid evaluated and deferred: shared `AdminUI` table primitives cover current needs; adopt `@mui/x-data-grid` only if a screen needs server-side sort/filter at scale.
+- **Phase 5.6 prerender:** DONE — `vite.config.ts` `closeBundle` plugin emits per-route `dist/<route>/index.html` from `router/prerender.ts` with title/meta/OG/Twitter/JSON-LD (Organization+WebSite on `/`, WebPage elsewhere).
+- **Phase 5.1 lifecycle tests:** PARTIAL — `test/lifecycle.spec.ts` covers booking→project(+milestones)→invoice(draft→sent)→payment SUCCEEDED→invoice paid + booking `DEPOSIT_PAID`→renewal-health transitions (`renewal_due`/`at_risk`/`active` via exported `computeClientHealth`), all on the in-memory Prisma facade. Route×theme sweep (partial, web public routes done): web public routes `/`, `/about`, `/services`, `/pricing`, `/blog`, `/staff`, `/contact`, `/careers` verified in dark+light via Playwright — `data-theme` flips correctly, bg/fg contrast tokens resolve, zero page errors (content gaps were backend-unavailable in sandbox, not theme bugs); admin sweep pending auth/backend. Browser-level E2E shipped (`e2e/` Playwright suite — `pnpm test:e2e`; 11 specs across web+admin projects against the real Vite dev servers with `/api/**` stubbed via `page.route`: homepage hero + theme toggle, services/pricing/contact data rendering, 3-step booking submit → redirect, portal magic-link → dashboard, admin login → dashboard, auth-guard redirect, payroll screen data, admin theme toggle + profile PUT). Remaining Phase 5: Lighthouse budgets, DataGrid adoption, docs consolidation, admin route×theme sweep against live backend.
+- **Phase 4 progress:** workflow triggers shipped (booking→client project on accept; payment→invoice settlement + staff notifications on booking status/payment receipt; SLA breach→alert via `workers/slaMonitor.ts` — priority-based thresholds, `slaBreachedAt` dedupe, notifies assignee or ADMINs, re-arms on reopen; migration `20261120T1115` adds `SupportTicket.slaBreachedAt`). Approval rules engine v1 shipped (`services/approvalRules.ts` — env-tunable thresholds; quote sends ≥ `APPROVAL_THRESHOLD_QUOTE` require `quotes.approve`). Cross-department reporting shipped (`GET /api/admin/reports/overview` + `/reports` screen). AI assistance shipped (Phase 4.5: `ai-assist` router + `AiAssist` admin screen — lead scoring, support triage, content suggestions, diff review, all routed through `loadAIConfig`/`aiComplete` with lenient JSON extraction; per-endpoint permission mirrors the assisted domain). Client renewal/account-health tracking shipped (`/api/admin/renewals` derived health + reminder with cooldown + client portal notifications). Dashboard widgets (4.3) confirmed live — `Workspace` renders the server-driven `widgets`/`assignmentCounts` from `/api/staff-dashboard/effective-access`. Missing admin UIs shipped (newsletters, surveys, support tickets, product inquiries). `/api/support-tickets*` routes tightened from bare `requireAuth` to granular `support_tickets.*` permissions. Phase 4.2 approval wiring completed: `Expense` + `LeaveRequest` models (migration `20261120T1115`, applied 2026-11-20), `/api/expenses*` and `/api/leave-requests*` routes with status machines wired into `approvalRules.ts` (expense amount threshold → `expenses.approve`, leave days threshold → `leave.approve`), new `expenses.*`/`leave.*` permission keys (STAFF gets request/create, HR gets full set), admin screens `/expenses` + `/leave-requests`, reviewer notifications + audit logs. Multi-step approval chains shipped: `ApprovalRequest` model (ordered `steps` JSON, entityType/entityId link, pending→approved/rejected/cancelled), `/api/approvals*` router (create gated by `approvals.manage`, sequential decide gated by `approvals.respond` + per-step permission via effective permissions, self-decision 403, `?mine=1` queue, cancel by requester/`approvals.manage`), `ApprovalsAdmin` screen with step-builder create modal, 6 route specs green. Phase 4 is now functionally complete.
+- **Pricing package model:** SHIPPED — `PricingPackage` entity (name/slug/description, optional `serviceId` link, price+currency, billingPeriod, features[], highlighted, published, sortOrder) in contract + schema; migration `20261120T1232` APPLIED to production Neon 2026-11-20 via MCP transaction; `GET /api/pricing-packages` (published only, service title included when published), admin CRUD at `/api/pricing-packages/admin` gated by `services.manage_pricing` with audit logs; `PricingPackagesAdmin` screen at `/pricing-packages`; public `/pricing` renders a "Ready-made packages" section fed by `usePricing` → `buildPricingModel`. `Service.pricing` JSON + `site_pricing` remain as legacy editorial sources.
+- **Office/Location model:** SHIPPED — `Office` entity (name/slug, addressLine/city/country, phone/email, `hours[]` JSON, mapUrl, isHeadquarters, published, sortOrder); migration `20261120T1253` APPLIED to production Neon 2026-11-20; `GET /api/offices` (published) + admin CRUD `/api/offices/admin` gated by `pages.update_contact` with audit logs; `OfficesAdmin` screen at `/offices`; public `/contact` renders `ContactOffices` cards (renders nothing when no published offices — `site_contact` copy remains the fallback).
+- **ERP/HR expansions:** attendance + payroll v1 SHIPPED — `AttendanceRecord` + `Payslip` models (migration `20261120T1302`, applied to production Neon 2026-11-20); `/api/attendance` (self check-in/check-out + `/me`, admin list/CRUD gated by `attendance.*`), `/api/payroll` (own payslips, admin CRUD, draft→approved→paid with self-approval block, auto net calc, notifications); `AttendanceAdmin` (`/attendance`) + `PayrollAdmin` (`/payroll`) screens; new `attendance.*`/`payroll.*` permission keys (HR full set, STAFF `attendance.record`); payroll runs shipped (`PayrollRun` period batches with total snapshots, migration `20261120T1338`); attendance depth v1 — `Holiday` + `WorkSchedule` models (migration `20261120T1343`, applied to production Neon), holiday CRUD + replace-all weekly schedule API + per-employee aggregate report endpoint + bulk import (`POST /api/attendance/admin/import` — JSON rows or CSV paste, upserts by employee+workDate, source `import`, per-row error collection, 500-row cap), `AttendanceAdmin` holiday/schedule/report/import UI. Salary structures shipped (`SalaryStructure` per-employee basic + allowances/deductions with statutory flags, migration `20261120T1357` applied to production Neon; `PUT/GET/DELETE /api/payroll/admin/structures*` + `POST /api/payroll/admin/generate` — bulk-creates draft payslips for a period, gross = basic + allowances, net = gross − deductions, optional draft-run linking with period match, skips existing employee+period); `PayrollAdmin` structure editor + generate controls. Statutory engine shipped (`services/statutory.ts` — PAYE progressive bands + relief, SHIF, NSSF, Housing Levy; all rates/thresholds env-tunable via `PAYROLL_*`; `GET /api/payroll/admin/statutory-preview?gross=` + `applyStatutory` flag on `/admin/generate` replaces structure-flagged statutory lines with computed ones while keeping non-statutory lines); `PayrollAdmin` statutory checkbox + preview. Payslip delivery shipped — `POST /api/payroll/admin/:id/send` emails an itemized payslip summary via the email queue (approved/paid only, drafts 409, audit-logged) with a "Send" action per non-draft row. Schedule-aware derivation shipped (`services/attendanceDerive.ts` shared by `POST /api/attendance/admin/derive` and `workers/attendanceDerive.ts` — 6h sweep deriving *yesterday*: holiday → 'holiday' records, scheduled working day with no check-in → 'absent', idempotent, late check-in self-corrects to 'present'; registered in API + worker processes; `AttendanceAdmin` derive date+button). 14 payroll + 11 attendance route specs green. Salary payout shipped — `POST /api/payroll/admin/:id/pay-out` (`payroll.mark_paid`) disburses an approved payslip's net via PayHero `withdraw` (mobile money, `networkCode` default MPESA, phone from request or `Employee.phone`): creates an idempotent `Payout` row keyed `SAL-<payslipId>` (unique reference → retry-safe, returns `reused:true`), marks the payslip `paid`+`paidAt` on success, notifies the employee, audit-logs `payslip.pay_out`; provider unconfigured → 503, provider failure → payout `FAILED` + 502 with payslip left `approved`; `PayrollAdmin` "Pay out" action on approved rows (phone prompt prefilled from employee record). ERP/HR domain complete per plan §4.
+- **Phase 5.2 security hardening (partial):** unsigned payment callbacks hardened — M-Pesa (`/api/payments/mpesa/callback`) and PayHero (`/api/payments/payhero/callback`) now support optional shared-secret gates (`MPESA_CALLBACK_TOKEN` / `PAYHERO_CALLBACK_TOKEN` via `?token=` or `X-*-Token` header) and cross-check callback amounts against the stored `Payment` row before settling; Stripe/Paystack webhooks remain signature-verified. New `publicFormLimiter` (30 req/10min/IP) applied to all public unauthenticated POST endpoints: booking create + reference messages/files/actions, product inquiries, newsletter subscribe, survey responses, client-portal request-link/session, chatbot `/chat`. Auth surface verified: uploads mutations `requireAuth` + owner checks, client portal `requireClientAuth` + ownership scoping, support tickets granular `support_tickets.*`, leave/expense approval rules with self-review blocks, CSRF double-submit + helmet + CORS credentials on all `/api`. Route×theme sweep (partial, web public routes done): web public routes `/`, `/about`, `/services`, `/pricing`, `/blog`, `/staff`, `/contact`, `/careers` verified in dark+light via Playwright — `data-theme` flips correctly, bg/fg contrast tokens resolve, zero page errors (content gaps were backend-unavailable in sandbox, not theme bugs); admin sweep pending auth/backend. Browser-level E2E shipped (`e2e/` Playwright suite — `pnpm test:e2e`; 11 specs across web+admin projects against the real Vite dev servers with `/api/**` stubbed via `page.route`: homepage hero + theme toggle, services/pricing/contact data rendering, 3-step booking submit → redirect, portal magic-link → dashboard, admin login → dashboard, auth-guard redirect, payroll screen data, admin theme toggle + profile PUT). Remaining Phase 5: Lighthouse budgets, DataGrid adoption, docs consolidation, admin route×theme sweep against live backend.
+- **Phase 5.4 observability (partial):** audit-log surfacing (`AuditLogViewer` + `GET /api/admin/audit-logs`), Sentry init + `captureException`/`captureMessage`, `suspiciousAuthEvent` now forwards warnings to Sentry, and a structured slow-request log (`type:"slow_request"` JSON line, `SLOW_REQUEST_MS` threshold, default 1s) on every API request. Backup/restore drills DONE — `docs/BACKUP_RESTORE.md`; found + fixed a real gap (no snapshot schedule → set daily 03:00 UTC/30d retention on Neon `production`); snapshot→branch restore drill verified with matching row counts. E2E coverage: backend lifecycle specs + browser-level Playwright suite (`e2e/`, 11 specs green).

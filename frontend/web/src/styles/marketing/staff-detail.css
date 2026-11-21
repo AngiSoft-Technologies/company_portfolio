@@ -1802,3 +1802,131 @@ li {
     display: none;
   }
 }
+
+/* ==========================================================================
+   Portfolio Studio themes + compact layout (Phase 3)
+   Scoped token overrides — the page keeps consuming the same variables.
+   ========================================================================== */
+
+.staff-portfolio--theme-dark {
+  --bg-primary: var(--color-abyss);
+  --surface: var(--color-navy);
+  --card-bg: color-mix(in srgb, var(--color-navy) 94%, transparent);
+  --border: color-mix(in srgb, var(--color-white) 14%, transparent);
+  --text-primary: var(--color-off-white);
+  --text-secondary: color-mix(in srgb, var(--color-off-white) 82%, transparent);
+  --text-muted: color-mix(in srgb, var(--color-off-white) 62%, transparent);
+  color-scheme: dark;
+}
+
+.staff-portfolio--theme-light {
+  --bg-primary: var(--color-off-white);
+  --surface: var(--color-white);
+  --card-bg: var(--color-white);
+  --border: color-mix(in srgb, var(--color-navy) 12%, transparent);
+  --text-primary: var(--color-navy);
+  --text-secondary: color-mix(in srgb, var(--color-navy) 78%, transparent);
+  --text-muted: color-mix(in srgb, var(--color-navy) 58%, transparent);
+  color-scheme: light;
+}
+
+.staff-portfolio--compact .staff-portfolio-hero {
+  padding-top: clamp(20px, 3vw, 40px);
+  padding-bottom: clamp(30px, 4vw, 56px);
+}
+
+.staff-portfolio--compact .staff-spotlight-hero {
+  padding-top: clamp(20px, 3vw, 40px);
+  padding-bottom: clamp(30px, 4vw, 56px);
+}
+
+/* ==========================================================================
+   Print / PDF (Phase 3.6)
+   ========================================================================== */
+
+@media print {
+  .staff-portfolio-back,
+  .staff-portfolio-nav,
+  .staff-template-switch,
+  .staff-portfolio-hero-top {
+    display: none !important;
+  }
+
+  .staff-portfolio,
+  .staff-portfolio--theme-dark,
+  .staff-portfolio--theme-light {
+    background: var(--color-white);
+    color: var(--color-navy);
+  }
+
+  .staff-portfolio-hero,
+  .staff-spotlight-hero {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-navy) 20%, transparent);
+    padding: 0 0 24px;
+  }
+
+  .staff-portfolio-section,
+  section[id^="portfolio-"] {
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: none;
+  }
+}
+
+/* Portfolio Studio — testimonials block (draftConfig.testimonials) */
+.staff-testimonial-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.staff-testimonial-item {
+  margin: 0;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.staff-testimonial-star {
+  color: var(--color-accent);
+  font-size: 0.9rem;
+}
+
+.staff-testimonial-item blockquote {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.staff-testimonial-item figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.staff-testimonial-item figcaption strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.staff-testimonial-item figcaption span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.staff-featured-work-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.staff-featured-work-link:hover .staff-project-title {
+  color: var(--color-primary);
+}

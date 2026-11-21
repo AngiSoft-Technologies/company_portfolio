@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { gContactLimiter } from '../../../shared/middleware/rateLimiter';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
@@ -26,6 +27,7 @@ const ENQUIRY_TYPES = [
     'support',
     'partnership',
     'careers',
+    'idea',
     'general',
 ] as const;
 
@@ -248,7 +250,9 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
         try {
             const existing = await prisma.orm.public.ContactEnquiry.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
-            const isPrivileged = ['ADMIN', 'MARKETING', 'SALES', 'SUPER_ADMIN'].includes(req.user?.role ?? '');
+            const ctx = req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+            const isPrivileged = (ctx ? await hasPermission(ctx, 'enquiries.view_all') : false)
+                || ['ADMIN', 'MARKETING', 'SALES', 'SUPER_ADMIN'].includes(req.user?.role ?? '');
             if (!isPrivileged && existing.assignedStaffId !== req.user?.sub) {
                 return res.status(403).json({ error: 'Not assigned to this enquiry' });
             }

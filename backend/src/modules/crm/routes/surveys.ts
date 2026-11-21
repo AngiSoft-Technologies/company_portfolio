@@ -4,6 +4,7 @@ import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
+import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 
 const createSchema = z.object({
     title: z.string().min(1),
@@ -87,7 +88,7 @@ export default function surveysRouter(prisma: Db = db) {
         res.json(survey);
     });
 
-    router.post('/:id/respond', async (req, res) => {
+    router.post('/:id/respond', publicFormLimiter, async (req, res) => {
         const { answers, respondentId } = req.body;
         if (!answers) return res.status(400).json({ error: 'Answers required' });
         const survey = await prisma.orm.public.Survey.where({ id: req.params.id }).first();

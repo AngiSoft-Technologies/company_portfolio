@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { isRole, requireAccess, requirePermission } from '../../../shared/middleware/roles';
+import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { servicesController } from '../controllers/servicesController';
 
 const createSchema = z.object({
@@ -23,10 +24,14 @@ const updateSchema = createSchema.partial();
 export default function servicesRouter(prisma: Db = db) {
     const router = Router();
 
+    const permCtx = (req: AuthRequest) =>
+        req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
-            const isDeveloper = isRole(req, ['DEVELOPER']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
+            const isDeveloper = ctx ? await hasPermission(ctx, 'services.create') : false;
             const services = await servicesController.list({
                 where: includeAll ? {} : (isDeveloper ? { authorId: req.user?.sub } : { published: true })
             });
@@ -38,8 +43,9 @@ export default function servicesRouter(prisma: Db = db) {
 
     router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
-            const isDeveloper = isRole(req, ['DEVELOPER']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
+            const isDeveloper = ctx ? await hasPermission(ctx, 'services.create') : false;
             const service = await servicesController.get(req.params.id, {
                 where: includeAll
                     ? {}
@@ -78,7 +84,8 @@ export default function servicesRouter(prisma: Db = db) {
         const parsed = updateSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
         try {
-            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const canManageAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             if (!canManageAll) {
                 const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
                 if (!existing || existing.authorId !== req.user?.sub) {
@@ -103,7 +110,8 @@ export default function servicesRouter(prisma: Db = db) {
 
     router.delete('/:id', requireAuth, requirePermission('services.archive'), async (req: AuthRequest, res) => {
         try {
-            const canManageAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const canManageAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             if (!canManageAll) {
                 const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
                 if (!existing || existing.authorId !== req.user?.sub) {

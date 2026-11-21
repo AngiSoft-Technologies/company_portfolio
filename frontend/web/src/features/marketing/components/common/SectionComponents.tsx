@@ -23,11 +23,7 @@ export const SectionHeader = ({ badge, title, titleHighlight, subtitle, centered
       <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
         {title}{' '}
         {titleHighlight && (
-          <span style={{
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
+          <span style={{ color: colors.primary }}>
             {titleHighlight}
           </span>
         )}

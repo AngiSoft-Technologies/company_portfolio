@@ -63,10 +63,7 @@
     font-weight: 800;
     line-height: 1.05;
     margin: 0 0 1rem;
-    background: linear-gradient(120deg, var(--text-primary) 30%, var(--color-accent) 75%, var(--color-accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--text-primary);
 }
 
 .services-hero__subtitle {

@@ -53,7 +53,7 @@ export default function Staff() {
 
       <Section>
         {staff.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+          <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
         ) : null}
         {!staff.loading && (!staff.data || staff.data.length === 0) ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">
@@ -72,7 +72,7 @@ export default function Staff() {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#0875FF]/10 text-xl font-bold text-[#0875FF]">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)] text-xl font-bold text-[var(--color-primary)]">
                     {initialsOf(member)}
                   </div>
                 )}

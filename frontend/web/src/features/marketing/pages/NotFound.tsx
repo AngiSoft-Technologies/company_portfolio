@@ -46,12 +46,7 @@ const NotFound = () => {
                     {/* 404 Number */}
                     <div 
                         className="text-[150px] md:text-[200px] font-bold leading-none mb-4"
-                        style={{ 
-                            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            textShadow: `0 10px 30px ${colors.primary}30`
-                        }}
+                        style={{ color: colors.primary }}
                     >
                         404
                     </div>

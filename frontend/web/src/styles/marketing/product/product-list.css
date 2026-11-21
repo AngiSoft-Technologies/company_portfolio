@@ -80,10 +80,7 @@
     font-weight: 900;
 }
 .products-hero__title span {
-    background: linear-gradient(120deg, var(--text-primary), var(--pd-accent));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--pd-accent);
 }
 .products-hero__sub { margin: 0; max-width: 62ch; color: var(--pd-muted); font-size: 1.08rem; line-height: 1.7; }
 .products-hero__badges { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 0.5rem; }
@@ -148,10 +145,7 @@
     font-size: 1.8rem;
     font-weight: 900;
     letter-spacing: 0.02em;
-    background: linear-gradient(120deg, var(--text-primary), var(--pd-accent));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--pd-accent);
 }
 .product-card__status {
     position: absolute;

@@ -36,8 +36,21 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      // Plan 5.5: no sourcemaps shipped to production.
+      sourcemap: false,
       target: 'esnext',
+      rollupOptions: {
+        output: {
+          // Phase 5 perf: split heavy vendors so the entry chunk stays small
+          // and caches independently.
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return
+            if (id.includes('@mui') || id.includes('@emotion')) return 'vendor-mui'
+            if (id.includes('socket.io') || id.includes('engine.io')) return 'vendor-realtime'
+            if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'vendor-react'
+          },
+        },
+      },
     },
   }
 })

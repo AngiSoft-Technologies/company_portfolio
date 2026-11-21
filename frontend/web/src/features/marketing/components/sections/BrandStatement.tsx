@@ -42,11 +42,7 @@ const BrandStatement = () => {
             style={{ color: isDark ? '#F5F7FA' : '#07142B' }}
           >
             From planning to deployment, AngiSoft delivers{' '}
-            <span style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>
+            <span style={{ color: colors.primary }}>
               secure, scalable, and maintainable
             </span>{' '}
             software solutions that help businesses work smarter.

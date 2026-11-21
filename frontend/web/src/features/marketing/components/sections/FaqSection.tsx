@@ -79,9 +79,9 @@ const FaqSection = () => {
             id="faq"
             className="angi-faq-section"
             style={{
-                '--faq-primary': colors?.primary || '#0875FF',
+                '--faq-primary': colors?.primary || 'var(--color-primary)',
                 '--faq-secondary':
-                    colors?.secondary || colors?.accent || '#00AFFF',
+                    colors?.secondary || colors?.accent || 'var(--color-secondary)',
             }}
         >
 

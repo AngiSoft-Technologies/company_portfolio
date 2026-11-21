@@ -3,7 +3,8 @@ import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { or } from '@prisma/orm-postgres/orm-client';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { isRole, requireAccess } from '../../../shared/middleware/roles';
+import { requireAccess } from '../../../shared/middleware/roles';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 import { serviceCategoriesController } from '../controllers/serviceCategoriesController';
 
 const createSchema = z.object({
@@ -29,10 +30,14 @@ function slugify(value: string) {
 export default function serviceCategoriesRouter(prisma: Db = db) {
     const router = Router();
 
+    const permCtx = (req: AuthRequest) =>
+        req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+
     // Public list (published only). Authenticated admins/marketing can see all.
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             const list = await serviceCategoriesController.list({
                 where: includeAll ? {} : { published: true }
             });
@@ -44,7 +49,8 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
 
     router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const includeAll = isRole(req, ['ADMIN', 'MARKETING']);
+            const ctx = permCtx(req);
+            const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             const category = await serviceCategoriesController.get(req.params.id, {
                 where: includeAll ? { id: req.params.id } : { id: req.params.id, published: true }
             });

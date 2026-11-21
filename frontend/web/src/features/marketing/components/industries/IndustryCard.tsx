@@ -9,21 +9,35 @@ export default function IndustryCard({ industry }) {
     const route = getIndustryRoute(industry.slug);
 
     return (
-        <Link to={route} className="industry-card" aria-label={`Explore ${industry.name}`}>
+        <Link
+            to={route}
+            aria-label={`Explore ${industry.name}`}
+            className="group block overflow-hidden rounded-(--radius-xl) border border-(--border) bg-(--card-bg) transition-all duration-(--duration-normal) ease-(--ease-standard) hover:-translate-y-1 hover:border-(--color-secondary)/50 hover:shadow-(--elevation-lg)"
+        >
             <div
-                className="industry-card__media"
-                style={{ backgroundImage: `linear-gradient(160deg, rgba(7,20,43,0.55), rgba(7,20,43,0.78)), url(${industry.bgImage})` }}
+                className="relative flex aspect-[16/9] items-center justify-center overflow-hidden"
+                style={{
+                    backgroundImage: `linear-gradient(160deg, color-mix(in srgb, var(--bg-primary) 55%, transparent), color-mix(in srgb, var(--bg-primary) 78%, transparent)), url(${industry.bgImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                }}
             >
-                {Icon && <Icon className="industry-card__icon" />}
-            </div>
-            <div className="industry-card__body">
-                <h3 className="industry-card__title">{industry.name}</h3>
-                {industry.description && (
-                    <p className="industry-card__desc">{industry.description}</p>
+                {Icon && (
+                    <Icon className="relative z-10 h-12 w-12 text-(--color-secondary) drop-shadow-lg transition-transform duration-500 group-hover:scale-110" />
                 )}
-                <span className="industry-card__more">
+            </div>
+            <div className="p-5">
+                <h3 className="text-lg font-bold text-(--text-primary) transition-colors group-hover:text-(--color-secondary)">
+                    {industry.name}
+                </h3>
+                {industry.description && (
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-(--text-secondary)">
+                        {industry.description}
+                    </p>
+                )}
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-(--color-secondary)">
                     Explore solutions
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="transition-transform duration-(--duration-normal) group-hover:translate-x-1">
                         <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </span>

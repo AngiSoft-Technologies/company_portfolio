@@ -69,3 +69,6 @@ firebase.json
 .firebaserc
 backend/package-lock.json
 frontend/package-lock.json
+# Playwright E2E
+test-results/
+playwright-report/

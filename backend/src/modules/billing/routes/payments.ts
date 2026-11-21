@@ -8,6 +8,7 @@ import * as mpesa from '../services/payments/mpesaService';
 import * as payhero from '../services/payments/payheroService';
 import { toMoney, toMoneyFromMinorUnits } from '../utils/money';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { has as hasPermission } from '../../identity/services/effectivePermissions';
 
 /**
  * Payment security hardening.
@@ -128,7 +129,9 @@ export default function paymentsRouter(prisma: Db) {
                     .first();
                 if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
-                const canManageAll = ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER'].includes(req.user?.role ?? '');
+                const ctx = req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+                const canManageAll = (ctx ? await hasPermission(ctx, 'bookings.view_all') : false)
+                    || ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER'].includes(req.user?.role ?? '');
                 const isAssigned = booking.assignedToId === req.user?.sub;
                 if (!canManageAll && !isAssigned) {
                     return res.status(403).json({ error: 'Not authorized for this booking' });
@@ -207,7 +210,9 @@ export default function paymentsRouter(prisma: Db) {
                     .select('id', 'assignedToId')
                     .first();
                 if (!booking) return res.status(404).json({ error: 'Booking not found' });
-                const canManageAll = ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER'].includes(req.user?.role ?? '');
+                const ctx = req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
+                const canManageAll = (ctx ? await hasPermission(ctx, 'bookings.view_all') : false)
+                    || ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER'].includes(req.user?.role ?? '');
                 if (!canManageAll && booking.assignedToId !== req.user?.sub) {
                     return res.status(403).json({ error: 'Not authorized for this booking' });
                 }
@@ -333,6 +338,14 @@ export default function paymentsRouter(prisma: Db) {
 
     // ─── PayHero callback (unsigned; authenticated by reference match) ────────
     router.post('/payhero/callback', async (req: any, res: any) => {
+        // Optional shared-secret gate (same pattern as the M-Pesa callback).
+        const expectedToken = process.env.PAYHERO_CALLBACK_TOKEN || '';
+        if (expectedToken) {
+            const provided = String(req.query?.token ?? req.headers['x-payhero-token'] ?? '');
+            if (provided !== expectedToken) {
+                return res.status(403).json({ status: false });
+            }
+        }
         res.json({ status: true });
         try {
             const cb = payhero.decodeCallback(req.body);
@@ -361,6 +374,16 @@ export default function paymentsRouter(prisma: Db) {
                 return;
             }
             if (cb.resultCode === 0 || cb.success) {
+                // Amount cross-check against the stored Payment row (cb.amount
+                // is 0 when the provider omits it — only enforce real values).
+                if (cb.amount > 0 && Number(cb.amount) !== Number(payment.amount)) {
+                    console.warn('PayHero callback amount mismatch — ignoring', {
+                        providerId: payment.providerId,
+                        expected: payment.amount,
+                        received: cb.amount
+                    });
+                    return;
+                }
                 await applyPaymentOutcome(prisma, {
                     provider: 'PAYHERO',
                     providerId: payment.providerId,
@@ -388,6 +411,17 @@ export default function paymentsRouter(prisma: Db) {
 
     // ─── M-Pesa Daraja callback (unsigned; authenticated by reference match) ──
     router.post('/mpesa/callback', async (req: any, res: any) => {
+        // Optional shared-secret gate: when MPESA_CALLBACK_TOKEN is set, the
+        // callback URL must carry it (?token=… or X-M-Pesa-Token header). This
+        // lets us register a secret-suffixed CallBackURL with Daraja.
+        const expectedToken = process.env.MPESA_CALLBACK_TOKEN || '';
+        if (expectedToken) {
+            const provided = String(req.query?.token ?? req.headers['x-mpesa-token'] ?? '');
+            if (provided !== expectedToken) {
+                return res.status(403).json({ ResultCode: 1, ResultDesc: 'Forbidden' });
+            }
+        }
+
         const cb = mpesa.decodeStkCallback(req.body);
         if (!cb) return res.status(400).json({ ResultCode: 1, ResultDesc: 'Invalid callback payload' });
 
@@ -403,6 +437,16 @@ export default function paymentsRouter(prisma: Db) {
                 return;
             }
             if (cb.resultCode === '0') {
+                // Amount cross-check: a forged callback must at least know the
+                // exact CheckoutRequestID AND the charged amount.
+                if (payment && cb.amount != null && Number(cb.amount) !== Number(payment.amount)) {
+                    console.warn('M-Pesa callback amount mismatch — ignoring', {
+                        checkoutRequestId: cb.checkoutRequestId,
+                        expected: payment.amount,
+                        received: cb.amount
+                    });
+                    return;
+                }
                 await applyPaymentOutcome(prisma, {
                     provider: 'MPESA',
                     providerId: cb.checkoutRequestId,

@@ -18,7 +18,7 @@ export default function Blog() {
 
       <Section>
         {blog.loading ? (
-          <div className="animate-spin h-8 w-8 border-4 border-[#0875FF] border-t-transparent rounded-full mx-auto my-20" />
+          <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full mx-auto my-20" />
         ) : null}
         {!blog.loading && (!blog.data || blog.data.length === 0) ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] py-12 text-center text-sm text-[var(--text-muted)]">

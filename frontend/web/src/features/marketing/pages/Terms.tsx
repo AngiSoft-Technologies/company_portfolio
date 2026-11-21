@@ -91,11 +91,7 @@ const Terms = () => {
                     <ScrollReveal animation="fadeUp" delay={100}>
                         <h1 className="text-5xl md:text-7xl font-bold mb-6">
                             <span style={{ color: colors.text }}>Terms & </span>
-                            <span style={{
-                                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent'
-                            }}>
+                            <span style={{ color: colors.primary }}>
                                 Conditions
                             </span>
                         </h1>
