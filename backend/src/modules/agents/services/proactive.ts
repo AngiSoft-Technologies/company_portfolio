@@ -239,9 +239,15 @@ async function writeArticle(prisma: Db, topic: string): Promise<ArticleDraft | n
             { role: 'system', content: 'You are the content lead of AngiSoft Technologies, a software company in Kenya. Write publish-ready blog posts: accurate, specific, professional, no hype, no pricing claims, no client names. Return ONLY a JSON object.' },
             { role: 'user', content: `Write a blog post about "${topic}" for AngiSoft Technologies' website. JSON shape: {"title": string, "slug": string (kebab-case), "excerpt": string (<=160 chars), "content": string (full markdown article, 600-900 words, with ## sections and a practical takeaway), "seoTitle": string (<=60 chars), "seoDescription": string (<=155 chars), "tags": string[] (3-5)}. Make it useful to a Kenyan business owner evaluating software services.` },
         ], { maxTokens: 3200, temperature: 0.6, timeoutMs: 110000 });
-        const match = text.match(/\{[\s\S]*\}/);
-        if (!match) return null;
-        const parsed = JSON.parse(match[0]) as Partial<ArticleDraft>;
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start < 0 || end <= start) return null;
+        let parsed: Partial<ArticleDraft>;
+        try {
+            parsed = JSON.parse(text.slice(start, end + 1)) as Partial<ArticleDraft>;
+        } catch {
+            return null;
+        }
         if (!parsed.title || !parsed.content || parsed.content.length < 400) return null;
         return {
             title: String(parsed.title).slice(0, 200),
@@ -609,5 +615,8 @@ export async function runProactive(prisma: Db, agent: any, output: AgentOutput):
         console.warn(`[agents] proactive phase failed for ${agent.key}:`, err?.message || err);
         res.notes.push(`Proactive phase error: ${err?.message || err}`);
     }
+    // Surface routine notes in the run output so operators can see *why* a
+    // proactive action did or did not happen (article skipped, dedupe hit…).
+    for (const note of res.notes.slice(0, 8)) output.highlights.push(`Note: ${note}`);
     return res;
 }

@@ -25,6 +25,8 @@ export interface AIProviderPreset {
   apiKeyEnv?: string;
   /** OpenAI-compatible may return 202 + requestId and need status polling. */
   pollsStatus?: boolean;
+  /** Send chat_template_kwargs.enable_thinking=false (NIM thinking models). */
+  disableThinking?: boolean;
   note?: string;
 }
 
@@ -49,7 +51,7 @@ export interface ChatMessage {
 export const AI_CONFIG_SETTING_KEY = 'chatbot_ai_config';
 
 export const AI_PROVIDER_PRESETS: AIProviderPreset[] = [
-  { id: 'nvidia', name: 'NVIDIA NIM', kind: 'openai', baseUrl: 'https://integrate.api.nvidia.com', defaultModel: 'meta/llama-3.2-11b-vision-instruct', pollsStatus: true, note: 'OpenAI-compatible endpoints hosted by NVIDIA' },
+  { id: 'nvidia', name: 'NVIDIA NIM', kind: 'openai', baseUrl: 'https://integrate.api.nvidia.com', defaultModel: 'meta/llama-3.2-11b-vision-instruct', pollsStatus: true, disableThinking: true, note: 'OpenAI-compatible endpoints hosted by NVIDIA' },
   { id: 'openai', name: 'OpenAI', kind: 'openai', baseUrl: 'https://api.openai.com', defaultModel: 'gpt-4o-mini', apiKeyEnv: 'OPENAI_API_KEY' },
   { id: 'anthropic', name: 'Anthropic (Claude)', kind: 'anthropic', baseUrl: 'https://api.anthropic.com', defaultModel: 'claude-3-5-sonnet-latest' },
   { id: 'google', name: 'Google (Gemini)', kind: 'google', baseUrl: 'https://generativelanguage.googleapis.com', defaultModel: 'gemini-2.0-flash' },
@@ -303,11 +305,13 @@ function buildProviderRequest(
   if (!apiKey) throw new AIProviderError('This provider requires an API key');
   headers.Authorization = `Bearer ${apiKey}`;
   const preset = AI_PROVIDER_PRESETS.find((p) => p.baseUrl && baseUrl.includes(p.baseUrl));
+  const payload: Record<string, any> = { model, messages, temperature, max_tokens: maxTokens };
+  if (preset?.disableThinking) payload.chat_template_kwargs = { enable_thinking: false };
   return {
     method: 'POST',
     url: joinEndpoint(baseUrl, '/v1/chat/completions'),
     headers,
-    payload: { model, messages, temperature, max_tokens: maxTokens },
+    payload,
     pollStatus: Boolean(preset?.pollsStatus),
   };
 }
@@ -325,7 +329,8 @@ function extractContent(kind: ProviderKind, decoded: any): string {
       : [];
     return parts.join('');
   }
-  return decoded?.choices?.[0]?.message?.content ?? '';
+  const message = decoded?.choices?.[0]?.message;
+  return message?.content || message?.reasoning_content || '';
 }
 
 function providerErrorMessage(status: number, text: string): string {
