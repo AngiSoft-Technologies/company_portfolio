@@ -2,8 +2,16 @@ import Redis, { type RedisOptions } from 'ioredis';
 import type { Db } from '../../../db';
 import { ts, tsMs, newId } from '../../../prisma/db';
 import { getRedisUrl, redisConnectionOptions } from '../../../shared/services/redis';
-import { sendMail } from '../../../shared/services/email';
+import {
+    escapeHtml,
+    renderBrandedDocument,
+    renderBrandedEmail,
+    sendMail,
+} from '../../../shared/services/email';
+import type { BrandedDocumentInput } from '../../../shared/services/email';
 import type { AgentOutput } from './agentRunner';
+
+export { escapeHtml };
 
 /**
  * Proactive outreach layer for the AI workforce.
@@ -266,16 +274,23 @@ export async function emailOwnerReport(
         senderName: 'AngiSoft AI Workforce',
         replyTo: to,
         text: `${output.summary}\n\n${(output.actions ?? []).join('\n')}`,
-        html: `
-          <div style="font-family:system-ui,sans-serif;max-width:640px">
-            <h2 style="margin:0 0 4px">${escapeHtml(agent.name)} — ${escapeHtml(agent.role)}</h2>
-            <p style="color:#64748b;margin:0 0 12px">${escapeHtml(agent.department ?? '')} · automated report</p>
-            <p>${escapeHtml(output.summary)}</p>
-            ${metrics ? `<table style="border-collapse:collapse;margin:8px 0">${metrics}</table>` : ''}
-            ${highlights ? `<ul>${highlights}</ul>` : ''}
-            ${actions}
-            <p style="color:#94a3b8;font-size:12px;margin-top:20px">Sent by the AngiSoft AI workforce · manage agents in admin → AI Workforce</p>
-          </div>`,
+        html: renderBrandedEmail({
+            title: `${agent.name} — ${agent.role}`,
+            eyebrow: 'AI Workforce Report',
+            preheader: output.summary.slice(0, 140),
+            footerNote: 'Automated report from the AngiSoft AI workforce.',
+            cta: {
+                label: 'Open AI Workforce',
+                url: `${process.env.ADMIN_URL || 'https://admin.angisoft.co.ke'}/agents`,
+            },
+            bodyHtml: `
+              <p style="margin:0 0 16px;color:#64748B;font-size:13px">${escapeHtml(agent.department ?? '')} · ${escapeHtml(new Date().toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' }))}</p>
+              <p style="margin:0 0 18px">${escapeHtml(output.summary)}</p>
+              ${metrics ? `<table style="border-collapse:collapse;margin:8px 0 18px;font-size:14px">${metrics}</table>` : ''}
+              ${highlights ? `<h2 style="margin:20px 0 8px;font-size:16px;color:#07142B">Highlights</h2><ul style="margin:0;padding-left:20px">${highlights}</ul>` : ''}
+              ${actions}
+              <p style="margin:20px 0 0;color:#64748B;font-size:13px">Review and decide in the admin console — no agent action is executed without approval.</p>`,
+        }),
     });
     await recordLedger(prisma, 'agent.report_emailed', 'agent', agent.key, {
         agentKey: agent.key,
@@ -302,12 +317,82 @@ export async function alertOwner(
             senderName: 'AngiSoft Monitoring',
             replyTo: to,
             text: body,
-            html: `<div style="font-family:system-ui,sans-serif"><h3>${escapeHtml(subject)}</h3><p>${escapeHtml(body)}</p><p style="color:#94a3b8;font-size:12px">Sent by agent "${escapeHtml(agentKey)}"</p></div>`,
+            html: renderBrandedEmail({
+            title: subject,
+            eyebrow: 'AI Workforce Alert',
+            preheader: body.slice(0, 140),
+            footerNote: `Triggered by agent "${agentKey}".`,
+            bodyHtml: `
+              <p style="margin:0 0 16px">${escapeHtml(body)}</p>
+              <p style="margin:0;color:#64748B;font-size:13px">This alert needs your attention. Reply to this email or open the admin console to review the agent run.</p>`,
+        }),
         });
     } catch (err: any) {
         console.warn(`[agents] owner alert failed:`, err?.message || err);
     }
     await notifyOwnerSms(`${agentKey}: ${subject} — ${body.slice(0, 140)}`);
+}
+
+/**
+ * Email the owner a print-ready branded document (NDA, letter, contract draft)
+ * for approval. The document is attached as HTML and never sent to the other
+ * party — that remains a SUPER_ADMIN decision.
+ */
+export async function emailOwnerDocument(
+    prisma: Db,
+    agent: any,
+    args: {
+        entityType: string;
+        entityId: string;
+        subject: string;
+        filename: string;
+        document: BrandedDocumentInput;
+    }
+): Promise<boolean> {
+    const to = await ownerEmail(prisma);
+    if (!to) return false;
+    const prior = await ledgerEntries(prisma, 'agent.document_emailed', args.entityType, 50, args.entityId);
+    if (prior.length) return false;
+
+    try {
+        await sendMail({
+            to,
+            subject: args.subject,
+            purpose: 'general',
+            senderName: 'AngiSoft Relationships',
+            replyTo: to,
+            text: `${args.subject}\n\nA branded draft is attached for your review. Do not send or sign it without your explicit approval.`,
+            html: renderBrandedEmail({
+                title: args.subject,
+                eyebrow: 'Contract Draft — Owner Approval',
+                preheader: 'A branded document is attached for your review.',
+                footerNote: 'Draft generated by the AngiSoft relationships agent.',
+                cta: {
+                    label: 'Review Approvals',
+                    url: `${process.env.ADMIN_URL || 'https://admin.angisoft.co.ke'}/approvals`,
+                },
+                bodyHtml: `
+                  <p style="margin:0 0 16px">A branded draft is attached to this email, ready for your review.</p>
+                  <p style="margin:0 0 16px"><strong>${escapeHtml(args.document.title)}</strong>${args.document.reference ? ` · ${escapeHtml(args.document.reference)}` : ''}</p>
+                  <p style="margin:0;color:#64748B;font-size:13px">Nothing has been sent to the counterparty. Approve, edit or reject the draft in the admin console.</p>`,
+            }),
+            attachments: [{
+                filename: args.filename,
+                contentType: 'text/html',
+                content: renderBrandedDocument(args.document),
+            }],
+        });
+        await recordLedger(prisma, 'agent.document_emailed', args.entityType, args.entityId, {
+            agentKey: agent.key,
+            to,
+            filename: args.filename,
+            title: args.document.title,
+        });
+        return true;
+    } catch (err: any) {
+        console.warn(`[agents] owner document email failed:`, err?.message || err);
+        return false;
+    }
 }
 
 // ─── SMS (optional gateway — no-op until configured) ───────────────────────
@@ -344,22 +429,18 @@ export async function notifyOwnerSms(text: string): Promise<boolean> {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-export function escapeHtml(s: string): string {
-    return s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+/** Wrap a body in the branded AngiSoft HTML email shell. */
+export function emailShell(title: string, bodyHtml: string): string {
+    return renderBrandedEmail({
+        title,
+        eyebrow: 'AngiSoft Technologies',
+        preheader: bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140),
+        bodyHtml,
+        footerNote: 'You received this because you contacted AngiSoft Technologies.',
+    });
 }
 
-/** Wrap a body in a minimal human-voiced HTML email shell. */
-export function emailShell(title: string, bodyHtml: string): string {
-    return `
-      <div style="font-family:Georgia,serif;max-width:620px;color:#1e293b">
-        <p style="font-size:13px;color:#64748b;margin:0 0 16px">AngiSoft Technologies</p>
-        <div style="font-size:15px;line-height:1.6">${bodyHtml}</div>
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0 12px">
-        <p style="font-size:12px;color:#94a3b8">You received this because you contacted AngiSoft Technologies.
-        Reply to this email or reach us on WhatsApp +254710398690.</p>
-      </div>`;
+/** Render a print-ready branded document for owner approval. */
+export function brandedDocument(input: BrandedDocumentInput): string {
+    return renderBrandedDocument(input);
 }

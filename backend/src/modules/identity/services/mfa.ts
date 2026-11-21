@@ -129,9 +129,13 @@ export async function deliverOtp(method: 'EMAIL' | 'SMS' | 'WHATSAPP', to: strin
     await sendMailDirect({
       to,
       subject: 'Your AngiSoft verification code',
-      text: otpMessage(code),
-      html: `<p>Your AngiSoft verification code is <strong>${code}</strong>. It expires in 5 minutes.</p><p>If you did not request this, ignore this message.</p>`,
       purpose: 'noreply',
+      title: 'Verify your identity',
+      eyebrow: 'Account Security',
+      preheader: 'Your one-time code expires in 5 minutes.',
+      text: otpMessage(code),
+      html: `<p style="margin:0 0 16px">Your AngiSoft verification code is <strong style="font-size:22px;letter-spacing:3px;color:#07142B">${code}</strong>.</p>
+             <p style="margin:0;color:#64748B;font-size:13px">It expires in 5 minutes. If you did not request this, ignore this message — your account remains secure.</p>`,
     });
     return;
   }

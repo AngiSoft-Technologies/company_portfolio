@@ -76,7 +76,7 @@ export default function clientPortalRouter(prisma: Db) {
             const client = await prisma.orm.public.Client.where({ email: email.toLowerCase() }).first();
             if (client) {
                 const token = createPlainToken();
-                const accessUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/portal/access?token=${encodeURIComponent(token)}`;
+                const accessUrl = `${process.env.FRONTEND_URL || 'https://angisoft.co.ke'}/portal/access?token=${encodeURIComponent(token)}`;
                 await prisma.orm.public.ClientAccessToken.create({
                     id: newId(),
                     clientId: client.id,
@@ -89,7 +89,12 @@ export default function clientPortalRouter(prisma: Db) {
                     to: client.email,
                     subject: 'Your secure AngiSoft client portal link',
                     purpose: 'noreply',
-                    html: `<p>Hello ${client.name || 'there'},</p><p>Use this secure link to access your AngiSoft project portal. It expires in 30 minutes.</p><p><a href="${accessUrl}">Open client portal</a></p>`,
+                    title: 'Your client portal link',
+                    eyebrow: 'Client Portal Access',
+                    preheader: 'Private link — expires in 30 minutes.',
+                    cta: { label: 'Open Client Portal', url: accessUrl },
+                    html: `<p style="margin:0 0 16px">Hello ${String(client.name || 'there').replace(/[<>&"]/g, '')},</p>
+                           <p style="margin:0;color:#64748B;font-size:13px">Use the button above to access your AngiSoft project portal. The link expires in 30 minutes. If you didn't request it, ignore this email.</p>`,
                     text: `Open your AngiSoft client portal: ${accessUrl}`
                 });
             }

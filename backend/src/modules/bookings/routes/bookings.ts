@@ -541,13 +541,18 @@ export default function bookingsRouter(prisma: Db) {
             const clientEmail = (booking as any)?.client?.email?.toLowerCase?.();
             if (booking && clientEmail === email) {
                 const token = signBookingAccessToken(booking.id, booking.publicReference);
-                const link = `${process.env.FRONTEND_URL || ''}/bookings/${encodeURIComponent(booking.publicReference)}?token=${encodeURIComponent(token)}`;
+                const link = `${process.env.FRONTEND_URL || 'https://angisoft.co.ke'}/bookings/${encodeURIComponent(booking.publicReference)}?token=${encodeURIComponent(token)}`;
                 await sendMail({
                     to: email,
                     subject: 'Your secure AngiSoft booking tracking link',
-                    html: `<p>Use this private link to view and manage booking ${booking.publicReference}. It expires in 30 minutes.</p><p><a href="${link}">Open booking</a></p><p>If you did not request this, ignore the email.</p>`,
-                    text: `Your secure booking link: ${link}`,
                     purpose: 'noreply',
+                    title: 'Your secure booking link',
+                    eyebrow: 'Booking Access',
+                    preheader: `Private link for booking ${booking.publicReference}.`,
+                    cta: { label: 'Open Booking', url: link },
+                    html: `<p style="margin:0 0 16px">Use this private link to view and manage booking <strong>${String(booking.publicReference).replace(/[<>&"]/g, '')}</strong>.</p>
+                           <p style="margin:0;color:#64748B;font-size:13px">It expires in 30 minutes. If you didn't request this, ignore the email — nobody else can use the link.</p>`,
+                    text: `Your secure booking link: ${link}`,
                 });
                 await logAudit({ action: 'booking_access_link', entity: 'Booking', entityId: booking.id });
             }

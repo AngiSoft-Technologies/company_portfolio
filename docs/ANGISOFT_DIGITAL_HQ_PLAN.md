@@ -158,6 +158,22 @@ successful run:
   `SMS_GATEWAY_TOKEN` / `SMS_TO` env vars; no-op until configured. Voice calls
   are intentionally out of scope (no telephony provider integrated).
 
+**Branded mail & documents (added 2026-11-21).**
+
+- All outbound email is wrapped in one responsive, inline-styled HTML shell
+  (`backend/src/shared/services/emailTemplate.ts`) with the AngiSoft logo,
+  brand bar, title/eyebrow header, CTA button, and a footer carrying contact
+  details plus Privacy Policy / Terms links. Brand colours come from the
+  shared UI tokens. `EMAIL_LOGO_URL` overrides the default CDN logo.
+- The shell is applied centrally in `sendMailDirect` — every `sendMail` caller
+  gets branding automatically; already-branded templates and `layout: 'raw'`
+  are respected. The email queue worker forwards the full options object so
+  queued mail keeps its CTA/footer/attachments.
+- `renderBrandedDocument` produces print-ready branded HTML (logo header,
+  clauses, signature blocks) for NDAs, letters and contract drafts. The
+  relationships agent attaches such a draft to an owner-approval email — it
+  is never sent or signed externally without SUPER_ADMIN approval.
+
 **Training & 24/7 operation (added 2026-11-22).**
 
 - **Charters** — `modules/agents/services/agentCharters.ts` is the written

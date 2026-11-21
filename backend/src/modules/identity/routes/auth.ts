@@ -193,9 +193,17 @@ router.post('/forgot', passwordResetRequestLimiter, async (req, res) => {
     await prisma.orm.public.Employee.where({ id: emp.id }).update({ resetToken: tokenHash, resetExpiry: expiry });
     await sendMail({
         to: email,
-        subject: 'Password reset',
-        html: `<p>Reset your AngiSoft password here: ${process.env.FRONTEND_URL}/reset?token=${token}</p><p>This link expires in one hour. Ignore it if you did not request it.</p>`,
+        subject: 'Reset your AngiSoft password',
         purpose: 'noreply',
+        title: 'Reset your password',
+        eyebrow: 'Account Security',
+        preheader: 'Your reset link expires in one hour.',
+        cta: {
+            label: 'Reset Password',
+            url: `${process.env.FRONTEND_URL || 'https://admin.angisoft.co.ke'}/reset?token=${token}`,
+        },
+        html: `<p style="margin:0 0 16px">We received a request to reset your AngiSoft password.</p>
+               <p style="margin:0;color:#64748B;font-size:13px">Use the button above to choose a new password. This link expires in one hour. If you didn't request it, you can safely ignore this email — your current password still works.</p>`,
     });
     await logAudit({ action: 'forgot_password', entity: 'Employee', entityId: emp.id });
     res.json({ ok: true });

@@ -147,10 +147,14 @@ vi.mock('../src/modules/ai/services/aiProvider', () => ({
 
 // The proactive phase sends real email through this service — stub the
 // transport so tests never touch SMTP or the queue.
-vi.mock('../src/shared/services/email', () => ({
-    sendMail: async () => ({ messageId: 'mock' }),
-    sendMailDirect: async () => ({ messageId: 'mock' }),
-}));
+vi.mock('../src/shared/services/email', async () => {
+    const template = await import('../src/shared/services/emailTemplate');
+    return {
+        ...template,
+        sendMail: async () => ({ messageId: 'mock' }),
+        sendMailDirect: async () => ({ messageId: 'mock' }),
+    };
+});
 
 describe('AI workforce: agent registry + runner + admin API', () => {
     let app: any;

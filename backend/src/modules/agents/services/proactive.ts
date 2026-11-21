@@ -3,6 +3,7 @@ import { ts, tsMs, newId } from '../../../prisma/db';
 import {
     sendAgentEmail,
     emailOwnerReport,
+    emailOwnerDocument,
     alertOwner,
     alreadyContacted,
     emailShell,
@@ -639,18 +640,18 @@ async function coordinatorProactive(prisma: Db, agent: any, output: AgentOutput,
 async function relationshipsProactive(prisma: Db, agent: any, output: AgentOutput, res: ProactiveResult): Promise<void> {
     const pattern = /\b(nda|non[ -]?disclosure|contract|agreement|msa|sla|terms|vendor|partner|partnership|proposal|letter of intent|lou|moa|collaborat|reseller|supplier|legal)\b/i;
     const tickets = await rows(prisma, 'SupportTicket', 100);
-    const checklist = [
-        'Relationships review checklist (Nexus):',
-        '1. Parties and signatories confirmed',
-        '2. Scope, deliverables and acceptance criteria',
-        '3. Term, renewal and termination rights',
-        '4. Payment terms, tax and currency',
-        '5. Confidentiality / NDA status',
-        '6. IP ownership and licence rights',
-        '7. Liability cap, indemnities and warranties',
-        '8. Governing law and dispute route',
+    const checklistItems = [
+        'Parties and signatories confirmed',
+        'Scope, deliverables and acceptance criteria',
+        'Term, renewal and termination rights',
+        'Payment terms, tax and currency',
+        'Confidentiality / NDA status',
+        'IP ownership and licence rights',
+        'Liability cap, indemnities and warranties',
+        'Governing law and dispute route',
         'No document may be sent, signed or amended without SUPER_ADMIN approval.',
-    ].join('\n');
+    ];
+    const checklist = ['Relationships review checklist (Nexus):', ...checklistItems.map((item, i) => `${i + 1}. ${item}`)].join('\n');
 
     for (const ticket of tickets.slice(0, 10)) {
         const text = [ticket.subject, ticket.description, ticket.body].map((v) => String(v ?? '')).join(' ');
@@ -678,6 +679,35 @@ async function relationshipsProactive(prisma: Db, agent: any, output: AgentOutpu
                 kind: 'contract_checklist',
             });
             res.notes.push(`Contract checklist added to ticket ${ticket.id}`);
+
+            const docSent = await emailOwnerDocument(prisma, agent, {
+                entityType: 'ticket',
+                entityId,
+                subject: `Branded contract/NDA draft for review — ticket ${ticket.id}`,
+                filename: `angisoft-contract-review-${ticket.id}.html`,
+                document: {
+                    title: 'Mutual Non-Disclosure Agreement — Draft for Review',
+                    subtitle: 'Generated from an inbound relationship request. Not for external circulation.',
+                    reference: `REL-${ticket.id}`,
+                    eyebrow: 'Confidential draft — owner approval required',
+                    preparedFor: 'Office of the SUPER_ADMIN',
+                    bodyHtml: `
+                        <p>This draft was prepared from the inbound request below. It is a starting point for legal review, not execution advice.</p>
+                        <blockquote style="margin:16px 0;padding:12px 16px;border-left:4px solid #0875FF;background:#F5F7FA;color:#334155">
+                            ${escapeHtml(text.replace(/\s+/g, ' ').slice(0, 600))}
+                        </blockquote>
+                        <p>Complete the counterparty details, term and governing-law clauses before any signature is considered.</p>`,
+                    clauses: checklistItems,
+                    signatories: [
+                        { name: 'AngiSoft Technologies', role: 'Disclosing / receiving party' },
+                        { name: 'Counterparty', role: 'To be confirmed from ticket' },
+                    ],
+                },
+            });
+            if (docSent) {
+                res.emailsSent += 1;
+                res.notes.push(`Branded NDA/contract draft emailed to owner for ticket ${ticket.id}`);
+            }
             output.actions.push(`Relationships: review contract/NDA request in ticket ${ticket.id} — owner approval required`);
         } catch (err: any) {
             console.warn('[agents] relationship ticket note failed:', err?.message || err);

@@ -3,7 +3,7 @@ import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import { sendMail } from '../../../shared/services/email';
+import { escapeHtml, sendMail } from '../../../shared/services/email';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
@@ -61,20 +61,15 @@ export default function newsletterRouter(prisma: Db) {
         await sendMail({
             to: email,
             subject: 'Confirm your subscription — AngiSoft Technologies',
+            title: `Welcome${name ? `, ${escapeHtml(name)}` : ''} to AngiSoft updates`,
+            eyebrow: 'Newsletter Confirmation',
+            preheader: 'One click confirms your subscription.',
+            footerNote: 'You received this because you subscribed to AngiSoft updates.',
+            cta: { label: 'Confirm Subscription', url: confirmUrl },
             html: `
-                <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;">
-                    <h2>Welcome${name ? `, ${name}` : ''}! 🎉</h2>
-                    <p>Thank you for subscribing to AngiSoft Technologies updates.</p>
-                    <p>Please confirm your subscription by clicking the button below:</p>
-                    <p style="text-align:center;margin:24px 0;">
-                        <a href="${confirmUrl}"
-                           style="background:#0891b2;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
-                            Confirm Subscription
-                        </a>
-                    </p>
-                    <p style="color:#666;font-size:13px;">If you didn't subscribe, simply ignore this email.</p>
-                </div>
-            `,
+                <p style="margin:0 0 16px">Thank you for subscribing to AngiSoft Technologies updates.</p>
+                <p style="margin:0 0 8px">Please confirm your subscription using the button below. You'll get product news, company updates and practical engineering notes — no noise.</p>
+                <p style="margin:0;color:#64748B;font-size:13px">If you didn't subscribe, simply ignore this email.</p>`,
             purpose: 'updates',
         });
 
@@ -139,16 +134,17 @@ export default function newsletterRouter(prisma: Db) {
         let sent = 0;
         for (const sub of subscribers) {
             const unsubLink = `${frontendUrl}/newsletter/unsubscribe?token=${sub.unsubToken}`;
-            const personalizedHtml = `
-                ${html}
-                <hr style="margin:32px 0;border:none;border-top:1px solid #eee;" />
-                <p style="color:#999;font-size:12px;text-align:center;">
-                    You're receiving this because you subscribed to AngiSoft updates.<br/>
-                    <a href="${unsubLink}" style="color:#0891b2;">Unsubscribe</a>
-                </p>
-            `;
             try {
-                await sendMail({ to: sub.email, subject, html: personalizedHtml, text, purpose: 'updates' });
+                await sendMail({
+                    to: sub.email,
+                    subject,
+                    html,
+                    text,
+                    purpose: 'updates',
+                    eyebrow: 'AngiSoft Updates',
+                    footerNote: "You're receiving this because you subscribed to AngiSoft updates.",
+                    unsubscribeUrl: unsubLink,
+                });
                 sent++;
             } catch (err: any) {
                 console.warn(`Failed to send to ${sub.email}:`, err.message);

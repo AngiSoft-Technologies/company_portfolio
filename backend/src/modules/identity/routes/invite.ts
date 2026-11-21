@@ -50,8 +50,18 @@ export default function inviteRouter(prisma: Db) {
             inviteToken: token,
             inviteExpiry: expiry,
         });
-        const acceptUrl = `${process.env.FRONTEND_URL}/invite/accept?token=${token}`;
-        await sendMail({ to: email, subject: 'You are invited to AngiSoft', html: `<p>Click <a href="${acceptUrl}">here</a> to accept your invite.</p>`, purpose: 'noreply' });
+        const acceptUrl = `${process.env.FRONTEND_URL || 'https://admin.angisoft.co.ke'}/invite/accept?token=${token}`;
+        await sendMail({
+            to: email,
+            subject: 'You are invited to AngiSoft',
+            purpose: 'noreply',
+            title: 'Welcome to the AngiSoft team',
+            eyebrow: 'Staff Invitation',
+            preheader: 'Accept your invite to set up your admin account.',
+            cta: { label: 'Accept Invite', url: acceptUrl },
+            html: `<p style="margin:0 0 16px">${firstName ? `Hi ${firstName.replace(/[<>&"]/g, '')},<br><br>` : ''}You've been invited to join AngiSoft Technologies.</p>
+                   <p style="margin:0;color:#64748B;font-size:13px">Use the button above to set your password and finish MFA setup. This invite expires soon — contact the owner if you need a new one.</p>`,
+        });
         await logAudit({ action: 'create_invite', entity: 'Employee', entityId: employee.id, actorId: req.user?.sub || null, actorRole: req.user?.role || null });
         res.status(201).json({ message: 'Invite created' });
     });

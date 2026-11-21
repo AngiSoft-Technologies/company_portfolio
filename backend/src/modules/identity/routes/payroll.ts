@@ -307,6 +307,9 @@ export default function payrollRouter(prisma: Db = db) {
                 to: email,
                 subject: `Payslip — ${period} (${currency} ${net.toLocaleString()} net)`,
                 purpose: 'general',
+                title: `Payslip — ${period}`,
+                eyebrow: 'Payroll',
+                preheader: `Net pay: ${currency} ${net.toLocaleString()}.`,
                 text: `Hi ${name},\n\nYour payslip for ${period} is ready.\nGross: ${currency} ${gross.toLocaleString()}\nNet: ${currency} ${net.toLocaleString()}\n\n— AngiSoft`,
                 html: `<p>Hi ${name},</p><p>Your payslip for <strong>${period}</strong> is ready.</p>
 <table style="border-collapse:collapse;font-family:sans-serif">

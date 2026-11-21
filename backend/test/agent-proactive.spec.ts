@@ -8,16 +8,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
  */
 
 const sentMails: any[] = [];
-vi.mock('../src/shared/services/email', () => ({
-    sendMail: async (opts: any) => {
-        sentMails.push(opts);
-        return { messageId: 'mock' };
-    },
-    sendMailDirect: async (opts: any) => {
-        sentMails.push(opts);
-        return { messageId: 'mock' };
-    },
-}));
+vi.mock('../src/shared/services/email', async () => {
+    const template = await import('../src/shared/services/emailTemplate');
+    return {
+        ...template,
+        sendMail: async (opts: any) => {
+            sentMails.push(opts);
+            return { messageId: 'mock' };
+        },
+        sendMailDirect: async (opts: any) => {
+            sentMails.push(opts);
+            return { messageId: 'mock' };
+        },
+    };
+});
 
 const store: Record<string, any[]> = {};
 

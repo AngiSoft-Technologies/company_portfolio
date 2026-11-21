@@ -1,5 +1,17 @@
 import nodemailer from 'nodemailer';
 import { getQueue } from '../../queue';
+import { renderBrandedEmail, type EmailCta } from './emailTemplate';
+
+export {
+    ANGISOFT_BRAND,
+    emailButton,
+    escapeHtml,
+    renderBrandedDocument,
+    renderBrandedEmail,
+    safeUrl,
+    sanitizeEmailHtml,
+} from './emailTemplate';
+export type { BrandedDocumentInput, BrandedEmailInput, EmailCta } from './emailTemplate';
 
 // ─── Zoho Mail SMTP Configuration ──────────────────────────────────
 // All outbound email uses Zoho Mail via SMTP (port 465 / TLS).
@@ -63,6 +75,7 @@ function resolveFrom(purpose: EmailPurpose = 'general'): string {
 interface MailOptions {
     to: string;
     subject: string;
+    /** Body fragment. Wrapped in the branded email shell unless `layout: 'raw'`. */
     html: string;
     text?: string;
     /** Which Zoho address to send from (default: 'general' → info@) */
@@ -75,6 +88,17 @@ interface MailOptions {
     senderName?: string;
     /** Where replies should land (e.g. the department mailbox). */
     replyTo?: string;
+    /** Branded heading/preheader/CTA. Title defaults to the subject. */
+    title?: string;
+    eyebrow?: string;
+    preheader?: string;
+    cta?: EmailCta;
+    footerNote?: string;
+    unsubscribeUrl?: string;
+    /** Escape hatch for already-complete HTML. Branded is the default. */
+    layout?: 'branded' | 'raw';
+    /** Nodemailer attachments, e.g. a branded HTML contract draft. */
+    attachments?: any[];
 }
 
 /**
@@ -100,13 +124,28 @@ export async function sendMail(opts: MailOptions) {
 export async function sendMailDirect(opts: MailOptions) {
     const base = opts.from ?? resolveFrom(opts.purpose);
     const from = !opts.from && opts.senderName ? base.replace(/"[^"]*"/, `"${opts.senderName.replace(/"/g, '')}"`) : base;
+    // Templates that already called renderBrandedEmail carry a marker; never
+    // wrap them twice. Everything else gets the standard AngiSoft shell.
+    const alreadyBranded = /data-angi-brand=["']1["']/i.test(opts.html);
+    const html = opts.layout === 'raw' || alreadyBranded
+        ? opts.html
+        : renderBrandedEmail({
+            title: opts.title ?? opts.subject,
+            eyebrow: opts.eyebrow,
+            preheader: opts.preheader,
+            bodyHtml: opts.html,
+            cta: opts.cta,
+            footerNote: opts.footerNote,
+            unsubscribeUrl: opts.unsubscribeUrl,
+        });
     const info = await transporter.sendMail({
         from,
         to: opts.to,
         subject: opts.subject,
         text: opts.text,
-        html: opts.html,
+        html,
         ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+        ...(opts.attachments?.length ? { attachments: opts.attachments } : {}),
     });
     console.log(`✅ Email sent → ${opts.to} (messageId: ${info.messageId})`);
     return info;
