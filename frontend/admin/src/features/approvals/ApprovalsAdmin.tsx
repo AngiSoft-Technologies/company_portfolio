@@ -41,11 +41,18 @@ interface PermissionOption {
   group: string;
 }
 
-const ENTITY_TYPES = ['quote', 'invoice', 'expense', 'leave', 'payslip', 'booking', 'custom'];
+const ENTITY_TYPES = ['quote', 'invoice', 'expense', 'leave', 'payslip', 'booking', 'custom', 'agent_action'];
 const STATUSES = ['pending', 'approved', 'rejected', 'cancelled'];
 
 const personName = (p?: { firstName?: string; lastName?: string; email?: string } | null) =>
   p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email || '—' : '—';
+
+const requesterLabel = (r: ApprovalRow) => {
+  if (r.requester) return personName(r.requester);
+  // Agent-filed requests carry a synthetic `agent:<key>` requester id.
+  if (r.requestedById?.startsWith('agent:')) return `🤖 ${r.requestedById.slice(6)}`;
+  return '—';
+};
 
 interface StepDraft {
   permission: string;
@@ -60,7 +67,15 @@ export default function ApprovalsAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('pending');
-  const [entityFilter, setEntityFilter] = useState('');
+  const [entityFilter, setEntityFilter] = useState(() => {
+    // Deep links like /approvals?entityType=agent_action (from AI Workforce).
+    try {
+      const v = new URLSearchParams(window.location.search).get('entityType');
+      return v && ENTITY_TYPES.includes(v) ? v : '';
+    } catch {
+      return '';
+    }
+  });
   const [mineOnly, setMineOnly] = useState(false);
 
   const [detail, setDetail] = useState<ApprovalRow | null>(null);
@@ -233,7 +248,7 @@ export default function ApprovalsAdmin() {
               { key: 'entity', header: 'Entity', render: (r: ApprovalRow) => `${r.entityType} · ${r.entityId}` },
               { key: 'amount', header: 'Amount', render: (r: ApprovalRow) =>
                 r.amount != null ? `${r.currency ?? ''} ${Number(r.amount).toLocaleString()}`.trim() : '—' },
-              { key: 'requester', header: 'Requester', render: (r: ApprovalRow) => personName(r.requester) },
+              { key: 'requester', header: 'Requester', render: (r: ApprovalRow) => requesterLabel(r) },
               { key: 'steps', header: 'Steps', render: (r: ApprovalRow) => {
                 const steps = r.steps ?? [];
                 const done = steps.filter((s) => s.status !== 'pending').length;
@@ -253,7 +268,7 @@ export default function ApprovalsAdmin() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-[var(--text-muted)]">Entity:</span> {detail.entityType} · {detail.entityId}</div>
-              <div><span className="text-[var(--text-muted)]">Requester:</span> {personName(detail.requester)}</div>
+              <div><span className="text-[var(--text-muted)]">Requester:</span> {requesterLabel(detail)}</div>
               {detail.amount != null && (
                 <div><span className="text-[var(--text-muted)]">Amount:</span> {detail.currency} {Number(detail.amount).toLocaleString()}</div>
               )}

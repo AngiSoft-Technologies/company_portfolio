@@ -38,7 +38,7 @@ interface ApprovalStep {
     note?: string | null;
 }
 
-const ENTITY_TYPES = ['quote', 'invoice', 'expense', 'leave', 'payslip', 'booking', 'custom'] as const;
+const ENTITY_TYPES = ['quote', 'invoice', 'expense', 'leave', 'payslip', 'booking', 'custom', 'agent_action'] as const;
 const KNOWN_PERMISSIONS = new Set(PERMISSIONS.map((p) => p.key));
 
 const createSchema = z.object({
@@ -284,14 +284,18 @@ export default function approvalsRouter(prisma: Db = db) {
                     updatedAt: ts(),
                 });
 
-            await createNotification(
-                r.requestedById,
-                `approval.${finalStatus === 'pending' ? 'step' : finalStatus}`,
-                `Approval ${finalStatus === 'pending' ? 'step completed' : finalStatus}: ${r.title}`,
-                `Step ${idx + 1}/${steps.length} (${step.label || permissionLabel(step.permission)}) was ${decision} by ${req.user!.sub}.`,
-                '/approvals',
-                { approvalRequestId: r.id, stepIndex: idx, decision },
-            );
+            // Agent-filed requests have no human requester — skip the
+            // requester notification (there is nobody to notify).
+            if (!String(r.requestedById).startsWith('agent:')) {
+                await createNotification(
+                    r.requestedById,
+                    `approval.${finalStatus === 'pending' ? 'step' : finalStatus}`,
+                    `Approval ${finalStatus === 'pending' ? 'step completed' : finalStatus}: ${r.title}`,
+                    `Step ${idx + 1}/${steps.length} (${step.label || permissionLabel(step.permission)}) was ${decision} by ${req.user!.sub}.`,
+                    '/approvals',
+                    { approvalRequestId: r.id, stepIndex: idx, decision },
+                );
+            }
             await logAudit({
                 actorId: req.user!.sub,
                 actorRole: req.user!.role ?? null,

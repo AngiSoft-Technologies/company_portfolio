@@ -485,8 +485,31 @@ async function monitoringProactive(prisma: Db, agent: any, output: AgentOutput, 
         res.alerts += 1;
         res.notes.push(`Owner paged for failed run ${run.agentKey}`);
     }
-    if (!res.alerts && Number(output.metrics?.failedAgentRuns ?? 0) > 0) {
-        res.notes.push('Failed runs on record already alerted — no new pages needed');
+
+    // Metric-only coverage: the collector counts failures across ALL recent
+    // runs with no 24h bound, so failures can exist that the per-run path
+    // can't page — older than 24h, pushed out of the scan window, beyond the
+    // 5-page cap, or the run query itself failed. Page once per day so those
+    // never go silent (regression: d2501cd dropped metric-driven paging).
+    const failedMetric = Number(output.metrics?.failedAgentRuns ?? 0);
+    const uncovered = failedMetric - freshFailed.length;
+    if (uncovered > 0) {
+        const metricEntityId = `metric:${agent.key}:${ts().slice(0, 10)}`;
+        if (!(await hasLedgerEntry(prisma, 'agent.owner_alert', metricEntityId))) {
+            await alertOwner(
+                prisma,
+                agent.key,
+                `${failedMetric} agent run(s) failing`,
+                `Monitoring sees ${failedMetric} failed agent run(s) in recent history; ${uncovered} fall outside the per-run alert window (older than 24h, beyond the scan limit, or over the 5-page cap). Check admin → AI Workforce → recent runs for the error column.`
+            );
+            await ledgerRecord(prisma, 'agent.owner_alert', 'agent_run_metric', metricEntityId, {
+                agentKey: agent.key,
+                failedAgentRuns: failedMetric,
+                uncovered,
+            });
+            res.alerts += 1;
+            res.notes.push('Owner paged with metric-level failure summary');
+        }
     }
 }
 

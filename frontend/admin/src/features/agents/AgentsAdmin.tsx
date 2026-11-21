@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from '@angisoft/utils';
 import { Badge } from '@/lib/Badge';
 import { apiFetch } from '@/lib/adminApi';
@@ -195,9 +196,14 @@ export function AgentsAdmin() {
         title="AI Workforce"
         subtitle="Automated agents that report to the owner — coordinator, marketing, sales, support, monitoring, finance, HR, analytics and security."
         actions={
-          <Button variant="outline" onClick={() => void load()} disabled={loading}>
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Link to="/approvals?entityType=agent_action">
+              <Button variant="outline">Approval queue</Button>
+            </Link>
+            <Button variant="outline" onClick={() => void load()} disabled={loading}>
+              Refresh
+            </Button>
+          </div>
         }
       />
 

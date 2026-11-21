@@ -218,13 +218,31 @@ describe('AI workforce: proactive outreach layer', () => {
             { id: 'run_failed_1', agentKey: 'sales-agent', status: 'failed', startedAt: iso(0), error: 'boom' },
         ];
         const out = output();
-        out.metrics.failedAgentRuns = 3;
+        out.metrics.failedAgentRuns = 1;
         await runProactive(prisma, agent('monitoring'), out);
         const alert = sentMails.find((m) => m.to === 'owner@example.com' && /agent run/i.test(m.subject));
         expect(alert).toBeTruthy();
         // Dedupe: a second proactive pass must not re-page for the same run.
         await runProactive(prisma, agent('monitoring'), out);
         expect(sentMails.filter((m) => m.to === 'owner@example.com' && /agent run/i.test(m.subject))).toHaveLength(1);
+    });
+
+    it('monitoring still pages the owner for metric-only failures (no fresh run rows)', async () => {
+        // Failures older than 24h never reach the per-run page path, but the
+        // collector's failedAgentRuns metric still counts them — the owner
+        // must be paged once per day, not left silent.
+        store.AgentRun = [
+            { id: 'run_failed_old', agentKey: 'finance', status: 'failed', startedAt: iso(2), error: 'old boom' },
+        ];
+        const out = output();
+        out.metrics.failedAgentRuns = 1;
+        await runProactive(prisma, agent('monitoring'), out);
+        const alerts = () => sentMails.filter((m) => m.to === 'owner@example.com' && /agent run/i.test(m.subject));
+        expect(alerts().length).toBe(1);
+        expect(alerts()[0].subject).toContain('1 agent run(s) failing');
+        // Daily dedupe: same-day repeat must not re-page.
+        await runProactive(prisma, agent('monitoring'), out);
+        expect(alerts()).toHaveLength(1);
     });
 
     it('pa writes a coaching note into an underperforming agent\'s config', async () => {

@@ -6,6 +6,7 @@ import { getWorkforceState, describeWorkforce, writeAgentStatus } from './agentS
 import { agentDefinition } from './agentRegistry';
 import { agentCharter } from './agentCharters';
 import { runProactive } from './proactive';
+import { syncAgentActions } from './agentApprovals';
 
 /**
  * Agent run engine.
@@ -472,6 +473,12 @@ export async function runAgent(
         if (task) output.task = task;
         output.summary = await polishSummary(prisma, agent, output);
         await runProactive(prisma, agent, output);
+        // Mirror human-decision items into the shared Approvals queue so they
+        // are tracked until someone signs off (or the issue resolves itself).
+        const queued = await syncAgentActions(prisma, agent, output);
+        if (queued > 0) {
+            output.highlights.push(`Approval queue: ${queued} new action item(s) awaiting owner decision`);
+        }
         const finished = await prisma.orm.public.AgentRun
             .where({ id: run.id })
             .update({

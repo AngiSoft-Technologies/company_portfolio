@@ -123,6 +123,9 @@ async function sweepScheduledAgents(): Promise<number> {
 
 let running = false;
 let inFlight = false;
+let sleepTimer: NodeJS.Timeout | null = null;
+let wakeSleep: (() => void) | null = null;
+let loopPromise: Promise<void> | null = null;
 
 async function cycle(): Promise<void> {
     if (inFlight) return; // never overlap cycles — agents stay responsive
@@ -174,9 +177,42 @@ export function startAgentRuntime(): void {
             } catch (err: any) {
                 console.warn('Agent runtime loop error:', err?.message || err);
             }
-            await new Promise((r) => setTimeout(r, pollMs));
+            if (!running) break;
+            // Interruptible sleep — stopAgentRuntime() wakes this immediately
+            // so shutdown doesn't wait a full poll interval.
+            await new Promise<void>((resolve) => {
+                wakeSleep = resolve;
+                sleepTimer = setTimeout(() => {
+                    sleepTimer = null;
+                    wakeSleep = null;
+                    resolve();
+                }, pollMs);
+            });
         }
     };
-    void loop();
+    loopPromise = loop();
     console.log(`🧠 Agent runtime started (poll ${pollMs}ms, continuous)`);
+}
+
+/**
+ * Stop the runtime loop. Must run BEFORE the process closes the Prisma pool —
+ * otherwise the 1s poll keeps firing cycles that all reject with
+ * "Postgres client is closed" during the shutdown window. Waits (bounded) for
+ * the in-flight cycle so its DB writes can land cleanly.
+ */
+export async function stopAgentRuntime(): Promise<void> {
+    if (!running) return;
+    running = false;
+    if (sleepTimer) {
+        clearTimeout(sleepTimer);
+        sleepTimer = null;
+    }
+    wakeSleep?.();
+    wakeSleep = null;
+    if (loopPromise) {
+        await Promise.race([
+            loopPromise,
+            new Promise((r) => setTimeout(r, 2_500)),
+        ]);
+    }
 }

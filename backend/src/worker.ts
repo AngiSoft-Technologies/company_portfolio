@@ -16,6 +16,7 @@ import { startSlaMonitor } from './workers/slaMonitor';
 import { startRenewalMonitor } from './workers/renewalMonitor';
 import { startAttendanceDeriveMonitor } from './workers/attendanceDerive';
 import { startAgentScheduler } from './workers/agentScheduler';
+import { stopAgentRuntime } from './workers/agentRuntime';
 import { closeWorkers, getWorkers } from './queue';
 
 async function bootstrap() {
@@ -25,13 +26,14 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  const monitorTimers: (NodeJS.Timeout | null)[] = [];
   for (const [label, start] of [
     ['email', startEmailWorker],
     ['file processor', startFileProcessor],
     ['reconciliation', startReconciliationWorker],
-    ['sla monitor', () => { startSlaMonitor(); }],
-    ['renewal monitor', () => { startRenewalMonitor(); }],
-    ['attendance derive monitor', () => { startAttendanceDeriveMonitor(); }],
+    ['sla monitor', () => { monitorTimers.push(startSlaMonitor()); }],
+    ['renewal monitor', () => { monitorTimers.push(startRenewalMonitor()); }],
+    ['attendance derive monitor', () => { monitorTimers.push(startAttendanceDeriveMonitor()); }],
     ['agent scheduler', () => { startAgentScheduler(); }],
   ] as const) {
     try {
@@ -50,6 +52,10 @@ async function bootstrap() {
   const shutdown = async (signal: string) => {
     console.log(`\n📦 ${signal} received — shutting down workers gracefully…`);
     clearInterval(keepAlive);
+    // Stop pollers/monitors BEFORE closing the pool — otherwise in-flight
+    // cycles reject with "Postgres client is closed" during shutdown.
+    await stopAgentRuntime().catch(() => undefined);
+    for (const t of monitorTimers) if (t) clearInterval(t);
     await closeWorkers();
     await disconnectDatabase();
     console.log('👋 Worker stopped');
