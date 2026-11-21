@@ -36,9 +36,13 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
     }
 }
 
-export function setRefreshCookie(res: Response, token: string) {
+export function setRefreshCookie(res: Response, token: string, remember = true) {
     const secure = process.env.NODE_ENV === 'production';
-    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'strict', path: '/api/auth', maxAge: 30 * 24 * 60 * 60 * 1000 });
+    // "Remember this device" controls cookie lifetime. Without it the refresh
+    // credential is a browser-session cookie; with it, 30 days. The refresh
+    // endpoint uses `current.remember` so the choice survives rotation.
+    const maxAge = remember ? 30 * 24 * 60 * 60 * 1000 : undefined;
+    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'strict', path: '/api/auth', ...(maxAge ? { maxAge } : {}) });
     // Double-submit CSRF token: readable by JS, echoed back as x-csrf-token.
     // (Fully enforced once the frontend migrates to cookie-based sessions;
     // today the app authenticates via the Authorization header, which is

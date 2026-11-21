@@ -11,6 +11,7 @@ import chatbotRouter from './modules/ai/routes/chatbot';
 import paymentsRouter from './modules/billing/routes/payments';
 import paymentConsoleRouter from './modules/billing/routes/payment-console';
 import authRouter from './modules/identity/routes/auth';
+import mfaRouter from './modules/identity/routes/mfa';
 import uploadsRouter from './modules/files/routes/uploads';
 import servicesRouter from './modules/cms/routes/services';
 import pricingPackagesRouter from './modules/cms/routes/pricing-packages';
@@ -308,6 +309,7 @@ app.get('/', (req, res) => {
         `);
 });
 
+app.use('/api/auth/mfa', authRateLimiter, mfaRouter);
 app.use('/api/auth', authRateLimiter, authRouter);
 app.use('/api/invite', inviteRouter(prisma));
 app.use('/api/bookings', bookingsRouter(prisma));

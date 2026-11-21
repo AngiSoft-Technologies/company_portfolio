@@ -8,6 +8,7 @@
   # Intentionally NO VITE_API_BASE_URL: the app calls the API same-origin
   # (angisoft.co.ke/api/*) via the proxy below. A cross-origin absolute base
   # would stop the browser sending the SameSite=Strict refresh cookie.
+  # Netlify UI env vars override this file — keep it unset there too.
   VITE_CDN_BASE_URL = "https://cdn.angisoft.co.ke"
   VITE_SOCKET_URL = "https://api.angisoft.co.ke"
 

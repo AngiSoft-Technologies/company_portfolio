@@ -23,6 +23,38 @@ let adminAccessToken: string | null = null;
 let clientAccessToken: string | null = null;
 let refreshPromise: Promise<string> | null = null;
 
+export interface MfaSetupMethod {
+  type: string;
+  label: string;
+  available: boolean;
+}
+
+export interface MfaSetupPayload {
+  setupTicket: string;
+  methods: MfaSetupMethod[];
+  remember: boolean;
+}
+
+/** Raised when a valid session proves the account still has no MFA factor. */
+export class MfaSetupRequiredError extends Error {
+  readonly payload: MfaSetupPayload;
+
+  constructor(payload: MfaSetupPayload) {
+    super('MFA setup required');
+    this.name = 'MfaSetupRequiredError';
+    this.payload = payload;
+  }
+}
+
+let pendingMfaSetup: MfaSetupPayload | null = null;
+
+/** Login keeps this until the forced enrollment form takes over. */
+export const consumePendingMfaSetup = (): MfaSetupPayload | null => {
+  const payload = pendingMfaSetup;
+  pendingMfaSetup = null;
+  return payload;
+};
+
 export const setAccessToken = (t: string | null): void => {
   adminAccessToken = t || null;
 };
@@ -91,8 +123,24 @@ const tryRefresh = async (): Promise<string> => {
         credentials: 'include',
         body: JSON.stringify({}),
       });
+      const data = (await res.json()) as {
+        accessToken?: string;
+        mfaSetupRequired?: boolean;
+        setupTicket?: string;
+        methods?: MfaSetupMethod[];
+        remember?: boolean;
+      };
+      if (data.mfaSetupRequired && data.setupTicket) {
+        const payload: MfaSetupPayload = {
+          setupTicket: data.setupTicket,
+          methods: data.methods || [],
+          remember: data.remember !== false,
+        };
+        pendingMfaSetup = payload;
+        clearSession();
+        throw new MfaSetupRequiredError(payload);
+      }
       if (!res.ok) throw new Error('refresh failed');
-      const data = (await res.json()) as { accessToken?: string };
       if (!data.accessToken) throw new Error('no token in refresh response');
       adminAccessToken = data.accessToken;
       return data.accessToken;
@@ -162,7 +210,8 @@ export const apiRequest = async <T = unknown>(
       try {
         await tryRefresh();
         response = await doFetch(method, url, headers, body, resolveToken(token));
-      } catch {
+      } catch (error) {
+        if (error instanceof MfaSetupRequiredError) throw error;
         redirectToLogin();
         throw new Error('Session expired');
       }
@@ -236,17 +285,54 @@ export const clientApiPost = <T = unknown>(endpoint: string, data: unknown): Pro
 export const clientApiPatch = <T = unknown>(endpoint: string, data: unknown): Promise<T> => clientPortalRequest<T>('PATCH', endpoint, data);
 
 /**
+ * An in-memory token can outlive a policy change (e.g. a SUPER_ADMIN who was
+ * logged in before MFA became mandatory). Ask the API once before granting a
+ * dashboard route; a setup ticket in the response means "enroll first".
+ */
+const assertAdminMfa = async (): Promise<void> => {
+  if (!adminAccessToken) return;
+  try {
+    const status = (await apiRequest<{
+      required?: boolean;
+      setupTicket?: string;
+      methods?: MfaSetupMethod[];
+      remember?: boolean;
+    }>('GET', '/auth/mfa/status')) as {
+      required?: boolean;
+      setupTicket?: string;
+      methods?: MfaSetupMethod[];
+      remember?: boolean;
+    };
+    if (status.required && status.setupTicket) {
+      const payload: MfaSetupPayload = {
+        setupTicket: status.setupTicket,
+        methods: status.methods || [],
+        remember: status.remember !== false,
+      };
+      pendingMfaSetup = payload;
+      clearSession();
+      throw new MfaSetupRequiredError(payload);
+    }
+  } catch (error) {
+    if (error instanceof MfaSetupRequiredError) throw error;
+    // Status is a safety net, not the enforcement point; never lock out a
+    // legitimate user because this extra probe failed.
+  }
+};
+
+/**
  * Rehydrate the admin session after a full page reload. Route guards call this;
  * it silently refreshes if a refresh cookie exists. Returns true when an access
- * token is available.
+ * token is available and the account has an MFA factor.
  */
 export const ensureSession = async (): Promise<boolean> => {
-  if (adminAccessToken) return true;
   if (clientAccessToken) return true;
   try {
-    await tryRefresh();
+    if (!adminAccessToken) await tryRefresh();
+    await assertAdminMfa();
     return !!adminAccessToken;
-  } catch {
+  } catch (error) {
+    if (error instanceof MfaSetupRequiredError) pendingMfaSetup = error.payload;
     return false;
   }
 };

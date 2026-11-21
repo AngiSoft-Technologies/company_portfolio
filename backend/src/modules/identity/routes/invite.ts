@@ -3,13 +3,14 @@ import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import { signAccessToken, createRefreshToken, hashToken } from '../../../modules/identity/utils/token';
 import { sendMail } from '../../../shared/services/email';
 import { logAudit } from '../../../shared/services/audit';
 import { z } from 'zod';
-import { AuthRequest, requireAuth, setRefreshCookie } from '../../../shared/middleware/auth';
+import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
+import { availableFactors, createSetupTicket, enrolledFactors } from '../services/mfa';
+import { issueSession } from '../services/session';
 
 // Mirrors the P7 `Role` enum (Employee.role values).
 const ROLES = [
@@ -74,19 +75,23 @@ export default function inviteRouter(prisma: Db) {
             lastName: lastName || emp.lastName,
         });
 
-        const refresh = createRefreshToken();
-        const refreshHash = hashToken(refresh);
-        const expiresAt = ts(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        await prisma.orm.public.RefreshToken.create({
-            id: newId(),
-            token: refreshHash,
-            employeeId: emp.id,
-            expiresAt,
-            ip: req.ip ?? null,
-            userAgent: req.get('user-agent') || null,
+        const factors = await enrolledFactors(emp);
+        if (factors.length === 0) {
+            const setupTicket = await createSetupTicket(emp);
+            const all = availableFactors(emp);
+            await logAudit({ action: 'accept_invite', entity: 'Employee', entityId: emp.id, actorId: emp.id, actorRole: emp.role });
+            return res.json({
+                mfaSetupRequired: true,
+                setupTicket,
+                methods: all.filter((f) => f.type === 'TOTP' || f.type === 'PASSKEY'),
+                remember: true,
+            });
+        }
+
+        const access = await issueSession(res, emp as any, true, {
+            ip: req.ip ?? undefined,
+            userAgent: req.get('user-agent') || undefined,
         });
-        const access = signAccessToken({ sub: emp.id, role: emp.role });
-        setRefreshCookie(res, refresh);
 
         await logAudit({ action: 'accept_invite', entity: 'Employee', entityId: emp.id, actorId: emp.id, actorRole: emp.role });
         res.json({ accessToken: access });

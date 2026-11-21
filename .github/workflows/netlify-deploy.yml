@@ -48,6 +48,7 @@ jobs:
             - name: Build admin
               run: pnpm --filter angisoft-admin build
               env:
+                  VITE_CDN_BASE_URL: https://cdn.angisoft.co.ke
                   VITE_SOCKET_URL: https://api.angisoft.co.ke
 
             - name: Deploy web

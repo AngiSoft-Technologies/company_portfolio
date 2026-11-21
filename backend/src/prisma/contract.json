@@ -168,6 +168,14 @@
       "model": "LeaveRequest",
       "namespace": "public"
     },
+    "MfaChallenge": {
+      "model": "MfaChallenge",
+      "namespace": "public"
+    },
+    "MfaMethod": {
+      "model": "MfaMethod",
+      "namespace": "public"
+    },
     "Newsletter": {
       "model": "Newsletter",
       "namespace": "public"
@@ -346,6 +354,10 @@
     },
     "TwoFactorBackupCode": {
       "model": "TwoFactorBackupCode",
+      "namespace": "public"
+    },
+    "WebAuthnCredential": {
+      "model": "WebAuthnCredential",
       "namespace": "public"
     },
     "WorkSchedule": {
@@ -4617,6 +4629,13 @@
                   "kind": "scalar"
                 }
               },
+              "mfaRequired": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "passwordHash": {
                 "nullable": true,
                 "type": {
@@ -5034,6 +5053,36 @@
                   "namespace": "public"
                 }
               },
+              "mfaChallenges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "employeeId"
+                  ]
+                },
+                "to": {
+                  "model": "MfaChallenge",
+                  "namespace": "public"
+                }
+              },
+              "mfaMethods": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "employeeId"
+                  ]
+                },
+                "to": {
+                  "model": "MfaMethod",
+                  "namespace": "public"
+                }
+              },
               "opportunities": {
                 "cardinality": "1:N",
                 "on": {
@@ -5230,6 +5279,21 @@
                   "model": "TwoFactorBackupCode",
                   "namespace": "public"
                 }
+              },
+              "webAuthnCredentials": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "employeeId"
+                  ]
+                },
+                "to": {
+                  "model": "WebAuthnCredential",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -5296,6 +5360,9 @@
                 },
                 "location": {
                   "column": "location"
+                },
+                "mfaRequired": {
+                  "column": "mfaRequired"
                 },
                 "passwordHash": {
                   "column": "passwordHash"
@@ -8017,6 +8084,267 @@
               },
               "namespaceId": "public",
               "table": "LeaveRequest"
+            }
+          },
+          "MfaChallenge": {
+            "fields": {
+              "attempts": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "challenge": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "codeHash": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "consumedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "destination": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "employeeId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "method": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "employee": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "employeeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "attempts": {
+                  "column": "attempts"
+                },
+                "challenge": {
+                  "column": "challenge"
+                },
+                "codeHash": {
+                  "column": "codeHash"
+                },
+                "consumedAt": {
+                  "column": "consumedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "destination": {
+                  "column": "destination"
+                },
+                "employeeId": {
+                  "column": "employeeId"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "method": {
+                  "column": "method"
+                }
+              },
+              "namespaceId": "public",
+              "table": "MfaChallenge"
+            }
+          },
+          "MfaMethod": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "credentialId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "destination": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "employeeId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "enabled": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "label": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastUsedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "employee": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "employeeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "credentialId": {
+                  "column": "credentialId"
+                },
+                "destination": {
+                  "column": "destination"
+                },
+                "employeeId": {
+                  "column": "employeeId"
+                },
+                "enabled": {
+                  "column": "enabled"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "label": {
+                  "column": "label"
+                },
+                "lastUsedAt": {
+                  "column": "lastUsedAt"
+                },
+                "type": {
+                  "column": "type"
+                }
+              },
+              "namespaceId": "public",
+              "table": "MfaMethod"
             }
           },
           "Newsletter": {
@@ -12541,6 +12869,13 @@
                   "kind": "scalar"
                 }
               },
+              "remember": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "revoked": {
                 "nullable": false,
                 "type": {
@@ -12600,6 +12935,9 @@
                 },
                 "ip": {
                   "column": "ip"
+                },
+                "remember": {
+                  "column": "remember"
                 },
                 "revoked": {
                   "column": "revoked"
@@ -14530,6 +14868,128 @@
               },
               "namespaceId": "public",
               "table": "TwoFactorBackupCode"
+            }
+          },
+          "WebAuthnCredential": {
+            "fields": {
+              "backedUp": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "counter": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-string@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "credentialId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "deviceType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "employeeId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "publicKey": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "transports": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "employee": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "employeeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Employee",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "backedUp": {
+                  "column": "backedUp"
+                },
+                "counter": {
+                  "column": "counter"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "credentialId": {
+                  "column": "credentialId"
+                },
+                "deviceType": {
+                  "column": "deviceType"
+                },
+                "employeeId": {
+                  "column": "employeeId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "publicKey": {
+                  "column": "publicKey"
+                },
+                "transports": {
+                  "column": "transports"
+                }
+              },
+              "namespaceId": "public",
+              "table": "WebAuthnCredential"
             }
           },
           "WorkSchedule": {
@@ -17882,6 +18342,15 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "mfaRequired": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "passwordHash": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -20435,6 +20904,223 @@
                   "id"
                 ],
                 "name": "LeaveRequest_pkey"
+              },
+              "uniques": []
+            },
+            "MfaChallenge": {
+              "columns": {
+                "attempts": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "challenge": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "codeHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "consumedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "destination": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "employeeId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "method": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "MfaChallenge_employeeId_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "employeeId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "MfaChallenge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "employeeId",
+                    "method"
+                  ],
+                  "name": "MfaChallenge_employeeId_method_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "MfaChallenge_pkey"
+              },
+              "uniques": []
+            },
+            "MfaMethod": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "credentialId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "destination": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "employeeId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "enabled": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "label": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "lastUsedAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "nativeType": "timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "type": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "MfaMethod_employeeId_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "employeeId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "MfaMethod"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "credentialId"
+                  ],
+                  "name": "MfaMethod_credentialId_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "employeeId",
+                    "type"
+                  ],
+                  "name": "MfaMethod_employeeId_type_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "MfaMethod_pkey"
               },
               "uniques": []
             },
@@ -24210,6 +24896,15 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "remember": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "revoked": {
                   "codecId": "pg/bool@1",
                   "default": {
@@ -25753,6 +26448,122 @@
               },
               "uniques": []
             },
+            "WebAuthnCredential": {
+              "columns": {
+                "backedUp": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "counter": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamp-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "credentialId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "deviceType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "employeeId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "publicKey": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "transports": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
+                  "noCheck": [
+                    "elementNotNull"
+                  ],
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "name": "WebAuthnCredential_employeeId_fkey",
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "employeeId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "WebAuthnCredential"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Employee"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "credentialId"
+                  ],
+                  "name": "WebAuthnCredential_credentialId_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "employeeId"
+                  ],
+                  "name": "WebAuthnCredential_employeeId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ],
+                "name": "WebAuthnCredential_pkey"
+              },
+              "uniques": []
+            },
             "WorkSchedule": {
               "columns": {
                 "createdAt": {
@@ -26059,7 +26870,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "01393c828ad0b87d8aedea9902e046bd866f0fe148cf29c8a8fcd77716757ef0"
+    "storageHash": "36dd9cede4359df6de2bed6fe0aeface2406bf144e19a050bd9aee5d3e36cfef"
   },
   "capabilities": {
     "postgres": {

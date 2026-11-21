@@ -31,6 +31,7 @@ model Employee {
   resetExpiry         DateTime?
   twoFactorSecret     String?
   twoFactorEnabled    Boolean  @default(false)
+  mfaRequired         Boolean  @default(false)
   acceptedAt          DateTime?
   bio                 String?
   avatarUrl           String?
@@ -68,6 +69,9 @@ model Employee {
   projectComments     ProjectComment[]
   refreshTokens       RefreshToken[]
   backupCodes         TwoFactorBackupCode[]
+  mfaMethods          MfaMethod[]
+  mfaChallenges       MfaChallenge[]
+  webAuthnCredentials WebAuthnCredential[]
   staffBlogs          StaffBlog[]
   certifications      Certification[]
   projectContributions ProjectEmployee[]
@@ -1242,7 +1246,8 @@ model RefreshToken {
   ip         String?
   userAgent  String?
   fingerprint String?
-  revoked    Boolean  @default(false)
+  remember    Boolean  @default(true)
+  revoked     Boolean  @default(false)
 }
 
 model AuditLog {
@@ -1263,6 +1268,55 @@ model TwoFactorBackupCode {
   codeHash   String
   used       Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+// Multi-factor authentication. One employee can have several active factors
+// (TOTP, email/SMS/WhatsApp OTP, passkeys); backup codes stay in the existing
+// TwoFactorBackupCode table. Challenges are single-use and short-lived.
+model MfaMethod {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        String    // TOTP | EMAIL | SMS | WHATSAPP | PASSKEY
+  label       String?
+  destination String?
+  credentialId String?  @unique
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  @@index([employeeId, type])
+}
+
+model MfaChallenge {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  method      String    // LOGIN | SETUP | EMAIL | SMS | WHATSAPP | PASSKEY | PASSKEY_REGISTER
+  destination String?
+  codeHash    String?
+  challenge   String?
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([employeeId, method])
+}
+
+model WebAuthnCredential {
+  id           String   @id @default(uuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    String
+  counter      Int      @default(0)
+  transports   String[] @default([])
+  deviceType   String?
+  backedUp     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([employeeId])
 }
 
 // ─── Newsletter Subscribers ─────────────────────────────────────────

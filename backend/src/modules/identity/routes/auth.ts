@@ -3,17 +3,19 @@ import prisma from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { and } from '@prisma/orm-postgres/orm-client';
 import bcrypt from 'bcrypt';
-import { signAccessToken, createRefreshToken, hashToken } from '../../../modules/identity/utils/token';
+import { createRefreshToken, hashToken } from '../../../modules/identity/utils/token';
 import { sendMail } from '../../../shared/services/email';
 import { logAudit } from '../../../shared/services/audit';
 import { suspiciousAuthEvent } from '../../../shared/services/monitor';
 import { z } from 'zod';
-import { AuthRequest, requireAuth, setRefreshCookie } from '../../../shared/middleware/auth';
+import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
 import rateLimit from 'express-rate-limit';
 import { generateSecret, generateOtpAuthUrl, verifyToken, generateBackupCodes, hashBackupCodes } from '../../../modules/identity/services/twofactor';
 import { requireAccess } from '../../../shared/middleware/roles';
 import zxcvbn from 'zxcvbn';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
+import { availableFactors, createLoginTicket, createSetupTicket, enrolledFactors, verifyBackupCode } from '../services/mfa';
+import { issueSession } from '../services/session';
 
 const router = Router();
 
@@ -27,7 +29,12 @@ const accountLimiter = rateLimit({
 });
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
-const login2FASchema = z.object({ email: z.string().email(), password: z.string().min(8), totp: z.string().optional() });
+const login2FASchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  totp: z.string().optional(),
+  remember: z.boolean().optional(),
+});
 const refreshSchema = z.object({}); // refresh token will be read from cookie or body
 const forgotSchema = z.object({ email: z.string().email() });
 const resetSchema = z.object({ token: z.string(), password: z.string().min(8) });
@@ -35,7 +42,7 @@ const resetSchema = z.object({ token: z.string(), password: z.string().min(8) })
 router.post('/login', accountLimiter, async (req, res) => {
     const parsed = login2FASchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-    const { email, password, totp } = parsed.data;
+    const { email, password, totp, remember } = parsed.data;
     const emp = await prisma.orm.public.Employee.where({ email }).first();
     if (!emp || !emp.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
     const ok = await bcrypt.compare(password, emp.passwordHash);
@@ -45,36 +52,50 @@ router.post('/login', accountLimiter, async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // if 2FA enabled, verify TOTP or accept a one-time backup code
-    if (emp.twoFactorEnabled) {
-        if (!totp) return res.status(401).json({ error: '2FA required' });
-        const valid = verifyToken(emp.twoFactorSecret || '', totp);
-        if (!valid) {
-            // try backup codes: find unused codes and compare with bcrypt
-            const codes = await prisma.orm.public.TwoFactorBackupCode.where({ employeeId: emp.id, used: false }).all();
-            let matchedCodeId: string | null = null;
-            for (const c of codes) {
-                const okCode = await bcrypt.compare(totp, c.codeHash);
-                if (okCode) {
-                    matchedCodeId = c.id;
-                    break;
-                }
-            }
-            if (!matchedCodeId) return res.status(401).json({ error: 'Invalid 2FA token' });
-            // mark the backup code as used
-            await prisma.orm.public.TwoFactorBackupCode.where({ id: matchedCodeId }).update({ used: true });
-        }
+    const factors = await enrolledFactors(emp);
+    const rememberSession = remember !== false;
+
+    // Nobody reaches a dashboard with password only. TOTP is the preferred
+    // first factor; a passkey (including a phone fingerprint) is the alternate.
+    if (factors.length === 0) {
+        const setupTicket = await createSetupTicket(emp);
+        const all = availableFactors(emp);
+        return res.status(200).json({
+            mfaSetupRequired: true,
+            setupTicket,
+            methods: all.filter((f) => f.type === 'TOTP' || f.type === 'PASSKEY'),
+            remember: rememberSession,
+        });
     }
 
-    const access = signAccessToken({ sub: emp.id, role: emp.role });
-    const refresh = createRefreshToken();
-    const refreshHash = hashToken(refresh);
-    const expiresAt = ts(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const ip = req.ip;
-    const userAgent = req.get('user-agent') || undefined;
-    const fingerprint = req.body.fingerprint || undefined;
-    await prisma.orm.public.RefreshToken.create({ id: newId(), token: refreshHash, employeeId: emp.id, expiresAt, ip: ip ?? null, userAgent: userAgent ?? null, fingerprint: fingerprint ?? null });
-    setRefreshCookie(res, refresh);
+    // Browser clients use the ticket flow so the user can choose any enrolled
+    // factor (TOTP, email/SMS/WhatsApp OTP, passkey, or a backup code).
+    if (factors.length > 0 && !totp) {
+        const loginTicket = await createLoginTicket(emp);
+        const all = availableFactors(emp);
+        const methods = all.filter((f) => factors.includes(f.type) || (f.type === 'BACKUP' && emp.twoFactorEnabled));
+        return res.status(200).json({
+            mfaRequired: true,
+            loginTicket,
+            methods,
+            remember: rememberSession,
+        });
+    }
+
+    // Backward compatibility: API clients may send a TOTP/backup code on the
+    // first request. This still goes through the same factor checks.
+    if (factors.length > 0) {
+        let factorOk = false;
+        if (totp && emp.twoFactorSecret) factorOk = verifyToken(emp.twoFactorSecret, totp);
+        if (!factorOk && totp) factorOk = await verifyBackupCode(emp, totp);
+        if (!factorOk) return res.status(401).json({ error: 'Invalid 2FA token' });
+    }
+
+    const access = await issueSession(res, emp as any, rememberSession, {
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+        fingerprint: (req.body as any)?.fingerprint,
+    });
 
     await logAudit({ action: 'login', entity: 'Employee', entityId: emp.id, actorId: emp.id, actorRole: emp.role });
     res.json({ accessToken: access });
@@ -95,16 +116,27 @@ router.post('/refresh', async (req, res) => {
     const emp = await prisma.orm.public.Employee.where({ id: current.employeeId }).first();
     if (!emp) return res.status(401).json({ error: 'Invalid token owner' });
 
-    const newToken = createRefreshToken();
-    const newHash = hashToken(newToken);
-    const expiresAt = ts(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const ip = req.ip;
-    const userAgent = req.get('user-agent') || undefined;
-    const fingerprint = req.body.fingerprint || undefined;
-    await prisma.orm.public.RefreshToken.create({ id: newId(), token: newHash, employeeId: emp.id, expiresAt, ip: ip ?? null, userAgent: userAgent ?? null, fingerprint: fingerprint ?? null });
-    setRefreshCookie(res, newToken);
+    // Sessions predating this policy must not rehydrate into a dashboard.
+    const factors = await enrolledFactors(emp);
+    if (factors.length === 0) {
+        await prisma.orm.public.RefreshToken.where({ employeeId: emp.id }).updateAll({ revoked: true });
+        res.clearCookie('refreshToken', { path: '/api/auth' });
+        const setupTicket = await createSetupTicket(emp);
+        const all = availableFactors(emp);
+        return res.status(403).json({
+            error: 'MFA setup required',
+            mfaSetupRequired: true,
+            setupTicket,
+            methods: all.filter((f) => f.type === 'TOTP' || f.type === 'PASSKEY'),
+            remember: current.remember ?? true,
+        });
+    }
 
-    const access = signAccessToken({ sub: emp.id, role: emp.role });
+    const access = await issueSession(res, emp as any, current.remember ?? true, {
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+        fingerprint: (req.body as any)?.fingerprint,
+    });
     await logAudit({ action: 'refresh', entity: 'Employee', entityId: emp.id });
     res.json({ accessToken: access });
 });

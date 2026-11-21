@@ -6,9 +6,11 @@ import { apiRequest, ensureSession, getAccessToken } from '@angisoft/api-client'
  * Delegates to the shared `@angisoft/api-client` so the admin app gets the
  * same security model as the public site:
  *
- *  - **Absolute API origin** — resolves `VITE_API_BASE_URL` in production and
- *    the Vite dev proxy in development, so requests never land on the Netlify
- *    SPA fallback (which used to return `200 text/html` for `/api/*`).
+ *  - **Same-origin API URL** — every call uses a relative `/api/*` path. Netlify
+ *    proxies it to the backend, so the host-only `SameSite=Strict` refresh cookie
+ *    and the readable `csrfToken` cookie stay on the app's own origin. An
+ *    absolute API origin makes the browser call the API host directly, where JS
+ *    cannot read the CSRF cookie and login fails with 403.
  *  - **Bearer token in memory** — the access token is attached from the
  *    in-memory store instead of being (re)read from `localStorage`, so it can
  *    never be exfiltrated by an injected script.
@@ -26,18 +28,12 @@ function readCsrfCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-/** Resolves the absolute API origin exactly like `@angisoft/api-client`. */
-function apiOrigin(): string {
-  const base = import.meta.env.VITE_API_BASE_URL as string | undefined;
-  if (base) return base.replace(/\/+$/, '').replace(/\/api$/, '');
-  return import.meta.env.PROD ? 'https://api.angisoft.co.ke' : '';
-}
-
+/** Normalizes an admin endpoint to a same-origin `/api/*` path. */
 function buildApiUrl(path: string): string {
   if (path.startsWith('http')) return path;
-  const normalized = path.startsWith('/api') ? path : `/api${path.startsWith('/') ? '' : '/'}${path}`;
-  const origin = apiOrigin();
-  return origin ? `${origin}${normalized}` : normalized;
+  return path.startsWith('/api')
+    ? path
+    : `/api${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
 /**

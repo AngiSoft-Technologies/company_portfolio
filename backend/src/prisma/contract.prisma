@@ -169,6 +169,7 @@ namespace public {
     inviteExpiry            TimestampString(3)?
     twoFactorSecret         String?
     twoFactorEnabled        Boolean                    @default(false)
+    mfaRequired             Boolean                    @default(false)
     acceptedAt              TimestampString(3)?
     bio                     String?
     avatarUrl               String?
@@ -225,6 +226,9 @@ namespace public {
     services                Service[]
     staffBlogs              StaffBlog[]
     twoFactorBackupCodes    TwoFactorBackupCode[]
+    mfaMethods              MfaMethod[]
+    mfaChallenges           MfaChallenge[]
+    webAuthnCredentials     WebAuthnCredential[]
     departmentDepartment    Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_departmentId_fkey")
     position                Position?                  @relation(fields: [positionId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_positionId_fkey")
     opportunities   Opportunity[]
@@ -1372,6 +1376,7 @@ namespace public {
     ip          String?
     userAgent   String?
     fingerprint String?
+    remember    Boolean      @default(true)
     revoked     Boolean      @default(false)
     employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "RefreshToken_employeeId_fkey", index: false)
 
@@ -1557,6 +1562,57 @@ namespace public {
     createdAt  TimestampString(3) @default(now())
     employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "TwoFactorBackupCode_employeeId_fkey", index: false)
   @@map("TwoFactorBackupCode")
+}
+
+  model MfaMethod {
+    id          String              @id(map: "MfaMethod_pkey")
+    employeeId  String
+    type        String
+    label       String?
+    destination String?
+    credentialId String?
+    enabled     Boolean             @default(true)
+    createdAt   TimestampString(3)  @default(now())
+    lastUsedAt  TimestampString(3)?
+    employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "MfaMethod_employeeId_fkey", index: false)
+
+    @@index([employeeId, type], map: "MfaMethod_employeeId_type_idx")
+    @@index([credentialId], map: "MfaMethod_credentialId_key", unique: true)
+  @@map("MfaMethod")
+}
+
+  model MfaChallenge {
+    id          String              @id(map: "MfaChallenge_pkey")
+    employeeId  String
+    method      String
+    destination String?
+    codeHash    String?
+    challenge   String?
+    attempts    Int                 @default(0)
+    expiresAt   TimestampString(3)
+    consumedAt  TimestampString(3)?
+    createdAt   TimestampString(3)  @default(now())
+    employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "MfaChallenge_employeeId_fkey", index: false)
+
+    @@index([employeeId, method], map: "MfaChallenge_employeeId_method_idx")
+  @@map("MfaChallenge")
+}
+
+  model WebAuthnCredential {
+    id           String              @id(map: "WebAuthnCredential_pkey")
+    employeeId   String
+    credentialId String
+    publicKey    String
+    counter      Int                 @default(0)
+    transports   String[]            @default([]) @noCheck(elementNotNull)
+    deviceType   String?
+    backedUp     Boolean             @default(false)
+    createdAt    TimestampString(3)  @default(now())
+    employee     Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "WebAuthnCredential_employeeId_fkey", index: false)
+
+    @@index([employeeId], map: "WebAuthnCredential_employeeId_idx")
+    @@index([credentialId], map: "WebAuthnCredential_credentialId_key", unique: true)
+  @@map("WebAuthnCredential")
 }
 
   model Expense {

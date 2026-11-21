@@ -91,6 +91,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/uploads', label: 'File Uploads', permission: 'media.upload' },
       { to: '/settings', label: 'Site Settings', permission: 'administration.settings' },
       { to: '/system', label: 'System Panel', permission: 'administration.audit' },
+      { to: '/security', label: 'Security & MFA', permission: 'administration.audit' },
       { to: '/audit-log', label: 'Audit Log', permission: 'administration.audit' },
     ],
   },

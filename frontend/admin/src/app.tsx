@@ -55,6 +55,7 @@ const AIConfigAdmin = lazy(() => import('@/features/ai-tools/AIConfigAdmin'));
 const AiAssist = lazy(() => import('@/features/ai-tools/AiAssist'));
 const AgentsAdmin = lazy(() => import('@/features/agents/AgentsAdmin').then((m) => ({ default: m.AgentsAdmin })));
 const SystemPanel = lazy(() => import('@/features/settings/SystemPanel'));
+const SecurityPanel = lazy(() => import('@/features/settings/SecurityPanel'));
 const FileUploadManager = lazy(() => import('@/features/settings/FileUploadManager'));
 const RolesAdmin = lazy(() => import('@/features/settings/RolesAdmin'));
 const AuditLogViewer = lazy(() => import('@/features/settings/AuditLogViewer'));
@@ -133,6 +134,7 @@ export default function App() {
         <Route path="ai-assist" element={<AiAssist />} />
         <Route path="agents" element={<AgentsAdmin />} />
         <Route path="system" element={<SystemPanel />} />
+        <Route path="security" element={<SecurityPanel />} />
         <Route path="audit-log" element={<AuditLogViewer />} />
         <Route path="uploads" element={<FileUploadManager />} />
       </Route>

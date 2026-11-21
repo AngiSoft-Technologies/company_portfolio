@@ -31,10 +31,10 @@ export function normalizeRows<T>(data: unknown, transform?: (rows: unknown) => T
 }
 
 /**
- * All admin data access goes through `apiFetch`, which adds the absolute API
- * origin, the in-memory Bearer token, the CSRF double-submit header, and the
- * 401 refresh retry. A raw `fetch` here silently produced anonymous requests
- * that every guarded endpoint rejected.
+ * All admin data access goes through `apiFetch`, which uses the same-origin
+ * `/api/*` proxy, the in-memory Bearer token, the CSRF double-submit header,
+ * and the 401 refresh retry. A raw `fetch` here silently produced anonymous
+ * requests that every guarded endpoint rejected.
  */
 export function adminHeaders(): Record<string, string> {
   return { 'Content-Type': 'application/json' };

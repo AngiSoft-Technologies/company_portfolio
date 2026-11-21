@@ -8,6 +8,8 @@
   # same-origin (admin.angisoft.co.ke/api/*) and relies on the proxy below.
   # A cross-origin https://api.angisoft.co.ke base would stop the browser from
   # sending the SameSite=Strict refresh cookie, silently breaking sessions.
+  # Netlify UI env vars override this file — keep it unset there too.
+  VITE_CDN_BASE_URL = "https://cdn.angisoft.co.ke"
   VITE_SOCKET_URL = "https://api.angisoft.co.ke"
 
 [[redirects]]
