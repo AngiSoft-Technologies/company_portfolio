@@ -9,6 +9,7 @@ import {
   listMetaCapabilities,
   listMetaPages,
   listMetaAppSubscriptions,
+  listMetaAdAccounts,
   listMetaAdInsights,
   getMetaInstagramAccount,
   listMetaInstagramInsights,
@@ -39,6 +40,7 @@ const MANAGE_ACCESS = ['ADMIN', 'SUPER_ADMIN'] as const;
 const READ_OPERATIONS: Partial<Record<MetaOperation, (input: any) => Promise<any>>> = {
   'pages.read': () => listMetaPages(),
   'app.subscriptions.read': () => listMetaAppSubscriptions(),
+  'ad_accounts.read': () => listMetaAdAccounts(),
   'ads.insights.read': (input) => listMetaAdInsights(input.objectId, input.days),
   'instagram.read': () => getMetaInstagramAccount(),
   'instagram.insights.read': (input) => listMetaInstagramInsights(input.objectId, input.days),

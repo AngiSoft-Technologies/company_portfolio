@@ -87,6 +87,7 @@ import {
   getMetaOperationStatus,
   hideMetaComment,
   listInstagramMentions,
+  listMetaAdAccounts,
   listMetaAdInsights,
   listMetaAppSubscriptions,
   listMetaInstagramInsights,
@@ -427,6 +428,15 @@ describe('Meta resource pack', () => {
       expect(getMetaOperationStatus('ads.insights.read').approvalRequired).toBe(true);
     });
 
+    it('reports ad-account discovery only with a system token and review grant', () => {
+      expect(getMetaOperationStatus('ad_accounts.read').available).toBe(false);
+      config.set('META_SYSTEM_USER_TOKEN', 'placeholder');
+      expect(getMetaOperationStatus('ad_accounts.read').available).toBe(false);
+      config.set('META_APP_REVIEW_GRANTED', 'true');
+      expect(getMetaOperationStatus('ad_accounts.read').available).toBe(true);
+      expect(getMetaOperationStatus('ad_accounts.read').approvalRequired).toBe(true);
+    });
+
     it('gates Instagram insights on a token but not an ad account or review grant', () => {
       expect(getMetaOperationStatus('instagram.insights.read').available).toBe(false);
       config.set('META_SYSTEM_USER_TOKEN', 'placeholder');
@@ -458,6 +468,22 @@ describe('Meta resource pack', () => {
       expect(url).toContain('time_range=');
       expect(init.headers.Authorization).toBe('Bearer placeholder');
       expect(url).not.toMatch(/campaign_id|adset_id|create|delete/);
+    });
+
+    it('lists ad accounts read-only with bounded fields and no mutation verbs', async () => {
+      config.set('META_SYSTEM_USER_TOKEN', 'placeholder');
+      config.set('META_APP_REVIEW_GRANTED', 'true');
+      const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      vi.stubGlobal('fetch', fetchMock);
+      await listMetaAdAccounts();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, { method?: string; headers: Record<string, string> }];
+      expect(url).toContain('/me/adaccounts?');
+      expect(url).toContain('fields=');
+      expect(url).toContain('currency');
+      expect(url).not.toMatch(/create|delete|update|spend|create_campaign/i);
+      expect(init.method).toBeUndefined(); // GET by default
+      expect(init.headers.Authorization).toBe('Bearer placeholder');
     });
 
     it('reads Instagram insights from the configured professional account', async () => {

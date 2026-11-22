@@ -14,6 +14,7 @@ const ERROR_LIMIT = 500;
 const SAFE_READS = [
   'pages.read',
   'app.subscriptions.read',
+  'ad_accounts.read',
   'ads.insights.read',
   'instagram.read',
   'instagram.insights.read',

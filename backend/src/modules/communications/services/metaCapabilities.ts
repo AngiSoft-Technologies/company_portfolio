@@ -27,6 +27,7 @@ export const META_OPERATIONS = [
   'pages.read',
   'pages.publish',
   'app.subscriptions.read',
+  'ad_accounts.read',
   'ads.insights.read',
   'instagram.read',
   'instagram.insights.read',
@@ -69,6 +70,7 @@ const OPERATION_REQUIREMENTS: Record<MetaOperation, Requirement[]> = {
   'pages.read': ['systemUserToken'],
   'pages.publish': ['systemUserToken', 'appReview'],
   'app.subscriptions.read': ['appId', 'appSecret'],
+  'ad_accounts.read': ['systemUserToken', 'appReview'],
   'ads.insights.read': ['systemUserToken', 'appReview', 'adAccount'],
   'instagram.read': ['systemUserToken'],
   'instagram.insights.read': ['systemUserToken'],
@@ -364,6 +366,21 @@ export async function listMetaAdInsights(objectId?: string, days = 7) {
     signal: AbortSignal.timeout(20_000),
   });
   if (!response.ok) throw new ProviderConfigurationError(`Meta Ads insights failed (HTTP ${response.status})`);
+  return response.json().catch(() => ({}));
+}
+
+/**
+ * List ad accounts visible to the configured system user. Read-only discovery
+ * used to populate the ad-account picker; never creates, edits or spends.
+ */
+export async function listMetaAdAccounts() {
+  assertMetaOperation('ad_accounts.read');
+  const params = new URLSearchParams({ fields: 'id,name,currency,account_status,amount_spent', limit: '50' });
+  const response = await fetch(`${graphBase()}/me/adaccounts?${params}`, {
+    headers: { Authorization: `Bearer ${graphToken()}` },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new ProviderConfigurationError(`Meta ad-account list failed (HTTP ${response.status})`);
   return response.json().catch(() => ({}));
 }
 
