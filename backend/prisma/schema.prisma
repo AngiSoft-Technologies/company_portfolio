@@ -459,7 +459,7 @@ model PaymentWallet {
   id          String   @id @default(uuid())
   provider    String   @default("PAYHERO")
   walletType  String // service_wallet | payment_wallet
-  balance     Decimal  @default(0) @db.Decimal(18, 2)
+  balance     Decimal  @default(dbgenerated("0")) @db.Decimal(18, 2)
   name        String?
   meta        Json?
   syncedAt    DateTime?

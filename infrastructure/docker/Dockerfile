@@ -31,6 +31,7 @@ COPY prisma.config.ts ./
 # Copy source code
 COPY tsconfig.json ./
 COPY src ./src
+COPY scripts ./scripts
 COPY uploads ./uploads
 
 

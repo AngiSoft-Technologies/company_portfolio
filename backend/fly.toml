@@ -6,7 +6,7 @@ swap_size_mb = 512
   dockerfile = "../infrastructure/docker/Dockerfile"
 
 [deploy]
-  release_command = "npx prisma db migrate"
+  release_command = "sh -c 'npx prisma db migrate || node scripts/apply-phase7-sql.mjs'"
 
 
 [http_service]
