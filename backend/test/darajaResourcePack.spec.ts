@@ -22,6 +22,7 @@ import {
   simulateC2b,
 } from '../src/modules/billing/services/payments/darajaPayouts';
 import {
+  darajaTimestamp,
   decodeStkCallback,
   initStkPush,
   queryStkStatus,
@@ -109,6 +110,14 @@ describe('Daraja resource pack adapters', () => {
     expect(B2B_COMMAND_IDS).toEqual(expect.arrayContaining([
       'BusinessPayBill', 'BusinessBuyGoods', 'DisburseFundsToBusiness',
     ]));
+  });
+
+  it('formats the STK password timestamp in Africa/Nairobi, not server local time', () => {
+    // 23:30 UTC on 1 Jan is 02:30 the next day in EAT (UTC+3, no DST).
+    // A UTC server using getHours() would produce 20240101233000 — wrong.
+    expect(darajaTimestamp(new Date('2024-01-01T23:30:00.000Z'))).toBe('20240102023000');
+    // Midday UTC is 15:00 EAT on the same date.
+    expect(darajaTimestamp(new Date('2024-06-15T12:00:00.000Z'))).toBe('20240615150000');
   });
 
   it('parses the account balance result string', () => {

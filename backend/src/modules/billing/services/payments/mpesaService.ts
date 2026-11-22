@@ -55,13 +55,27 @@ export function scheduleStkStatusRecovery(job: StkRecoveryJob): Promise<{ id: st
     });
 }
 
-function pad(n: number) {
-    return String(n).padStart(2, '0');
-}
+/**
+ * Safaricom timestamps are Africa/Nairobi wall-clock time (EAT, UTC+3), NOT the
+ * server's local timezone. The local pack is inconsistent here — its Node sample
+ * uses UTC `toISOString()` while its Python sample uses local `datetime.now()` —
+ * so pin the IANA zone explicitly. A Fly/host container defaults to UTC, which
+ * would otherwise produce a three-hour skew and an invalid STK password.
+ * Kenya has no DST, but Intl keeps this correct even if that ever changes.
+ */
+const DARAJA_TIMEZONE = 'Africa/Nairobi';
+const darajaClock = new Intl.DateTimeFormat('en-GB', {
+    timeZone: DARAJA_TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hourCycle: 'h23',
+});
 
-/** Safaricom timestamp = YYYYMMDDHHmmss in LOCAL time (never UTC). */
+/** Safaricom timestamp = YYYYMMDDHHmmss in Africa/Nairobi local time. */
 export function darajaTimestamp(date = new Date()) {
-    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+    const parts = darajaClock.formatToParts(date);
+    const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
+    return `${part('year')}${part('month')}${part('day')}${part('hour')}${part('minute')}${part('second')}`;
 }
 
 /** Base64(ShortCode + Passkey + Timestamp), shared by STK push and STK query. */

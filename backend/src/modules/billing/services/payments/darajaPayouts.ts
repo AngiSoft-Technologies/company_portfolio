@@ -149,8 +149,11 @@ export async function getAccessToken(): Promise<string> {
   // old token; it is never included in an error message or log.
   const identity = `${key}:${secret}`;
 
+  // The guide (`docs/getting-started/auth.md`) recommends refreshing within
+  // five minutes of the one-hour expiry. Match the STK cache's 300s skew so a
+  // token is never presented to Daraja in its final, race-prone minute.
   if (tokenCache && tokenCache.env === current && tokenCache.identity === identity
-      && tokenCache.expiresAt > Date.now() + 30_000) {
+      && tokenCache.expiresAt > Date.now() + 300_000) {
     return tokenCache.token;
   }
   if (tokenInFlight) return tokenInFlight;
