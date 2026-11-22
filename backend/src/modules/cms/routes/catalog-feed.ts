@@ -61,56 +61,57 @@ function renderItem(siteUrl: string, item: FeedItem): string {
     </item>`;
 }
 
-export default function catalogFeedRouter(prisma: Db = db) {
-  const router = Router();
+/**
+ * Render the published catalogue as Meta/Google Product RSS. Exported so the
+ * read-only Meta catalog-readiness diagnostic can validate the exact same feed
+ * Meta would poll, without duplicating the query or rendering logic.
+ */
+export async function buildCatalogFeedXml(prisma: Db = db): Promise<{ xml: string; itemCount: number }> {
+  const siteUrl = String(getConfig('PUBLIC_SITE_URL') || 'https://angisoft.co.ke');
+  const [packageRows, serviceRows] = await Promise.all([
+    prisma.orm.public.PricingPackage
+      .where({ published: true })
+      .include('service', (s: any) => s.select('id', 'title', 'slug', 'description', 'images', 'priceFrom', 'currency', 'published'))
+      .orderBy((p: any) => p.sortOrder.asc())
+      .all(),
+    prisma.orm.public.Service
+      .where({ published: true })
+      .all(),
+  ]);
+  const packages = packageRows as any[];
+  const services = serviceRows as any[];
 
-  router.get(['/feed.xml', '/feed'], async (_req, res) => {
-    try {
-      const siteUrl = String(getConfig('PUBLIC_SITE_URL') || 'https://angisoft.co.ke');
-      const [packageRows, serviceRows] = await Promise.all([
-        prisma.orm.public.PricingPackage
-          .where({ published: true })
-          .include('service', (s: any) => s.select('id', 'title', 'slug', 'description', 'images', 'priceFrom', 'currency', 'published'))
-          .orderBy((p: any) => p.sortOrder.asc())
-          .all(),
-        prisma.orm.public.Service
-          .where({ published: true })
-          .all(),
-      ]);
-      const packages = packageRows as any[];
-      const services = serviceRows as any[];
+  const items: FeedItem[] = [];
+  const packagedServiceIds = new Set<string>();
+  for (const pkg of packages) {
+    const service = pkg.service;
+    if (!service || service.published === false) continue;
+    packagedServiceIds.add(String(service.id));
+    const images = Array.isArray(service.images) ? service.images : [];
+    items.push({
+      id: `package-${pkg.id}`,
+      title: `${service.title} — ${pkg.name}`,
+      description: String(pkg.description || service.description || `${pkg.name} from AngiSoft Technologies`).slice(0, 5000),
+      link: publicUrl(siteUrl, `/services/${service.slug}#pricing`),
+      imageLink: publicUrl(siteUrl, String(images[0] || '/og-default.png')),
+      price: money(pkg.price, pkg.currency || service.currency),
+    });
+  }
 
-      const items: FeedItem[] = [];
-      const packagedServiceIds = new Set<string>();
-      for (const pkg of packages) {
-        const service = pkg.service;
-        if (!service || service.published === false) continue;
-        packagedServiceIds.add(String(service.id));
-        const images = Array.isArray(service.images) ? service.images : [];
-        items.push({
-          id: `package-${pkg.id}`,
-          title: `${service.title} — ${pkg.name}`,
-          description: String(pkg.description || service.description || `${pkg.name} from AngiSoft Technologies`).slice(0, 5000),
-          link: publicUrl(siteUrl, `/services/${service.slug}#pricing`),
-          imageLink: publicUrl(siteUrl, String(images[0] || '/og-default.png')),
-          price: money(pkg.price, pkg.currency || service.currency),
-        });
-      }
+  for (const service of services) {
+    if (packagedServiceIds.has(String(service.id))) continue;
+    const images = Array.isArray(service.images) ? service.images : [];
+    items.push({
+      id: `service-${service.id}`,
+      title: String(service.title || 'AngiSoft service'),
+      description: String(service.description || 'Custom software, ERP, IoT and AI services from AngiSoft Technologies').slice(0, 5000),
+      link: publicUrl(siteUrl, `/services/${service.slug}`),
+      imageLink: publicUrl(siteUrl, String(images[0] || '/og-default.png')),
+      price: money(service.priceFrom, service.currency),
+    });
+  }
 
-      for (const service of services) {
-        if (packagedServiceIds.has(String(service.id))) continue;
-        const images = Array.isArray(service.images) ? service.images : [];
-        items.push({
-          id: `service-${service.id}`,
-          title: String(service.title || 'AngiSoft service'),
-          description: String(service.description || 'Custom software, ERP, IoT and AI services from AngiSoft Technologies').slice(0, 5000),
-          link: publicUrl(siteUrl, `/services/${service.slug}`),
-          imageLink: publicUrl(siteUrl, String(images[0] || '/og-default.png')),
-          price: money(service.priceFrom, service.currency),
-        });
-      }
-
-      const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
+  const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>AngiSoft Technologies services</title>
@@ -119,6 +120,15 @@ export default function catalogFeedRouter(prisma: Db = db) {
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>${items.map((item) => renderItem(siteUrl, item)).join('')}
   </channel>
 </rss>`;
+  return { xml: xmlBody, itemCount: items.length };
+}
+
+export default function catalogFeedRouter(prisma: Db = db) {
+  const router = Router();
+
+  router.get(['/feed.xml', '/feed'], async (_req, res) => {
+    try {
+      const { xml: xmlBody } = await buildCatalogFeedXml(prisma);
       res.set('Content-Type', 'application/xml; charset=utf-8');
       res.set('Cache-Control', 'public, max-age=3600');
       res.send(xmlBody);

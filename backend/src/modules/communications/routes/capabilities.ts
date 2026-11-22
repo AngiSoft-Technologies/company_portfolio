@@ -31,6 +31,7 @@ import {
 } from '../services/metaCapabilities';
 import { ProviderConfigurationError } from '../services/providerSecrets';
 import { callMetaMcpTool, listMetaMcpTools } from '../services/metaMcp';
+import { getMetaCatalogReadiness } from '../services/metaCatalogReadiness';
 
 const VIEW_ACCESS = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'] as const;
 const MANAGE_ACCESS = ['ADMIN', 'SUPER_ADMIN'] as const;
@@ -74,6 +75,15 @@ export default function communicationsCapabilitiesRouter(prisma: Db) {
       operations: listMetaCapabilities().operations,
       executableReads: Object.keys(READ_OPERATIONS),
     });
+  });
+
+  /**
+   * Read-only catalog/commerce readiness. Validates the exact CMS feed Meta
+   * would poll and reports config coverage — no writes, no Meta API calls, no
+   * secrets in the response.
+   */
+  router.get('/meta/catalog-readiness', requireAccess('communications.overview.view', [...VIEW_ACCESS]), async (_req, res) => {
+    res.json(await getMetaCatalogReadiness(prisma));
   });
 
   /** Execute a safe Graph read only when its capability flags are satisfied. */

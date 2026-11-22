@@ -247,6 +247,60 @@ function MetaDiagnostics({ flags }: { flags: JsonRecord }) {
   );
 }
 
+/** Read-only catalog readiness: config coverage, CMS feed validation, CAPI events. */
+function CatalogReadiness({ data, loading, error }: { data: unknown; loading: boolean; error: string | null }) {
+  const root = isRecord(data) ? data : {};
+  const feed = isRecord(root.feed) ? root.feed : {};
+  const capi = isRecord(root.capi) ? root.capi : {};
+  const gaps = Array.isArray(root.gaps)
+    ? root.gaps.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    : [];
+  const events = Array.isArray(capi.events)
+    ? capi.events.filter((item): item is { name: string; wired: boolean } =>
+      isRecord(item) && typeof item.name === 'string')
+    : [];
+
+  return (
+    <div className="mt-5 border-t border-[var(--border)] pt-4">
+      <h4 className="mb-2 text-sm font-semibold">Catalog &amp; commerce readiness</h4>
+      {loading ? <p className="text-xs text-[var(--text-muted)]">Checking feed…</p> : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <CapabilityBadge label="Catalog ID configured" state={root.catalogIdConfigured === true} />
+        <CapabilityBadge label="Feed URL configured" state={root.feedUrlConfigured === true} />
+        <CapabilityBadge label="CMS feed valid" state={feed.valid === true} />
+      </div>
+      <p className="mt-2 text-xs text-[var(--text-muted)]">
+        Public product feed: <code>{flagText(root.publicFeedPath) ?? '/v1/catalog/feed.xml'}</code>
+        {' · '}Items: {typeof feed.itemCount === 'number' ? feed.itemCount : '—'}
+      </p>
+      {root.feedUrl ? <p className="mt-1 text-xs text-[var(--text-secondary)]">Feed URL: <code>{flagText(root.feedUrl)}</code></p> : null}
+      {gaps.length > 0 ? (
+        <ul className="mt-2 space-y-1">
+          {gaps.map((gap) => <li key={gap} className="text-xs text-amber-700">• {gap}</li>)}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs text-[var(--text-muted)]">No readiness gaps reported.</p>
+      )}
+      {events.length > 0 ? (
+        <div className="mt-3">
+          <p className="mb-1 text-xs font-medium text-[var(--text-secondary)]">Conversion events</p>
+          <div className="flex flex-wrap gap-2">
+            {events.map((event) => (
+              <Badge key={event.name} tone={event.wired ? 'green' : 'slate'}>
+                {event.name}{event.wired ? '' : ' (no emitter)'}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <p className="mt-3 text-xs text-[var(--text-muted)]">
+        Read-only check. Meta never overwrites CMS data and no credentials are displayed.
+      </p>
+    </div>
+  );
+}
+
 function CapiNotice({ flags }: { flags: JsonRecord }) {
   const entry = Object.entries(flags).find(([key]) => /capi|conversion/i.test(key));
   if (!entry) {
@@ -272,6 +326,7 @@ export default function MetaCommandCenter() {
   const { can } = useEffectiveAccess();
   const capabilities = useResource<unknown>(CAPABILITIES);
   const operations = useResource<unknown>(`${CAPABILITIES}/operations`);
+  const catalogReadiness = useResource<unknown>(`${CAPABILITIES}/catalog-readiness`);
   const { flags, operations: statusRows } = useMemo(
     () => normalizeCapabilities(capabilities.data),
     [capabilities.data],
@@ -478,7 +533,7 @@ export default function MetaCommandCenter() {
           <h3 className="font-semibold">Operation capabilities</h3>
           <Button
             variant="ghost"
-            onClick={() => void Promise.all([capabilities.reload(), operations.reload(), toolsResource.reload()])}
+            onClick={() => void Promise.all([capabilities.reload(), operations.reload(), toolsResource.reload(), catalogReadiness.reload()])}
           >
             Refresh status
           </Button>
@@ -503,6 +558,11 @@ export default function MetaCommandCenter() {
         />
         <CapiNotice flags={flags} />
         <MetaDiagnostics flags={flags} />
+        <CatalogReadiness
+          data={catalogReadiness.data}
+          loading={catalogReadiness.loading}
+          error={catalogReadiness.error}
+        />
       </Card>
 
       <Card>
