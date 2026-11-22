@@ -50,13 +50,24 @@ describe('translation resolution', () => {
   });
 
   it('falls back to English when a locale omits a key', () => {
-    // 'finance.noFallback' is intentionally English-only in the dictionaries.
-    expect(translate('sw', 'finance.noFallback')).toBe(
-      'No FX is performed. KES settles via M-Pesa/PayHero; card payments settle in the quoted currency.',
-    );
-    expect(translate('zh', 'finance.noFallback')).toBe(
-      'No FX is performed. KES settles via M-Pesa/PayHero; card payments settle in the quoted currency.',
-    );
+    // All six registered locales now translate every source key, so exercise
+    // the same fallback path with an unregistered locale (no dictionary → en).
+    expect(translate('de', 'common.save')).toBe('Save');
+    const englishFallback =
+      'No FX is performed. KES settles via M-Pesa/PayHero; card payments settle in the quoted currency.';
+    expect(translate('pt', 'finance.noFallback')).toBe(englishFallback);
+  });
+
+  it('translates the Phase 7 finance/communications keys in every locale', () => {
+    for (const code of ['sw', 'fr', 'es', 'zh', 'ar'] as const) {
+      // Non-empty and not identical to the English source (properly localized).
+      expect(translate(code, 'admin.boardroom').length).toBeGreaterThan(0);
+      expect(translate(code, 'admin.boardroom')).not.toBe('AI Boardroom');
+      expect(translate(code, 'comms.consentRequired')).not.toBe(
+        'Marketing consent is required before tracking events are sent.',
+      );
+      expect(translate(code, 'finance.settlements').length).toBeGreaterThan(0);
+    }
   });
 
   it('interpolates {{placeholders}} and handles missing vars safely', () => {
