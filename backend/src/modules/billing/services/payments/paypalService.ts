@@ -157,7 +157,12 @@ export function checkoutUrls() {
 
 // ─── OAuth token (cached, single-flight) ─────────────────────────────────────
 
-let tokenCache: { env: PayPalEnvironment; token: string; expiresAt: number } | null = null;
+let tokenCache: {
+  env: PayPalEnvironment;
+  identity: string;
+  token: string;
+  expiresAt: number;
+} | null = null;
 let tokenInFlight: Promise<string> | null = null;
 
 export function resetTokenCacheForTests() {
@@ -165,15 +170,27 @@ export function resetTokenCacheForTests() {
   tokenInFlight = null;
 }
 
+/**
+ * Non-reversible fingerprint of the active credential pair. Only the digest is
+ * kept in memory so rotating a credential cannot keep serving the old token
+ * until expiry, while no secret is ever stored, logged or echoed. Mirrors the
+ * Daraja adapter's env+identity cache key.
+ */
+function credentialIdentity(clientId: string, clientSecret: string): string {
+  return crypto.createHash('sha256').update(`${clientId}\u0000${clientSecret}`).digest('hex').slice(0, 16);
+}
+
 export async function getAccessToken(): Promise<string> {
   const env = paypalEnvironment();
-  if (tokenCache && tokenCache.env === env && tokenCache.expiresAt > Date.now() + 30_000) {
+  const { clientId, clientSecret } = credentials();
+  const identity = credentialIdentity(clientId, clientSecret);
+  if (tokenCache && tokenCache.env === env && tokenCache.identity === identity
+      && tokenCache.expiresAt > Date.now() + 30_000) {
     return tokenCache.token;
   }
   if (tokenInFlight) return tokenInFlight;
 
   tokenInFlight = (async () => {
-    const { clientId, clientSecret } = credentials();
     if (!clientId || !clientSecret) {
       throw new PayPalError('PayPal is not configured', 503);
     }
@@ -196,6 +213,7 @@ export async function getAccessToken(): Promise<string> {
     if (!body.access_token) throw new PayPalError('PayPal OAuth returned no access token', 502);
     tokenCache = {
       env,
+      identity,
       token: body.access_token,
       expiresAt: Date.now() + Math.max(60, Number(body.expires_in) || 3600) * 1000,
     };

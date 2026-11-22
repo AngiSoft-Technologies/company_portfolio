@@ -42,7 +42,10 @@ function isStaffOrAdmin(role?: string): boolean {
  * URL. A missing secret is a configuration error and always fails closed.
  */
 function callbackSecretValid(req: any, envName: string): boolean {
-    const expected = process.env[envName] || '';
+    // Read through the runtime vault (falls back to process.env) so a token
+    // stored only in the encrypted config store is honoured. A missing secret
+    // still fails closed.
+    const expected = getConfig(envName);
     if (!expected) return false;
     const provided = String(req.query?.token ?? req.headers['x-callback-token'] ?? '');
     const expectedBuffer = Buffer.from(expected);

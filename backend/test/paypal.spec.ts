@@ -90,6 +90,27 @@ describe('PayPal adapter', () => {
     expect(paypal.isConfigured()).toBe(false);
   });
 
+  it('re-fetches the OAuth token when credentials rotate within the same environment', async () => {
+    let tokenCalls = 0;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes('/v1/oauth2/token')) {
+        tokenCalls += 1;
+        return json({ access_token: `tok-${tokenCalls}`, expires_in: 3600 });
+      }
+      return json({}, 404);
+    });
+
+    expect(await paypal.getAccessToken()).toBe('tok-1');
+    expect(await paypal.getAccessToken()).toBe('tok-1'); // cached
+    expect(tokenCalls).toBe(1);
+
+    // Rotate the client secret without changing the environment. A stale token
+    // must never survive a credential rotation.
+    process.env.PAYPAL_SANDBOX_CLIENT_SECRET = 'rotated-secret';
+    expect(await paypal.getAccessToken()).toBe('tok-2');
+    expect(tokenCalls).toBe(2);
+  });
+
   it('validates the configured settlement currency and rejects KES explicitly', () => {
     expect(paypal.settlementCurrency()).toBe('USD');
     expect(paypal.settlementCurrency('EUR')).toBe('EUR');
