@@ -33,7 +33,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
     const grant = existing
       ? await prisma.orm.public.CommunicationGrant.where({ id: existing.id }).update({ scopes: body.scopes as any } as any)
       : await prisma.orm.public.CommunicationGrant.create({ id: newId(), accountId: body.accountId, employeeId: body.employeeId, scopes: body.scopes as any, createdById: req.user?.sub ?? null, createdAt: ts() } as any);
-    await logAudit({ actorId: req.user?.sub, actorRole: req.user?.role as any, action: 'communications.grant.upsert', entity: 'CommunicationGrant', entityId: grant.id, meta: { accountId: body.accountId, employeeId: body.employeeId, scopes: body.scopes } });
+    await logAudit({ actorId: req.user?.sub, actorRole: req.user?.role as any, action: 'communications.grant.upsert', entity: 'CommunicationGrant', entityId: (grant as any)?.id, meta: { accountId: body.accountId, employeeId: body.employeeId, scopes: body.scopes } });
     res.status(existing ? 200 : 201).json({ grant });
   });
 

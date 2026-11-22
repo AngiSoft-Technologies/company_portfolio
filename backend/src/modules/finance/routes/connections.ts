@@ -47,7 +47,7 @@ export default function financeConnectionsRouter(prisma: Db) {
       if (!hasEncryptionKey()) return res.status(400).json({ error: 'APP_ENCRYPTION_KEY is required to store secrets' });
       const enc = encryptSecret(body.secret);
       await prisma.orm.public.ProviderSecret.create({
-        id: newId(), connectionId: existing.id, kind: body.secretKind ?? 'API_KEY',
+        id: newId(), connectionId: connection.id, kind: body.secretKind ?? 'API_KEY',
         ciphertext: enc.ciphertext, iv: enc.iv, authTag: enc.authTag, keyVersion: enc.keyVersion,
         createdById: req.user?.sub ?? null, createdAt: now, updatedAt: now,
       } as any);
