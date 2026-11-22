@@ -29,12 +29,17 @@ client portal only offers the three gateways below.
   Finance Hub routes.
 - PesaFlow is adapter-ready but unavailable until credentials are configured in
   the vault. It never silently substitutes for the default rails.
+- Adapter-only Daraja capabilities (Pochi, standing orders, tax remittance;
+  Bill Manager has no adapter) are visible in the Finance Hub only as
+  unavailable entries. They are inert — no dispatch path exists until official
+  Safaricom enablement and capability approval exist. See
+  [`DARAJA_RESOURCE_UTILIZATION_PLAN.md`](DARAJA_RESOURCE_UTILIZATION_PLAN.md).
 
 ## Coverage matrix
 
 | Flow | Method | Gateway | Region | Initiation | Settlement |
 |---|---|---|---|---|---|
-| C2B | PayPal wallet / Pay Later / Venmo | PayPal | International | `POST /v1/client-portal/invoices/:id/pay` `{method:'PAYPAL'}` → redirect to PayPal | webhook `PAYMENT.CAPTURE.COMPLETED` + return-page capture |
+| C2B | PayPal wallet / Pay Later | PayPal | International | `POST /v1/client-portal/invoices/:id/pay` `{method:'PAYPAL'}` → redirect to PayPal | webhook `PAYMENT.CAPTURE.COMPLETED` + return-page capture |
 | C2B | Card — Visa, Mastercard, Amex, Discover | PayPal | International | `method:'CARD'` → “Pay with card” on PayPal checkout | same as above |
 | C2B | Google Pay / Apple Pay | PayPal | International | `method:'GOOGLE_PAY'` / `'APPLE_PAY'`; visible to eligible buyers in supported browsers | same as above |
 | C2B | iDEAL, Bancontact, BLIK, eps, Przelewy24, Trustly, Alipay, OXXO | PayPal | International | `method:'<ID>'` → PayPal-hosted local method | same as above |
@@ -62,6 +67,24 @@ All M-Pesa traffic uses one canonical resource family — `/v1/payments/mpesa/*`
 `/c2b/simulate`, `/balance` and `/qr`. There is no `/api` alias, no
 `/mpesa-extended` and no `/v1/payments/daraja` endpoint alias; `Daraja` is only
 the Safaricom API name used inside adapter code.
+
+### Read-only, review-only and inert actions
+
+- `GET /v1/admin/money/status/MPESA_BALANCE` is **read-only/review-only**: the
+  adapter queries the shortcode balance, and the result callback mirrors parsed
+  balances as `DARAJA_ACCOUNT_BALANCE_REVIEW` ProviderEvents/AuditLog rows with
+  `reviewOnly: true` and `autoSettlement: false`. It never posts a ledger entry
+  or settles an invoice/payout.
+- `GET /v1/admin/money/status/PAYPAL_ORDER_STATUS` is **read-only** (`paypal.getOrder`);
+  it never captures, refunds or otherwise modifies the order.
+- C2B confirmations are **manual review only**. They are recorded as immutable
+  review ProviderEvents; no scheduled job matches `BillRefNumber` to an invoice
+  and nothing is auto-posted to the ledger. Any matching/settlement is a manual
+  finance action until a separately approved job exists.
+- Registered C2B validation/confirmation URLs carry `MPESA_CALLBACK_TOKEN` as a
+  query parameter. Those tokenized URLs must never be logged, echoed in API
+  responses or copied into documentation; use `X-Callback-Token` for manual
+  callback tests.
 
 Staff use the **Money Movement** screen in the admin app (`/admin/money-movement`)
 to see the full transaction catalogue, initiate B2C/B2B payouts, issue PayPal
@@ -191,6 +214,11 @@ PAYHERO_CALLBACK_URL=https://api.angisoft.co.ke/v1/payments/payhero/callback
 PAYHERO_CALLBACK_TOKEN=…
 ```
 
+Airtel Money, telco/operator and bank methods require their own dedicated
+channel IDs and network codes from the vault. They must **never** reuse the
+primary M-Pesa channel (`PAYHERO_CHANNEL_ID`); a missing or shared channel keeps
+those methods unavailable rather than silently routing them through M-Pesa.
+
 ## Daraja setup
 
 ```text
@@ -230,7 +258,10 @@ MPESA_C2B_RESPONSE_TYPE
 MPESA_BALANCE_QUEUE_URL
 MPESA_BALANCE_RESULT_URL
 MPESA_STATUS_RESULT_URL
-MPESA_REVERSAL_TIMEOUT_URL
+# Reversal uses MPESA_REVERSAL_QUEUE_URL (QueueTimeOutURL) and
+# MPESA_REVERSAL_RESULT_URL (ResultURL) from the Daraja setup block above.
+# The legacy MPESA_REVERSAL_TIMEOUT_URL vault key is registered but not read by
+# the reversal adapter.
 MPESA_QR_MERCHANT_NAME
 MPESA_QR_TRANSACTION_TYPE
 MPESA_QR_CALLBACK_URL
@@ -240,9 +271,9 @@ MPESA_QR_CALLBACK_URL
 are cached (with a five-minute safety margin) on both the STK and outbound
 paths; a lost STK callback is recovered with one delayed
 `queryStkStatus(CheckoutRequestID)` call rather than continuous polling.
-Result and timeout URLs must be distinct in production. See
+Result and queue-timeout URLs must be distinct in production. See
 [`DARAJA_RESOURCE_UTILIZATION_PLAN.md`](DARAJA_RESOURCE_UTILIZATION_PLAN.md)
-for the complete local resource catalogue and go-live checklist.
+for the inventory of the 27 locally available pack files and the go-live checklist.
 
 ## Tests
 

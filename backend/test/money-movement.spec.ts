@@ -65,4 +65,22 @@ describe('money movement catalogue', () => {
     expect(getMoneyType('MPESA_BALANCE')?.flow).toBe('STATUS');
     expect(getMoneyType('MPESA_BALANCE')?.description).toMatch(/preflight/i);
   });
+
+  it('exposes read-only PayPal order status without capture or refund side effects', () => {
+    const status = getMoneyType('PAYPAL_ORDER_STATUS');
+    expect(status?.flow).toBe('STATUS');
+    expect(status?.provider).toBe('PAYPAL');
+    expect(status?.requires).toEqual(['orderId']);
+    expect(status?.description).toMatch(/never captures|read/i);
+  });
+
+  it('keeps adapter-only Daraja capabilities visible but inert', () => {
+    for (const id of ['MPESA_POCHI', 'MPESA_STANDING_ORDER', 'MPESA_TAX_REMITTANCE']) {
+      const type = getMoneyType(id, true);
+      expect(type).toBeTruthy();
+      expect(type?.available).toBe(false);
+      expect(type?.reason).toMatch(/enablement|approval/i);
+      expect(getMoneyType(id)).toBeNull();
+    }
+  });
 });

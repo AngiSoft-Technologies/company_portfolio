@@ -74,8 +74,11 @@ export function listPaymentMethods(): PaymentMethod[] {
   const payheroReady = payhero.isConfigured();
   const darajaReady = mpesa.isConfigured();
   const payheroChannel = channelFromEnv('PAYHERO_CHANNEL_ID');
-  const airtelChannel = channelFromEnv('PAYHERO_AIRTEL_CHANNEL_ID') || payheroChannel;
-  const telcoChannel = channelFromEnv('PAYHERO_TELCO_CHANNEL_ID') || payheroChannel;
+  // Airtel and generic telco money are different PayHero channels from the
+  // primary M-Pesa paybill. Never silently reuse the M-Pesa channel: that would
+  // advertise a method the deployment cannot actually originate.
+  const airtelChannel = channelFromEnv('PAYHERO_AIRTEL_CHANNEL_ID');
+  const telcoChannel = channelFromEnv('PAYHERO_TELCO_CHANNEL_ID');
 
   const pp = (m: Omit<PaymentMethod, 'provider' | 'available' | 'reason'>): PaymentMethod => ({
     ...m,

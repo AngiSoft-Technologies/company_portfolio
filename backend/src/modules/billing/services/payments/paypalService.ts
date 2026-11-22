@@ -35,10 +35,17 @@ const API_BASE: Record<PayPalEnvironment, string> = {
 
 /** Currencies PayPal can settle in (subset commonly used by AngiSoft clients). */
 const SUPPORTED_CURRENCIES = new Set([
-  'AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF',
+  'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF',
   'ILS', 'INR', 'JPY', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'SEK',
   'SGD', 'THB', 'TWD', 'USD',
 ]);
+
+/**
+ * PayPal zero-decimal currencies. Sending `100.00` for JPY/HUF/TWD is rejected
+ * by PayPal; the order/payout/refund adapters must send `100` instead.
+ */
+export const PAYPAL_ZERO_DECIMAL_CURRENCIES = new Set(['JPY', 'HUF', 'TWD']);
+
 
 const MAX_REQUEST_ID_LENGTH = 38;
 
@@ -52,6 +59,25 @@ export class PayPalError extends Error {
     super(message);
     this.name = 'PayPalError';
   }
+}
+
+/**
+ * Format a PayPal `money.value` string for the settlement currency.
+ * KES is rejected by `paypalSettlementCurrency()` before this is reached.
+ */
+export function formatPayPalAmount(currency: unknown, value: unknown): string {
+  const code = String(currency ?? '').trim().toUpperCase();
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new PayPalError('Invalid PayPal amount', 400);
+  }
+  if (PAYPAL_ZERO_DECIMAL_CURRENCIES.has(code)) {
+    if (Math.abs(amount - Math.round(amount)) > 1e-9) {
+      throw new PayPalError(`${code} is a zero-decimal currency; provide a whole number`, 400);
+    }
+    return String(Math.round(amount));
+  }
+  return amount.toFixed(2);
 }
 
 export function paypalEnvironment(): PayPalEnvironment {
@@ -245,6 +271,7 @@ export async function createOrder(args: CreatePayPalOrderArgs): Promise<PayPalOr
   if (!args.reference) throw new PayPalError('PayPal requires an idempotency reference', 400);
 
   const currency = paypalSettlementCurrency(args.currency);
+  const formattedAmount = formatPayPalAmount(currency, amount);
   const urls = checkoutUrls();
   const { data } = await api<any>('POST', '/v2/checkout/orders', {
     intent: 'CAPTURE',
@@ -253,7 +280,7 @@ export async function createOrder(args: CreatePayPalOrderArgs): Promise<PayPalOr
       invoice_id: args.reference,
       custom_id: String(args.invoiceId || args.bookingId || '').slice(0, 127) || undefined,
       description: String(args.description || 'AngiSoft online payment').slice(0, 127),
-      amount: { currency_code: currency, value: amount.toFixed(2) },
+      amount: { currency_code: currency, value: formattedAmount },
     }],
     payment_source: {
       paypal: {
@@ -278,7 +305,7 @@ export async function createOrder(args: CreatePayPalOrderArgs): Promise<PayPalOr
     approvalUrl: String(approvalUrl),
     status: String(data.status || 'CREATED'),
     currency,
-    amount: amount.toFixed(2),
+    amount: formattedAmount,
     details: {
       ...data,
       approvalUrl,

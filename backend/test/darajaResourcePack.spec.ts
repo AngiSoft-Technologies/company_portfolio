@@ -275,18 +275,23 @@ describe('Daraja resource pack adapters', () => {
 });
 
 /** Minimal in-memory Db stand-in for the callback router (no real database). */
-function fakePrisma(payout?: any) {
+function fakePrisma(payout?: any, ledgerEntry?: any) {
   const events: any[] = [];
   const updates: any[] = [];
+  const ledgerUpdates: any[] = [];
+  const transactionUpdates: any[] = [];
+  const matches = (row: any, criteria: any) => Boolean(row)
+    && Object.entries(criteria).every(([key, value]) => row[key] === value);
   return {
     events,
     updates,
+    ledgerUpdates,
+    transactionUpdates,
     orm: {
       public: {
         ProviderEvent: {
           where: (criteria: any) => ({
-            first: async () => events.find((event) =>
-              Object.entries(criteria).every(([key, value]) => event[key] === value)) ?? null,
+            first: async () => events.find((event) => matches(event, criteria)) ?? null,
           }),
           create: async (data: any) => {
             const row = { id: `ev_${events.length + 1}`, ...data };
@@ -296,9 +301,7 @@ function fakePrisma(payout?: any) {
         },
         Payout: {
           where: (criteria: any) => ({
-            first: async () => payout && Object.entries(criteria).every(
-              ([key, value]) => payout[key] === value,
-            ) ? payout : null,
+            first: async () => matches(payout, criteria) ? payout : null,
             update: async (data: any) => {
               updates.push(data);
               if (payout) Object.assign(payout, data);
@@ -306,9 +309,29 @@ function fakePrisma(payout?: any) {
             },
           }),
         },
+        LedgerEntry: {
+          where: (criteria: any) => ({
+            all: async () => matches(ledgerEntry, criteria) ? [ledgerEntry] : [],
+            update: async (data: any) => {
+              ledgerUpdates.push(data);
+              if (ledgerEntry) Object.assign(ledgerEntry, data);
+              return ledgerEntry;
+            },
+          }),
+        },
+        FinanceTransaction: {
+          where: () => ({
+            update: async (data: any) => {
+              transactionUpdates.push(data);
+              return data;
+            },
+          }),
+        },
       },
     },
-  } as unknown as Db & { events: any[]; updates: any[] };
+  } as unknown as Db & {
+    events: any[]; updates: any[]; ledgerUpdates: any[]; transactionUpdates: any[];
+  };
 }
 
 describe('Daraja result callback audit', () => {
@@ -484,6 +507,35 @@ describe('Daraja result callback audit', () => {
     expect(mismatch).toMatchObject({ signatureValid: false, status: 'FAILED' });
     // No settlement was driven by the callback.
     expect(payout.status).toBe('PENDING');
+  });
+
+  it('settles a pending reversal ledger only after a matching terminal callback', async () => {
+    const ledgerEntry = {
+      id: 'ledger-rev-1', provider: 'MPESA', externalRef: 'ORIG-REV-1',
+      entryType: 'REVERSAL', status: 'PENDING', amount: '250.00',
+      metadata: { transactionId: 'TXN-REV-1' }, providerEventId: 'ev-ledger-1',
+    };
+    const prisma = fakePrisma(undefined, ledgerEntry);
+    const app = appFor(prisma);
+    const response = await request(app)
+      .post('/v1/payments/mpesa/callback?token=shared-token')
+      .send({
+        Result: {
+          ResultType: 0, ResultCode: 0,
+          ResultDesc: 'The service request has been accepted successfully',
+          OriginatorConversationID: 'ORIG-REV-1', ConversationID: 'CONV-REV-1',
+          TransactionID: 'TXN-REV-1',
+          ResultParameters: { ResultParameter: [{ Key: 'Amount', Value: 250 }] },
+        },
+      });
+
+    expect(response.status).toBe(200);
+    await vi.waitFor(() => expect(ledgerEntry.status).toBe('COMPLETED'));
+    expect(prisma.ledgerUpdates[0]).toMatchObject({ status: 'COMPLETED' });
+    expect(prisma.transactionUpdates[0]).toMatchObject({ status: 'COMPLETED' });
+    expect(logAuditMock).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'DARAJA_REVERSAL_SETTLED', entityId: 'ledger-rev-1',
+    }));
   });
 });
 

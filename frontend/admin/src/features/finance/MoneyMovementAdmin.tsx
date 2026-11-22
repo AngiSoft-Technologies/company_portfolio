@@ -186,8 +186,8 @@ export default function MoneyMovementAdmin() {
           <select className={inputClass} value={statusType} onChange={(e) => setStatusType(e.target.value)}>
             {statusTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
-          <input className={inputClass} placeholder="Reference" value={statusQuery.reference} onChange={(e) => setStatusQuery({ ...statusQuery, reference: e.target.value })} />
-          <input className={inputClass} placeholder="Transaction / batch / refund ID" value={statusQuery.transactionId || statusQuery.batchId || statusQuery.refundId} onChange={(e) => {
+          <input className={inputClass} placeholder="PayPal order ID / M-Pesa transaction ID" value={statusQuery.reference} onChange={(e) => setStatusQuery({ ...statusQuery, reference: e.target.value })} />
+          <input className={inputClass} placeholder="PayPal refund ID / payout batch ID / M-Pesa transaction ID" value={statusQuery.transactionId || statusQuery.batchId || statusQuery.refundId} onChange={(e) => {
             const v = e.target.value;
             setStatusQuery({ ...statusQuery, transactionId: v, batchId: v, refundId: v });
           }} />
@@ -196,6 +196,10 @@ export default function MoneyMovementAdmin() {
             <option value="service_wallet">service_wallet</option>
           </select>
         </div>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">
+          Use the reference for a PayPal order ID or M-Pesa transaction ID where applicable. Use the ID field for a
+          PayPal refund ID, payout batch ID or M-Pesa transaction ID, depending on the selected status type.
+        </p>
         <Button className="mt-3" onClick={() => void doStatus()} disabled={busy}>Look up</Button>
         {statusResult ? <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-[var(--bg-primary)] p-3 text-xs">{JSON.stringify(statusResult, null, 2)}</pre> : null}
       </Card>

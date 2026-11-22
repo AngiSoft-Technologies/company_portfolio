@@ -50,6 +50,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/client-projects', label: 'Client Projects', permission: 'client_projects.view_all' },
       { to: '/bookings', label: 'Bookings', permission: 'bookings.view_all' },
       { to: '/payments', label: 'Payments', permission: 'payments.view_all' },
+      { to: '/payments/console', label: 'Payments Console', permission: 'payments.view_all' },
       { to: '/money-movement', label: 'Money Movement', permission: 'payments.view_all' },
       { to: '/expenses', label: 'Expenses', permission: 'expenses.create' },
     ],

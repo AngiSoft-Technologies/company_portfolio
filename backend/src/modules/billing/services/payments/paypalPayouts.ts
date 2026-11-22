@@ -27,6 +27,7 @@
 
 import { createHash } from 'crypto';
 import {
+  formatPayPalAmount,
   getAccessToken,
   isConfigured as paypalIsConfigured,
   isSupportedPayPalCurrency,
@@ -151,12 +152,16 @@ function normalizeRecipientType(value: unknown): PayPalRecipientType {
   return type as PayPalRecipientType;
 }
 
-function normalizeAmount(value: unknown, field: string): string {
+function normalizeAmount(value: unknown, field: string, currency: unknown): string {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new PayPalPayoutError(`${field} must be a positive amount`, 400);
   }
-  return amount.toFixed(2);
+  try {
+    return formatPayPalAmount(currency, amount);
+  } catch (err: any) {
+    throw new PayPalPayoutError(String(err?.message || err), Number(err?.status) || 400);
+  }
 }
 
 function normalizeCurrency(value: unknown): string {
@@ -257,12 +262,13 @@ export async function createPayout(input: CreatePayoutInput): Promise<PayPalPayo
 
     const receiver = String(item?.receiver ?? '').trim();
     if (!receiver) throw new PayPalPayoutError(`items[${index}].receiver is required`, 400);
+    const currency = normalizeCurrency(item?.currency);
 
     return {
       recipient_type: normalizeRecipientType(item?.recipientType ?? item?.recipient_type),
       amount: {
-        value: normalizeAmount(item?.amount, `items[${index}].amount`),
-        currency: normalizeCurrency(item?.currency),
+        value: normalizeAmount(item?.amount, `items[${index}].amount`, currency),
+        currency,
       },
       note: item?.note ? String(item.note).slice(0, 140) : undefined,
       receiver,
@@ -322,7 +328,7 @@ export async function refundCapture(input: RefundCaptureInput): Promise<PayPalRe
   if (input.amount !== undefined && input.amount !== null && input.amount !== '') {
     const currency = normalizeCurrency(input.currency ?? paypalSettlementCurrency());
     body.amount = {
-      value: normalizeAmount(input.amount, 'amount'),
+      value: normalizeAmount(input.amount, 'amount', currency),
       currency_code: currency,
     };
   }

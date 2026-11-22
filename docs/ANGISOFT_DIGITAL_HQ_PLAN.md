@@ -857,6 +857,8 @@ All six delivery slices are implemented in code. The remaining work is provision
 
 **Closeout verification (2026-11-22):** focused Phase 7 suites pass 7 files / 125 tests, including explicit-consent CAPI dispatch, Meta read-only MCP/tool gating, tokenized C2B registration, fail-closed C2B callback auth, immediate acknowledgement, hashed dedupe ids, read-only confirmations, live STK HTTPS validation, redacted upstream errors, QR `TrxCode` validation, result hints, `MPESA_BALANCE`, STK recovery and booking deposits. The full run passes 38 mocked files / 369 tests (4 skipped); only `test/integration.spec.ts` fails with the intentionally invalid dummy database URL. Backend `tsc`, workspace `pnpm typecheck`, web and admin production builds, and the 137-key `config:seed --dry-run` are green. No secret values are printed or written by the dry-run. Full-repo lint still reports pre-existing `no-explicit-any` debt and is not used as a Phase 7 gate.
 
+**Documentation closeout (2026-11-22):** the Daraja plan now inventories all 27 locally available Markdown files; Daraja config keys, read-only/adapter-only capabilities and PayPal currency allowlist gaps were reconciled with code in `DARAJA_RESOURCE_UTILIZATION_PLAN.md`, `PAYMENTS.md` and the PayPal docs. Documentation only — status remains **Implemented (code complete)**; the additive migration is not applied and no production readiness is claimed.
+
 ## 17. Production verification checklist (after next deploy)
 
 ```bash

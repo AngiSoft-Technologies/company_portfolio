@@ -1,5 +1,6 @@
 /** Telegram Bot API adapter (official API only). */
 
+import crypto from 'crypto';
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
 import { getConfig } from '../../../shared/services/runtimeConfig';
@@ -8,6 +9,14 @@ import { ProviderConfigurationError, readProviderSecret } from './providerSecret
 import { ingestInboundMessage } from './conversations';
 
 export type TelegramUpdate = Record<string, any>;
+
+/** Length-safe constant-time string comparison, same contract as other webhooks. */
+export function safeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
 
 export type ParsedTelegramMessage = {
   updateId: string | null;
@@ -58,7 +67,7 @@ export async function verifyTelegramWebhook(prisma: Db, input: {
   if (!expected) {
     return process.env.NODE_ENV !== 'production' && getConfig('TELEGRAM_ALLOW_UNSIGNED_WEBHOOKS') === 'true';
   }
-  return Boolean(input.headerToken) && input.headerToken === expected;
+  return safeEqual(input.headerToken, expected);
 }
 
 async function getTelegramToken(prisma: Db, connectionId?: string | null): Promise<string> {

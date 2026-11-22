@@ -222,6 +222,58 @@ describe('Meta resource pack', () => {
       config.set('META_CAPI_ACCESS_TOKEN', 'placeholder');
       expect(getMetaFeatureFlags().capiConfigured).toBe(true);
     });
+
+    it('exposes the WhatsApp Graph version as a non-secret version string', () => {
+      expect(getMetaFeatureFlags().whatsappGraphVersion).toBe('v23.0');
+      config.set('WHATSAPP_API_VERSION', 'v24.0');
+      expect(getMetaFeatureFlags().whatsappGraphVersion).toBe('v24.0');
+      expect(getMetaFeatureFlags().graphVersion).toBe('v23.0');
+    });
+
+    it('exposes only booleans, version strings and allowlisted endpoint strings', () => {
+      config.set('META_APP_ID', '123456');
+      config.set('META_GRAPH_VERSION', 'v24.0');
+      config.set('WHATSAPP_API_VERSION', 'v23.0');
+      config.set('META_CAPI_ENABLED', 'true');
+      config.set('META_CAPI_DATASET_ID', 'dataset-1');
+      for (const { configKey, url } of ENDPOINTS) config.set(configKey, url);
+
+      const flags = getMetaFeatureFlags() as unknown as Record<string, unknown>;
+      for (const [key, value] of Object.entries(flags)) {
+        if (key === 'graphVersion' || key === 'whatsappGraphVersion') {
+          expect(typeof value, key).toBe('string');
+          expect(value, key).toMatch(/^v\d+(?:\.\d+)+$/);
+        } else if (key === 'mcpEndpoints') {
+          expect(value && typeof value === 'object', key).toBe(true);
+          for (const [endpointName, endpoint] of Object.entries(value as Record<string, unknown>)) {
+            expect(endpoint === null || (typeof endpoint === 'string' && endpoint.startsWith('https://mcp.facebook.com/')), endpointName).toBe(true);
+          }
+        } else {
+          expect(typeof value, key).toBe('boolean');
+        }
+      }
+    });
+
+    it('never includes configured token values in the flag payload', () => {
+      const dummySecrets: Record<string, string> = {
+        META_APP_SECRET: 'dummy-app-secret-DO-NOT-EXPOSE',
+        META_SYSTEM_USER_TOKEN: 'dummy-system-token-DO-NOT-EXPOSE',
+        META_PAGE_ACCESS_TOKEN: 'dummy-page-token-DO-NOT-EXPOSE',
+        META_CAPI_ACCESS_TOKEN: 'dummy-capi-token-DO-NOT-EXPOSE',
+        META_MCP_ACCESS_TOKEN: 'dummy-mcp-token-DO-NOT-EXPOSE',
+        WHATSAPP_ACCESS_TOKEN: 'dummy-whatsapp-token-DO-NOT-EXPOSE',
+        THREADS_ACCESS_TOKEN: 'dummy-threads-token-DO-NOT-EXPOSE',
+      };
+      for (const [key, value] of Object.entries(dummySecrets)) config.set(key, value);
+      config.set('META_CAPI_ENABLED', 'true');
+      config.set('META_CAPI_DATASET_ID', 'dataset-1');
+
+      const serialized = JSON.stringify(getMetaFeatureFlags());
+      for (const secret of Object.values(dummySecrets)) {
+        expect(serialized).not.toContain(secret);
+      }
+      expect(serialized).not.toContain('DO-NOT-EXPOSE');
+    });
   });
 
   describe('firstPartySourceUrl', () => {

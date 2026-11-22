@@ -81,6 +81,23 @@ describe('payment method catalogue', () => {
     expect(airtel.reason).toMatch(/channel/i);
   });
 
+  it('never reuses the primary M-Pesa channel for Airtel or telco methods', () => {
+    delete process.env.PAYHERO_AIRTEL_CHANNEL_ID;
+    delete process.env.PAYHERO_TELCO_CHANNEL_ID;
+    const methods = listPaymentMethods();
+    const mpesa = methods.find((m) => m.id === 'MPESA_STK')!;
+    const airtel = methods.find((m) => m.id === 'AIRTEL_MONEY')!;
+    const telco = methods.find((m) => m.id === 'TELCO')!;
+    expect(mpesa.available).toBe(true);
+    expect(mpesa.channelId).toBe(10);
+    expect(airtel.available).toBe(false);
+    expect(telco.available).toBe(false);
+    expect(airtel.channelId).toBeUndefined();
+    expect(telco.channelId).toBeUndefined();
+    expect(resolvePaymentMethod('AIRTEL_MONEY')).toBeNull();
+    expect(resolvePaymentMethod('TELCO')).toBeNull();
+  });
+
   it('never exposes secrets in the capability payload', () => {
     const payload = JSON.stringify(paymentMethodCapabilities());
     expect(payload).not.toContain('pp-secret');

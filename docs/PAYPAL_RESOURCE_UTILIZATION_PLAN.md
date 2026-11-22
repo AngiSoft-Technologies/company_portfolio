@@ -14,6 +14,17 @@
 > `PLANNED` — not built, intended · `DEFERRED` — consciously out of scope for now ·
 > `N/A` — no applicable surface in our stack.
 
+> **Code audit — currency reconciliation (2026-11-22).** The code allowlist
+> (`SUPPORTED_CURRENCIES` in `paypalService.ts`, shared with payouts) now
+> includes CNY alongside INR/HUF/TWD (and CHF/GBP), matching the docs list in
+> [`PAYPAL_DOCS_SUMMARY.md`](./PAYPAL_DOCS_SUMMARY.md) §6. JPY/HUF/TWD are
+> **zero-decimal** and are formatted as whole numbers by the shared
+> `formatPayPalAmount()` helper; KES is **not supported**. BRL/CNY/MYR may
+> require an in-country PayPal account or conversion. This is a code-level
+> reconciliation, not evidence of live credentials or registered webhooks —
+> §11 remains blocking. Venmo and voucher methods (Boleto/Multibanco) are
+> documented by PayPal but are **not** AngiSoft catalogue entries.
+
 ---
 
 ## 0. Coverage at a glance
@@ -44,10 +55,10 @@ The intent is **not** to bolt on all 33 agent tools. It is to make every resourc
 | 1.3 | `PayPal-Request-Id` / idempotency | Every create/capture/refund/payout POST; 45-day UUID replay safety | `paypalService.ts`, `paypalPayouts.ts`, `Payout` unique reference | SHIPPED | Extend to any future orders PATCH/confirm and dispute calls |
 | 1.4 | Orders v2 create | Server-held amount; invoice balance converted to `PAYPAL_CURRENCY` | `paypalService.ts` `createOrder`; called from client-portal pay route | SHIPPED | Pass `invoice_id` into the order for reconciliation |
 | 1.5 | Orders v2 capture | Return-page capture + webhook, both idempotent | `paypalService.ts` `captureOrder`; `POST /v1/payments/paypal/capture` | SHIPPED | Harden return-page pairing so a stale `token` cannot settle a different invoice |
-| 1.6 | Orders v2 get / show | Live status lookup from admin Money Movement | `GET /v1/admin/money/status/PAYPAL_PAYOUT_STATUS` and order status | PARTIAL | Expose an explicit `PAYPAL_ORDER_STATUS` money type |
+| 1.6 | Orders v2 get / show | Read-only live order lookup from admin Money Movement | `GET /v1/admin/money/status/PAYPAL_ORDER_STATUS` (`paypal.getOrder`) | SHIPPED (read-only) | Keep read-only: never capture/refund/modify the order from this endpoint |
 | 1.7 | Orders v2 PATCH / confirm | Update amounts/shipping before approval; explicit confirm for alternative payment sources | order adapter | PLANNED | Only when we add address/shipping or APMs that need `confirm` |
 | 1.8 | Authorize + separate capture | Two-step authorise-now/capture-on-fulfilment for project deposits | order adapter + `Payout`/`Payment` state machine | PLANNED | Requires adding `AUTHORIZE` intent and an authorisation expiry sweeper |
-| 1.9 | Webhooks + verify-signature | Settlement/refund/denial events, verified before any ledger write | `paypalService.ts` verify; raw-body path + CSRF bypass in `app.ts` | SHIPPED | Subscribe live webhook to `PAYMENT.CAPTURE.COMPLETED|REFUNDED|DENIED`; add dispute and payout events |
+| 1.9 | Webhooks + verify-signature | Settlement/refund/denial events, verified before any ledger write | `paypalService.ts` verify; raw-body path + CSRF bypass in `app.ts` | SHIPPED | Live webhook **not registered**; subscribe to `PAYMENT.CAPTURE.COMPLETED|REFUNDED|DENIED` after credentials exist, then add dispute and payout events |
 | 1.10 | `PayPal-Mock-Response` | Simulate `DUPLICATE_INVOICE_ID` and other errors in sandbox CI tests | test suite | PARTIAL | Add negative-path specs for retry/idempotency using this header |
 | 1.11 | `PayPal-Auth-Assertion` / BN code | Only if we become a platform paying on behalf of other merchants | — | N/A | Revisit if multi-tenant merchant onboarding is introduced; BN code from Dashboard → App Settings → Reports |
 
@@ -60,7 +71,7 @@ The intent is **not** to bolt on all 33 agent tools. It is to make every resourc
 | 2.3 | Local APMs (iDEAL, Bancontact, BLIK, eps, Przelewy24, Trustly, Alipay, OXXO) | International client invoice payment, grouped under Bank/Voucher | `methods.ts` | PARTIAL | Catalogue only; verify each method's country/currency availability at runtime and hide ineligible ones |
 | 2.4 | Google Pay | One-tap wallet for eligible devices | `methods.ts` → PayPal checkout | PARTIAL | Enable in PayPal sandbox/live dashboard, register domain, set `environment` and 3DS preference; then render via SDK v6 |
 | 2.5 | Apple Pay | One-tap wallet for eligible Apple devices | `methods.ts` → PayPal checkout | PARTIAL | Register and verify merchant domain + domain-association file, Apple Pay merchant identity certificate; HTTPS only |
-| 2.6 | Venmo | US clients only | catalogue hook | PLANNED | US-only gate via `isEligible('venmo')`; do not advertise to Kenyan/international non-US buyers |
+| 2.6 | Venmo | Documented by PayPal for US clients only | not in the AngiSoft catalogue | DEFERRED | Do not add to the active catalogue; revisit only with verified US buyer eligibility and explicit approval |
 | 2.7 | Expanded Card Fields (`advanced_cards`) | Optional on-site card capture with 3DS and SCA | new checkout component | DEFERRED | Only if hosted checkout conversion is insufficient; requires CSP updates and client-token endpoint |
 | 2.8 | React SDK v6 (`PayPalProvider`, `useEligibleMethods`, session hooks) | Replace hand-rolled redirect with in-page eligible buttons | web app payment picker | PLANNED | Adopt `@paypal/react-paypal-js/sdk-v6`; pre-fetch eligibility server-side via `useFetchEligibleMethods` and pass to provider |
 | 2.9 | Voucher methods (Boleto, OXXO, Multibanco) | Offline-payment completion for BR/MX/PT | catalogue | DEFERRED | Needs a "awaiting offline payment" state and expiry sweeper before exposing |
@@ -140,7 +151,7 @@ movement stays behind our `Payout`/`ApprovalRequest` gate; agents may *propose*,
 
 | # | Resource | AngiSoft use | Where it lands | Status | Next action |
 |---|---|---|---|---|---|
-| 8.1 | Currency codes | Validate settlement currency; **exclude KES**; handle zero-decimal JPY/HUF/TWD | `settlementCurrency()` in `paypalService.ts` and payout allowlist in `paypalPayouts.ts` | PARTIAL | Current allowlists include INR but omit CNY, and add CHF/GBP; reconcile both against the doc's currency table and document the KES gap |
+| 8.1 | Currency codes | Validate settlement currency; **exclude KES**; handle zero-decimal JPY/HUF/TWD | `isSupportedPayPalCurrency()` + `formatPayPalAmount()` in `paypalService.ts`, shared by payouts/refunds | SHIPPED | Allowlist now includes CNY alongside the documented codes; JPY/HUF/TWD are whole-number formatted; KES still rejected. BRL/CNY/MYR still need in-country/conversion confirmation before live use |
 | 8.2 | Payment Receiving Preferences | Convert non-held currencies automatically instead of pending payments | PayPal account settings | PLANNED | Configure in live account after credentials are supplied |
 | 8.3 | Country codes (`KE`, etc.) | Buyer country in orders and eligibility | order payload / validation | PLANNED | Validate `country_code` against the documented list |
 | 8.4 | Locale codes (`en-KE` → REST, `en_US` fallback) | Localise PayPal checkout for our buyers | order `locale` parameter | PLANNED | Derive from user profile; default `en_US` |
@@ -154,9 +165,9 @@ movement stays behind our `Payout`/`ApprovalRequest` gate; agents may *propose*,
 ### Phase A — close the gaps on what is already shipped (now)
 1. Production fail-closed guard for `PAYPAL_ENV` + live credentials + `PAYPAL_WEBHOOK_ID`.
 2. Live PayPal webhook registration (`PAYMENT.CAPTURE.COMPLETED|REFUNDED|DENIED`) and callback URL updates for all providers to `/v1`.
-3. `PAYPAL_ORDER_STATUS` money type; partial-refund validation; `invoice_id` on orders.
-4. Negative-path tests with `PayPal-Mock-Response`; card/3DS sandbox E2E.
-5. Reconcile `SUPPORTED_CURRENCIES` with the documented currency list; document zero-decimal handling.
+3. ~~`PAYPAL_ORDER_STATUS` money type; partial-refund validation~~ — SHIPPED (read-only order lookup; full/provider-amount refunds and explicit partial amounts validated). `invoice_id` on orders remains planned.
+4. Negative-path tests with `PayPal-Mock-Response`; card/3DS sandbox E2E (needs sandbox credentials).
+5. ~~Reconcile `SUPPORTED_CURRENCIES`; document zero-decimal handling~~ — SHIPPED (CNY added; JPY/HUF/TWD whole-number formatted via `formatPayPalAmount()`; KES rejected).
 
 ### Phase B — eligibility and compliance before more methods go live
 6. `@paypal/react-paypal-js/sdk-v6` provider + `useEligibleMethods` in the payment picker.
@@ -191,7 +202,7 @@ movement stays behind our `Payout`/`ApprovalRequest` gate; agents may *propose*,
 
 | Item | Needed from | Why it blocks |
 |---|---|---|
-| Live PayPal client ID/secret + webhook ID | Owner | Cannot flip `PAYPAL_ENV=live` or verify live webhooks |
+| Live PayPal client ID/secret + webhook ID | Owner | None are provisioned in this checkout; cannot flip `PAYPAL_ENV=live` or verify/register live webhooks |
 | Apple Pay merchant identity + domain association | Owner / domain DNS | Apple Pay cannot render in production |
 | Google Pay merchant config | Owner | Google Pay cannot render in production |
 | PayPal MCP OAuth sign-in via `/mcps` | Owner | MCP tools stay unauthenticated |

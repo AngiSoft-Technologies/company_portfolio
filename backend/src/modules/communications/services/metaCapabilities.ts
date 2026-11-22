@@ -120,6 +120,8 @@ export function getMetaFeatureFlags() {
     appReviewGranted: getConfig('META_APP_REVIEW_GRANTED') === 'true',
     capiConfigured: capiConfigured(),
     graphVersion: String(getConfig('META_GRAPH_VERSION') || 'v23.0'),
+    // Non-secret version string only — never a token or credential.
+    whatsappGraphVersion: String(getConfig('WHATSAPP_API_VERSION') || 'v23.0'),
     mcpEndpoints: {
       ads: allowlistedMcpEndpoint(META_MCP_ENDPOINTS['mcp.ads'].configKey, META_MCP_ENDPOINTS['mcp.ads'].url),
       social: allowlistedMcpEndpoint(META_MCP_ENDPOINTS['mcp.social'].configKey, META_MCP_ENDPOINTS['mcp.social'].url),

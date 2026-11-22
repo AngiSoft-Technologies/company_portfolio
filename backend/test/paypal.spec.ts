@@ -93,6 +93,7 @@ describe('PayPal adapter', () => {
   it('validates the configured settlement currency and rejects KES explicitly', () => {
     expect(paypal.settlementCurrency()).toBe('USD');
     expect(paypal.settlementCurrency('EUR')).toBe('EUR');
+    expect(paypal.settlementCurrency('CNY')).toBe('CNY');
     // KES is never converted at a 1:1 rate into a PayPal currency.
     expect(() => paypal.settlementCurrency('KES')).toThrow(/KES is not a PayPal settlement currency/);
     const configured = process.env.PAYPAL_CURRENCY;
@@ -102,6 +103,22 @@ describe('PayPal adapter', () => {
     } finally {
       process.env.PAYPAL_CURRENCY = configured;
     }
+  });
+
+  it('formats zero-decimal currencies without fractional amounts', () => {
+    expect(paypal.formatPayPalAmount('JPY', 100)).toBe('100');
+    expect(paypal.formatPayPalAmount('HUF', 500)).toBe('500');
+    expect(paypal.formatPayPalAmount('TWD', 80)).toBe('80');
+    expect(() => paypal.formatPayPalAmount('JPY', 100.5)).toThrow(/zero-decimal/);
+    expect(paypal.formatPayPalAmount('USD', 42.5)).toBe('42.50');
+  });
+
+  it('sends whole-number amounts for zero-decimal PayPal orders', async () => {
+    await paypal.createOrder({ amount: 100, currency: 'JPY', reference: 'INV-JPY' });
+    const call = fetchMock.mock.calls.find(
+      ([url, init]: any[]) => String(url).endsWith('/v2/checkout/orders') && init?.method === 'POST',
+    );
+    expect(JSON.parse(call[1].body).purchase_units[0].amount).toEqual({ currency_code: 'JPY', value: '100' });
   });
 
   it('keeps PayPal-Request-Id header-safe and bounded', () => {

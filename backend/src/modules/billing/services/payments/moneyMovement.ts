@@ -155,6 +155,37 @@ export function listMoneyTypes(): MoneyType[] {
       description: 'Look up a PayPal refund by id.',
       requires: ['refundId'],
     },
+    {
+      id: 'PAYPAL_ORDER_STATUS', flow: 'STATUS', label: 'PayPal order status', provider: 'PAYPAL',
+      region: 'International', available: paypalReady(),
+      reason: paypalReady() ? undefined : 'PayPal is not configured',
+      description: 'Read the live status of a PayPal order (checkout only; never captures it).',
+      requires: ['orderId'],
+    },
+    // Daraja adapter-only capabilities from the local developer pack. They are
+    // deliberately visible but inert: no dispatch path exists until official
+    // Safaricom enablement and a dedicated approval gate are in place.
+    {
+      id: 'MPESA_POCHI', flow: 'B2C', label: 'M-Pesa Pochi payout', provider: 'MPESA',
+      region: 'Kenya', available: false,
+      reason: 'Official Daraja enablement and capability approval required',
+      description: 'Send money to a Pochi wallet (adapter implemented, not enabled).',
+      requires: ['phone', 'amount'],
+    },
+    {
+      id: 'MPESA_STANDING_ORDER', flow: 'B2B', label: 'M-Pesa standing order', provider: 'MPESA',
+      region: 'Kenya', available: false,
+      reason: 'Official Daraja enablement and capability approval required',
+      description: 'Create a recurring standing order (adapter implemented, not enabled).',
+      requires: ['amount'],
+    },
+    {
+      id: 'MPESA_TAX_REMITTANCE', flow: 'B2B', label: 'M-Pesa tax remittance', provider: 'MPESA',
+      region: 'Kenya', available: false,
+      reason: 'Official Daraja enablement and capability approval required',
+      description: 'Remit tax through Daraja (adapter implemented, not enabled).',
+      requires: ['amount'],
+    },
   ];
 
   return [...c2b, ...outbound];

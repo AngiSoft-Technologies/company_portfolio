@@ -41,6 +41,85 @@ export function callbackDedupeId(body: unknown): string | null {
   return null;
 }
 
+/**
+ * Settle a pending reversal ledger entry only after Daraja reports a terminal
+ * result. The request handler deliberately posts `PENDING`; this callback is
+ * the sole place that moves a reversal to COMPLETED/FAILED, and it refuses to
+ * settle when the reported amount differs from the stored amount.
+ */
+async function settlePendingReversal(
+  prisma: Db,
+  decoded: Record<string, any>,
+  successful: boolean,
+  externalEventId: string,
+): Promise<void> {
+  const reference = String(decoded.originatorConversationId || '').trim();
+  if (!reference) return;
+  let entries: any[] = [];
+  try {
+    entries = (await prisma.orm.public.LedgerEntry
+      .where({
+        provider: 'MPESA' as any,
+        externalRef: reference,
+        entryType: 'REVERSAL' as any,
+        status: 'PENDING' as any,
+      } as any)
+      .all()) as any[];
+  } catch {
+    entries = [];
+  }
+  if (!entries.length) return;
+
+  if (decoded.amount !== undefined && Number.isFinite(Number(decoded.amount))) {
+    const received = Number(decoded.amount);
+    const mismatched = entries.find((entry: any) => {
+      const expected = fromMoney(String(entry.amount ?? '0'));
+      return Math.abs(expected - received) > 0.01;
+    });
+    if (mismatched) {
+      await logAudit({
+        action: 'DARAJA_REVERSAL_AMOUNT_MISMATCH',
+        entity: 'LedgerEntry',
+        entityId: String((mismatched as any).id || reference),
+        meta: { reference, received, externalEventId },
+      });
+      await recordProviderEvent(prisma, {
+        provider: 'MPESA', domain: 'FINANCE',
+        externalEventId: `${externalEventId}:REVERSAL_AMOUNT_MISMATCH`,
+        eventType: 'DARAJA_REVERSAL_AMOUNT_MISMATCH',
+        signatureValid: false,
+        payload: { ...asJsonObject(decoded.raw), authMethod: 'SHARED_CALLBACK_TOKEN' },
+        status: 'FAILED',
+      });
+      return;
+    }
+  }
+
+  const finalStatus = successful ? 'COMPLETED' : 'FAILED';
+  for (const entry of entries as any[]) {
+    const previous = asJsonObject(entry.metadata);
+    await prisma.orm.public.LedgerEntry.where({ id: entry.id } as any).update({
+      status: finalStatus as any,
+      metadata: JSON.parse(JSON.stringify({
+        ...previous,
+        callback: { resultCode: decoded.resultCode, resultDesc: decoded.resultDesc, transactionId: decoded.transactionId },
+        settledAt: ts(),
+      })),
+    } as any).catch(() => undefined);
+    if (entry.providerEventId) {
+      await prisma.orm.public.FinanceTransaction
+        .where({ providerEventId: entry.providerEventId, transactionType: 'REVERSAL' } as any)
+        .update({ status: finalStatus as any, updatedAt: ts() } as any)
+        .catch(() => undefined);
+    }
+    await logAudit({
+      action: successful ? 'DARAJA_REVERSAL_SETTLED' : 'DARAJA_REVERSAL_FAILED',
+      entity: 'LedgerEntry', entityId: entry.id,
+      meta: { reference, externalEventId, resultCode: decoded.resultCode, resultDesc: decoded.resultDesc },
+    });
+  }
+}
+
 /** Do not persist the shared callback token (or any auth header) in events. */
 function safeHeaders(req: Request): JsonObject {
   const redacted = new Set([
@@ -220,6 +299,11 @@ export default function mpesaCallbacksRouter(prisma: Db) {
           },
         });
       }
+
+      // Reversals are mirrored as PENDING ledger entries at request time.
+      // Only this terminal callback may settle them, and only after the amount
+      // cross-check above. This runs even if no payout row needs updating.
+      await settlePendingReversal(prisma, decoded as unknown as Record<string, any>, successful, externalEventId);
 
       const reference = decoded.originatorConversationId;
       if (!reference) return;

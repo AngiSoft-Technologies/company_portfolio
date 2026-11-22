@@ -179,6 +179,74 @@ function JsonPreview({ label, value }: { label: string; value: unknown }) {
   );
 }
 
+function flagText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+/** Read-only version, MCP endpoint and App Review diagnostics from safe flags. */
+function MetaDiagnostics({ flags }: { flags: JsonRecord }) {
+  const graphVersion = flagText(flags.graphVersion);
+  const whatsappVersion = flagText(flags.whatsappGraphVersion);
+  const matchLabel = graphVersion && whatsappVersion
+    ? (graphVersion === whatsappVersion ? 'Match' : 'Mismatch')
+    : 'Unknown';
+  const matchTone = matchLabel === 'Match' ? 'green' : matchLabel === 'Mismatch' ? 'red' : 'slate';
+  const reviewGranted = typeof flags.appReviewGranted === 'boolean' ? flags.appReviewGranted : null;
+  const reviewLabel = reviewGranted === null ? 'Unknown' : reviewGranted ? 'Granted' : 'Not granted';
+  const reviewTone = reviewGranted === null ? 'slate' : reviewGranted ? 'green' : 'amber';
+
+  const endpoints = isRecord(flags.mcpEndpoints) ? flags.mcpEndpoints : {};
+  const endpointRows = Object.entries(endpoints).flatMap(([key, value]) => {
+    const url = flagText(value);
+    if (!key || key.length > 40 || !url || !/^https:\/\//i.test(url) || url.includes('@')) return [];
+    return [{ key, url }];
+  });
+
+  return (
+    <div className="mt-5 border-t border-[var(--border)] pt-4">
+      <h4 className="mb-2 text-sm font-semibold">Version &amp; endpoint diagnostics</h4>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-[var(--border)] p-3">
+          <div className="text-xs uppercase tracking-wide text-[var(--text-muted)]">META Graph version</div>
+          <div className="mt-1 font-mono text-sm">{graphVersion ?? '—'}</div>
+        </div>
+        <div className="rounded-lg border border-[var(--border)] p-3">
+          <div className="text-xs uppercase tracking-wide text-[var(--text-muted)]">WhatsApp API version</div>
+          <div className="mt-1 font-mono text-sm">{whatsappVersion ?? '—'}</div>
+        </div>
+        <div className="rounded-lg border border-[var(--border)] p-3">
+          <div className="text-xs uppercase tracking-wide text-[var(--text-muted)]">Versions match</div>
+          <div className="mt-1"><Badge tone={matchTone}>{matchLabel}</Badge></div>
+        </div>
+        <div className="rounded-lg border border-[var(--border)] p-3">
+          <div className="text-xs uppercase tracking-wide text-[var(--text-muted)]">App Review status</div>
+          <div className="mt-1"><Badge tone={reviewTone}>{reviewLabel}</Badge></div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="mb-1 text-xs font-medium text-[var(--text-secondary)]">Allowlisted MCP endpoints</p>
+        {endpointRows.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)]">—</p>
+        ) : (
+          <ul className="space-y-1">
+            {endpointRows.map(({ key, url }) => (
+              <li key={key} className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge tone="slate">{key.replace(/[._]/g, ' ')}</Badge>
+                <code className="break-all text-[var(--text-secondary)]">{url}</code>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <p className="mt-3 text-xs text-[var(--text-muted)]">
+        Read-only diagnostics. Tokens and secrets are never displayed here.
+      </p>
+    </div>
+  );
+}
+
 function CapiNotice({ flags }: { flags: JsonRecord }) {
   const entry = Object.entries(flags).find(([key]) => /capi|conversion/i.test(key));
   if (!entry) {
@@ -434,6 +502,7 @@ export default function MetaCommandCenter() {
           rows={statusRows.map((row) => ({ ...row, id: row.operation }))}
         />
         <CapiNotice flags={flags} />
+        <MetaDiagnostics flags={flags} />
       </Card>
 
       <Card>

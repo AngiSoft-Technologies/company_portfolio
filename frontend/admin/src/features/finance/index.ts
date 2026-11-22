@@ -1,4 +1,5 @@
 import PaymentsAdmin from './PaymentsAdmin';
+import PaymentConsoleAdmin from './PaymentConsoleAdmin';
 import ExpensesAdmin from './ExpensesAdmin';
 
 export { default as FinanceOverview } from './FinanceOverview';
@@ -12,5 +13,5 @@ export { default as RefundsDisputes } from './RefundsDisputes';
 export { default as FinanceReports } from './FinanceReports';
 export { default as FinanceSettings } from './FinanceSettings';
 export { default as MoneyMovementAdmin } from './MoneyMovementAdmin';
-export { PaymentsAdmin, ExpensesAdmin };
+export { PaymentsAdmin, PaymentConsoleAdmin, ExpensesAdmin };
 export default PaymentsAdmin;

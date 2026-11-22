@@ -12,6 +12,7 @@ import { getMoneyType, moneyMovementSummary } from '../services/payments/moneyMo
 import * as payhero from '../services/payments/payheroService';
 import * as daraja from '../services/payments/darajaPayouts';
 import * as paypalPayouts from '../services/payments/paypalPayouts';
+import * as paypal from '../services/payments/paypalService';
 import { settlementCurrency as paypalSettlementCurrency } from '../services/payments/paypalService';
 import { toMoney } from '../utils/money';
 import { postLedgerEntry, resolveFinanceAccount } from '../../finance/services/ledger';
@@ -32,6 +33,39 @@ const WRITE_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MARKETING'];
 // enough: it also accepts a granular `payments.reconcile` grant, and neither
 // route has a separate approval step. Other providers keep WRITE_ROLES.
 const DARAJA_WRITE_ROLES = ['SUPER_ADMIN', 'ADMIN'];
+
+// Daraja warns that continuous transaction-status polling can get the caller's
+// IP blocked. This advisory per-transaction cooldown is deliberately local and
+// ephemeral: it throttles UI re-clicks without changing provider state.
+const MPESA_STATUS_COOLDOWN_MS = 30_000;
+const mpesaStatusLastChecked = new Map<string, number>();
+
+function statusCooldownRemaining(transactionId: string): number {
+  const now = Date.now();
+  if (mpesaStatusLastChecked.size > 1000) {
+    for (const [key, at] of mpesaStatusLastChecked) {
+      if (now - at >= MPESA_STATUS_COOLDOWN_MS) mpesaStatusLastChecked.delete(key);
+    }
+  }
+  const last = mpesaStatusLastChecked.get(transactionId);
+  return last === undefined ? 0 : Math.max(0, MPESA_STATUS_COOLDOWN_MS - (now - last));
+}
+
+/**
+ * Explicit B2C/B2B dispatch allowlist. Adapter-only capabilities (Pochi,
+ * standing orders, tax remittance) and any future catalogue entry must be
+ * wired here deliberately: an unknown type must never fall through to the
+ * PayPal payout branch just because it was accidentally marked available.
+ */
+const PAYOUT_DISPATCH: Record<string, 'MPESA_B2C' | 'MPESA_B2B' | 'PAYHERO_B2C_MOBILE' | 'PAYHERO_B2B_BANK' | 'PAYHERO_TOPUP' | 'PAYPAL_PAYOUT' | 'PAYPAL_B2B_PAYOUT'> = {
+  MPESA_B2C: 'MPESA_B2C',
+  MPESA_B2B: 'MPESA_B2B',
+  PAYHERO_B2C_MOBILE: 'PAYHERO_B2C_MOBILE',
+  PAYHERO_B2B_BANK: 'PAYHERO_B2B_BANK',
+  PAYHERO_TOPUP: 'PAYHERO_TOPUP',
+  PAYPAL_PAYOUT: 'PAYPAL_PAYOUT',
+  PAYPAL_B2B_PAYOUT: 'PAYPAL_B2B_PAYOUT',
+};
 
 function errorStatus(err: any): number {
   if (err?.status && err.status >= 400 && err.status < 600) return err.status;
@@ -71,6 +105,11 @@ export default function moneyMovementRouter(prisma: Db) {
     }
     if (!['B2C', 'B2B'].includes(definition.flow)) {
       return res.status(400).json({ error: `${type} is not a payout flow` });
+    }
+    const dispatch = PAYOUT_DISPATCH[type];
+    if (!dispatch || dispatch !== type) {
+      // No catalogue entry may reach a provider until it is explicitly wired.
+      return res.status(400).json({ error: `${type} has no payout dispatcher` });
     }
     if (definition.provider === 'MPESA' && !isRole(req, DARAJA_WRITE_ROLES)) {
       return res.status(403).json({ error: 'Only administrators may initiate M-Pesa payouts' });
@@ -196,7 +235,7 @@ export default function moneyMovementRouter(prisma: Db) {
           phoneNumber = String(body.phone || '');
           channel = 'topup';
           status = result.success ? 'PENDING' : 'FAILED';
-        } else {
+        } else if (dispatch === 'PAYPAL_PAYOUT' || dispatch === 'PAYPAL_B2B_PAYOUT') {
           // PayPal Payouts covers both B2C and B2B recipients.
           const result = await paypalPayouts.createPayout({
             reference,
@@ -214,6 +253,9 @@ export default function moneyMovementRouter(prisma: Db) {
           raw = result;
           channel = 'paypal';
           status = 'PENDING';
+        } else {
+          // Defensive: the allowlist above should make this unreachable.
+          throw new Error(`${type} has no payout dispatcher`);
         }
       } catch (err: any) {
         // Keep the intent row for audit — mark it failed instead of losing it.
@@ -293,6 +335,12 @@ export default function moneyMovementRouter(prisma: Db) {
   router.post('/refund', requireAccess('payments.reconcile', WRITE_ROLES), async (req: AuthRequest, res) => {
     const captureId = String(req.body?.captureId || '').trim();
     if (!captureId) return res.status(400).json({ error: 'captureId is required' });
+    if (req.body?.amount !== undefined && req.body?.amount !== null && req.body?.amount !== '') {
+      const requested = Number(req.body.amount);
+      if (!Number.isFinite(requested) || requested <= 0) {
+        return res.status(400).json({ error: 'amount must be a positive number when provided' });
+      }
+    }
     const definition = getMoneyType('PAYPAL_REFUND');
     if (!definition) return res.status(503).json({ error: 'PayPal refunds are not available' });
     let refundCurrency: string;
@@ -326,14 +374,26 @@ export default function moneyMovementRouter(prisma: Db) {
           reused: true, reference, refundIdDb: existing?.id ?? null, event,
         });
       }
+      const requestedAmount = req.body?.amount === undefined || req.body?.amount === null || req.body?.amount === ''
+        ? undefined
+        : Number(req.body.amount);
       const result = await paypalPayouts.refundCapture({
         captureId,
         reference,
-        amount: req.body?.amount ? Number(req.body.amount) : undefined,
+        amount: requestedAmount,
         currency: refundCurrency,
       });
       const refundExternalRef = String((result as any)?.refundId || reference);
-      const refundAmount = Number(req.body?.amount || 0);
+      // A full refund omits the request amount; the adapter returns the
+      // provider's actual amount. Never persist a zero-value refund/ledger row
+      // just because the caller did not ask for a partial amount.
+      const providerAmount = Number((result as any)?.amount);
+      const refundAmount = Number.isFinite(providerAmount) && providerAmount > 0
+        ? providerAmount
+        : Number(requestedAmount);
+      if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
+        throw new Error('PayPal refund did not return a usable amount');
+      }
       const existingRefund = await prisma.orm.public.Refund
         .where({ provider: 'PAYPAL' as any, externalRef: refundExternalRef } as any)
         .first()
@@ -396,43 +456,134 @@ export default function moneyMovementRouter(prisma: Db) {
     if (!transactionId || !Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ error: 'transactionId and a positive amount are required' });
     }
+    // A reversal is irreversible money movement. Derive a stable reference from
+    // the target + amount so a replay returns the original result instead of
+    // submitting a second reversal to Safaricom.
+    const stableSeed = ['MPESA_REVERSAL', transactionId, String(amount)].join('|');
+    const reference = String(req.body?.reference || '').trim()
+      || `RV-${createHash('sha256').update(stableSeed).digest('hex').slice(0, 16).toUpperCase()}`;
+    const eventExternalId = `reversal:${reference}`;
+    let providerAccepted = false;
     try {
+      // Commit the local intent before calling Safaricom. The reference is also
+      // the OriginatorConversationID, so the result callback can settle it.
+      const claim = await withScopeLock(prisma, `money:reversal:${reference}`, async (tx) => {
+        const existing = await tx.orm.public.Payout.where({ reference }).first();
+        if (existing) return { row: existing, reused: true };
+        const row = await tx.orm.public.Payout.create({
+          id: newId(),
+          provider: 'MPESA',
+          reference,
+          amount: toMoney(amount),
+          currency: 'KES',
+          channel: 'reversal',
+          status: 'PENDING',
+          metadata: {
+            type: 'MPESA_REVERSAL', transactionId, phase: 'SUBMITTED',
+            initiator: req.user?.sub || '',
+          } as any,
+          createdAt: ts(),
+          updatedAt: ts(),
+        } as any);
+        return { row, reused: false };
+      });
+
+      const priorEvent = await prisma.orm.public.ProviderEvent
+        .where({ provider: 'MPESA' as any, externalEventId: eventExternalId } as any)
+        .first()
+        .catch(() => null);
+      if (priorEvent && String(priorEvent.status || '').toUpperCase() !== 'FAILED') {
+        return res.status(200).json({
+          reused: true, reference, payoutId: claim.row.id, event: priorEvent,
+        });
+      }
+
+      const event = priorEvent
+        ? await prisma.orm.public.ProviderEvent.where({ id: priorEvent.id } as any).update({
+          status: 'RECEIVED', error: null, processedAt: null,
+        } as any).catch(() => null)
+        : (await recordProviderEvent(prisma, {
+          provider: 'MPESA', domain: 'FINANCE',
+          externalEventId: eventExternalId,
+          eventType: 'MPESA_REVERSAL_REQUESTED',
+          signatureValid: false,
+          status: 'RECEIVED',
+          payload: { transactionId, amount, reference },
+        })).event;
+      if (!event?.id) throw new Error('Could not record the reversal idempotency event');
+
       const result = await daraja.reverseTransaction({
         transactionId,
         amount,
         remarks: String(req.body?.remarks || 'AngiSoft reversal'),
-        originatorConversationId: String(req.body?.reference || transactionId),
+        originatorConversationId: reference,
       });
+      providerAccepted = true;
+
+      await prisma.orm.public.Payout.where({ id: claim.row.id } as any).update({
+        providerReference: String((result as any)?.conversationId || ''),
+        status: 'PENDING',
+        metadata: {
+          type: 'MPESA_REVERSAL', transactionId, phase: 'AWAITING_CALLBACK',
+          conversationId: (result as any)?.conversationId || null,
+          initiator: req.user?.sub || '',
+        } as any,
+        updatedAt: ts(),
+      } as any).catch(() => undefined);
+      await prisma.orm.public.ProviderEvent.where({ id: event.id } as any).update({
+        status: 'PROCESSED', processedAt: ts(), error: null,
+      } as any).catch(() => undefined);
+
       const reversedPayment = await prisma.orm.public.Payment
         .where({ providerId: transactionId } as any)
         .first()
         .catch(() => null);
       try {
-        const account = await resolveFinanceAccount(prisma, 'MPESA', transactionId);
+        const account = await resolveFinanceAccount(prisma, 'MPESA', reference);
         await postLedgerEntry(prisma, {
           provider: 'MPESA',
-          externalRef: String((result as any)?.conversationId || transactionId),
+          externalRef: reference,
           entryType: 'REVERSAL',
           direction: 'OUT',
           amount,
           currency: 'KES',
-          status: 'COMPLETED',
+          // Pending until the signed-in result callback settles the Payout.
+          status: 'PENDING',
           financeAccountId: account?.id ?? null,
           sourceType: 'PAYMENT',
           sourceId: reversedPayment?.id ?? null,
-          metadata: { transactionId, originatorConversationId: req.body?.reference || null },
+          metadata: {
+            transactionId, originatorConversationId: reference,
+            conversationId: (result as any)?.conversationId || null,
+          } as any,
         });
       } catch (ledgerErr: any) {
         console.error('Reversal ledger posting failed', ledgerErr?.message || ledgerErr);
+        await logAudit({
+          actorId: req.user?.sub, actorRole: String((req.user as any)?.role || ''),
+          action: 'LEDGER_POST_FAILED', entity: 'Payout', entityId: claim.row.id,
+          meta: { type: 'MPESA_REVERSAL', reference, error: String(ledgerErr?.message || ledgerErr).slice(0, 500) },
+        }).catch(() => undefined);
       }
 
       await logAudit({
         actorId: req.user?.sub, actorRole: String((req.user as any)?.role || ''),
-        action: 'MPESA_REVERSAL', entity: 'Payment', entityId: reversedPayment?.id || transactionId,
-        meta: { amount, transactionId },
+        action: 'MPESA_REVERSAL_INITIATED', entity: 'Payout', entityId: claim.row.id,
+        meta: { amount, transactionId, reference, settlement: 'PENDING_CALLBACK' },
       });
-      res.json({ result });
+      res.status(202).json({ result, reference, payoutId: claim.row.id, pending: true });
     } catch (err: any) {
+      if (!providerAccepted) {
+        await prisma.orm.public.Payout.where({ reference } as any).update({
+          status: 'FAILED',
+          metadata: { type: 'MPESA_REVERSAL', transactionId, phase: 'PROVIDER_FAILED' } as any,
+          updatedAt: ts(),
+        } as any).catch(() => undefined);
+        await prisma.orm.public.ProviderEvent
+          .where({ provider: 'MPESA' as any, externalEventId: eventExternalId } as any)
+          .update({ status: 'FAILED', error: String(err?.message || err).slice(0, 1000) } as any)
+          .catch(() => undefined);
+      }
       res.status(errorStatus(err)).json({ error: err?.message || 'Reversal failed' });
     }
   });
@@ -458,10 +609,47 @@ export default function moneyMovementRouter(prisma: Db) {
         if (!refundId) return res.status(400).json({ error: 'refundId is required' });
         return res.json({ status: await paypalPayouts.getRefund(refundId) });
       }
+      if (type === 'PAYPAL_ORDER_STATUS') {
+        const orderId = String(req.query.orderId || req.query.reference || '');
+        if (!orderId) return res.status(400).json({ error: 'orderId is required' });
+        // Read-only lookup: never capture, refund or modify the order here.
+        return res.json({ status: await paypal.getOrder(orderId) });
+      }
       if (type === 'MPESA_STATUS') {
         const transactionId = String(req.query.transactionId || req.query.reference || '');
         if (!transactionId) return res.status(400).json({ error: 'transactionId is required' });
-        return res.json({ status: await daraja.queryTransactionStatus({ transactionId }) });
+        const remaining = statusCooldownRemaining(transactionId);
+        if (remaining > 0) {
+          return res.status(429).json({
+            error: 'M-Pesa status was checked too recently',
+            retryAfterSeconds: Math.ceil(remaining / 1000),
+          });
+        }
+        mpesaStatusLastChecked.set(transactionId, Date.now());
+        try {
+          return res.json({ status: await daraja.queryTransactionStatus({ transactionId }) });
+        } catch (err) {
+          // Do not penalise a retry after an upstream/configuration failure.
+          mpesaStatusLastChecked.delete(transactionId);
+          throw err;
+        }
+      }
+      if (type === 'MPESA_BALANCE') {
+        if (!getMoneyType('MPESA_BALANCE')) return res.status(503).json({ error: 'M-Pesa balance is not available' });
+        // No caller-supplied URLs or payload overrides. Parsed balances are
+        // mirrored by the result callback as review-only ProviderEvents; this
+        // read-only branch never posts a ledger entry.
+        const result = await daraja.queryAccountBalance();
+        return res.json({
+          status: {
+            responseCode: result.responseCode,
+            responseDescription: result.responseDescription,
+            conversationId: result.conversationId,
+            originatorConversationId: result.originatorConversationId,
+          },
+          reviewOnly: true,
+          autoSettlement: false,
+        });
       }
       if (type === 'PAYPAL_PAYOUT_STATUS') {
         const batchId = String(req.query.batchId || req.query.reference || '');

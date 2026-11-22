@@ -39,6 +39,7 @@ const AboutAdmin = lazy(() => import('@/features/cms/AboutAdmin'));
 const AnnouncementsAdmin = lazy(() => import('@/features/cms/AnnouncementsAdmin').then((m) => ({ default: m.AnnouncementsAdmin })));
 const CompanyStatsAdmin = lazy(() => import('@/features/cms/CompanyStatsAdmin').then((m) => ({ default: m.CompanyStatsAdmin })));
 const PaymentsAdmin = lazy(() => import('@/features/finance/PaymentsAdmin'));
+const PaymentConsoleAdmin = lazy(() => import('@/features/finance/PaymentConsoleAdmin'));
 const ExpensesAdmin = lazy(() => import('@/features/finance/ExpensesAdmin'));
 const FinanceHub = lazy(() => import('@/features/finance/FinanceHub'));
 const FinanceOverview = lazy(() => import('@/features/finance/FinanceOverview'));
@@ -148,6 +149,7 @@ export default function App() {
         <Route path="announcements" element={<AnnouncementsAdmin />} />
         <Route path="company-stats" element={<CompanyStatsAdmin />} />
         <Route path="payments" element={<PaymentsAdmin />} />
+        <Route path="payments/console" element={<PaymentConsoleAdmin />} />
         <Route path="finance-hub" element={<FinanceHub />} />
         <Route path="finance" element={<FinanceOverview />} />
         <Route path="finance/connections" element={<FinanceConnections />} />

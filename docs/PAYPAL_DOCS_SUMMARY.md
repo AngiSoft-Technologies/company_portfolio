@@ -295,6 +295,15 @@ handles the 3DS challenge where required. Relevant only if we ship a native app.
   THB, TWD, USD. **KES is not listed.** JPY/HUF/TWD are zero-decimal. BRL/CNY/MYR need an
   in-country PayPal account or conversion. Configure Payment Receiving Preferences so
   payments in currencies we do not hold are converted instead of left pending.
+
+> **AngiSoft reconciliation (code audit 2026-11-22):** `SUPPORTED_CURRENCIES` in
+> `paypalService.ts` (shared by payouts) now includes CNY alongside INR/HUF/TWD
+> (and CHF/GBP), matching this reference list. JPY/HUF/TWD are formatted as
+> zero-decimal amounts by `formatPayPalAmount()`, and **KES is not supported** by
+> our allowlist. BRL/CNY/MYR may require an in-country account or conversion.
+> This is a code-level reconciliation — no live credentials or registered
+> webhooks are claimed as provisioned. See
+> [`PAYPAL_RESOURCE_UTILIZATION_PLAN.md`](./PAYPAL_RESOURCE_UTILIZATION_PLAN.md) §8.1.
 - **Country codes** (`/reference/country-codes`) — two-character codes; Kenya = `KE`.
 - **Locale codes** (`/reference/locale-codes`) — BCP-47 for REST; Kenya priority is
   `en_US` → `fr_XC` → `es_XC` → `zh_XC`, with `en-KE` as the REST value.
@@ -335,3 +344,6 @@ handles the 3DS challenge where required. Relevant only if we ship a native app.
 7. **No PII or secrets in prompts.** The toolkit rejects them, and PCI DSS applies.
 8. **KES is not a PayPal settlement currency.** Charge in `PAYPAL_CURRENCY` (USD default)
    and preserve the original currency/amount in metadata for reconciliation.
+9. **Documented methods are not automatically catalogued.** Venmo, Boleto and Multibanco
+   appear in PayPal's docs but are not active AngiSoft payment catalogue entries; do not
+   add them as part of this closeout. Currency allowlist gaps are recorded in §6 above.
