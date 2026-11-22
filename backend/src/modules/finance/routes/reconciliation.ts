@@ -7,6 +7,7 @@ import { logAudit } from '../../../shared/services/audit';
 import { generateReconciliationReport, resolveReconciliationItem } from '../services/reconciliation';
 import { matchC2bConfirmations } from '../services/c2bMatching';
 import { reviewPayHeroEvents, summarizePayHeroReview } from '../services/payheroReconciliation';
+import { listDarajaResultReference } from '../services/darajaResultReference';
 import { actor, allRows, objectOf, route } from './helpers';
 
 const VIEW_ROLES = ['ADMIN', 'SUPER_ADMIN', 'MANAGER'];
@@ -136,6 +137,21 @@ export default function financeReconciliationRouter(prisma: Db) {
       meta: { eventsReviewed: events.length, paymentsReviewed: payments.length, summary },
     });
     return res.json({ suggestions, summary, readOnly: true });
+  }));
+
+  /**
+   * READ-ONLY Daraja result-code reference from the vendored community guide.
+   * Advisory text only — no Meta/PayHero calls, no writes, no secrets and no
+   * instruction to auto-retry or move money.
+   */
+  router.get(['/reconciliation/daraja/result-codes', '/daraja/result-codes'], requireAccess('finance.reconciliation.view', VIEW_ROLES), route(async (req, res) => {
+    const reference = listDarajaResultReference();
+    await logAudit({
+      ...actor(req), action: 'finance.reconciliation.daraja_reference', entity: 'ProviderEvent',
+      entityId: null,
+      meta: { resultCodes: reference.resultCodes.length },
+    });
+    return res.json(reference);
   }));
 
   router.post(['/reconciliation/runs', '/runs', '/'], requireAccess('finance.reconciliation.manage', MANAGE_ROLES), route(async (req: AuthRequest, res) => {

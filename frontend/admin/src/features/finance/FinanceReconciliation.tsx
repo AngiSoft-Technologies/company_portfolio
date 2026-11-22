@@ -14,6 +14,7 @@ export default function FinanceReconciliation() {
   const runs = useResource<ApiRow>('/admin/finance/reconciliation/runs');
   const payheroReview = useResource<ApiRow>('/admin/finance/reconciliation/payhero/review');
   const c2bReview = useResource<ApiRow>('/admin/finance/reconciliation/c2b/review');
+  const darajaReference = useResource<ApiRow>('/admin/finance/reconciliation/daraja/result-codes');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const items = useResource<ApiRow>(selectedId ? `/admin/finance/reconciliation/runs/${selectedId}/items` : null);
   const [form, setForm] = useState({ provider: 'PAYHERO', financeAccountId: '', periodStart: '', periodEnd: '' });
@@ -26,6 +27,8 @@ export default function FinanceReconciliation() {
   const itemRows = listFrom(items.data, 'items', 'exceptions');
   const payheroRows = listFrom(payheroReview.data, 'suggestions');
   const c2bRows = listFrom(c2bReview.data, 'suggestions');
+  const darajaCodes = listFrom(darajaReference.data, 'resultCodes');
+  const darajaHttpHints = listFrom(darajaReference.data, 'httpHints');
   const selectedRun = runRows.find((row) => String(row.id) === selectedId) ?? null;
 
   const iso = (value: string) => (value ? new Date(value).toISOString() : undefined);
@@ -209,6 +212,48 @@ export default function FinanceReconciliation() {
           <p className="mt-3 text-xs text-[var(--text-muted)]">Reference matching is advisory only. A human reviewer decides any action.</p>
         </Card>
       </div>
+
+      <Card>
+        <h2 className="font-semibold">Daraja result-code reference</h2>
+        <p className="mt-1 mb-3 text-xs text-[var(--text-muted)]">
+          {String(darajaReference.data?.provenance ?? 'Derived from the vendored community Daraja guide.')}
+        </p>
+        <ErrorNotice error={darajaReference.error} onRetry={() => void darajaReference.reload()} />
+        {darajaReference.loading ? <p className="text-sm text-[var(--text-muted)]">Loading…</p> : null}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Callback result codes</h3>
+            {darajaCodes.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)]">No reference codes published.</p>
+            ) : (
+              <Table<ApiRow>
+                columns={[
+                  { key: 'code', header: 'Code', render: (row) => <code className="text-xs">{String(row.code ?? '—')}</code> },
+                  { key: 'hint', header: 'Operator hint', render: (row) => <span className="text-xs text-[var(--text-secondary)]">{String(row.hint ?? '—')}</span> },
+                ]}
+                rows={darajaCodes}
+              />
+            )}
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">HTTP status hints</h3>
+            {darajaHttpHints.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)]">No HTTP hints published.</p>
+            ) : (
+              <Table<ApiRow>
+                columns={[
+                  { key: 'status', header: 'Status', render: (row) => <Badge>{String(row.status ?? '—')}</Badge> },
+                  { key: 'hint', header: 'Hint', render: (row) => <span className="text-xs text-[var(--text-secondary)]">{String(row.hint ?? '—')}</span> },
+                ]}
+                rows={darajaHttpHints}
+              />
+            )}
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-amber-700">
+          Advisory only — confirm against official Safaricom documentation. Hints never auto-retry, settle or move money.
+        </p>
+      </Card>
 
       {resolving ? (
         <Modal

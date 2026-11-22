@@ -64,21 +64,16 @@ export class DarajaError extends Error {
 }
 
 /**
- * Operator hints for the few result codes the local pack actually documents
- * (`guides/common-errors.md`). The pack is community-maintained, so these are
- * diagnostics only — never a reason to auto-retry or move money. Unknown codes
- * deliberately get no hint rather than an invented explanation.
+ * Operator hints are single-sourced in a pure, side-effect-free module so the
+ * payout adapter and the read-only admin reference always show identical text.
+ * Re-exported here for existing callers/tests.
  */
-const RESULT_HINTS: Record<string, string> = {
-  '1': 'Insufficient funds or generic rejection — check payer balance and initiator permissions.',
-  '1001': 'System lock or another active transaction on the MSISDN; operator review only.',
-  '1032': 'Customer cancelled the prompt; require a new user action before retrying.',
-  '1037': 'Timeout — payer out of coverage or too slow entering PIN; do not auto-retry settlement.',
-  '2001': 'Invalid M-Pesa PIN entered by the customer; require a new user action.',
-  '400.002.02': 'Invalid callback URL — use a public HTTPS URL.',
-  '400.002.05': 'Invalid shortcode — check BusinessShortCode and PartyB against the credentials.',
-  '403.002.01': 'Forbidden — access token is missing, invalid or expired.',
-};
+import {
+  DARAJA_DOCUMENTED_RESULT_CODES,
+  darajaHttpHint,
+  darajaResultHint,
+} from './darajaResultHints';
+export { DARAJA_DOCUMENTED_RESULT_CODES, darajaHttpHint, darajaResultHint };
 
 /** Shared-secret callback registration: the gate lives in the route layer. */
 function tokenizedUrl(override: unknown, envName: string): string {
@@ -88,17 +83,6 @@ function tokenizedUrl(override: unknown, envName: string): string {
   const parsed = new URL(url);
   parsed.searchParams.set('token', token);
   return parsed.toString();
-}
-
-export function darajaResultHint(code: unknown): string | null {
-  return RESULT_HINTS[String(code ?? '').trim()] ?? null;
-}
-
-/** HTTP-level hints from `guides/common-errors.md`; no upstream body is echoed. */
-export function darajaHttpHint(status: unknown): string | null {
-  if (status === 401) return 'OAuth token missing or invalid — check consumer credentials and Basic auth.';
-  if (status === 400) return 'Bad request — check mandatory fields and numeric amount types (integers, not strings).';
-  return null;
 }
 
 function env(name: string): string {

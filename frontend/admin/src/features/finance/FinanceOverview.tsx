@@ -109,6 +109,7 @@ export default function FinanceOverview() {
                   { key: 'event', header: 'Event', render: (row) => String(row.eventType ?? row.type ?? '—') },
                   { key: 'provider', header: 'Provider', render: (row) => String(row.provider ?? '—') },
                   { key: 'status', header: 'Status', render: (row) => <Badge>{String(row.status ?? '—')}</Badge> },
+                  { key: 'hint', header: 'Operator hint', render: (row) => <span className="text-xs text-[var(--text-muted)]">{String(row.operatorHint ?? '—')}</span> },
                   { key: 'when', header: 'When', render: (row) => formatDateTime(row.createdAt) },
                 ]}
                 rows={events.slice(0, 8)}

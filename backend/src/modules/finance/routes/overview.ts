@@ -4,6 +4,7 @@ import { requireAuth } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { sumMoney } from '../../billing/utils/money';
 import { listCapabilityMatrix } from '../services/capabilityMatrix';
+import { annotateDarajaEvents } from '../services/darajaResultReference';
 import { selectPaymentRail } from '../services/providers';
 import { allRows, route } from './helpers';
 
@@ -61,7 +62,9 @@ export default function financeOverviewRouter(prisma: Db) {
       disputes: { total: disputes.length, open: disputes.filter((d) => !['RESOLVED', 'CLOSED', 'WON', 'LOST'].includes(String(d.status))).length },
       settlements: { total: settlements.length, net: sumMoney(settlements.map((s) => s.net)) },
       reconciliation: { runs: runs.length, byStatus: byStatus(runs) },
-      recentEvents: events,
+      // Advisory operator hints for documented Daraja result codes — no raw
+      // payloads, credentials or tokenised URLs are added to the response.
+      recentEvents: annotateDarajaEvents(events),
       capabilities: listCapabilityMatrix().map((item) => ({
         provider: item.provider,
         available: item.available,
