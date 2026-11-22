@@ -375,6 +375,25 @@ export async function getOrder(orderId: string): Promise<any> {
   return data;
 }
 
+/**
+ * Read-only capture lookup (Payments v2). Refunds require a capture id; this
+ * lets staff resolve a capture (status, amount, currency) before issuing one.
+ * Never captures, refunds or modifies anything upstream.
+ */
+export async function getCapture(captureId: string): Promise<PayPalCapture> {
+  if (!captureId) throw new PayPalError('Missing PayPal capture id', 400);
+  const { data } = await api<any>('GET', `/v2/payments/captures/${encodeURIComponent(captureId)}`);
+  return {
+    captureId: String(data?.id || captureId),
+    orderId: String(data?.supplementary_data?.related_ids?.order_id || ''),
+    status: String(data?.status || ''),
+    amount: String(data?.amount?.value || ''),
+    currency: String(data?.amount?.currency_code || ''),
+    ...(data?.payer?.email_address ? { payerEmail: String(data.payer.email_address) } : {}),
+    raw: data,
+  };
+}
+
 // ─── Webhook verification ─────────────────────────────────────────────────────
 
 const WEBHOOK_HEADERS = [

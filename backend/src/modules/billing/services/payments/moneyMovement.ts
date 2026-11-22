@@ -162,6 +162,13 @@ export function listMoneyTypes(): MoneyType[] {
       description: 'Read the live status of a PayPal order (checkout only; never captures it).',
       requires: ['orderId'],
     },
+    {
+      id: 'PAYPAL_CAPTURE_STATUS', flow: 'STATUS', label: 'PayPal capture lookup', provider: 'PAYPAL',
+      region: 'International', available: paypalReady(),
+      reason: paypalReady() ? undefined : 'PayPal is not configured',
+      description: 'Read a captured payment by capture id to resolve refunds (read-only).',
+      requires: ['captureId'],
+    },
     // Daraja adapter-only capabilities from the local developer pack. They are
     // deliberately visible but inert: no dispatch path exists until official
     // Safaricom enablement and a dedicated approval gate are in place.

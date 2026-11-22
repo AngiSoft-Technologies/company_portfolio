@@ -615,6 +615,12 @@ export default function moneyMovementRouter(prisma: Db) {
         // Read-only lookup: never capture, refund or modify the order here.
         return res.json({ status: await paypal.getOrder(orderId) });
       }
+      if (type === 'PAYPAL_CAPTURE_STATUS') {
+        const captureId = String(req.query.captureId || req.query.reference || '');
+        if (!captureId) return res.status(400).json({ error: 'captureId is required' });
+        // Read-only lookup used to resolve a capture before issuing a refund.
+        return res.json({ status: await paypal.getCapture(captureId) });
+      }
       if (type === 'MPESA_STATUS') {
         const transactionId = String(req.query.transactionId || req.query.reference || '');
         if (!transactionId) return res.status(400).json({ error: 'transactionId is required' });

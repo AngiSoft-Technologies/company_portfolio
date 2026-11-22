@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   getTransactionStatus: vi.fn(),
   getWallet: vi.fn(),
   getOrder: vi.fn(),
+  getCapture: vi.fn(),
   getRefund: vi.fn(),
   getPayout: vi.fn(),
   getPayoutItem: vi.fn(),
@@ -60,6 +61,7 @@ vi.mock('../src/modules/billing/services/payments/darajaPayouts', () => ({
 }));
 vi.mock('../src/modules/billing/services/payments/paypalService', () => ({
   getOrder: h.getOrder,
+  getCapture: h.getCapture,
   settlementCurrency: () => 'USD',
 }));
 vi.mock('../src/modules/billing/services/payments/paypalPayouts', () => ({
@@ -188,6 +190,27 @@ describe('money movement route hardening', () => {
     expect(response.body.reviewOnly).toBe(true);
     expect(response.body.autoSettlement).toBe(false);
     expect(h.postLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('resolves a PayPal capture read-only for refund preparation', async () => {
+    h.getCapture.mockResolvedValue({
+      captureId: 'CAP-1', orderId: 'ORDER-1', status: 'COMPLETED',
+      amount: '10.00', currency: 'USD', raw: { id: 'CAP-1' },
+    });
+
+    const response = await request(app).get('/v1/admin/money/status/PAYPAL_CAPTURE_STATUS?captureId=CAP-1');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toMatchObject({ captureId: 'CAP-1', status: 'COMPLETED' });
+    expect(h.getCapture).toHaveBeenCalledWith('CAP-1');
+    expect(h.refundCapture).not.toHaveBeenCalled();
+    expect(h.postLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('requires a captureId for PayPal capture lookup', async () => {
+    const response = await request(app).get('/v1/admin/money/status/PAYPAL_CAPTURE_STATUS');
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/captureId is required/);
+    expect(h.getCapture).not.toHaveBeenCalled();
   });
 
   it('throttles repeated M-Pesa transaction-status checks', async () => {

@@ -210,6 +210,27 @@ describe('PayPal adapter', () => {
     expect(call[1].headers['PayPal-Request-Id']).toBe('INV-ABC-capture');
   });
 
+  it('looks up a capture read-only and refuses an empty capture id', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes('/v1/oauth2/token')) return json({ access_token: 'tok', expires_in: 3600 });
+      return json({
+        id: 'CAP-LOOKUP', status: 'COMPLETED',
+        amount: { value: '25.00', currency_code: 'USD' },
+        supplementary_data: { related_ids: { order_id: 'ORDER-9' } },
+      });
+    });
+
+    const capture = await paypal.getCapture('CAP-LOOKUP');
+    expect(capture).toMatchObject({
+      captureId: 'CAP-LOOKUP', status: 'COMPLETED', amount: '25.00',
+      currency: 'USD', orderId: 'ORDER-9',
+    });
+    const call = fetchMock.mock.calls.find(([url]: any[]) => String(url).includes('/v2/payments/captures/'));
+    expect(String(call[0])).toBe('https://api-m.sandbox.paypal.com/v2/payments/captures/CAP-LOOKUP');
+    expect(call[1].method).toBe('GET');
+    await expect(paypal.getCapture('')).rejects.toThrow(/capture id/);
+  });
+
   it('fails closed when the webhook id is missing', async () => {
     delete process.env.PAYPAL_WEBHOOK_ID;
     await expect(paypal.verifyWebhookSignature(webhookHeaders, Buffer.from('{}')))
