@@ -5,7 +5,8 @@ import { requireAuth, type AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 import { generateReconciliationReport, resolveReconciliationItem } from '../services/reconciliation';
-import { actor, allRows, route } from './helpers';
+import { matchC2bConfirmations } from '../services/c2bMatching';
+import { actor, allRows, objectOf, route } from './helpers';
 
 const VIEW_ROLES = ['ADMIN', 'SUPER_ADMIN', 'MANAGER'];
 const MANAGE_ROLES = ['ADMIN', 'SUPER_ADMIN'];
@@ -20,6 +21,10 @@ const runSchema = z.object({
 const resolveSchema = z.object({
   note: z.string().optional().nullable(),
   resolution: z.enum(['MANUAL', 'REFUNDED', 'ADJUSTED', 'IGNORED', 'ESCALATED']).default('MANUAL'),
+});
+
+const c2bReviewSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(100),
 });
 
 export default function financeReconciliationRouter(prisma: Db) {
@@ -42,6 +47,51 @@ export default function financeReconciliationRouter(prisma: Db) {
     const run = await prisma.orm.public.ReconciliationRun.where({ id: req.params.id } as any).first();
     if (!run) return res.status(404).json({ error: 'Reconciliation run not found' });
     return res.json({ run });
+  }));
+
+  /**
+   * READ-ONLY C2B review. Surfaces candidate invoice matches for Daraja C2B
+   * confirmations recorded by the billing callbacks. It writes nothing, posts
+   * nothing to the ledger and never settles a payment — suggestions only.
+   */
+  router.get(['/reconciliation/c2b/review', '/c2b/review'], requireAccess('finance.reconciliation.view', VIEW_ROLES), route(async (req, res) => {
+    const { limit } = c2bReviewSchema.parse(req.query);
+    const events = await allRows(
+      prisma.orm.public.ProviderEvent
+        .where({ provider: 'MPESA', eventType: 'DARAJA_C2B_CONFIRMATION' } as any)
+        .orderBy((e: any) => e.createdAt.desc())
+        .limit(limit)
+        .all(),
+    );
+
+    // Pull only invoices whose number/publicReference could match a BillRefNumber.
+    const refs = new Set<string>();
+    for (const event of events) {
+      const value = String(objectOf(objectOf(event).payload).matchValue ?? '').trim().toUpperCase();
+      if (value) refs.add(value);
+    }
+    const refList = [...refs];
+    const invoices: any[] = refList.length
+      ? [
+          ...await allRows(prisma.orm.public.Invoice.where((i: any) => i.number.in(refList)).all()),
+          ...await allRows(prisma.orm.public.Invoice.where((i: any) => i.publicReference.in(refList)).all()),
+        ]
+      : [];
+
+    // De-duplicate invoices that matched on both number and publicReference.
+    const uniqueInvoices = [...new Map(invoices.map((i) => [i.id, i])).values()];
+    const suggestions = matchC2bConfirmations(events, uniqueInvoices);
+    const summary = suggestions.reduce((acc, s) => {
+      acc[s.status] = (acc[s.status] ?? 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    await logAudit({
+      ...actor(req), action: 'finance.reconciliation.c2b_review', entity: 'ProviderEvent',
+      entityId: null,
+      meta: { eventsReviewed: events.length, summary },
+    });
+    return res.json({ suggestions, summary, readOnly: true });
   }));
 
   router.post(['/reconciliation/runs', '/runs', '/'], requireAccess('finance.reconciliation.manage', MANAGE_ROLES), route(async (req: AuthRequest, res) => {
