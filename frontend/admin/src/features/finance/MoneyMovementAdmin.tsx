@@ -13,6 +13,23 @@ type Catalogue = { flows: string[]; byFlow: Record<string, number>; available: n
 
 const inputClass = 'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm';
 
+/**
+ * Each read-only status lookup expects a different identifier. Mapping the
+ * selected type to its exact query key keeps the three payment rails distinct
+ * (PayPal capture/order/refund/payout vs PayHero reference vs Daraja transaction)
+ * instead of firing one ambiguous ID at every provider.
+ */
+const STATUS_ID_FIELDS: Record<string, { key: string; label: string }> = {
+  PAYHERO_STATUS: { key: 'reference', label: 'PayHero transaction reference' },
+  PAYHERO_BALANCE: { key: '', label: '' },
+  PAYPAL_REFUND_STATUS: { key: 'refundId', label: 'PayPal refund ID' },
+  PAYPAL_ORDER_STATUS: { key: 'reference', label: 'PayPal order ID' },
+  PAYPAL_CAPTURE_STATUS: { key: 'captureId', label: 'PayPal capture ID' },
+  PAYPAL_PAYOUT_STATUS: { key: 'batchId', label: 'PayPal payout batch ID' },
+  MPESA_STATUS: { key: 'transactionId', label: 'M-Pesa transaction ID' },
+  MPESA_BALANCE: { key: '', label: '' },
+};
+
 /** Staff console for every outbound money movement across PayPal, PayHero and Daraja. */
 export default function MoneyMovementAdmin() {
   const { can, access } = useEffectiveAccess();
@@ -31,8 +48,10 @@ export default function MoneyMovementAdmin() {
   const [reversal, setReversal] = useState({ transactionId: '', amount: '', remarks: '', reference: '' });
   const statusTypes = (catalogue?.types || []).filter((t) => t.flow === 'STATUS');
   const [statusType, setStatusType] = useState('PAYHERO_STATUS');
-  const [statusQuery, setStatusQuery] = useState({ reference: '', transactionId: '', batchId: '', itemId: '', refundId: '', walletType: 'payment_wallet' });
+  const [statusId, setStatusId] = useState('');
+  const [statusWalletType, setStatusWalletType] = useState('payment_wallet');
   const [statusResult, setStatusResult] = useState<any>(null);
+  const statusIdField = STATUS_ID_FIELDS[statusType] ?? { key: '', label: 'Identifier' };
 
   const load = async () => {
     setLoading(true);
@@ -82,7 +101,8 @@ export default function MoneyMovementAdmin() {
     setBusy(true);
     try {
       const params = new URLSearchParams();
-      Object.entries(statusQuery).forEach(([k, v]) => { if (v) params.set(k, String(v)); });
+      if (statusIdField.key && statusId.trim()) params.set(statusIdField.key, statusId.trim());
+      if (statusType === 'PAYHERO_BALANCE') params.set('walletType', statusWalletType);
       const res = await apiFetch(`/admin/money/status/${statusType}?${params.toString()}`);
       setStatusResult(res);
     } catch (e: any) {
@@ -210,22 +230,28 @@ export default function MoneyMovementAdmin() {
       <Card>
         <h3 className="mb-3 font-semibold">Live status lookup</h3>
         <div className="grid gap-2 sm:grid-cols-4">
-          <select className={inputClass} value={statusType} onChange={(e) => setStatusType(e.target.value)}>
+          <select className={inputClass} value={statusType} onChange={(e) => { setStatusType(e.target.value); setStatusResult(null); }}>
             {statusTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
-          <input className={inputClass} placeholder="PayPal order ID / M-Pesa transaction ID" value={statusQuery.reference} onChange={(e) => setStatusQuery({ ...statusQuery, reference: e.target.value })} />
-          <input className={inputClass} placeholder="PayPal refund ID / payout batch ID / M-Pesa transaction ID" value={statusQuery.transactionId || statusQuery.batchId || statusQuery.refundId} onChange={(e) => {
-            const v = e.target.value;
-            setStatusQuery({ ...statusQuery, transactionId: v, batchId: v, refundId: v });
-          }} />
-          <select className={inputClass} value={statusQuery.walletType} onChange={(e) => setStatusQuery({ ...statusQuery, walletType: e.target.value })}>
-            <option value="payment_wallet">payment_wallet</option>
-            <option value="service_wallet">service_wallet</option>
-          </select>
+          {statusIdField.key ? (
+            <input
+              className={inputClass}
+              placeholder={statusIdField.label}
+              aria-label={statusIdField.label}
+              value={statusId}
+              onChange={(e) => setStatusId(e.target.value)}
+            />
+          ) : <span className="self-center text-xs text-[var(--text-muted)]">No identifier required</span>}
+          {statusType === 'PAYHERO_BALANCE' ? (
+            <select className={inputClass} value={statusWalletType} onChange={(e) => setStatusWalletType(e.target.value)} aria-label="Wallet type">
+              <option value="payment_wallet">payment_wallet</option>
+              <option value="service_wallet">service_wallet</option>
+            </select>
+          ) : <span />}
         </div>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          Use the reference for a PayPal order ID or M-Pesa transaction ID where applicable. Use the ID field for a
-          PayPal refund ID, payout batch ID or M-Pesa transaction ID, depending on the selected status type.
+          Read-only lookup — nothing is captured, settled or moved. The identifier field adapts to the selected rail
+          (PayPal capture/order/refund/payout, PayHero reference, or Daraja transaction ID).
         </p>
         <Button className="mt-3" onClick={() => void doStatus()} disabled={busy}>Look up</Button>
         {statusResult ? <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-[var(--bg-primary)] p-3 text-xs">{JSON.stringify(statusResult, null, 2)}</pre> : null}
