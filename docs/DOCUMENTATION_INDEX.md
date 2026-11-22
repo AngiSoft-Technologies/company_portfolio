@@ -61,6 +61,7 @@ Full rules: `ANGISOFT_DIGITAL_HQ_PLAN.md` §11 (Reconciliation Rules) and §15 (
 - [`PAYPAL_DOCS_SUMMARY.md`](PAYPAL_DOCS_SUMMARY.md) — summary of the supplied PayPal docs.
 - [`PAYPAL_RESOURCE_UTILIZATION_PLAN.md`](PAYPAL_RESOURCE_UTILIZATION_PLAN.md) — what we use, defer or decline, and why.
 - [`DARAJA_RESOURCE_UTILIZATION_PLAN.md`](DARAJA_RESOURCE_UTILIZATION_PLAN.md) — inventories the 27 locally available Daraja Markdown files, reconciled config keys, decisions/gaps and pre-production checklist; not a claim that the pack is complete or that Phase 7 is production-ready.
+- [`daraja-guide/`](daraja-guide/README.md) — all 27 community Daraja docs vendored in-repo (verbatim), with a provenance note and the C1–C7 decisions that override them. Non-authoritative; the utilization plan is the inventory of record.
 
 ### 5. **`SECRETS_ARCHITECTURE.md`** — root secrets vs database vault
 
