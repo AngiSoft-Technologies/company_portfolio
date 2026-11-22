@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/adminApi';
+import { useEffectiveAccess } from '@/lib/permissions';
 import { toast } from '@angisoft/utils';
 import { Button, Card, EmptyState, PageHeader, Spinner } from '@/components';
 import { formatKsh } from '@/lib/format';
@@ -14,6 +15,11 @@ const inputClass = 'w-full rounded-lg border border-[var(--border)] bg-[var(--bg
 
 /** Staff console for every outbound money movement across PayPal, PayHero and Daraja. */
 export default function MoneyMovementAdmin() {
+  const { can, access } = useEffectiveAccess();
+  // Mirrors the backend gates: writes need payments.reconcile; Daraja B2C/B2B
+  // and reversals are additionally restricted to SUPER_ADMIN/ADMIN.
+  const canInitiate = can('payments.reconcile');
+  const isDarajaAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(String(access?.systemRole ?? ''));
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +54,10 @@ export default function MoneyMovementAdmin() {
   useEffect(() => { void load(); }, []);
 
   const submit = async (path: string, body: unknown, success: string, onDone?: (r: any) => void) => {
+    if (!canInitiate) {
+      toast.error('You do not have permission to move money.');
+      return null;
+    }
     setBusy(true);
     try {
       const res = await apiFetch(path, { method: 'POST', body });
@@ -92,6 +102,15 @@ export default function MoneyMovementAdmin() {
 
       {loading ? <Spinner /> : null}
 
+      {!canInitiate ? (
+        <Card>
+          <p className="text-sm text-amber-700">
+            You have read-only access to money movement. Initiating payouts, refunds and reversals requires the
+            <code> payments.reconcile</code> permission — the server enforces this on every request.
+          </p>
+        </Card>
+      ) : null}
+
       {catalogue ? (
         <Card>
           <h3 className="mb-2 font-semibold">Transaction catalogue</h3>
@@ -131,7 +150,15 @@ export default function MoneyMovementAdmin() {
           <div className="grid gap-2 sm:grid-cols-2">
             <select className={inputClass} value={payout.type} onChange={(e) => setPayout({ ...payout, type: e.target.value })}>
               <option value="">Select a payout type…</option>
-              {payoutTypes.map((t) => <option key={t.id} value={t.id} disabled={!t.available}>{t.label}{t.available ? '' : ' (not configured)'}</option>)}
+              {payoutTypes.map((t) => {
+                const darajaOnly = t.provider === 'MPESA';
+                const blocked = !t.available || (darajaOnly && !isDarajaAdmin);
+                return (
+                  <option key={t.id} value={t.id} disabled={blocked}>
+                    {t.label}{!t.available ? ' (not configured)' : darajaOnly && !isDarajaAdmin ? ' (admin only)' : ''}
+                  </option>
+                );
+              })}
             </select>
             <input className={inputClass} type="number" min="1" step="0.01" placeholder="Amount" value={payout.amount} onChange={(e) => setPayout({ ...payout, amount: e.target.value })} />
             <input className={inputClass} placeholder="Phone (07xxxxxxxx)" value={payout.phone} onChange={(e) => setPayout({ ...payout, phone: e.target.value })} />
@@ -145,7 +172,7 @@ export default function MoneyMovementAdmin() {
             <input className={inputClass} placeholder="Reference (idempotency — optional)" value={payout.reference} onChange={(e) => setPayout({ ...payout, reference: e.target.value })} />
             <input className={inputClass} placeholder="Remarks" value={payout.remarks} onChange={(e) => setPayout({ ...payout, remarks: e.target.value })} />
           </div>
-          <Button className="mt-3" onClick={() => void doPayout()} disabled={busy || !payout.type || !payout.amount}>Send payout</Button>
+          <Button className="mt-3" onClick={() => void doPayout()} disabled={busy || !canInitiate || !payout.type || !payout.amount}>Send payout</Button>
         </Card>
 
         <div className="space-y-6">
@@ -162,7 +189,7 @@ export default function MoneyMovementAdmin() {
               amount: refund.amount ? Number(refund.amount) : undefined,
               currency: refund.currency || undefined,
               reference: refund.reference || undefined,
-            }, 'Refund requested')} disabled={busy || !refund.captureId}>Issue refund</Button>
+            }, 'Refund requested')} disabled={busy || !canInitiate || !refund.captureId}>Issue refund</Button>
           </Card>
 
           <Card>
@@ -175,7 +202,7 @@ export default function MoneyMovementAdmin() {
             </div>
             <Button className="mt-3" onClick={() => void submit('/admin/money/reversal', {
               ...reversal, amount: Number(reversal.amount),
-            }, 'Reversal requested')} disabled={busy || !reversal.transactionId || !reversal.amount}>Reverse transaction</Button>
+            }, 'Reversal requested')} disabled={busy || !canInitiate || !isDarajaAdmin || !reversal.transactionId || !reversal.amount}>Reverse transaction</Button>
           </Card>
         </div>
       </div>
