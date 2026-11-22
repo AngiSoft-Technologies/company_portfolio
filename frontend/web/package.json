@@ -15,6 +15,7 @@
     "@angisoft/ai": "workspace:*",
     "@angisoft/api-client": "workspace:*",
     "@angisoft/auth": "workspace:*",
+    "@angisoft/i18n": "workspace:*",
     "@angisoft/offline": "workspace:*",
     "@angisoft/realtime": "workspace:*",
     "@angisoft/types": "workspace:*",

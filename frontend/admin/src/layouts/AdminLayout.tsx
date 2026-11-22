@@ -4,6 +4,43 @@ import { AdminThemeContext } from '@/styles/theme';
 import { apiFetch } from '@/lib/adminApi';
 import { NotificationBell } from '@/components/NotificationBell';
 import { EffectiveAccessProvider, useEffectiveAccess } from '@/lib/permissions';
+import {
+  LanguageSwitcher,
+  useI18n,
+  type TranslationKey,
+} from '@angisoft/i18n';
+
+/** Nav labels (English source) mapped to i18n keys where a translation exists. */
+const NAV_LABEL_KEYS: Record<string, TranslationKey> = {
+  Dashboard: 'admin.dashboard',
+  'My Workspace': 'admin.workspace',
+  Reports: 'admin.reports',
+  Contacts: 'admin.contacts',
+  Enquiries: 'admin.enquiries',
+  Sales: 'admin.sales',
+  Projects: 'admin.projects',
+  Bookings: 'admin.bookings',
+  Payments: 'admin.payments',
+  'Payments Console': 'admin.paymentsConsole',
+  'Money Movement': 'admin.moneyMovement',
+  Finance: 'admin.finance',
+  Communications: 'admin.communications',
+  Content: 'admin.content',
+  Staff: 'admin.staff',
+  'Staff Access': 'admin.permissions',
+  'AI Workforce': 'admin.agents',
+  'AI Boardroom': 'admin.boardroom',
+  Settings: 'admin.settings',
+  'Site Settings': 'admin.settings',
+  'Audit Log': 'admin.auditLog',
+  WhatsApp: 'comms.whatsapp',
+  Telegram: 'comms.telegram',
+  Templates: 'comms.templates',
+  Payouts: 'finance.payouts',
+  Refunds: 'finance.refunds',
+  Reconciliation: 'finance.reconciliation',
+  Overview: 'admin.dashboard',
+};
 
 /**
  * Navigation is permission-driven (plan Phase 1.5): each link names the
@@ -132,9 +169,14 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
 
 function AdminShell() {
   const { mode, toggleMode } = useContext(AdminThemeContext);
+  const { t } = useI18n();
   const { can, access, isSuperAdmin } = useEffectiveAccess();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
+  const label = (english: string) => {
+    const key = NAV_LABEL_KEYS[english];
+    return key ? t(key) : english;
+  };
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => {
@@ -186,7 +228,7 @@ function AdminShell() {
           {groups.map((group) => (
             <div key={group.title}>
               <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                {group.title}
+                {label(group.title)}
               </div>
               <div className="space-y-1">
                 {group.links.map((l) => (
@@ -202,7 +244,7 @@ function AdminShell() {
                       }`
                     }
                   >
-                    {l.label}
+                    {label(l.label)}
                   </NavLink>
                 ))}
               </div>
@@ -220,7 +262,7 @@ function AdminShell() {
             onClick={logout}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
           >
-            Sign out
+            {t('admin.logout')}
           </button>
         </div>
       </aside>
@@ -248,6 +290,7 @@ function AdminShell() {
               View site ↗
             </Link>
             <NotificationBell />
+            <LanguageSwitcher className="rounded-lg border border-[var(--border)] px-2 py-1 text-sm text-[var(--text-secondary)] [&_select]:bg-transparent [&_select]:text-[var(--text-secondary)]" />
             <button
               onClick={toggleMode}
               aria-label="Toggle theme"

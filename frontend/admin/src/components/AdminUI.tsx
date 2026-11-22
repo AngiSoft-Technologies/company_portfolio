@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { toast } from '@angisoft/utils';
+import { useI18n } from '@angisoft/i18n';
 import { apiFetch } from '@/lib/adminApi';
 
 /**
@@ -44,6 +45,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const refresh = async () => {
     setLoading(true);
@@ -52,7 +54,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
       setRows(normalizeRows<T>(json, config.transform));
       setError(null);
     } catch (e) {
-      setError((e as Error).message || 'Failed to load');
+      setError((e as Error).message || t('common.failedToLoad'));
       setRows([]);
     } finally {
       setLoading(false);
@@ -62,11 +64,11 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
   const remove = async (id: string): Promise<boolean> => {
     try {
       await apiFetch(`/v1${config.endpoint}/${id}`, { method: 'DELETE' });
-      toast.success('Deleted successfully');
+      toast.success(t('common.deleted'));
       await refresh();
       return true;
     } catch (e) {
-      toast.error((e as Error).message || 'Delete failed');
+      toast.error((e as Error).message || t('common.deleteFailed'));
       return false;
     }
   };
@@ -96,11 +98,12 @@ export function Spinner({ size = 32 }: { size?: number }) {
   );
 }
 
-export function EmptyState({ title = 'No records found' }: { title?: string }) {
+export function EmptyState({ title }: { title?: string }) {
+  const { t } = useI18n();
   return (
     <div className="py-16 text-center text-sm text-[var(--text-muted)]">
       <p className="mb-2 text-2xl">🗂</p>
-      {title}
+      {title ?? t('common.noRecords')}
     </div>
   );
 }
@@ -169,6 +172,7 @@ export function Table<T extends { id: string | number }>({
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
       <table className="w-full text-sm">
@@ -179,7 +183,7 @@ export function Table<T extends { id: string | number }>({
                 {c.header}
               </th>
             ))}
-            {(onEdit || onDelete) && <th className="px-4 py-3 text-right font-semibold">Actions</th>}
+            {(onEdit || onDelete) && <th className="px-4 py-3 text-right font-semibold">{t('common.actions')}</th>}
           </tr>
         </thead>
         <tbody>
@@ -198,7 +202,7 @@ export function Table<T extends { id: string | number }>({
                         onClick={() => onEdit(row)}
                         className="rounded border border-[var(--border)] px-2 py-1 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
                       >
-                        Edit
+                        {t('common.edit')}
                       </button>
                     )}
                     {onDelete && (
@@ -206,7 +210,7 @@ export function Table<T extends { id: string | number }>({
                         onClick={() => onDelete(row)}
                         className="rounded border border-red-200 px-2 py-1 text-xs text-red-500 hover:bg-red-50"
                       >
-                        Delete
+                        {t('common.delete')}
                       </button>
                     )}
                   </div>
@@ -216,7 +220,7 @@ export function Table<T extends { id: string | number }>({
           ))}
         </tbody>
       </table>
-      {rows.length === 0 && <div className="py-10 text-center text-sm text-[var(--text-muted)]">No records.</div>}
+      {rows.length === 0 && <div className="py-10 text-center text-sm text-[var(--text-muted)]">{t('common.noRecords')}</div>}
     </div>
   );
 }

@@ -4,15 +4,18 @@ import { BrowserRouter } from 'react-router-dom';
 import App from '@/app';
 import '@/styles/global.css';
 import { ThemeProvider } from '@/styles/theme';
+import { LanguageProvider } from '@angisoft/i18n';
 
 const container = document.getElementById('root');
 
 ReactDOM.createRoot(container as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
+    </LanguageProvider>
   </React.StrictMode>,
 );

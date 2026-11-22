@@ -13,6 +13,7 @@
   "dependencies": {
     "@angisoft/api-client": "workspace:*",
     "@angisoft/auth": "workspace:*",
+    "@angisoft/i18n": "workspace:*",
     "@angisoft/realtime": "workspace:*",
     "@angisoft/types": "workspace:*",
     "@angisoft/ui": "workspace:*",

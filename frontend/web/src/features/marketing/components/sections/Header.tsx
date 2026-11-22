@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";import { Link, useLocation } from "react-router-dom";import { apiGet } from '@/lib/httpClient';import AngiSoftLogo from '../brand/AngiSoftLogo';import { FaGlobe, FaBars, FaTimes, FaChevronDown, FaSearch, FaArrowLeft, FaUsers, FaSun, FaMoon } from "react-icons/fa";
 import { useTheme } from '@/lib/theme';import iconRegistry from '@/lib/marketing/iconRegistry';
+import { LanguageSwitcher } from '@angisoft/i18n';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import './Header.css';
 
@@ -442,6 +443,8 @@ return (<>
             ))}
           </select>
         )}
+
+        <LanguageSwitcher className="angi-header-control" label="Site language" />
 
         <button
           type="button"

@@ -365,6 +365,9 @@ importers:
       '@angisoft/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@angisoft/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@angisoft/realtime':
         specifier: workspace:*
         version: link:../../packages/realtime
@@ -456,6 +459,9 @@ importers:
       '@angisoft/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@angisoft/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@angisoft/offline':
         specifier: workspace:*
         version: link:../../packages/offline
@@ -610,6 +616,16 @@ importers:
       vite:
         specifier: ^7.3.3
         version: 7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.1)
+
+  packages/i18n:
+    dependencies:
+      react:
+        specifier: ^19.1.0
+        version: 19.3.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.3.0
 
   packages/offline:
     dependencies:

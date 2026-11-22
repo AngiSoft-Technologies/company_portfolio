@@ -18,6 +18,19 @@
           document.documentElement.setAttribute('data-theme', mode);
           document.documentElement.classList.toggle('dark', mode === 'dark');
           document.documentElement.style.colorScheme = mode;
+
+          // Locale: explicit choice wins, otherwise follow the browser. Set
+          // lang/dir before paint so RTL layouts do not flash LTR.
+          var supported = ['en', 'sw', 'fr', 'es', 'zh', 'ar'];
+          var rtl = ['ar'];
+          var lang = localStorage.getItem('angisoft-language');
+          if (!lang) {
+            var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+            lang = String(nav).toLowerCase().split(/[-_]/)[0];
+          }
+          if (supported.indexOf(lang) === -1) lang = 'en';
+          document.documentElement.setAttribute('lang', lang);
+          document.documentElement.setAttribute('dir', rtl.indexOf(lang) !== -1 ? 'rtl' : 'ltr');
         } catch (_) {}
       }());
     </script>

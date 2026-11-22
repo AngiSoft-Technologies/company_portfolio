@@ -7,18 +7,21 @@ import { ThemeProvider } from '@/lib/theme';
 import { ToastHost } from '@/lib/toast';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { registerServiceWorker } from '@angisoft/offline';
+import { LanguageProvider } from '@angisoft/i18n';
 
 const container = document.getElementById('root');
 
 ReactDOM.createRoot(container as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <App />
-        <ToastHost />
-      </BrowserRouter>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <App />
+          <ToastHost />
+        </BrowserRouter>
+      </ThemeProvider>
+    </LanguageProvider>
   </React.StrictMode>,
 );
 
