@@ -35,7 +35,7 @@ export default function communicationsInboxRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/conversations', requireAccess('communications.inbox.view', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.get('/conversations', requireAccess('communications.inbox.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const all = await prisma.orm.public.Conversation
       .orderBy((c: any) => c.lastMessageAt.desc())
@@ -52,7 +52,7 @@ export default function communicationsInboxRouter(prisma: Db) {
     res.json({ conversations: filtered });
   });
 
-  router.get('/conversations/:id/messages', requireAccess('communications.inbox.view', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.get('/conversations/:id/messages', requireAccess('communications.inbox.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const convo = await prisma.orm.public.Conversation.where({ id: req.params.id } as any).first();
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
     if (!(await canAccessAccount(prisma, req.user, (convo as any).accountId, 'view'))) return res.status(403).json({ error: 'Not authorized' });
@@ -64,7 +64,7 @@ export default function communicationsInboxRouter(prisma: Db) {
     res.json({ messages });
   });
 
-  router.post('/conversations/:id/send', requireAccess('communications.inbox.respond', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/conversations/:id/send', requireAccess('communications.inbox.respond', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const input = sendSchema.parse(req.body);
     const convo = await prisma.orm.public.Conversation.where({ id: req.params.id } as any).include('account', (a: any) => a.include('connection')).include('contact', (c: any) => c.include('identities')).first();
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });

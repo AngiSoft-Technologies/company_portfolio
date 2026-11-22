@@ -17,21 +17,21 @@ export default function financeReconciliationRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/runs', requireAccess('finance.reconciliation.view', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (_req, res) => {
-    const runs = await prisma.orm.public.ReconciliationRun.orderBy((r: any) => r.createdAt.desc()).limit(50).all().catch(() => []);
+  router.get('/runs', requireAccess('finance.reconciliation.view', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (_req, res) => {
+    const runs = await Promise.resolve(prisma.orm.public.ReconciliationRun.orderBy((r: any) => r.createdAt.desc()).limit(50).all() as unknown as Promise<any[]>).catch(() => [] as any);
     res.json({ runs });
   });
 
-  router.post('/runs', requireAccess('finance.reconciliation.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/runs', requireAccess('finance.reconciliation.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = runSchema.parse(req.body);
-    const run = await prisma.orm.public.ReconciliationRun.create({
+    const run = await Promise.resolve(prisma.orm.public.ReconciliationRun.create({
       id: newId(), provider: body.provider, financeAccountId: body.financeAccountId ?? null,
       status: 'RUNNING', periodStart: body.periodStart ?? null, periodEnd: body.periodEnd ?? null,
       createdById: req.user?.sub ?? null, createdAt: ts(),
     } as any);
     try {
-      const payments = await prisma.orm.public.Payment.where({ provider: body.provider as any } as any).all().catch(() => []);
-      const ledger = await prisma.orm.public.LedgerEntry.where({ provider: body.provider } as any).all().catch(() => []);
+      const payments = await prisma.orm.public.Payment.where({ provider: (body.provider as any } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
+      const ledger = await Promise.resolve(prisma.orm.public.LedgerEntry.where({ provider: (body.provider } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
       const succeeded = payments.filter((p: any) => p.status === 'SUCCEEDED');
       const ledgerSucceeded = ledger.filter((l: any) => l.status === 'SUCCEEDED');
       const summary = {

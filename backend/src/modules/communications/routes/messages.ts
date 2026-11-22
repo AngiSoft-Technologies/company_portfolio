@@ -13,7 +13,7 @@ export default function communicationsWorkflowRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.post('/conversations/:id/assign', requireAccess('communications.inbox.assign', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (req: AuthRequest, res) => {
+  router.post('/conversations/:id/assign', requireAccess('communications.inbox.assign', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (req: AuthRequest, res) => {
     const body = assignSchema.parse(req.body);
     const convo = await prisma.orm.public.Conversation.where({ id: req.params.id } as any).first();
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
@@ -22,7 +22,7 @@ export default function communicationsWorkflowRouter(prisma: Db) {
     res.json({ conversation: updated });
   });
 
-  router.post('/conversations/:id/status', requireAccess('communications.inbox.respond', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (req: AuthRequest, res) => {
+  router.post('/conversations/:id/status', requireAccess('communications.inbox.respond', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (req: AuthRequest, res) => {
     const body = statusSchema.parse(req.body);
     const convo = await prisma.orm.public.Conversation.where({ id: req.params.id } as any).first();
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });
@@ -31,7 +31,7 @@ export default function communicationsWorkflowRouter(prisma: Db) {
     res.json({ conversation: updated });
   });
 
-  router.post('/conversations/:id/note', requireAccess('communications.inbox.respond', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (req: AuthRequest, res) => {
+  router.post('/conversations/:id/note', requireAccess('communications.inbox.respond', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (req: AuthRequest, res) => {
     const body = z.object({ body: z.string().min(1) }).parse(req.body);
     const convo = await prisma.orm.public.Conversation.where({ id: req.params.id } as any).first();
     if (!convo) return res.status(404).json({ error: 'Conversation not found' });

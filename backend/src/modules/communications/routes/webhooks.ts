@@ -86,7 +86,7 @@ export default function communicationsWebhooksRouter(prisma: Db) {
         signatureValid,
         payload,
         headers: { 'x-hub-signature-256': signature },
-        status: deduped ? 'IGNORED' : 'RECEIVED',
+        status: 'RECEIVED',
       });
       if (deduped) return res.sendStatus(200);
 
@@ -111,13 +111,13 @@ export default function communicationsWebhooksRouter(prisma: Db) {
         if (!account) continue;
 
         const identityValue = msg.from;
-        let identity = await prisma.orm.public.ContactIdentity.where({ channel: 'WHATSAPP', value: identityValue } as any).include('contact').first();
+        let identity: any = await prisma.orm.public.ContactIdentity.where({ channel: 'WHATSAPP', value: identityValue } as any).include('contact').first();
         if (!identity) {
           const contact = await prisma.orm.public.Contact.create({ id: newId(), name: msg.name ?? null, createdAt: ts(), updatedAt: ts() } as any);
-          identity = await prisma.orm.public.ContactIdentity.create({
+          const createdIdentity = await prisma.orm.public.ContactIdentity.create({
             id: newId(), contactId: contact.id, channel: 'WHATSAPP', value: identityValue, externalId: identityValue, metadata: { name: msg.name } as any, createdAt: ts(),
           } as any);
-          (identity as any).contact = contact;
+          identity = { ...(createdIdentity as any), contact };
         }
 
         const threadId = `wa:${msg.from}`;

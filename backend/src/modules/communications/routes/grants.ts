@@ -16,7 +16,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', requireAccess('communications.grants.manage', 'ADMIN', 'SUPER_ADMIN'), async (req, res) => {
+  router.get('/', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), async (req, res) => {
     const accountId = req.query.accountId ? String(req.query.accountId) : undefined;
     const grants = await prisma.orm.public.CommunicationGrant
       .where((g: any) => accountId ? g.accountId.eq(accountId) : g.id.isNotNull())
@@ -27,7 +27,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
     res.json({ grants });
   });
 
-  router.post('/', requireAccess('communications.grants.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = grantSchema.parse(req.body);
     const existing = await prisma.orm.public.CommunicationGrant.where({ accountId: body.accountId, employeeId: body.employeeId } as any).first();
     const grant = existing
@@ -37,7 +37,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
     res.status(existing ? 200 : 201).json({ grant });
   });
 
-  router.delete('/:id', requireAccess('communications.grants.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.delete('/:id', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const existing = await prisma.orm.public.CommunicationGrant.where({ id: req.params.id } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });
     await prisma.orm.public.CommunicationGrant.where({ id: existing.id }).delete();

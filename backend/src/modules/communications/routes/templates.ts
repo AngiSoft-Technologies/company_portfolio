@@ -21,11 +21,11 @@ const templateSchema = z.object({
 export default function communicationsTemplatesRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
-  router.get('/', requireAccess('communications.templates.manage', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (_req, res) => {
-    const templates = await prisma.orm.public.CommunicationTemplate.orderBy((t: any) => t.updatedAt.desc()).limit(200).all().catch(() => []);
+  router.get('/', requireAccess('communications.templates.manage', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (_req, res) => {
+    const templates = await Promise.resolve(prisma.orm.public.CommunicationTemplate.orderBy((t: any) => t.updatedAt.desc()).limit(200).all() as unknown as Promise<any[]>).catch(() => [] as any);
     res.json({ templates });
   });
-  router.post('/', requireAccess('communications.templates.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('communications.templates.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = templateSchema.parse(req.body);
     const template = await prisma.orm.public.CommunicationTemplate.create({
       id: newId(), channel: body.channel, provider: body.provider ?? null, name: body.name,

@@ -30,7 +30,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', requireAccess('communications.accounts.view', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'), async (_req, res) => {
+  router.get('/', requireAccess('communications.accounts.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
     const connections = await prisma.orm.public.ProviderConnection
       .where({ domain: 'COMMUNICATIONS' } as any)
       .orderBy((c: any) => c.createdAt.desc())
@@ -40,7 +40,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     res.json({ connections: connections.map((c: any) => ({ ...c, secrets: (c.secrets || []).map((s: any) => ({ ...s, masked: '••••' })) })) });
   });
 
-  router.post('/', requireAccess('communications.accounts.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = upsertSchema.parse(req.body);
     const now = ts();
     const connection = await prisma.orm.public.ProviderConnection.create({
@@ -79,7 +79,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     res.status(201).json({ connection: full ?? connection });
   });
 
-  router.patch('/:id', requireAccess('communications.accounts.manage', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.patch('/:id', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = upsertSchema.partial().parse(req.body);
     const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'COMMUNICATIONS' } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });
@@ -106,7 +106,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     res.json({ connection });
   });
 
-  router.get('/events', requireAccess('communications.audit.view', 'ADMIN', 'SUPER_ADMIN'), async (req, res) => {
+  router.get('/events', requireAccess('communications.audit.view', ['ADMIN', 'SUPER_ADMIN']), async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const events = await prisma.orm.public.ProviderEvent
       .where({ domain: 'COMMUNICATIONS' } as any)

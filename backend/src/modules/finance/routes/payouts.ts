@@ -23,12 +23,12 @@ export default function financePayoutsRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', requireAccess('finance.payouts.view', 'ADMIN', 'SUPER_ADMIN', 'MANAGER'), async (_req, res) => {
-    const payouts = await prisma.orm.public.Payout.orderBy((p: any) => p.createdAt.desc()).limit(100).all().catch(() => []);
+  router.get('/', requireAccess('finance.payouts.view', ['ADMIN', 'SUPER_ADMIN', 'MANAGER']), async (_req, res) => {
+    const payouts = await Promise.resolve(prisma.orm.public.Payout.orderBy((p: any) => p.createdAt.desc()).limit(100).all() as unknown as Promise<any[]>).catch(() => [] as any);
     res.json({ payouts });
   });
 
-  router.post('/', requireAccess('finance.payouts.create', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('finance.payouts.create', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = payoutSchema.parse(req.body);
     const reference = body.reference || `PO-${Date.now()}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
     const payout = await prisma.orm.public.Payout.create({
@@ -41,7 +41,7 @@ export default function financePayoutsRouter(prisma: Db) {
     res.status(201).json({ payout });
   });
 
-  router.post('/:id/approve', requireAccess('finance.payouts.approve', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/:id/approve', requireAccess('finance.payouts.approve', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const payout = await prisma.orm.public.Payout.where({ id: req.params.id } as any).first();
     if (!payout) return res.status(404).json({ error: 'Payout not found' });
     if ((payout as any).status !== 'PENDING_APPROVAL') return res.status(400).json({ error: 'Only pending approval payouts can be approved' });
@@ -51,7 +51,7 @@ export default function financePayoutsRouter(prisma: Db) {
     res.json({ payout: updated });
   });
 
-  router.post('/:id/reject', requireAccess('finance.payouts.approve', 'ADMIN', 'SUPER_ADMIN'), async (req: AuthRequest, res) => {
+  router.post('/:id/reject', requireAccess('finance.payouts.approve', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const payout = await prisma.orm.public.Payout.where({ id: req.params.id } as any).first();
     if (!payout) return res.status(404).json({ error: 'Payout not found' });
     const updated = await prisma.orm.public.Payout.where({ id: payout.id }).update({ status: 'REJECTED', updatedAt: ts(), metadata: { ...(((payout as any).metadata)||{}), rejectedBy: req.user?.sub, rejectedAt: ts(), reason: (req.body as any)?.reason || null } as any } as any);
