@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Hook for a single product's detail, loaded by slug from /api/products/:slug.
+// Hook for a single product's detail, loaded by slug from /v1/products/:slug.
 // Uses the canonical API source — no CMS fallback.
 import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/httpClient';

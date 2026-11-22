@@ -44,12 +44,12 @@
                                      │
                         ┌────────────▼────────────┐
                         │   Backend API (Express) │
-                        │   /api/services         │
-                        │   /api/projects         │
-                        │   /api/blogs      ⭐    │
-                        │   /api/testimonials     │
-                        │   /api/staff            │
-                        │   /api/admin/*          │
+                        │   /v1/services         │
+                        │   /v1/projects         │
+                        │   /v1/blogs      ⭐    │
+                        │   /v1/testimonials     │
+                        │   /v1/staff            │
+                        │   /v1/admin/*          │
                         └────────────┬────────────┘
                                      │
                  ┌───────────────────┼───────────────────┐
@@ -240,19 +240,19 @@ cd frontend && npm run dev
 ### The Data Flow
 ```
 Step 1: Admin Creates Content
-   Admin Form → POST /api/services → Database
+   Admin Form → POST /v1/services → Database
 
 Step 2: Frontend Fetches Content
-   Homepage → GET /api/services → Display in grid
+   Homepage → GET /v1/services → Display in grid
 
 Step 3: Client Sees Content
    User visits → Services section loads → Shows admin-created content
 
 Step 4: Admin Updates Content
-   Admin edits → PUT /api/services/:id → Database updates
+   Admin edits → PUT /v1/services/:id → Database updates
    
 Step 5: Frontend Reflects Changes
-   User refreshes → GET /api/services → Sees updated content
+   User refreshes → GET /v1/services → Sees updated content
 ```
 
 ---

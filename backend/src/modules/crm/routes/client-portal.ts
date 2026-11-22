@@ -15,6 +15,7 @@ import {
     type ProviderId,
 } from '../../billing/services/payments';
 import { toMoney } from '../../billing/utils/money';
+import { resolvePaymentMethod } from '../../billing/services/payments/methods';
 import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 
 interface ClientPortalRequest extends Request {
@@ -168,15 +169,25 @@ export default function clientPortalRouter(prisma: Db) {
         res.json({ invoices });
     });
 
-    // Client-initiated invoice payment (M-Pesa STK / PayHero / Paystack
-    // redirect). The Payment row carries `metadata.invoiceId`, which
+    // Client-initiated invoice payment (PayPal redirect, PayHero STK, Safaricom
+    // Daraja STK). The Payment row carries `metadata.invoiceId`, which
     // `applyPaymentOutcome` settles against the invoice on success (Phase 4.1).
     router.post('/invoices/:id/pay', requireClientAuth, async (req: ClientPortalRequest, res) => {
         try {
-            const { provider, phone } = req.body ?? {};
-            const providerId = String(provider || '').toUpperCase() as ProviderId;
-            if (!['MPESA', 'PAYHERO', 'PAYSTACK'].includes(providerId)) {
-                return res.status(400).json({ error: 'Unsupported provider — use MPESA, PAYHERO or PAYSTACK' });
+            const { provider, phone, method, returnUrl, cancelUrl } = req.body ?? {};
+            // Online clients use the capability-gated method catalogue:
+            // PayPal (wallet/cards/Google Pay/Apple Pay/APMs), PayHero
+            // (M-Pesa/Airtel/telco) and Safaricom Daraja (M-Pesa STK).
+            const methodDef = method ? resolvePaymentMethod(String(method)) : null;
+            if (method && !methodDef) {
+                const all = resolvePaymentMethod(String(method), true);
+                return res.status(all ? 503 : 400).json({
+                    error: all?.reason || `Unknown payment method: ${String(method)}`,
+                });
+            }
+            const providerId = (methodDef?.provider || String(provider || '').toUpperCase()) as ProviderId;
+            if (!['MPESA', 'PAYHERO', 'PAYPAL'].includes(providerId)) {
+                return res.status(400).json({ error: 'Unsupported payment provider' });
             }
             if (!isProviderConfigured(providerId)) {
                 return res.status(503).json({ error: `${providerId} is not configured for this deployment` });
@@ -204,8 +215,8 @@ export default function clientPortalRouter(prisma: Db) {
             if ((providerId === 'MPESA' || providerId === 'PAYHERO') && !payPhone) {
                 return res.status(400).json({ error: 'A phone number is required for mobile money payment' });
             }
-            if (providerId === 'PAYSTACK' && !payEmail) {
-                return res.status(400).json({ error: 'A customer email is required for Paystack' });
+            if (providerId === 'PAYPAL' && methodDef?.requiresEmail && !payEmail) {
+                return res.status(400).json({ error: 'A customer email is required for this PayPal payment method' });
             }
 
             const paymentReference = generateReference('INV');
@@ -218,7 +229,23 @@ export default function clientPortalRouter(prisma: Db) {
                     .limit(20)
                     .all();
                 const dup = pending.find((p: any) => (p.metadata as any)?.invoiceId === invoice.id);
-                if (dup) return { existing: dup };
+                if (dup) {
+                    // A PayPal order is reusable: hand back its stored approval
+                    // URL so a double-click resumes the same pending order
+                    // instead of creating a second charge for one invoice.
+                    const meta = (dup.metadata as any) || {};
+                    const approve = String(
+                        meta.approvalUrl
+                        || meta.links?.find((l: any) => l.rel === 'approve' || l.rel === 'payer-action')?.href
+                        || '',
+                    );
+                    return {
+                        existing: dup,
+                        result: dup.provider === 'PAYPAL' && approve
+                            ? { provider: 'PAYPAL', kind: 'redirect', checkoutUrl: approve, providerId: dup.providerId }
+                            : undefined,
+                    };
+                }
 
                 const result = await initializePayment({
                     provider: providerId,
@@ -226,11 +253,15 @@ export default function clientPortalRouter(prisma: Db) {
                     currency: invoice.currency || 'KES',
                     email: payEmail || undefined,
                     phone: payPhone || undefined,
+                    channelId: methodDef?.channelId,
                     reference: paymentReference,
                     description: `Invoice ${invoice.number || invoice.publicReference} — AngiSoft`,
+                    returnUrl: returnUrl ? String(returnUrl) : undefined,
+                    cancelUrl: cancelUrl ? String(cancelUrl) : undefined,
                     metadata: {
                         invoiceId: invoice.id,
                         invoiceNumber: invoice.number,
+                        method: methodDef?.id,
                         actor: 'client',
                         clientId: req.client!.sub,
                         reference: paymentReference,
@@ -249,7 +280,13 @@ export default function clientPortalRouter(prisma: Db) {
                         providerId: result.providerId,
                         reference: paymentReference,
                         status: 'PENDING' as any,
-                        metadata: JSON.parse(JSON.stringify({ ...(result.details || {}), invoiceId: invoice.id })),
+                        metadata: JSON.parse(JSON.stringify({
+                            ...(result.details || {}),
+                            invoiceId: invoice.id,
+                            clientId: req.client!.sub,
+                            method: methodDef?.id,
+                            reference: paymentReference,
+                        })),
                     });
                 } catch {
                     row = (await tx.orm.public.Payment.where({ reference: paymentReference }).first())
@@ -260,24 +297,21 @@ export default function clientPortalRouter(prisma: Db) {
             });
 
             const result = (outcome as any).result;
-            if ((outcome as any).existing) {
-                return res.json({
-                    paymentId: (outcome as any).existing.id,
-                    provider: providerId,
-                    kind: result?.kind,
-                    checkoutUrl: result?.checkoutUrl,
-                    clientSecret: result?.clientSecret,
-                    reused: true,
-                });
-            }
-
+            const existing = (outcome as any).existing;
+            const existingMeta = (existing?.metadata as any) || {};
             res.json({
-                paymentId: (outcome as any).row?.id,
-                provider: (outcome as any).result.provider,
-                kind: (outcome as any).result.kind,
-                checkoutUrl: (outcome as any).result.checkoutUrl,
-                clientSecret: (outcome as any).result.clientSecret,
-                reference: paymentReference,
+                paymentId: existing ? existing.id : (outcome as any).row?.id,
+                provider: providerId,
+                method: methodDef?.id,
+                kind: result?.kind,
+                checkoutUrl: result?.checkoutUrl,
+                clientSecret: result?.clientSecret,
+                // The buyer-return page needs both values to confirm a PayPal
+                // order. They are only ever returned to the authenticated
+                // client that initiated the payment.
+                orderId: result?.kind === 'redirect' ? (result?.providerId || '') : undefined,
+                reference: existing ? String(existingMeta.reference || paymentReference) : paymentReference,
+                reused: Boolean(existing),
             });
         } catch (err: any) {
             const message = err instanceof PaymentProviderError ? err.message : 'Payment provider error';

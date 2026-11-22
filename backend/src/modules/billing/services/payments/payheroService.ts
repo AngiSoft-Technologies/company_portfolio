@@ -14,17 +14,19 @@
  * status. Every call fails closed when the account is not configured.
  */
 
+import { getConfig } from '../../../../shared/services/runtimeConfig';
+
 export const PAYHERO_BASE = 'https://backend.payhero.co.ke/api/v2';
 
 export function isConfigured() {
   // Channel id is resolved at push time (provided channel -> DB default -> env),
   // so only the account credentials gate the provider.
-  return Boolean(process.env.PAYHERO_API_USERNAME && process.env.PAYHERO_API_PASSWORD);
+  return Boolean(getConfig('PAYHERO_API_USERNAME') && getConfig('PAYHERO_API_PASSWORD'));
 }
 
 function authHeader() {
-  const user = process.env.PAYHERO_API_USERNAME || '';
-  const pass = process.env.PAYHERO_API_PASSWORD || '';
+  const user = getConfig('PAYHERO_API_USERNAME');
+  const pass = getConfig('PAYHERO_API_PASSWORD');
   return `Basic ${Buffer.from(`${user}:${pass}`).toString('base64')}`;
 }
 
@@ -71,7 +73,7 @@ export async function initStkPush(opts: {
   description?: string;
 }) {
   if (!isConfigured()) throw new PayHeroError('PayHero not configured', 503);
-  const channelId = opts.channelId ?? Number(process.env.PAYHERO_CHANNEL_ID || 0);
+  const channelId = opts.channelId ?? Number(getConfig('PAYHERO_CHANNEL_ID') || 0);
   if (!channelId) throw new PayHeroError('No PayHero channel configured for this push', 400);
 
   const json = await request('/payments', {
@@ -82,9 +84,9 @@ export async function initStkPush(opts: {
       channel_id: channelId,
       provider: 'm-pesa',
       external_reference: String(opts.reference || '').slice(0, 50),
-      customer_name: process.env.PAYHERO_CUSTOMER_NAME || '',
+      customer_name: getConfig('PAYHERO_CUSTOMER_NAME'),
       description: String(opts.description || 'Payment'),
-      callback_url: process.env.PAYHERO_CALLBACK_URL || ''
+      callback_url: getConfig('PAYHERO_CALLBACK_URL')
     }
   });
 
@@ -151,7 +153,7 @@ export async function registerChannel(opts: {
   };
   if (opts.shortCode) body.short_code = opts.shortCode;
   if (opts.accountNumber) body.account_number = opts.accountNumber;
-  if (process.env.PAYHERO_ACCOUNT_ID) body.account_id = Number(process.env.PAYHERO_ACCOUNT_ID);
+  if (getConfig('PAYHERO_ACCOUNT_ID')) body.account_id = Number(getConfig('PAYHERO_ACCOUNT_ID'));
 
   const json = await request('/payment_channels', { method: 'POST', body });
   return {
@@ -223,7 +225,7 @@ export async function withdraw(opts: {
     amount: Math.round(opts.amount),
     network_code: opts.networkCode,
     external_reference: String(opts.reference).slice(0, 50),
-    callback_url: process.env.PAYHERO_CALLBACK_URL || '',
+    callback_url: getConfig('PAYHERO_CALLBACK_URL'),
     channel: opts.channel
   };
   if (opts.channel === 'mobile') body.phone_number = opts.phone || '';

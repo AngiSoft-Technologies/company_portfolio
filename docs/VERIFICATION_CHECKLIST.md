@@ -24,32 +24,32 @@
 
 ### Backend Verification
 - [x] Services endpoint working
-  - Endpoint: `/api/services`
+  - Endpoint: `/v1/services`
   - Methods: GET, POST, PUT, DELETE
   - Status: ✅ VERIFIED
 
 - [x] Projects endpoint working
-  - Endpoint: `/api/projects`
+  - Endpoint: `/v1/projects`
   - Methods: GET, POST, PUT, DELETE
   - Status: ✅ VERIFIED
 
 - [x] Blogs endpoint working
-  - Endpoint: `/api/blogs`
+  - Endpoint: `/v1/blogs`
   - Methods: GET, POST, PUT, DELETE
   - Status: ✅ VERIFIED
 
 - [x] Testimonials endpoint working
-  - Endpoint: `/api/testimonials`
+  - Endpoint: `/v1/testimonials`
   - Methods: GET, POST, PUT, DELETE
   - Status: ✅ VERIFIED
 
 - [x] Staff endpoint working
-  - Endpoint: `/api/staff`
+  - Endpoint: `/v1/staff`
   - Methods: GET (with :id support)
   - Status: ✅ VERIFIED
 
 - [x] Admin routes working
-  - Endpoint: `/api/admin/*`
+  - Endpoint: `/v1/admin/*`
   - Features: Dashboard, bookings, employees
   - Status: ✅ VERIFIED
 
@@ -59,27 +59,27 @@
   - Status: ✅ VERIFIED
 
 ### Frontend Integration
-- [x] Blog.jsx fetches from `/api/blogs`
+- [x] Blog.jsx fetches from `/v1/blogs`
   - Implementation: useEffect + apiGet
   - Fallback: Default posts if API fails
   - Status: ✅ VERIFIED
 
-- [x] Services.jsx fetches from `/api/services`
+- [x] Services.jsx fetches from `/v1/services`
   - Implementation: useEffect + apiGet
   - Fallback: Default services if API fails
   - Status: ✅ VERIFIED
 
-- [x] Projects.jsx fetches from `/api/projects`
+- [x] Projects.jsx fetches from `/v1/projects`
   - Implementation: useEffect + apiGet
   - Fallback: Default projects if API fails
   - Status: ✅ VERIFIED
 
-- [x] Staff.jsx fetches from `/api/staff`
+- [x] Staff.jsx fetches from `/v1/staff`
   - Implementation: useEffect + apiGet
   - Fallback: Default staff if API fails
   - Status: ✅ VERIFIED
 
-- [x] Testimonials.jsx fetches from `/api/testimonials`
+- [x] Testimonials.jsx fetches from `/v1/testimonials`
   - Implementation: useEffect + apiGet
   - Fallback: Default testimonials if API fails
   - Status: ✅ VERIFIED

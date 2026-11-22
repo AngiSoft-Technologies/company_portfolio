@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 /**
  * AI Workforce specs — the automated-agent roster, run engine and admin API
- * (`/api/admin/agents`). DB-free like `route-coverage.spec.ts`: the Prisma 8
+ * (`/v1/admin/agents`). DB-free like `route-coverage.spec.ts`: the Prisma 8
  * façade is mocked, auth uses real JWTs, and the LLM provider is stubbed so
  * no network call is ever made.
  */
@@ -194,7 +194,7 @@ describe('AI workforce: agent registry + runner + admin API', () => {
 
     it('attaches structured quality signals to every successful run', async () => {
         const res = await request(app)
-            .post('/api/admin/agents/monitoring/run')
+            .post('/v1/admin/agents/monitoring/run')
             .set(authed('emp_owner', 'SUPER_ADMIN'))
             .send({});
         expect(res.status).toBe(200);
@@ -211,7 +211,7 @@ describe('AI workforce: agent registry + runner + admin API', () => {
             { id: 'enq_2', subject: 'General question', message: 'What are your opening hours?', status: 'new', createdAt: new Date().toISOString() },
         ];
         const res = await request(app)
-            .post('/api/admin/agents/relationships/run')
+            .post('/v1/admin/agents/relationships/run')
             .set(authed('emp_owner', 'SUPER_ADMIN'))
             .send({});
         expect(res.status).toBe(200);
@@ -221,33 +221,33 @@ describe('AI workforce: agent registry + runner + admin API', () => {
     });
 
     it('does not postpone the scheduled cadence for a manual run', async () => {
-        await request(app).get('/api/admin/agents').set(authed('emp_admin', 'ADMIN'));
+        await request(app).get('/v1/admin/agents').set(authed('emp_admin', 'ADMIN'));
         const agent = store.Agent.find((a) => a.key === 'monitoring');
         const nextRunAt = agent.nextRunAt;
         expect(nextRunAt).toBeTruthy();
         await request(app)
-            .post('/api/admin/agents/monitoring/run')
+            .post('/v1/admin/agents/monitoring/run')
             .set(authed('emp_admin', 'ADMIN'))
             .send({});
         expect(store.Agent.find((a) => a.key === 'monitoring').nextRunAt).toBe(nextRunAt);
     });
 
-    describe('GET /api/admin/agents', () => {
+    describe('GET /v1/admin/agents', () => {
         it('rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/admin/agents');
+            const res = await request(app).get('/v1/admin/agents');
             expect(res.status).toBe(401);
         });
 
         it('rejects a role without agents.view', async () => {
             const res = await request(app)
-                .get('/api/admin/agents')
+                .get('/v1/admin/agents')
                 .set(authed('emp_client', 'STAFF'));
             expect(res.status).toBe(403);
         });
 
         it('seeds the roster and returns agents for an admin', async () => {
             const res = await request(app)
-                .get('/api/admin/agents')
+                .get('/v1/admin/agents')
                 .set(authed('emp_admin', 'ADMIN'));
             expect(res.status).toBe(200);
             expect(res.body.agents).toHaveLength(AGENT_REGISTRY.length);
@@ -255,15 +255,15 @@ describe('AI workforce: agent registry + runner + admin API', () => {
             expect(coordinator.name).toBeTruthy();
             expect(coordinator.lastRun).toBeNull();
             // Second call must be idempotent — no duplicate rows.
-            await request(app).get('/api/admin/agents').set(authed('emp_admin', 'ADMIN'));
+            await request(app).get('/v1/admin/agents').set(authed('emp_admin', 'ADMIN'));
             expect(store.Agent).toHaveLength(AGENT_REGISTRY.length);
         });
     });
 
-    describe('POST /api/admin/agents/:key/run', () => {
+    describe('POST /v1/admin/agents/:key/run', () => {
         it('rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/admin/agents/monitoring/run')
+                .post('/v1/admin/agents/monitoring/run')
                 .send({});
             expect(res.status).toBe(401);
         });
@@ -276,7 +276,7 @@ describe('AI workforce: agent registry + runner + admin API', () => {
             store.Booking = [{ id: 'b1', status: 'SUBMITTED', createdAt: new Date().toISOString() }];
 
             const res = await request(app)
-                .post('/api/admin/agents/monitoring/run')
+                .post('/v1/admin/agents/monitoring/run')
                 .set(authed('emp_owner', 'SUPER_ADMIN'))
                 .send({});
             expect(res.status).toBe(200);
@@ -298,27 +298,27 @@ describe('AI workforce: agent registry + runner + admin API', () => {
         });
 
         it('refuses to run a paused agent without force', async () => {
-            await request(app).get('/api/admin/agents').set(authed('emp_admin', 'ADMIN'));
+            await request(app).get('/v1/admin/agents').set(authed('emp_admin', 'ADMIN'));
             await request(app)
-                .patch('/api/admin/agents/monitoring')
+                .patch('/v1/admin/agents/monitoring')
                 .set(authed('emp_admin', 'ADMIN'))
                 .send({ status: 'paused' });
 
             const res = await request(app)
-                .post('/api/admin/agents/monitoring/run')
+                .post('/v1/admin/agents/monitoring/run')
                 .set(authed('emp_admin', 'ADMIN'))
                 .send({});
             expect(res.status).toBe(409);
 
             const forced = await request(app)
-                .post('/api/admin/agents/monitoring/run')
+                .post('/v1/admin/agents/monitoring/run')
                 .set(authed('emp_admin', 'ADMIN'))
                 .send({ force: true });
             expect(forced.status).toBe(200);
         });
     });
 
-    describe('GET /api/admin/agents/runs + PATCH', () => {
+    describe('GET /v1/admin/agents/runs + PATCH', () => {
         it('lists runs and filters by agentKey', async () => {
             store.Agent = [{ id: 'a1', key: 'monitoring', name: 'Pulse', status: 'active' }];
             store.AgentRun = [
@@ -326,7 +326,7 @@ describe('AI workforce: agent registry + runner + admin API', () => {
                 { id: 'r2', agentId: 'a1', agentKey: 'coordinator', status: 'failed', startedAt: '2026-01-02T00:00:00Z' },
             ];
             const res = await request(app)
-                .get('/api/admin/agents/runs?agentKey=monitoring')
+                .get('/v1/admin/agents/runs?agentKey=monitoring')
                 .set(authed('emp_admin', 'ADMIN'));
             expect(res.status).toBe(200);
             expect(res.body.runs).toHaveLength(1);
@@ -334,9 +334,9 @@ describe('AI workforce: agent registry + runner + admin API', () => {
         });
 
         it('PATCH updates schedule and status', async () => {
-            await request(app).get('/api/admin/agents').set(authed('emp_admin', 'ADMIN'));
+            await request(app).get('/v1/admin/agents').set(authed('emp_admin', 'ADMIN'));
             const res = await request(app)
-                .patch('/api/admin/agents/coordinator')
+                .patch('/v1/admin/agents/coordinator')
                 .set(authed('emp_admin', 'ADMIN'))
                 .send({ status: 'paused', scheduleMinutes: 120 });
             expect(res.status).toBe(200);

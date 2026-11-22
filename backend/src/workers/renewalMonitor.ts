@@ -6,7 +6,7 @@ import { computeClientHealth } from '../modules/crm/routes/renewals';
  * Recurring renewal automation (DIGITAL_HQ_PLAN — client success).
  *
  * Periodically scans clients, derives account health via the same
- * `computeClientHealth` used by /api/admin/renewals, and sends a
+ * `computeClientHealth` used by /v1/admin/renewals, and sends a
  * client-facing renewal notification for `renewal_due` accounts —
  * respecting the same RENEWAL_REMINDER_COOLDOWN_DAYS window as the manual
  * remind endpoint so automated and manual nudges share one cooldown.

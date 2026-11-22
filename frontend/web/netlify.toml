@@ -6,7 +6,7 @@
 [build.environment]
   NODE_VERSION = "24"
   # Intentionally NO VITE_API_BASE_URL: the app calls the API same-origin
-  # (angisoft.co.ke/api/*) via the proxy below. A cross-origin absolute base
+  # (angisoft.co.ke/v1/*) via the proxy below. A cross-origin absolute base
   # would stop the browser sending the SameSite=Strict refresh cookie.
   # Netlify UI env vars override this file — keep it unset there too.
   VITE_CDN_BASE_URL = "https://cdn.angisoft.co.ke"
@@ -21,12 +21,12 @@
   status = 200
   force = true
 
-# Same-origin proxy for any remaining relative `/api/*` call. Guarantees the
+# Same-origin proxy for any remaining relative `/v1/*` call. Guarantees the
 # API is reached instead of the SPA fallback, and makes requests first-party so
 # the SameSite=Strict refresh cookie is sent.
 [[redirects]]
-  from = "/api/*"
-  to = "https://api.angisoft.co.ke/api/:splat"
+  from = "/v1/*"
+  to = "https://api.angisoft.co.ke/v1/:splat"
   status = 200
   force = true
 

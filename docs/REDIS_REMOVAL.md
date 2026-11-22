@@ -98,7 +98,7 @@ Simply set `REDIS_URL` in `.env` and the system will use Redis (backward compati
 
 ### Check Backend Status
 ```bash
-curl http://localhost:5000/api/admin/dashboard/stats
+curl http://localhost:5000/v1/admin/dashboard/stats
 # Will return: {"error":"Missing authorization"}
 # This confirms API is working
 ```

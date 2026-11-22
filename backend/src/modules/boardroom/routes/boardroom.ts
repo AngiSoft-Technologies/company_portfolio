@@ -15,7 +15,7 @@ import {
 } from '../services/boardroom';
 
 /**
- * AI Boardroom admin API — mounted at /api/admin/boardroom.
+ * AI Boardroom admin API — mounted at /v1/admin/boardroom.
  *
  * SUPER_ADMIN only. Every mutation is CSRF-protected, rate-limited and
  * audit-logged. Agent output is untrusted context, never a command source.

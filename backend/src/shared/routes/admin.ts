@@ -311,8 +311,8 @@ export default function adminRouter(prisma: Db) {
         }
     });
 
-    // Uploads live only in /api/uploads/*, where keys, MIME types, owners and
-    // destinations are validated and authorized. The former /api/admin/upload/*
+    // Uploads live only in /v1/uploads/*, where keys, MIME types, owners and
+    // destinations are validated and authorized. The former /v1/admin/upload/*
     // routes (direct upload, sign, confirm) bypassed those controls and were
     // removed.
 

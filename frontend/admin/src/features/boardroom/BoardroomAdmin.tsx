@@ -243,8 +243,8 @@ export default function BoardroomAdmin() {
   const load = useCallback(async () => {
     try {
       const [sessionData, reportData] = await Promise.all([
-        apiFetch('/api/admin/boardroom/sessions').then(asRecord),
-        apiFetch('/api/admin/boardroom/reports').then(asRecord),
+        apiFetch('/v1/admin/boardroom/sessions').then(asRecord),
+        apiFetch('/v1/admin/boardroom/reports').then(asRecord),
       ]);
       const rawSessions = Array.isArray(sessionData.sessions) ? sessionData.sessions : [];
       const nextSessions = rawSessions
@@ -321,7 +321,7 @@ export default function BoardroomAdmin() {
   const startMeeting = async () => {
     setStarting(true);
     try {
-      const data = asRecord(await apiFetch('/api/admin/boardroom/sessions', { method: 'POST', body: {} }));
+      const data = asRecord(await apiFetch('/v1/admin/boardroom/sessions', { method: 'POST', body: {} }));
       const session = normalizeSession(data.session);
       if (!session) throw new Error('Boardroom did not return a session');
       setSessions((prev) => [session, ...prev]);
@@ -352,7 +352,7 @@ export default function BoardroomAdmin() {
       ? { ...s, output: { ...s.output, messages: [...s.output.messages, optimistic] } }
       : s));
     try {
-      const data = asRecord(await apiFetch(`/api/admin/boardroom/sessions/${active.id}/messages`, {
+      const data = asRecord(await apiFetch(`/v1/admin/boardroom/sessions/${active.id}/messages`, {
         method: 'POST',
         body: { content, askAll, ...(selectedAgent ? { agentKey: selectedAgent } : {}) },
       }));
@@ -371,7 +371,7 @@ export default function BoardroomAdmin() {
     setFinalizing(true);
     try {
       const actionItems = actionsText.split('\n').map((a) => a.trim()).filter(Boolean);
-      const data = asRecord(await apiFetch(`/api/admin/boardroom/sessions/${active.id}/finalize`, {
+      const data = asRecord(await apiFetch(`/v1/admin/boardroom/sessions/${active.id}/finalize`, {
         method: 'POST',
         body: { decision, actionItems },
       }));

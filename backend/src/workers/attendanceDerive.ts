@@ -5,7 +5,7 @@ import { deriveAttendanceForDate } from '../modules/identity/services/attendance
  * Nightly attendance derivation (DIGITAL_HQ_PLAN — HR automation).
  *
  * Runs the same schedule-aware derivation exposed at
- * POST /api/attendance/admin/derive for *yesterday* (UTC): company holidays
+ * POST /v1/attendance/admin/derive for *yesterday* (UTC): company holidays
  * get 'holiday' records and scheduled working days with no check-in get
  * 'absent' records (source 'schedule'). Idempotent — existing records are
  * never touched, and a late check-in flips an auto-'absent' back to

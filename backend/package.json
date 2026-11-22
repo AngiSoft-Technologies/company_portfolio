@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma db migrate",
     "prisma:migrate:dev": "prisma contract emit && prisma migration plan",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "config:seed": "ts-node scripts/seed-runtime-config.ts",
     "migrate-mongo": "node scripts/migrate-mongo-to-postgres-safe.js",
     "reconcile:stripe": "node scripts/reconcile-stripe.js",
     "extract:about-default": "node scripts/extract-about-default.mjs",

@@ -102,7 +102,7 @@ export default function ApprovalsAdmin() {
       if (statusFilter) params.set('status', statusFilter);
       if (entityFilter) params.set('entityType', entityFilter);
       if (mineOnly) params.set('mine', '1');
-      const data = await apiFetch(`/api/approvals?${params.toString()}`);
+      const data = await apiFetch(`/v1/approvals?${params.toString()}`);
       setRows(Array.isArray(data) ? (data as ApprovalRow[]) : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load approvals');
@@ -116,7 +116,7 @@ export default function ApprovalsAdmin() {
   const openDetail = async (id: string) => {
     setDetailLoading(true);
     try {
-      const data = (await apiFetch(`/api/approvals/${id}`)) as ApprovalRow;
+      const data = (await apiFetch(`/v1/approvals/${id}`)) as ApprovalRow;
       setDetail(data);
       setDecisionNote('');
     } catch {
@@ -130,7 +130,7 @@ export default function ApprovalsAdmin() {
     if (!detail) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/approvals/${detail.id}/decide`, {
+      await apiFetch(`/v1/approvals/${detail.id}/decide`, {
         method: 'POST',
         body: { decision, note: decisionNote || null },
       });
@@ -147,7 +147,7 @@ export default function ApprovalsAdmin() {
     if (!detail) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/approvals/${detail.id}/cancel`, { method: 'POST' });
+      await apiFetch(`/v1/approvals/${detail.id}/cancel`, { method: 'POST' });
       await openDetail(detail.id);
       void load();
     } catch (e) {
@@ -169,7 +169,7 @@ export default function ApprovalsAdmin() {
     setCreateOpen(true);
     if (!permissions.length) {
       try {
-        const data = await apiFetch('/api/approvals/permissions');
+        const data = await apiFetch('/v1/approvals/permissions');
         setPermissions(Array.isArray(data) ? (data as PermissionOption[]) : []);
       } catch {
         setPermissions([]);
@@ -181,7 +181,7 @@ export default function ApprovalsAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch('/api/approvals', {
+      await apiFetch('/v1/approvals', {
         method: 'POST',
         body: {
           entityType: form.entityType,

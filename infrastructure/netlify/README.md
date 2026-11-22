@@ -1,7 +1,7 @@
 # Netlify configuration
 
 > **🛠 OPERATIONAL** — Current deployment reference.<br>
-> **Required update (canonical plan Phase 0.7):** Admin `netlify.toml` must add `/api/*` proxy before SPA fallback.
+> **Required update (canonical plan Phase 0.7):** Admin `netlify.toml` must add `/v1/*` proxy before SPA fallback.
 
 The effective Netlify configuration lives beside each application:
 
@@ -17,8 +17,8 @@ Both configurations proxy `/uploads/*` to the API before applying the SPA fallba
 **Admin `netlify.toml` must add:**
 ```toml
 [[redirects]]
-  from = "/api/*"
-  to = "https://api.angisoft.co.ke/api/:splat"
+  from = "/v1/*"
+  to = "https://api.angisoft.co.ke/v1/:splat"
   status = 200
   force = true
 ```

@@ -1,3 +1,4 @@
+import { getConfig } from '../../../shared/services/runtimeConfig';
 import { Router } from 'express';
 import { and } from '@prisma/orm-postgres/orm-client';
 import type { Db } from '../../../db';
@@ -87,8 +88,8 @@ export default function paymentConsoleRouter(prisma: Db) {
                 recentPayments,
                 payHeroConfigured: payhero.isConfigured(),
                 paystackConfigured: paystack.isConfigured(),
-                payHeroChannelId: Number(process.env.PAYHERO_CHANNEL_ID || 0) || null,
-                callbackUrl: process.env.PAYHERO_CALLBACK_URL || null,
+                payHeroChannelId: Number(getConfig('PAYHERO_CHANNEL_ID') || 0) || null,
+                callbackUrl: getConfig('PAYHERO_CALLBACK_URL') || null,
                 defaultBookingStatus: 'DEPOSIT_PAID',
             });
         } catch (err) { handleErr(res, err); }

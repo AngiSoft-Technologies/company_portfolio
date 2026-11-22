@@ -41,19 +41,19 @@ Core architecture decisions
 - Email: Zoho Mail SMTP (smtp.zoho.com:465) via nodemailer.
 
 API routes (main)
-- POST /api/invite — admin creates employee invite; sends email with token
-- POST /api/invite/accept — accept invite and set password
-- POST /api/auth/login — email/password (+ TOTP if enabled) → returns access token; sets refresh cookie
-- POST /api/auth/refresh — rotates refresh token, returns new access
-- POST /api/auth/logout — revoke refresh token
-- GET /api/auth/sessions — list refresh-token sessions
-- POST /api/bookings — create booking; optional deposit creation; accept files
-- GET /api/bookings/:id — view booking
-- POST /api/bookings/:id/accept-terms — accept terms (admin action triggers email)
-- POST /api/payments/create-intent — optional separate route (or embed in bookings)
-- POST /api/payments/webhook — Stripe webhook handler (raw body)
-- CRUD APIs for admin CMS: /api/services, /api/projects, /api/blogs, /api/testimonials, /api/settings
-- File signed upload endpoints: /api/uploads/sign (returns signed PUT/POST URL)
+- POST /v1/invite — admin creates employee invite; sends email with token
+- POST /v1/invite/accept — accept invite and set password
+- POST /v1/auth/login — email/password (+ TOTP if enabled) → returns access token; sets refresh cookie
+- POST /v1/auth/refresh — rotates refresh token, returns new access
+- POST /v1/auth/logout — revoke refresh token
+- GET /v1/auth/sessions — list refresh-token sessions
+- POST /v1/bookings — create booking; optional deposit creation; accept files
+- GET /v1/bookings/:id — view booking
+- POST /v1/bookings/:id/accept-terms — accept terms (admin action triggers email)
+- POST /v1/payments/create-intent — optional separate route (or embed in bookings)
+- POST /v1/payments/webhook — Stripe webhook handler (raw body)
+- CRUD APIs for admin CMS: /v1/services, /v1/projects, /v1/blogs, /v1/testimonials, /v1/settings
+- File signed upload endpoints: /v1/uploads/sign (returns signed PUT/POST URL)
 
 Data contract highlights (examples)
 - Booking create payload (multipart or JSON + signed file URLs):
@@ -131,17 +131,17 @@ Deliverables (frontend)
 3) Integration — API contracts & auth handshake
 ------------------------------------------------
 Auth flow (concise)
-- Login (POST /api/auth/login) returns access token in body and sets httpOnly refresh cookie
+- Login (POST /v1/auth/login) returns access token in body and sets httpOnly refresh cookie
 - Access token sent in Authorization: Bearer <token> for protected AJAX calls
 - Refresh endpoint rotates token and sets new refresh cookie
 - Admin pages require role=ADMIN access in token payload
 
 CORS and cookies
 - Frontend origin (e.g., https://www.angisoft.com) must be allowed in backend CORS
-- Backend should set cookies with: SameSite=None; Secure; Path=/api/auth; Domain as appropriate
+- Backend should set cookies with: SameSite=None; Secure; Path=/v1/auth; Domain as appropriate
 
 File uploads
-- Frontend requests a signed upload URL from backend (/api/uploads/sign) and PUTs the file directly to R2/S3
+- Frontend requests a signed upload URL from backend (/v1/uploads/sign) and PUTs the file directly to R2/S3
 - Backend validates upload completion webhook (optional) and stores metadata in `File` model
 
 Payments integration
@@ -273,7 +273,7 @@ Initial tasks to mark immediately (examples we will perform first):
 - Implement background email queue (BullMQ) and move sendMail to queue
 
 [2025-10-12] BACKEND payments:webhook,reconcile — DONE — Improved Stripe webhook handler to verify signature, create missing Payment records when events arrive, and added `scripts/reconcile-stripe.js` plus `src/services/payments/stripeService.ts` to reconcile PaymentIntents with the DB.
-[2025-10-12] BACKEND uploads:signed_urls — DONE — Implemented S3/R2 presigned PUT URL helper (`src/services/storage/s3.ts`) and upload routes (`/api/uploads/sign` and `/api/uploads/confirm`) to persist `File` records after client upload.
+[2025-10-12] BACKEND uploads:signed_urls — DONE — Implemented S3/R2 presigned PUT URL helper (`src/services/storage/s3.ts`) and upload routes (`/v1/uploads/sign` and `/v1/uploads/confirm`) to persist `File` records after client upload.
 [2025-10-12] BACKEND queue:email — DONE — Added BullMQ-based queue wrapper and email worker (`src/queue`, `src/workers/emailWorker.ts`); `sendMail` enqueues jobs when `REDIS_URL` is configured and a worker will send emails.
 [2025-10-12] BACKEND cms:services — DONE — Implemented Services CRUD (`src/controllers/servicesController.ts`, `src/routes/services.ts`) and generic CRUD helper `src/utils/crud.ts`, plus audit logging on changes.
 [2025-10-12] BACKEND tokens:rs256-scaffold — DONE — Added KMS/private-key scaffolding to `src/utils/token.ts` to allow RS256 via KMS or env PEM; falls back to HS256.

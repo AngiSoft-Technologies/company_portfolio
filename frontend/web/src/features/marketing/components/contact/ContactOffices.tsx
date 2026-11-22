@@ -4,7 +4,7 @@ import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaClock, FaBuilding } from 'rea
 const telHref = (phone) => `tel:${String(phone).replace(/[^0-9+]/g, '')}`;
 
 /**
- * Structured office/location cards from GET /api/offices.
+ * Structured office/location cards from GET /v1/offices.
  * Renders nothing when no published offices exist — the legacy
  * ContactDetails block remains the fallback.
  */

@@ -34,7 +34,7 @@ All backed by a single PostgreSQL database, a single API, shared TypeScript pack
 |-------|--------|----------|
 | **Monorepo structure** | ✅ Complete (Phases 0–4) | `AGENTS.md` — pnpm + Turborepo, 9 shared packages, 2 frontend apps, 10 backend modules |
 | **Public website** | 🟡 ~50% | 37 routes, 373 TSX files; content DB-driven; About-page work in progress (uncommitted) |
-| **Admin application** | 🟡 ~45% | 26 screens, 9 feature areas; API integration broken in production (no Bearer tokens, no `/api/*` proxy) |
+| **Admin application** | 🟡 ~45% | 26 screens, 9 feature areas; API integration broken in production (no Bearer tokens, no `/v1/*` proxy) |
 | **Backend API** | 🟡 ~55% | 279 endpoints, 10 domain modules, 6 shared areas; effective-permission resolver exists but not wired to middleware |
 | **Database schema** | ✅ Rich (69 models) | Prisma 8 contract at `backend/src/prisma/contract.prisma`; Departments, Positions, Assignments, EmployeePermission, PermissionPreset all present |
 | **Authentication** | 🟡 ~35% | JWT + refresh cookies exist; in-memory token store in `@angisoft/api-client`; **2FA endpoints without UI; CSRF middleware exists but not mounted**; AdminLogin discards access token |
@@ -60,11 +60,11 @@ answers "where are we?" without reading code.
 | Phase 4 — Automation & Intelligence | ✅ Implemented | Workflow triggers (booking→project, payment→invoice, SLA→alert), approval rules + multi-step approval chains (`ApprovalRequest`), cross-dept reports, AI assist, renewals + automation worker |
 | Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets, security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 11 specs); Lighthouse + admin route×theme sweep remain |
 | **Phase 6 — AI Workforce** | ✅ Implemented | 12-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security, PA, relationships/contracts) with 24/7 scheduled runs, structured reports, owner notifications, SUPER_ADMIN AI Boardroom at `/admin/boardroom`, admin UI at `/agents`, `agents.*` permissions |
-| **Phase 7 — Communications & Finance Command Center** | 🔄 In progress | Foundation landed in code (ProviderConnection/Secret/Event, comms/finance routes, RBAC keys, admin nav/screens). WhatsApp Cloud webhook+inbox MVP wired; Zoho Mail/Telegram/Meta/TikTok adapters, full finance ledger reconciliation, approvals, and production hardening remain. See §18. |
+| **Phase 7 — Communications & Finance Command Center** | ✅ Implemented (code complete) | 7A–7F landed in code: encrypted config vault, provider connections/events, finance ledger + reconciliation, PayPal-first international rail, PayHero/Daraja East-Africa rails, Zoho/email, WhatsApp/Telegram, Meta/TikTok/social + routing/AI/SLA, admin command screens and hardened webhooks. Additive schema is committed but not applied to the live Neon branch; live credentials, provider dashboard URLs, Meta App Review/consent and a disposable integration database remain provisioning blockers. See §18. |
 
 ### Critical Production Blockers (P0 — must fix before any feature work)
 
-1. **Admin API/auth integration broken** — admin app uses relative URLs, no Bearer token, no `/api/*` proxy in `netlify.toml`
+1. **Admin API/auth integration broken** — admin app uses relative URLs, no Bearer token, no `/v1/*` proxy in `netlify.toml`
 2. **Chatbot admin endpoints unguarded** — `GET /chatbot/conversations`, `GET /chatbot/conversations/:id`, `PUT /chatbot/conversations/:id` lack authentication
 3. **Privileged cache poisoning** — `publicJsonCache` varies by role via `optionalAuth`; authenticated unpublished responses can be served publicly
 4. **Tests hit production Neon** — `backend/test/integration.spec.ts` broadly deletes records; `pnpm test` currently unsafe
@@ -87,7 +87,7 @@ Every P0 blocker is closed in code. Each row names the file that proves it.
 | 0.4 | Cache never serves authenticated responses | `isCacheable()` in `shared/middleware/cache.ts` bails on any `Authorization` header or session cookie | → "public JSON cache isolation" |
 | 0.5 | Tests isolated from production | `connectionUrl.ts` requires `TEST_DATABASE_URL` when `NODE_ENV=test`; vitest forces test mode; `integration.spec.ts` skips when unset and validates the DB name; destructive deletes narrowed to test-owned rows | `vitest run` → 17 passed / 4 skipped |
 | 0.6 | Route shadowing fixed | `GET /admin` moved before `GET /:id` (bookings), `/staff` before `/:id` (projects), `/admin` before `/:id` (contact-enquiries) | → "route ordering" |
-| 0.7 | Admin API integration | `useCrud`, `saveJson`, logout, and every screen routed through `@angisoft/api-client` (Bearer + CSRF + refresh); `/api/*` proxy added to **both** Netlify configs; `VITE_API_BASE_URL` removed so calls are same-origin | `docs/NETLIFY.md` §Routing |
+| 0.7 | Admin API integration | `useCrud`, `saveJson`, logout, and every screen routed through `@angisoft/api-client` (Bearer + CSRF + refresh); `/v1/*` proxy added to **both** Netlify configs; `VITE_API_BASE_URL` removed so calls are same-origin | `docs/NETLIFY.md` §Routing |
 | 0.8 | AdminLogin retains the token | `setAccessToken(accessToken)` after login | `AdminLogin.tsx` |
 | + | API contract mismatches | 13 admin endpoints corrected (health, dashboards, ai-config, staff-access, staff/employees, bookings admin + stage/status, client-projects PATCH, chatbot) | §6 Content Coverage Ledger |
 | + | Guards no longer lock out roles | `requireAccess(permission, fallbackRoles)` replaces stacked role+permission guards | `shared/middleware/roles.ts` |
@@ -101,15 +101,15 @@ makes access decisions visible in the admin app instead of hardcoded in routes.
 | # | Task | Implementation | Proof |
 |---|------|----------------|-------|
 | 1.1 | One canonical permission registry | `modules/identity/services/permissionRegistry.ts` holds **123** typed definitions (group / risk / scope / order), `PERMISSION_GROUPS`, `groupedPermissions()`, `validateRegistryIntegrity()`. `prisma/seed.ts` seeds `Permission` rows and role grants from it, and aborts if the registry is inconsistent. | `test/permission-registry.spec.ts` (14 specs) |
-| 1.2 | All route guards migrated | Every `requireRoles(...)` call removed from route files; guards now use `requireAccess(permission, fallbackRoles)`. Includes bespoke gates in `ai-config.ts` (local `requireAdmin`), `payment-console.ts` (local `allow(roles)`) and `site.ts` (per-section permissions). `/api/roles/catalogue` exposes the grouped registry to the UI. | `test/route-guards.spec.ts` (5 specs: no `requireRoles`, every guard key canonical, no retired key reused) |
+| 1.2 | All route guards migrated | Every `requireRoles(...)` call removed from route files; guards now use `requireAccess(permission, fallbackRoles)`. Includes bespoke gates in `ai-config.ts` (local `requireAdmin`), `payment-console.ts` (local `allow(roles)`) and `site.ts` (per-section permissions). `/v1/roles/catalogue` exposes the grouped registry to the UI. | `test/route-guards.spec.ts` (5 specs: no `requireRoles`, every guard key canonical, no retired key reused) |
 | 1.3 | Role & Permissions admin UI | `frontend/admin/src/features/settings/RolesAdmin.tsx` at `/settings/roles`: create/rename roles, grant permissions from the registry (grouped, filterable, risk-badged), see assignment counts. Writes `RolePermission` rows and clears both permission caches. | Plan §14 Phase 1 metric |
 | 1.4 | Staff Access screen complete | `StaffAccess.tsx` now renders the **full registry catalogue** with tri-state `Inherit / Grant / Deny` per permission, plus identity (department, position, seniority, public title) and assignment scopes. | Plan §14 Phase 1 metric |
-| 1.5 | Nav + guards wired to effective permissions | `lib/permissions.tsx` provides `EffectiveAccessProvider` / `useCan()` over `/api/staff-dashboard/effective-access`. `AdminLayout` nav links declare the permission they need; empty groups disappear. `can()` treats unknown as allowed but DENY as final, so the shell never blanks out. | `AdminLayout.tsx`, `permissions.tsx` |
+| 1.5 | Nav + guards wired to effective permissions | `lib/permissions.tsx` provides `EffectiveAccessProvider` / `useCan()` over `/v1/staff-dashboard/effective-access`. `AdminLayout` nav links declare the permission they need; empty groups disappear. `can()` treats unknown as allowed but DENY as final, so the shell never blanks out. | `AdminLayout.tsx`, `permissions.tsx` |
 | 1.6 | Unified `/workspace` shell | `features/dashboard/Workspace.tsx` renders server-provided widgets with real assignment counts; a granted permission with zero records shows an empty state + CTA instead of hiding the module (plan §8). | `Workspace.tsx` |
-| 1.7 | Preferences & theme persistence | ✅ Done. `Employee.preferences` JSONB column exists (migration `20261119T2153`, verified live); `GET /api/staff-dashboard/effective-access` returns normalized `preferences`; `PUT /api/staff-dashboard/profile` merges preference patches; admin `theme.tsx` restores the server theme on login and persists `theme` on toggle. | `staff-dashboard.ts`, `theme.tsx` |
+| 1.7 | Preferences & theme persistence | ✅ Done. `Employee.preferences` JSONB column exists (migration `20261119T2153`, verified live); `GET /v1/staff-dashboard/effective-access` returns normalized `preferences`; `PUT /v1/staff-dashboard/profile` merges preference patches; admin `theme.tsx` restores the server theme on login and persists `theme` on toggle. | `staff-dashboard.ts`, `theme.tsx` |
 | + | Legacy grants keep working during migration | `canonicalKey()` is applied on both sides of the resolver (`effectivePermissions.ts`, legacy `permissions.ts`), so a grant stored as `content.manage` still satisfies a guard checking `publications.review`. | `permissionRegistry.spec.ts` alias specs |
 | + | Role fallback cannot bypass DENY | `requireAccess` checks `isDenied()` **before** the role fallback, so an explicit DENY blocks even a fallback role and even `SUPER_ADMIN`. Precedence is now true for every route, migrated or not. | `test/require-access.spec.ts` (7 specs) |
-| + | Dashboard contract | `/api/staff-dashboard/permissions` now returns `assignmentCounts`; new `/api/staff-dashboard/effective-access` returns the versioned §8 payload (permissions with source/scope, counts, widgets, preferences). | `staff-dashboard.ts` |
+| + | Dashboard contract | `/v1/staff-dashboard/permissions` now returns `assignmentCounts`; new `/v1/staff-dashboard/effective-access` returns the versioned §8 payload (permissions with source/scope, counts, widgets, preferences). | `staff-dashboard.ts` |
 
 ---
 
@@ -126,7 +126,7 @@ relationships/contracts — all reporting to the owner.
 | Schema | `Agent` + `AgentRun` models in `contract.prisma`; migration `migrations/app/20261120T2340_ai_workforce` (additive, offline-planned) | `npx prisma migration plan` output |
 | Run engine | `modules/agents/services/agentRunner.ts` — deterministic DB collectors per agent → structured `{summary, metrics, highlights, actions, recommendations}`; optional LLM narrative via `aiProvider` when configured; every run writes `AgentRun`, updates `lastRunAt`/`nextRunAt`, and notifies SUPER_ADMIN/ADMIN employees through `createNotification` | `test/agents.spec.ts` run specs |
 | Scheduler | `workers/agentScheduler.ts` — 60s sweep (`AGENT_SCHEDULER_INTERVAL_MS`), runs due agents sequentially with per-agent failure isolation; registered in `index.ts` and `worker.ts` | `startAgentScheduler()` |
-| Admin API | `/api/admin/agents` — list roster+latest run, run history (`?agentKey=`), agent detail, `POST /:key/run` (manual, `force` overrides pause), `PATCH /:key` (status/schedule/config). Guards: `agents.view`/`agents.run`/`agents.manage` with ADMIN fallback | `test/agents.spec.ts` HTTP specs |
+| Admin API | `/v1/admin/agents` — list roster+latest run, run history (`?agentKey=`), agent detail, `POST /:key/run` (manual, `force` overrides pause), `PATCH /:key` (status/schedule/config). Guards: `agents.view`/`agents.run`/`agents.manage` with ADMIN fallback | `test/agents.spec.ts` HTTP specs |
 | Permissions | `agents.view` (LOW), `agents.run` (MEDIUM), `agents.manage` (HIGH) added to the canonical registry under group **AI Workforce**; ADMIN gets all, MARKETING + HR get `agents.view`; catalogue regenerated (163 keys / 35 groups) | `test/permission-registry.spec.ts` |
 | Admin UI | `features/agents/AgentsAdmin.tsx` at `/agents` — roster cards (status, schedule, last-run summary), Run now / Pause / Resume actions, recent-runs feed; nav item gated by `agents.view` | `AgentsAdmin.tsx`, `AdminLayout.tsx` |
 | Proactive layer | `modules/agents/services/proactive.ts` + `agentOutreach.ts` — after each successful report, agents act within hard bounds (below) | `test/agent-proactive.spec.ts` (7 specs) |
@@ -181,7 +181,7 @@ successful run:
   training manual for every agent: mandate, explicit decision rights
   (autonomous / approval-required / escalate-to-owner), standard workflow and
   KPIs. Charters are injected into the LLM narrative prompt, exposed on
-  `/api/admin/agents` (`charter` field), and rendered in the admin UI as a
+  `/v1/admin/agents` (`charter` field), and rendered in the admin UI as a
   "Role charter & decision rights" disclosure per agent card.
 - **PA agent (`pa` / "Pia")** — Executive Assistant & AI
   Workforce Coach (12h cadence). Its collector produces a workforce scorecard
@@ -211,7 +211,7 @@ gated by a quality/legal check and defaults to a draft plus approval item; and
 never mirrored back into the Approvals queue. Outreach budgets are per-agent and
 dedupe claims are atomic-ish through Redis with an AuditLog fallback.
 
-**AI Boardroom (added 2026-11-21).** `GET /api/admin/boardroom/sessions`,
+**AI Boardroom (added 2026-11-21).** `GET /v1/admin/boardroom/sessions`,
 `POST /sessions`, `POST /sessions/:id/messages` and `POST /sessions/:id/finalize`
 are mounted behind `requireAuth`, a strict SUPER_ADMIN role check,
 `agents.manage`, CSRF and a dedicated rate limiter. Sessions are stored as
@@ -256,7 +256,7 @@ A staff member can:
 | 0.4 | Isolate cached public responses from authenticated context | `publicJsonCache` bypasses `optionalAuth`; cache key excludes auth |
 | 0.5 | Add `TEST_DATABASE_URL` env; rewrite integration tests to use it | `pnpm test` never touches production Neon |
 | 0.6 | Fix route shadowing: move `/:id` after `/admin`, `/staff` in bookings, projects, contact-enquiries | Admin/staff list endpoints reachable |
-| 0.7 | Admin app: proxy `/api/*` in `netlify.toml`; use `@angisoft/api-client` with Bearer token | Admin login retains access token; all admin calls authenticated |
+| 0.7 | Admin app: proxy `/v1/*` in `netlify.toml`; use `@angisoft/api-client` with Bearer token | Admin login retains access token; all admin calls authenticated |
 | 0.8 | AdminLogin: store returned access token via `setAccessToken` | Session survives reload via refresh flow |
 
 ### Phase 1 — Unified Identity & Workspace Shell (Week 2–3)
@@ -266,7 +266,7 @@ A staff member can:
 | 1.2 | Migrate all route guards to `requirePermission(key)` using canonical resolver | No hardcoded `requireRoles(...)`; every guard testable |
 | 1.3 | Build Role & Permissions admin UI (`/admin/settings/roles`) | Create/rename/archive roles; assign permissions; assign roles to staff |
 | 1.4 | Fix Staff Access screen: load assignments, save identity (dept/position) | `/admin/staff/:id/access` works end-to-end |
-| 1.5 | Wire nav + route guards to effective permissions (frontend calls `/api/staff-dashboard/permissions`) | Menu items, buttons, screens respect effective permissions |
+| 1.5 | Wire nav + route guards to effective permissions (frontend calls `/v1/staff-dashboard/permissions`) | Menu items, buttons, screens respect effective permissions |
 | 1.6 | Unified workspace shell at `/workspace` with department/position-driven navigation | Each employee sees only their modules; global search, inbox, notifications, tasks |
 | 1.7 | User preferences & theme persistence (light/dark/custom) via `@angisoft/ui` | Preferences saved to `Employee` profile |
 
@@ -339,7 +339,7 @@ All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrat
 | `LEGACY_KEY_ALIASES` | Old key → canonical key. Applied by `canonicalKey()` on both sides of the resolver and on write, so a grant stored as `content.manage` still satisfies a guard checking `publications.review`. |
 | `ROLE_DEFAULT_PERMISSIONS` | Starter bundle per system role, seeded into `RolePermission`. Preserves the access each role had under the old `requireRoles(...)` guards. |
 | `requireAccess(permission, fallbackRoles)` | Route guard: permission **or** a fallback system role, with **explicit DENY checked first** so the fallback can never resurrect a denied key. |
-| `GET /api/roles/catalogue` | Grouped registry for the admin UI, so the screen can never drift from the keys the guards enforce. |
+| `GET /v1/roles/catalogue` | Grouped registry for the admin UI, so the screen can never drift from the keys the guards enforce. |
 
 | Scope | Meaning |
 |-------|---------|
@@ -495,27 +495,27 @@ guards.
 
 | Public Page | Model(s) | Public API | Admin API | Admin UI | Gate Permission | UI Status | Schema Status |
 |-------------|----------|------------|-----------|----------|-----------------|-----------|---------------|
-| Home | `HomeSection`, `CompanyStat` | `/api/site/home`, `/api/company-stats` | `/api/home-sections`, `/api/company-stats` | `HomeSectionsAdmin`, `CompanyStatsAdmin` | `pages.update_home` | ❌ Missing | ✅ Exists |
-| About | `AboutSection` | `/api/site/about` | `/api/about-sections` | `AboutAdmin` | `pages.update_about` | ✅ Exists | ✅ Exists |
-| Services List | `Service`, `ServiceCategory` | `/api/services`, `/api/service-categories` | `/api/services/admin`, `/api/service-categories` | `ServicesAdmin`, `ServiceCategoriesAdmin` | `services.update` | ✅ Exists | ✅ Exists |
-| Service Detail | `Service`, `ServiceFaq` | `/api/services/:slug` | `/api/services/:id`, `/api/service-faqs` | `ServicesAdmin`, `FaqsAdmin` | `services.update` | ✅ Exists | ✅ Exists |
-| Pricing | `PricingPackage`, `Service.pricing` (JSON legacy) | `/api/pricing-packages`, `/api/services` | `/api/pricing-packages/admin`, `/api/services/:id/pricing` | `PricingPackagesAdmin`, `PricingAdmin`, `ServicesAdmin` | `services.manage_pricing` | ✅ Exists | ✅ Exists |
-| Products List | `Product` | `/api/products` | `/api/products/admin` | `ProductsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
-| Product Detail | `Product`, `ProductFaq` | `/api/products/:slug` | `/api/products/:id`, `/api/product-faqs` | `ProductsAdmin`, `ProductFaqsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
-| Blog List | `BlogPost` | `/api/blogs` | `/api/blogs/admin` | `BlogAdmin` | `publications.review` | ✅ Exists | ✅ Exists |
-| Staff List | `Employee` | `/api/staff` | `/api/admin/staff` | `StaffManagement`, `StaffAccess` | `staff.view` | ✅ Dept/pos via StaffAccess | ✅ Exists |
-| Staff Detail | `Employee`, `EmployeePortfolioItem` | `/api/staff/:usernameOrId` | `/api/employee-profiles` | `StaffDashboard` (self) | `profile.update_own` | ✅ Self only | ✅ Exists |
-| Industries | `Industry` | `/api/industries` | `/api/industries/admin` | `IndustriesAdmin` | `pages.update_industries` | ✅ Exists | ✅ Exists |
-| Solutions | `Solution` | `/api/solutions` | `/api/solutions/admin` | `SolutionsAdmin` | `pages.update_solutions` | ✅ Exists | ✅ Exists |
-| Booking | `Booking`, `Service` | `POST /api/bookings` | `/api/bookings/admin` | `BookingsManagement` | `bookings.view_all` | ✅ Exists | ✅ Exists |
-| Testimonials | `Testimonial` | `/api/testimonials` | `/api/testimonials/admin` | `TestimonialsAdmin` | `reviews.moderate` | ✅ Exists | ✅ Exists |
-| FAQs | `Faq`, `ServiceFaq` | `/api/faqs` | `/api/faqs`, `/api/service-faqs` | `FaqsAdmin` | `services.manage_faqs` | ✅ Exists | ✅ Exists |
-| Careers | `JobPosting` | `/api/careers` | `/api/careers/admin` | `CareersAdmin` | `careers.manage` | ✅ Exists | ✅ Exists |
-| Announcements | `Announcement` | `/api/announcements` | `/api/announcements/admin` | `AnnouncementsAdmin` | `pages.update_announcements` | ✅ Exists | ✅ Exists |
-| Company Stats | `CompanyStat` | `/api/company-stats` | `/api/company-stats/admin` | `CompanyStatsAdmin` | `company_stats.view` | ✅ Exists | ✅ Exists |
-| Contact | `ContactEnquiry` | `POST /api/contact-enquiries` | `/api/contact-enquiries/admin` | `ContactsAdmin` | `enquiries.view_all` | ✅ Exists | ✅ Exists |
-| Client Portal | `ClientAccessToken`, `ClientProject` | `/api/client-portal/*` | `/api/client-projects/admin` | `ClientProjectsManagement` | `client_projects.view_all` | ✅ Partial | ✅ Exists |
-| AI Chatbot | `ChatConversation` | `/api/chatbot/*` | `/api/chatbot/conversations` | `ChatConversationsAdmin` | `chatbot.view_all` | ✅ Exists | ✅ Exists |
+| Home | `HomeSection`, `CompanyStat` | `/v1/site/home`, `/v1/company-stats` | `/v1/home-sections`, `/v1/company-stats` | `HomeSectionsAdmin`, `CompanyStatsAdmin` | `pages.update_home` | ❌ Missing | ✅ Exists |
+| About | `AboutSection` | `/v1/site/about` | `/v1/about-sections` | `AboutAdmin` | `pages.update_about` | ✅ Exists | ✅ Exists |
+| Services List | `Service`, `ServiceCategory` | `/v1/services`, `/v1/service-categories` | `/v1/services/admin`, `/v1/service-categories` | `ServicesAdmin`, `ServiceCategoriesAdmin` | `services.update` | ✅ Exists | ✅ Exists |
+| Service Detail | `Service`, `ServiceFaq` | `/v1/services/:slug` | `/v1/services/:id`, `/v1/service-faqs` | `ServicesAdmin`, `FaqsAdmin` | `services.update` | ✅ Exists | ✅ Exists |
+| Pricing | `PricingPackage`, `Service.pricing` (JSON legacy) | `/v1/pricing-packages`, `/v1/services` | `/v1/pricing-packages/admin`, `/v1/services/:id/pricing` | `PricingPackagesAdmin`, `PricingAdmin`, `ServicesAdmin` | `services.manage_pricing` | ✅ Exists | ✅ Exists |
+| Products List | `Product` | `/v1/products` | `/v1/products/admin` | `ProductsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
+| Product Detail | `Product`, `ProductFaq` | `/v1/products/:slug` | `/v1/products/:id`, `/v1/product-faqs` | `ProductsAdmin`, `ProductFaqsAdmin` | `products.update` | ✅ Exists | ✅ Exists |
+| Blog List | `BlogPost` | `/v1/blogs` | `/v1/blogs/admin` | `BlogAdmin` | `publications.review` | ✅ Exists | ✅ Exists |
+| Staff List | `Employee` | `/v1/staff` | `/v1/admin/staff` | `StaffManagement`, `StaffAccess` | `staff.view` | ✅ Dept/pos via StaffAccess | ✅ Exists |
+| Staff Detail | `Employee`, `EmployeePortfolioItem` | `/v1/staff/:usernameOrId` | `/v1/employee-profiles` | `StaffDashboard` (self) | `profile.update_own` | ✅ Self only | ✅ Exists |
+| Industries | `Industry` | `/v1/industries` | `/v1/industries/admin` | `IndustriesAdmin` | `pages.update_industries` | ✅ Exists | ✅ Exists |
+| Solutions | `Solution` | `/v1/solutions` | `/v1/solutions/admin` | `SolutionsAdmin` | `pages.update_solutions` | ✅ Exists | ✅ Exists |
+| Booking | `Booking`, `Service` | `POST /v1/bookings` | `/v1/bookings/admin` | `BookingsManagement` | `bookings.view_all` | ✅ Exists | ✅ Exists |
+| Testimonials | `Testimonial` | `/v1/testimonials` | `/v1/testimonials/admin` | `TestimonialsAdmin` | `reviews.moderate` | ✅ Exists | ✅ Exists |
+| FAQs | `Faq`, `ServiceFaq` | `/v1/faqs` | `/v1/faqs`, `/v1/service-faqs` | `FaqsAdmin` | `services.manage_faqs` | ✅ Exists | ✅ Exists |
+| Careers | `JobPosting` | `/v1/careers` | `/v1/careers/admin` | `CareersAdmin` | `careers.manage` | ✅ Exists | ✅ Exists |
+| Announcements | `Announcement` | `/v1/announcements` | `/v1/announcements/admin` | `AnnouncementsAdmin` | `pages.update_announcements` | ✅ Exists | ✅ Exists |
+| Company Stats | `CompanyStat` | `/v1/company-stats` | `/v1/company-stats/admin` | `CompanyStatsAdmin` | `company_stats.view` | ✅ Exists | ✅ Exists |
+| Contact | `ContactEnquiry` | `POST /v1/contact-enquiries` | `/v1/contact-enquiries/admin` | `ContactsAdmin` | `enquiries.view_all` | ✅ Exists | ✅ Exists |
+| Client Portal | `ClientAccessToken`, `ClientProject` | `/v1/client-portal/*` | `/v1/client-projects/admin` | `ClientProjectsManagement` | `client_projects.view_all` | ✅ Partial | ✅ Exists |
+| AI Chatbot | `ChatConversation` | `/v1/chatbot/*` | `/v1/chatbot/conversations` | `ChatConversationsAdmin` | `chatbot.view_all` | ✅ Exists | ✅ Exists |
 
 **Legend:** ✅ = Live & complete, ⚠️ = Partial/needs work, ❌ = Missing entirely
 
@@ -555,7 +555,7 @@ guards.
 
 ## 8. Dashboard Contract (Versioned Payload)
 
-**Endpoint:** `GET /api/staff-dashboard/effective-access`  
+**Endpoint:** `GET /v1/staff-dashboard/effective-access`<br>
 **Response (v1):**
 ```typescript
 interface EffectiveAccessPayload {
@@ -641,8 +641,8 @@ Every document in the repository must carry one of these status badges at the to
 | `assigneeId` vs `assignedStaffId` (ContactEnquiry) | `assigneeId` canonical; `assignedStaffId` deprecated; migration script |
 | `BlogPost` vs `StaffBlog` | `BlogPost` = marketing blog; `StaffBlog` = staff publications; separate admin surfaces |
 | Service assignment | Not currently modeled; `services.update_assigned` requires `ServiceTeamMember` (Phase 2 gate) |
-| Dashboard endpoint mismatch | `/api/staff-dashboard` (backend) vs `/api/admin/staff-dashboard` (frontend) → standardize on `/api/staff-dashboard` |
-| Admin API base URL | Admin app **must** use `@angisoft/api-client`; API calls are **same-origin** through the Netlify `/api/*` proxy — do **not** set `VITE_API_BASE_URL` (it would make the `SameSite=Strict` refresh cookie cross-site and break silent refresh) |
+| Dashboard endpoint mismatch | `/v1/staff-dashboard` (backend) vs `/v1/admin/staff-dashboard` (frontend) → standardize on `/v1/staff-dashboard` |
+| Admin API base URL | Admin app **must** use `@angisoft/api-client`; API calls are **same-origin** through the Netlify `/v1/*` proxy — do **not** set `VITE_API_BASE_URL` (it would make the `SameSite=Strict` refresh cookie cross-site and break silent refresh) |
 | Money as `Float` | **Blocker for Finance/ERP** — migration to `Decimal` required before Phase 2 Finance |
 | CI runs without checks | GitHub Actions must run `pnpm lint`, `pnpm typecheck`, `pnpm test` before deploy |
 
@@ -666,7 +666,7 @@ mixed into the additive schema change.
 | ~~P2~~ | ✅ Done — both regenerated/refreshed against live routes (2026-11-20/21) | Docs | No stale `frontend/src/**` paths remain |
 | ~~P2~~ | ✅ Done — no `isRole(`/`role !== 'ADMIN'` remains in `bookings.ts` | Backend | Grep clean |
 | ~~P3~~ | ✅ Done — `test/route-coverage.spec.ts` (21 specs) covers bookings staff/admin, client-projects, notifications, uploads, staff-dashboard + employee-profiles auth gates; `test/agents.spec.ts` (9 specs) covers the AI workforce | Backend | Each router has 401/403 + happy-path specs |
-| ~~P6~~ | ✅ Done — AI Workforce: 12-agent roster, scheduler, run engine, `/api/admin/agents`, `/agents` UI, SUPER_ADMIN AI Boardroom (§2.4) | Full stack | Roster seeded; runs notify owner; boardroom minutes mirror into approvals; spec suite green |
+| ~~P6~~ | ✅ Done — AI Workforce: 12-agent roster, scheduler, run engine, `/v1/admin/agents`, `/agents` UI, SUPER_ADMIN AI Boardroom (§2.4) | Full stack | Roster seeded; runs notify owner; boardroom minutes mirror into approvals; spec suite green |
 
 ---
 
@@ -730,9 +730,9 @@ All implementation work proceeds from this document. Document updates follow the
 
 ---
 
-## 18. Phase 7 — Communications & Finance Command Center (Proposed, 2026-11-22)
+## 18. Phase 7 — Communications & Finance Command Center (Implemented, 2026-11-22)
 
-> **Status:** In progress (2026-11-22). Foundation code landed: additive Prisma models/migrations (not yet applied in this workspace), encrypted secret service, provider event dedupe, `communications.*`/`finance.*` permissions, admin routes/screens, WhatsApp Cloud webhook verify/receive + inbox send MVP. Remaining work is listed in §18.10 and must be completed before claiming production-ready.
+> **Status:** Code complete (2026-11-22). Slices 7A–7F are implemented across the backend, admin UI, config vault, permissions, workers and focused tests. This is a code-completion claim only: production readiness still depends on applying the additive migration, provisioning live provider credentials/callback URLs, completing Meta App Review/consent, and running the integration suite against a disposable database. Those external/provisioning blockers are listed in §18.10.
 
 ### 18.1 Why Phase 7
 
@@ -825,14 +825,16 @@ Add canonical keys in `permissionRegistry.ts` (grouped, HIGH for money/config/ex
 
 ### 18.8 Delivery slices
 
-| Slice | Scope | Exit criteria |
-|---|---|---|
-| **7A Foundation** | Secret vault, ProviderConnection/ProviderEvent/SyncCursor schema, permission keys, audit conventions, admin nav shells | Secrets encrypted; webhook events dedupe; permissions visible in Role/Staff Access; no provider logic yet |
-| **7B Finance Hub v1** | Wrap existing PayHero/Paystack/M-Pesa in Finance Hub; unified transactions ledger + reconciliation basics | Existing payment console still works; ledger entries created idempotently; reconciliation report generated |
-| **7C Finance Hub v2** | PesaFlow + PayPal adapters, refunds/disputes/settlements, payout approvals, reports, money-type cleanup | Capability matrix accurate; high-risk actions audited/approved; money fields standardized |
-| **7D Communications v1** | Zoho OAuth, mailbox sync, inbox/compose, grants, audit | Super admin connects mailboxes; delegated user can read/compose only granted scopes; sends/audits recorded |
-| **7E WhatsApp + Telegram** | Unified conversation model, webhooks, templates, assignments | Inbound/outbound messages land in one inbox; WhatsApp window/template rules enforced |
-| **7F Meta/TikTok/Automation** | FB/IG, capability-gated TikTok, routing rules, AI draft assist, SLA automations | Adapters feature-flagged; routing/audit proven; AI actions are assistive and logged |
+| Slice | Status | Scope | Exit criteria |
+|---|---|---|---|
+| **7A Foundation** | ✅ Shipped | Secret vault, ProviderConnection/ProviderEvent/SyncCursor schema, permission keys, audit conventions, admin nav shells | Secrets encrypted; webhook events dedupe; permissions visible in Role/Staff Access; no provider logic yet |
+| **7B Finance Hub v1** | ✅ Shipped | Wrap existing PayHero/Paystack/M-Pesa in Finance Hub; unified transactions ledger + reconciliation basics | Existing payment console still works; ledger entries created idempotently; reconciliation report generated |
+| **7C Finance Hub v2** | ✅ Shipped | PayPal-first international rail, PayHero/Daraja East-Africa rails, refunds/disputes/settlements, payout approvals, reports, money-type cleanup | Capability matrix accurate; high-risk actions audited/approved; money fields standardized |
+| **7D Communications v1** | ✅ Shipped | Zoho OAuth, mailbox sync, inbox/compose, grants, audit | Super admin connects mailboxes; delegated user can read/compose only granted scopes; sends/audits recorded |
+| **7E WhatsApp + Telegram** | ✅ Shipped | Unified conversation model, webhooks, templates, assignments | Inbound/outbound messages land in one inbox; WhatsApp window/template rules enforced |
+| **7F Meta/TikTok/Automation** | ✅ Shipped | FB/IG, Threads, safe Meta MCP/Graph reads, CAPI, catalog feed, capability-gated TikTok, routing rules, AI draft assist, SLA automations | Adapters feature-flagged; routing/audit proven; AI actions are assistive and logged |
+| **Booking deposit closeout** | ✅ Shipped | Token-gated booking deposits, server-held amount, capability-gated rails, PayPal return capture, STK recovery and no client payment secret | Browser cannot set amount/currency; pending/paid deposits are idempotent; Stripe/Paystack remain legacy-only |
+| **Resource pack closeout** | ✅ Shipped | Meta and Daraja resource packs inventoried; safe helpers, tests and docs added; unsupported items explicitly deferred | MCP stays three read-only URLs; CAPI is consent-gated; Daraja callbacks and one-shot STK recovery are hardened; no invented endpoints |
 
 ### 18.9 Risks / non-goals
 
@@ -841,25 +843,33 @@ Add canonical keys in `permissionRegistry.ts` (grouped, HIGH for money/config/ex
 - **Data migration risk**: consolidating `admin@angisoft.co.ke` shell into `sangera@angisoft.co.ke` requires FK reassignment/audit; do as explicit script with dry-run.
 - **Performance risk**: inbox/message/event tables grow fast; design indexes, partitioning, retention, and archive before high-volume channels go live.
 
-### 18.10 Immediate next implementation after this doc
+### 18.10 Completion state and remaining production enablement
 
-1. Finish identity consolidation properly: `EmployeeEmail` table or verified additional-email flow, login lookup by verified email, data migration for legacy admin shell, admin UI.
-2. Build 7A foundation: `shared/services/secrets.ts`, `ProviderConnection/ProviderEvent`, permission keys, audit helpers.
-3. Pick first vertical: **Finance Hub v1** for fast value, or **Zoho + WhatsApp** for customer operations.
+All six delivery slices are implemented in code. The remaining work is provisioning, migration and external verification — not feature implementation:
+
+1. **Apply the additive schema safely.** Validate `backend/prisma/migrations/20261122210000_phase7_completion/migration.sql` on a temporary Neon branch, then apply to the live branch only with explicit approval. Run the permission/config seed after deploy.
+2. **Provision runtime secrets.** Populate the vault through `SUPER_ADMIN` → `/settings/vault` or `npm run config:seed`, using `backend/.env`/Fly secrets only for bootstrapping keys. Never commit or print secret values.
+3. **Rotate exposed webhook credentials.** Rotate `MPESA_CALLBACK_TOKEN`, `PAYHERO_CALLBACK_TOKEN`, the removed Neon credential, and any token previously committed or echoed into logs.
+4. **Configure provider dashboards.** Register the canonical `/v1` callback/return URLs for PayPal, PayHero, Safaricom Daraja and Zoho; add PayHero channel IDs/network codes for Airtel and other telcos/banks/wallets; configure Apple Pay/Google Pay domain and device prerequisites.
+5. **Verify webhooks and live money movement.** Complete live PayPal buyer/capture/refund/payout and East-Africa M-Pesa/Airtel E2E flows after credentials are available; verify signature failures, dedupe and amount cross-checks.
+6. **Complete Meta enablement.** Production app, Business Manager assets, system-user tokens, MCP OAuth sign-in, App Review, consent/privacy approval, catalog dataset and page/Instagram/Threads assets are external prerequisites. Advanced Graph and Threads operations remain gated by `META_APP_REVIEW_GRANTED`; reads never substitute unavailable writes.
+7. **Run the integration suite.** A disposable `TEST_DATABASE_URL` is required for `test/integration.spec.ts`; the focused unit suites and typechecks already run without it.
+
+**Closeout verification (2026-11-22):** focused Phase 7 suites pass 15 files / 186 tests; the full mocked backend suite passes 36 of 37 files and 350 of 351 tests, with the single `route-coverage.spec.ts` hook timing out only under parallel load and passing 21/21 in isolation. Backend `tsc`, workspace `pnpm typecheck` (11/11 tasks), web and admin production builds, and the 137-key `config:seed --dry-run` are green. No secret values are printed or written by the dry-run. Full-repo lint still reports pre-existing `no-explicit-any` debt and is not used as a Phase 7 gate.
 
 ## 17. Production verification checklist (after next deploy)
 
 ```bash
 # 1. Admin API is the API, not the SPA (must be JSON, not HTML)
-curl -sI https://admin.angisoft.co.ke/api/health | head -1
-curl -s  https://admin.angisoft.co.ke/api/chatbot/conversations | head -c 200   # expect 401 JSON
+curl -sI https://admin.angisoft.co.ke/v1/health | head -1
+curl -s  https://admin.angisoft.co.ke/v1/chatbot/conversations | head -c 200   # expect 401 JSON
 
 # 2. Web chatbot reaches the API too
-curl -sI https://www.angisoft.co.ke/api/health | head -1
+curl -sI https://www.angisoft.co.ke/v1/health | head -1
 
 # 3. Cache isolation (public read still cacheable, authenticated read not)
-curl -sI https://api.angisoft.co.ke/api/faqs | grep -i cache-control
-curl -sI -H 'Authorization: Bearer x' https://api.angisoft.co.ke/api/faqs | grep -ci cache-control  # expect 0
+curl -sI https://api.angisoft.co.ke/v1/faqs | grep -i cache-control
+curl -sI -H 'Authorization: Bearer x' https://api.angisoft.co.ke/v1/faqs | grep -ci cache-control  # expect 0
 
 # 4. Run the suite against a disposable database
 TEST_DATABASE_URL='postgresql://…/angisoft_test' pnpm test

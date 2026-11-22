@@ -1,3 +1,4 @@
+import { getConfig } from '../../../shared/services/runtimeConfig';
 import type { Db } from '../../../db';
 import { ts } from '../../../prisma/db';
 
@@ -103,7 +104,7 @@ export function configFromEnv(): AIProviderConfig {
     name: process.env.AI_PROVIDER_NAME || (preset ? preset.name : 'OpenAI'),
     kind: resolveProviderKind(baseUrl, process.env.AI_PROVIDER_KIND),
     baseUrl,
-    apiKey: process.env.AI_API_KEY || '',
+    apiKey: getConfig('AI_API_KEY'),
     model: process.env.AI_MODEL || (preset ? preset.defaultModel : ''),
     maxTokens: toPositiveInt(process.env.AI_MAX_TOKENS, 1200),
     temperature: Number(process.env.AI_TEMPERATURE || 0.3),
@@ -112,13 +113,13 @@ export function configFromEnv(): AIProviderConfig {
 
   // Backwards compatible: keep supporting OPENAI_API_KEY when no NVIDIA / AI_*
   // key is configured yet.
-  if (!config.apiKey && process.env.OPENAI_API_KEY) {
+  if (!config.apiKey && getConfig('OPENAI_API_KEY')) {
     config.provider = 'openai';
     config.name = 'OpenAI';
     config.kind = 'openai';
     config.baseUrl = config.baseUrl || 'https://api.openai.com';
     config.model = config.model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    config.apiKey = process.env.OPENAI_API_KEY;
+    config.apiKey = getConfig('OPENAI_API_KEY');
   }
 
   return config;
@@ -167,7 +168,9 @@ export async function loadAIConfig(prisma: Db): Promise<{ config: AIProviderConf
         name: saved.name || envConfig.name || (preset ? preset.name : 'Custom'),
         kind,
         baseUrl,
-        apiKey: saved.apiKey || envConfig.apiKey,
+        // The encrypted vault wins. `saved.apiKey` is only honoured for rows
+        // written before the vault existed; new saves strip it entirely.
+        apiKey: envConfig.apiKey || saved.apiKey || '',
         model: saved.model || envConfig.model || (preset && preset.defaultModel ? preset.defaultModel : ''),
         maxTokens: saved.maxTokens || envConfig.maxTokens,
         temperature: saved.temperature ?? envConfig.temperature,
@@ -182,17 +185,20 @@ export async function loadAIConfig(prisma: Db): Promise<{ config: AIProviderConf
 }
 
 export async function saveAIConfig(prisma: Db, config: AIProviderConfig): Promise<void> {
+  // Credentials never go into the plain Setting JSON. API keys belong in the
+  // encrypted vault (secret:AI_API_KEY) written by the SUPER_ADMIN route.
+  const persisted = { ...config, apiKey: '' };
   await prisma.transaction(async (tx) => {
     const existing = await tx.orm.public.Setting.where({ key: AI_CONFIG_SETTING_KEY }).first();
     if (existing) {
       await tx.orm.public.Setting.where({ key: AI_CONFIG_SETTING_KEY }).update({
-        value: config as any,
+        value: persisted as any,
         updatedAt: ts(),
       });
     } else {
       await tx.orm.public.Setting.create({
         key: AI_CONFIG_SETTING_KEY,
-        value: config as any,
+        value: persisted as any,
         updatedAt: ts(),
       });
     }

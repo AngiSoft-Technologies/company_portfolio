@@ -2,10 +2,10 @@
 import React from 'react';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 
-// Resolve a blog cover image. Handles full URLs, /uploads, /api and relative paths.
+// Resolve a blog cover image. Handles full URLs, /uploads, /v1 and relative paths.
 export const resolveBlogImage = (coverImage) => {
   if (!coverImage) return null;
-  if (/^(https?:)?\/\//.test(coverImage) || coverImage.startsWith('/uploads') || coverImage.startsWith('/api')) {
+  if (/^(https?:)?\/\//.test(coverImage) || coverImage.startsWith('/uploads') || coverImage.startsWith('/v1')) {
     return coverImage;
   }
   return resolveAssetUrl ? resolveAssetUrl(coverImage) : coverImage;

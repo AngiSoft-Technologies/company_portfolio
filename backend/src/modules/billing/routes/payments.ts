@@ -1,3 +1,4 @@
+import { getConfig } from '../../../shared/services/runtimeConfig';
 import express, { Router } from 'express';
 import crypto from 'crypto';
 import type { Db } from '../../../db';
@@ -8,9 +9,13 @@ import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import * as paystack from '../services/payments/paystackService';
 import * as mpesa from '../services/payments/mpesaService';
 import * as payhero from '../services/payments/payheroService';
+import * as paypal from '../services/payments/paypalService';
+import { paymentMethodCapabilities } from '../services/payments/methods';
 import { toMoney, toMoneyFromMinorUnits } from '../utils/money';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireAccess } from '../../../shared/middleware/roles';
 import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { safeWebhookHeaders } from '../../finance/routes/webhooks';
 
 /**
  * Payment security hardening.
@@ -48,6 +53,21 @@ function callbackSecretValid(req: any, envName: string): boolean {
 
 export default function paymentsRouter(prisma: Db) {
     const router = Router({ mergeParams: true });
+
+    /** Admin payment table used by the finance console. */
+    router.get('/', requireAuth, requireAccess('payments.view_all', ['SUPER_ADMIN', 'ADMIN', 'MARKETING', 'MANAGER']), async (req, res) => {
+        const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+        let payments: unknown[] = [];
+        try {
+            payments = await prisma.orm.public.Payment
+                .orderBy((p: any) => p.createdAt.desc())
+                .limit(limit)
+                .all();
+        } catch {
+            payments = [];
+        }
+        res.json({ payments });
+    });
 
     // Stripe webhook endpoint — signature verified, never trusts the raw body.
     router.post('/webhook', express.raw({ type: 'application/json' }) as any, async (req: any, res: any) => {
@@ -123,6 +143,143 @@ export default function paymentsRouter(prisma: Db) {
         res.json({ received: true });
     });
 
+    // ─── PayPal Orders v2 webhook ───────────────────────────────────────────
+    // Verification is delegated to PayPal's verify-webhook-signature API with
+    // the configured webhook id. Missing id / invalid signature = no processing.
+    router.post('/paypal/webhook', express.raw({ type: '*/*' }) as any, async (req: any, res: any) => {
+        const rawBody: Buffer = Buffer.isBuffer(req.body) ? req.body : Buffer.from('');
+        try {
+            const valid = await paypal.verifyWebhookSignature(req.headers, rawBody);
+            if (!valid) return res.status(400).send('Invalid PayPal webhook signature');
+        } catch (err: any) {
+            console.error('PayPal webhook rejected:', err?.message);
+            return res.status(err?.status === 503 ? 503 : 502).send('PayPal webhook verification unavailable');
+        }
+
+        // Ack immediately: PayPal retries non-2xx deliveries for up to 3 days.
+        res.json({ received: true });
+
+        try {
+            const event = JSON.parse(rawBody.toString('utf8'));
+            const resource = event?.resource || {};
+            const eventType = String(event?.event_type || 'paypal.webhook');
+            await recordProviderEvent(prisma, {
+                provider: 'PAYPAL', domain: 'FINANCE',
+                externalEventId: String(event?.id || resource?.id || ''),
+                eventType, signatureValid: true,
+                payload: event,
+                // Reuse the finance inbox masker so transmission signatures and
+                // other secrets never land in ProviderEvent.headers.
+                headers: safeWebhookHeaders(req.headers as Record<string, any>),
+                status: 'RECEIVED',
+            }).catch(() => {});
+
+            if (!eventType.startsWith('PAYMENT.CAPTURE.')) return;
+            const orderId = paypal.orderIdFromCaptureEvent(resource);
+            if (!orderId) return;
+            const payment = await prisma.orm.public.Payment.where({ providerId: orderId }).first();
+            if (!payment) {
+                console.warn('PayPal webhook for unknown order ignored', orderId);
+                return;
+            }
+
+            const status = eventType === 'PAYMENT.CAPTURE.COMPLETED' ? 'SUCCEEDED'
+                : eventType === 'PAYMENT.CAPTURE.REFUNDED' ? 'REFUNDED' : 'FAILED';
+            const charged = paypal.parseWebhookAmount(resource);
+            await applyPaymentOutcome(prisma, {
+                provider: 'PAYPAL', providerId: orderId,
+                reference: String(payment.reference || ''),
+                status: status as any,
+                metadata: JSON.parse(JSON.stringify({
+                    ...((payment.metadata as any) || {}),
+                    paypalWebhook: eventType,
+                    captureId: resource?.id,
+                    settlementAmount: charged.amount,
+                    settlementCurrency: charged.currency,
+                })),
+                bookingId: payment.bookingId || undefined,
+                clientId: payment.clientId || undefined,
+            });
+        } catch (err) {
+            console.error('Error handling PayPal webhook', err);
+        }
+    });
+
+    // ─── PayPal capture ──────────────────────────────────────────────────────
+    // Called when the buyer returns from PayPal approval. Gated by the
+    // (orderId, reference) pair returned only by the initiation response, so a
+    // third party cannot capture an order they did not initiate. Amounts are
+    // never accepted from the browser; the capture result is cross-checked
+    // against the persisted Payment row before settlement.
+    router.post('/paypal/capture', async (req: any, res: any) => {
+        const orderId = String(req.body?.orderId || '');
+        const reference = String(req.body?.reference || '');
+        if (!orderId || !reference) return res.status(400).json({ error: 'Missing orderId or reference' });
+
+        try {
+            const payment = await prisma.orm.public.Payment.where({ providerId: orderId }).first();
+            if (!payment || String(payment.reference || '') !== reference) {
+                return res.status(404).json({ error: 'Payment not found for this order' });
+            }
+            if (payment.status !== 'PENDING') {
+                return res.json({ status: payment.status, paymentId: payment.id, alreadyProcessed: true });
+            }
+
+            const capture = await paypal.captureOrder(orderId, reference);
+            const charged = Number(capture.amount);
+            const expected = Number(payment.amount);
+            if (Number.isFinite(charged) && Number.isFinite(expected) && charged > expected + 0.01) {
+                console.error('PayPal capture exceeds stored payment', { orderId, charged, expected });
+                return res.status(409).json({ error: 'Captured amount does not match the payment' });
+            }
+
+            await recordProviderEvent(prisma, {
+                provider: 'PAYPAL', domain: 'FINANCE',
+                externalEventId: capture.captureId || orderId,
+                eventType: 'paypal.order.captured', signatureValid: true,
+                payload: capture.raw, status: 'RECEIVED',
+            }).catch(() => {});
+
+            await applyPaymentOutcome(prisma, {
+                provider: 'PAYPAL', providerId: orderId,
+                reference,
+                status: capture.status === 'COMPLETED' ? 'SUCCEEDED' as any : 'PENDING' as any,
+                metadata: JSON.parse(JSON.stringify({
+                    ...((payment.metadata as any) || {}),
+                    paypalCapture: capture.raw,
+                    captureId: capture.captureId,
+                    payerEmail: capture.payerEmail,
+                    settlementAmount: capture.amount,
+                    settlementCurrency: capture.currency,
+                })),
+                bookingId: payment.bookingId || undefined,
+                clientId: payment.clientId || undefined,
+            });
+
+            res.json({
+                status: capture.status,
+                captureId: capture.captureId,
+                paymentId: payment.id,
+                payerEmail: capture.payerEmail,
+            });
+        } catch (err: any) {
+            console.error('PayPal capture failed', err);
+            res.status(err?.status === 400 ? 400 : 502).json({ error: err?.message || 'PayPal capture failed' });
+        }
+    });
+
+    // Public capability discovery so the client portal can render the full
+    // method catalogue and disable anything this deployment cannot settle.
+    // No credentials are exposed — only booleans, labels and setup hints.
+    router.get('/methods', (_req, res) => {
+        res.json(paymentMethodCapabilities());
+    });
+    // Backwards-compatible alias used by earlier dashboard builds.
+    router.get('/config', (_req, res) => {
+        const capabilities = paymentMethodCapabilities();
+        res.json({ paypal: capabilities.paypal, providers: capabilities.providers, methods: capabilities.methods });
+    });
+
     // create payment intent — authenticated, ownership-checked, idempotent.
     router.post('/create-intent', requireAuth, async (req: AuthRequest, res) => {
         const { bookingId, amount, currency = 'KES', idempotencyKey } = req.body;
@@ -131,7 +288,7 @@ export default function paymentsRouter(prisma: Db) {
         try {
             // Only staff/admin roles may create intents via this endpoint. (The
             // client-facing deposit flow creates its intent server-side during
-            // POST /api/bookings; this endpoint is for internal/manual use.)
+            // POST /v1/bookings; this endpoint is for internal/manual use.)
             if (!isStaffOrAdmin(req.user?.role)) {
                 return res.status(403).json({ error: 'Not authorized to create payment intents' });
             }
@@ -208,7 +365,7 @@ export default function paymentsRouter(prisma: Db) {
         if (!provider || !amount) return res.status(400).json({ error: 'Missing provider or amount' });
 
         const providerId = String(provider).toUpperCase();
-        if (!['STRIPE', 'PAYSTACK', 'MPESA', 'PAYHERO'].includes(providerId)) {
+        if (!['STRIPE', 'PAYSTACK', 'MPESA', 'PAYHERO', 'PAYPAL'].includes(providerId)) {
             return res.status(400).json({ error: 'Unsupported provider' });
         }
         if (!isProviderConfigured(providerId as ProviderId)) {
@@ -264,7 +421,9 @@ export default function paymentsRouter(prisma: Db) {
                     reference: paymentReference,
                     channelId: Number(channelId) || undefined,
                     description,
-                    metadata: { bookingId: bookingId || '', actor: req.user?.sub || '', reference: paymentReference }
+                    returnUrl: req.body.returnUrl,
+                    cancelUrl: req.body.cancelUrl,
+                    metadata: { bookingId: bookingId || '', clientId: clientId || '', actor: req.user?.sub || '', reference: paymentReference }
                 });
 
                 let row: any = null;
@@ -356,7 +515,7 @@ export default function paymentsRouter(prisma: Db) {
 
     // ─── PayHero callback (shared-secret gate; no unsigned fallback) ─────────
     router.post('/payhero/callback', async (req: any, res: any) => {
-        if (!process.env.PAYHERO_CALLBACK_TOKEN) {
+        if (!getConfig('PAYHERO_CALLBACK_TOKEN')) {
             console.error('PayHero callback rejected: PAYHERO_CALLBACK_TOKEN not configured.');
             return res.status(503).json({ status: false, error: 'Callback not configured' });
         }
@@ -432,7 +591,7 @@ export default function paymentsRouter(prisma: Db) {
 
     // ─── M-Pesa Daraja callback (shared-secret gate; no unsigned fallback) ────
     router.post('/mpesa/callback', async (req: any, res: any) => {
-        if (!process.env.MPESA_CALLBACK_TOKEN) {
+        if (!getConfig('MPESA_CALLBACK_TOKEN')) {
             console.error('M-Pesa callback rejected: MPESA_CALLBACK_TOKEN not configured.');
             return res.status(503).json({ ResultCode: 1, ResultDesc: 'Callback not configured' });
         }

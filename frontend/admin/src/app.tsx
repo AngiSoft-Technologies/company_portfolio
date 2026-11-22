@@ -41,8 +41,27 @@ const CompanyStatsAdmin = lazy(() => import('@/features/cms/CompanyStatsAdmin').
 const PaymentsAdmin = lazy(() => import('@/features/finance/PaymentsAdmin'));
 const ExpensesAdmin = lazy(() => import('@/features/finance/ExpensesAdmin'));
 const FinanceHub = lazy(() => import('@/features/finance/FinanceHub'));
+const FinanceOverview = lazy(() => import('@/features/finance/FinanceOverview'));
+const FinanceConnections = lazy(() => import('@/features/finance/FinanceConnections'));
+const FinanceAccounts = lazy(() => import('@/features/finance/FinanceAccounts'));
+const FinanceTransactions = lazy(() => import('@/features/finance/FinanceTransactions'));
+const FinancePayouts = lazy(() => import('@/features/finance/FinancePayouts'));
+const FinanceReconciliation = lazy(() => import('@/features/finance/FinanceReconciliation'));
+const RefundsDisputes = lazy(() => import('@/features/finance/RefundsDisputes'));
+const FinanceReports = lazy(() => import('@/features/finance/FinanceReports'));
+const FinanceSettings = lazy(() => import('@/features/finance/FinanceSettings'));
+const MoneyMovementAdmin = lazy(() => import('@/features/finance/MoneyMovementAdmin'));
 const CommunicationsHub = lazy(() => import('@/features/communications/CommunicationsHub'));
+const CommunicationsOverview = lazy(() => import('@/features/communications/CommunicationsOverview'));
 const CommunicationsInbox = lazy(() => import('@/features/communications/CommunicationsInbox'));
+const EmailAdmin = lazy(() => import('@/features/communications/EmailAdmin'));
+const WhatsAppAdmin = lazy(() => import('@/features/communications/WhatsAppAdmin'));
+const TelegramAdmin = lazy(() => import('@/features/communications/TelegramAdmin'));
+const SocialAdmin = lazy(() => import('@/features/communications/SocialAdmin'));
+const TemplatesAdmin = lazy(() => import('@/features/communications/TemplatesAdmin'));
+const RulesAdmin = lazy(() => import('@/features/communications/RulesAdmin'));
+const CommunicationContactsAdmin = lazy(() => import('@/features/communications/ContactsAdmin'));
+const CommunicationsSettings = lazy(() => import('@/features/communications/SettingsAdmin'));
 const OpportunitiesAdmin = lazy(() => import('@/features/sales/OpportunitiesAdmin'));
 const QuotesAdmin = lazy(() => import('@/features/sales/QuotesAdmin'));
 const InvoicesAdmin = lazy(() => import('@/features/sales/InvoicesAdmin'));
@@ -58,6 +77,7 @@ const AIConfigAdmin = lazy(() => import('@/features/ai-tools/AIConfigAdmin'));
 const AiAssist = lazy(() => import('@/features/ai-tools/AiAssist'));
 const AgentsAdmin = lazy(() => import('@/features/agents/AgentsAdmin').then((m) => ({ default: m.AgentsAdmin })));
 const BoardroomAdmin = lazy(() => import('@/features/boardroom/BoardroomAdmin'));
+const RuntimeConfigAdmin = lazy(() => import('@/features/settings/RuntimeConfigAdmin'));
 const SystemPanel = lazy(() => import('@/features/settings/SystemPanel'));
 const SecurityPanel = lazy(() => import('@/features/settings/SecurityPanel'));
 const FileUploadManager = lazy(() => import('@/features/settings/FileUploadManager'));
@@ -115,6 +135,7 @@ export default function App() {
         <Route path="sections" element={<HomeSectionsAdmin />} />
         <Route path="settings" element={<SiteSettingsAdmin />} />
         <Route path="settings/roles" element={<RolesAdmin />} />
+        <Route path="settings/vault" element={<RuntimeConfigAdmin />} />
         <Route path="faqs" element={<FaqsAdmin />} />
         <Route path="careers" element={<CareersAdmin />} />
         <Route path="testimonials" element={<TestimonialsAdmin />} />
@@ -128,8 +149,27 @@ export default function App() {
         <Route path="company-stats" element={<CompanyStatsAdmin />} />
         <Route path="payments" element={<PaymentsAdmin />} />
         <Route path="finance-hub" element={<FinanceHub />} />
+        <Route path="finance" element={<FinanceOverview />} />
+        <Route path="finance/connections" element={<FinanceConnections />} />
+        <Route path="finance/accounts" element={<FinanceAccounts />} />
+        <Route path="finance/transactions" element={<FinanceTransactions />} />
+        <Route path="finance/payouts" element={<FinancePayouts />} />
+        <Route path="finance/reconciliation" element={<FinanceReconciliation />} />
+        <Route path="finance/refunds-disputes" element={<RefundsDisputes />} />
+        <Route path="finance/reports" element={<FinanceReports />} />
+        <Route path="finance/settings" element={<FinanceSettings />} />
+        <Route path="money-movement" element={<MoneyMovementAdmin />} />
         <Route path="communications" element={<CommunicationsHub />} />
+        <Route path="communications/overview" element={<CommunicationsOverview />} />
         <Route path="communications/inbox" element={<CommunicationsInbox />} />
+        <Route path="communications/email" element={<EmailAdmin />} />
+        <Route path="communications/whatsapp" element={<WhatsAppAdmin />} />
+        <Route path="communications/telegram" element={<TelegramAdmin />} />
+        <Route path="communications/social" element={<SocialAdmin />} />
+        <Route path="communications/templates" element={<TemplatesAdmin />} />
+        <Route path="communications/rules" element={<RulesAdmin />} />
+        <Route path="communications/contacts" element={<CommunicationContactsAdmin />} />
+        <Route path="communications/settings" element={<CommunicationsSettings />} />
         <Route path="expenses" element={<ExpensesAdmin />} />
         <Route path="leave-requests" element={<LeaveRequestsAdmin />} />
         <Route path="attendance" element={<AttendanceAdmin />} />

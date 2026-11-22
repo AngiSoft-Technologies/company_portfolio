@@ -94,9 +94,9 @@ describe.skipIf(!hasTestDatabase)('Integration: booking -> payment flow', () => 
         }
     });
 
-    it('POST /api/bookings creates booking and optionally PaymentIntent', async () => {
+    it('POST /v1/bookings creates booking and optionally PaymentIntent', async () => {
         const res = await request(app)
-            .post('/api/bookings')
+            .post('/v1/bookings')
             .send({
                 name: 'Test Client',
                 email: 'test@example.com',
@@ -110,13 +110,9 @@ describe.skipIf(!hasTestDatabase)('Integration: booking -> payment flow', () => 
         expect(res.body.bookingId).toBeTruthy();
     }, 15000);
 
-    it('POST /api/bookings with deposit creates PaymentIntent', async () => {
-        if (!process.env.STRIPE_SECRET?.startsWith('sk_test_')) {
-            console.warn('STRIPE_SECRET test key not set, skipping payment test');
-            return;
-        }
+    it('POST /v1/bookings with deposit returns a server-held deposit, not a payment secret', async () => {
         const res = await request(app)
-            .post('/api/bookings')
+            .post('/v1/bookings')
             .send({
                 name: 'Test Client 2',
                 email: 'test2@example.com',
@@ -129,9 +125,10 @@ describe.skipIf(!hasTestDatabase)('Integration: booking -> payment flow', () => 
                 currency: 'KES',
             });
         expect([200, 201]).toContain(res.status);
-        if (res.body.clientSecret) {
-            expect(res.body.clientSecret).toBeTruthy();
-        }
+        expect(res.body.paymentRequired).toBe(true);
+        expect(res.body.paymentContext).toMatchObject({ amount: 50, currency: 'KES' });
+        expect(res.body.clientSecret).toBeUndefined();
+        expect(res.body.trackingToken).toBeTruthy();
     });
 });
 
@@ -163,17 +160,17 @@ describe.skipIf(!hasTestDatabase)('Integration: invite -> accept -> login', () =
             .delete();
     });
 
-    it('POST /api/invite requires admin authentication', async () => {
+    it('POST /v1/invite requires admin authentication', async () => {
         const res = await request(app)
-            .post('/api/invite')
+            .post('/v1/invite')
             .send({ firstName: 'Jane', lastName: 'Developer', email: 'jane@angisoft.com' });
         expect(res.status).toBe(401);
     });
 
-    it('POST /api/invite/accept accepts invite and sets password', async () => {
+    it('POST /v1/invite/accept accepts invite and sets password', async () => {
         // first create invite
         const invite = await request(app)
-            .post('/api/invite')
+            .post('/v1/invite')
             .send({ firstName: 'John', lastName: 'Admin', email: 'john@angisoft.com' });
         const emp = await prisma.orm.public.Employee
             .where({ email: 'john@angisoft.com' })
@@ -181,7 +178,7 @@ describe.skipIf(!hasTestDatabase)('Integration: invite -> accept -> login', () =
         const token = emp?.inviteToken;
         if (!token) return;
         const res = await request(app)
-            .post('/api/invite/accept')
+            .post('/v1/invite/accept')
             .send({ token, password: 'SecurePassword123!' });
         expect(res.status).toBe(200);
         expect(res.body.accessToken).toBeTruthy();

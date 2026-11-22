@@ -1,7 +1,7 @@
 # Netlify Deployment
 
 > **🛠 OPERATIONAL** — Current deployment reference; update admin proxy config per Phase 0.7.<br>
-> **Required change (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` Phase 0.7):** Admin `netlify.toml` must add `[[redirects]]` for `/api/*` → `https://api.angisoft.co.ke/api/:splat` before SPA fallback.
+> **Required change (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` Phase 0.7):** Admin `netlify.toml` must add `[[redirects]]` for `/v1/*` → `https://api.angisoft.co.ke/v1/:splat` before SPA fallback.
 
 The web and admin applications are separate Vite sites built from the pnpm workspace. Dependency installation and build commands run from the repository root.
 
@@ -53,18 +53,29 @@ pnpm --filter angisoft-admin build
 
 ## Routing
 
-Both app configurations proxy `/uploads/*` **and `/api/*`** to the API before applying the SPA fallback. Do not add a catch-all rule before the uploads rule.
+Both app configurations proxy `/uploads/*` **and `/v1/*`** to the API before applying the SPA fallback. Do not add a catch-all rule before the uploads rule.
 
-### Why `/api/*` must be proxied
+### Versioned API base
 
-The backend issues the refresh token as a **host-only, `SameSite=Strict`** cookie (`backend/src/shared/middleware/auth.ts`). A browser will not send a `SameSite=Strict` cookie on a cross-site request, so an app calling `https://api.angisoft.co.ke/api/...` directly from `admin.angisoft.co.ke` never transmits it — silent refresh fails and staff sessions die on every reload.
+The backend mounts every endpoint under `/v1` (for example
+`https://api.angisoft.co.ke/v1/services`). There is intentionally no `/api`
+alias — callers must use the versioned path. Browser apps keep calling the
+same-origin relative form (`/v1/services`) and Netlify forwards it to the
+versioned backend URL above; `@angisoft/api-client` rewrites any legacy
+`/api/...` input to `/v1/...` as a defensive measure, but new code must use
+`/v1`. Provider webhook URLs (PayPal, PayHero, Safaricom Daraja, Zoho) must
+also be updated to their `/v1` equivalents in each provider dashboard.
 
-Proxying `/api/*` makes API traffic **first-party**, which fixes cookie delivery and removes the CORS preflight entirely:
+### Why `/v1/*` must be proxied
+
+The backend issues the refresh token as a **host-only, `SameSite=Strict`** cookie (`backend/src/shared/middleware/auth.ts`). A browser will not send a `SameSite=Strict` cookie on a cross-site request, so an app calling `https://api.angisoft.co.ke/v1/...` directly from `admin.angisoft.co.ke` never transmits it — silent refresh fails and staff sessions die on every reload.
+
+Proxying `/v1/*` makes API traffic **first-party**, which fixes cookie delivery and removes the CORS preflight entirely:
 
 ```toml
 [[redirects]]
-  from = "/api/*"
-  to = "https://api.angisoft.co.ke/api/:splat"
+  from = "/v1/*"
+  to = "https://api.angisoft.co.ke/v1/:splat"
   status = 200
   force = true
 ```

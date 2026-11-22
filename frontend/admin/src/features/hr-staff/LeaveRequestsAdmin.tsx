@@ -43,7 +43,7 @@ export function LeaveRequestsAdmin() {
       if (statusFilter) params.set('status', statusFilter);
       if (mineOnly) params.set('mine', 'true');
       const qs = params.toString() ? `?${params}` : '';
-      const data = await apiFetch(`/api/leave-requests${qs}`);
+      const data = await apiFetch(`/v1/leave-requests${qs}`);
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load leave requests');
@@ -58,7 +58,7 @@ export function LeaveRequestsAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch('/api/leave-requests', {
+      await apiFetch('/v1/leave-requests', {
         method: 'POST',
         body: { ...form, reason: form.reason || null },
       });
@@ -75,7 +75,7 @@ export function LeaveRequestsAdmin() {
   const act = async (id: string, action: string, body?: unknown) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/leave-requests/${id}/${action}`, { method: 'POST', body });
+      await apiFetch(`/v1/leave-requests/${id}/${action}`, { method: 'POST', body });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : `${action} failed`);

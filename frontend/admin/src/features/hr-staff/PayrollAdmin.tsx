@@ -108,9 +108,9 @@ export function PayrollAdmin() {
       if (employeeFilter) params.set('employeeId', employeeFilter);
       const qs = params.toString();
       const [payslips, payrollRuns, salaryStructures] = await Promise.all([
-        apiFetch(`/api/payroll/admin${qs ? `?${qs}` : ''}`),
-        apiFetch('/api/payroll/runs'),
-        apiFetch('/api/payroll/admin/structures'),
+        apiFetch(`/v1/payroll/admin${qs ? `?${qs}` : ''}`),
+        apiFetch('/v1/payroll/runs'),
+        apiFetch('/v1/payroll/admin/structures'),
       ]);
       setRows(Array.isArray(payslips) ? payslips : []);
       setRuns(Array.isArray(payrollRuns) ? payrollRuns : []);
@@ -125,7 +125,7 @@ export function PayrollAdmin() {
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    apiFetch('/api/admin/employees')
+    apiFetch('/v1/admin/employees')
       .then((data) => {
         const list = Array.isArray(data) ? data : (data as { data?: unknown[] })?.data ?? [];
         setEmployees(Array.isArray(list) ? (list as EmployeeOption[]) : []);
@@ -162,7 +162,7 @@ export function PayrollAdmin() {
     try {
       const deductions = deductionsPayload();
       if (editing) {
-        await apiFetch(`/api/payroll/admin/${editing.id}`, {
+        await apiFetch(`/v1/payroll/admin/${editing.id}`, {
           method: 'PUT',
           body: {
             grossAmount: Number(form.grossAmount),
@@ -173,7 +173,7 @@ export function PayrollAdmin() {
           },
         });
       } else {
-        await apiFetch('/api/payroll/admin', {
+        await apiFetch('/v1/payroll/admin', {
           method: 'POST',
           body: {
             employeeId: form.employeeId,
@@ -199,7 +199,7 @@ export function PayrollAdmin() {
   const act = async (id: string, action: string) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/payroll/admin/${id}/${action}`, { method: 'POST' });
+      await apiFetch(`/v1/payroll/admin/${id}/${action}`, { method: 'POST' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : `${action} failed`);
@@ -213,7 +213,7 @@ export function PayrollAdmin() {
     setNotice(null);
     setError(null);
     try {
-      const res = (await apiFetch(`/api/payroll/admin/${r.id}/send`, { method: 'POST' })) as { sentTo: string };
+      const res = (await apiFetch(`/v1/payroll/admin/${r.id}/send`, { method: 'POST' })) as { sentTo: string };
       setNotice(`Payslip emailed to ${res.sentTo}.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Send failed');
@@ -233,7 +233,7 @@ export function PayrollAdmin() {
     setNotice(null);
     setError(null);
     try {
-      const res = (await apiFetch(`/api/payroll/admin/${r.id}/pay-out`, {
+      const res = (await apiFetch(`/v1/payroll/admin/${r.id}/pay-out`, {
         method: 'POST',
         body: phone.trim() ? { phone: phone.trim() } : {},
       })) as { reused?: boolean };
@@ -250,7 +250,7 @@ export function PayrollAdmin() {
     if (!window.confirm(`Delete payslip for ${r.period}?`)) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/payroll/admin/${r.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/payroll/admin/${r.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -263,7 +263,7 @@ export function PayrollAdmin() {
 
   const openRunDetail = async (id: string) => {
     try {
-      const data = (await apiFetch(`/api/payroll/runs/${id}`)) as RunDetail;
+      const data = (await apiFetch(`/v1/payroll/runs/${id}`)) as RunDetail;
       setRunDetail(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load run');
@@ -274,7 +274,7 @@ export function PayrollAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch('/api/payroll/runs', {
+      await apiFetch('/v1/payroll/runs', {
         method: 'POST',
         body: { period: runForm.period, name: runForm.name || null, notes: runForm.notes || null },
       });
@@ -291,7 +291,7 @@ export function PayrollAdmin() {
   const runAction = async (id: string, action: 'complete' | 'cancel') => {
     setBusy(true);
     try {
-      await apiFetch(`/api/payroll/runs/${id}/${action}`, { method: 'POST' });
+      await apiFetch(`/v1/payroll/runs/${id}/${action}`, { method: 'POST' });
       if (runDetail?.id === id) await openRunDetail(id);
       void load();
     } catch (e) {
@@ -331,7 +331,7 @@ export function PayrollAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch(`/api/payroll/admin/structures/${encodeURIComponent(employeeId)}`, {
+      await apiFetch(`/v1/payroll/admin/structures/${encodeURIComponent(employeeId)}`, {
         method: 'PUT',
         body: {
           basicSalary: Number(structureForm.basicSalary),
@@ -354,7 +354,7 @@ export function PayrollAdmin() {
     if (!window.confirm(`Delete salary structure for ${empName(s.employee)}?`)) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/payroll/admin/structures/${encodeURIComponent(s.employeeId)}`, { method: 'DELETE' });
+      await apiFetch(`/v1/payroll/admin/structures/${encodeURIComponent(s.employeeId)}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -367,7 +367,7 @@ export function PayrollAdmin() {
     setBusy(true);
     setError(null);
     try {
-      const data = (await apiFetch(`/api/payroll/admin/statutory-preview?gross=${encodeURIComponent(previewGross)}`)) as { deductions: LineItem[] };
+      const data = (await apiFetch(`/v1/payroll/admin/statutory-preview?gross=${encodeURIComponent(previewGross)}`)) as { deductions: LineItem[] };
       setPreviewLines(data.deductions);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Preview failed');
@@ -381,7 +381,7 @@ export function PayrollAdmin() {
     setGenMsg(null);
     setError(null);
     try {
-      const res = (await apiFetch('/api/payroll/admin/generate', {
+      const res = (await apiFetch('/v1/payroll/admin/generate', {
         method: 'POST',
         body: { period: generatePeriod, ...(generateRunId ? { payrollRunId: generateRunId } : {}), applyStatutory: genStatutory },
       })) as { created: number; skipped: number };

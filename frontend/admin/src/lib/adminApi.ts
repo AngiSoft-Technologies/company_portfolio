@@ -6,7 +6,7 @@ import { apiRequest, ensureSession, getAccessToken } from '@angisoft/api-client'
  * Delegates to the shared `@angisoft/api-client` so the admin app gets the
  * same security model as the public site:
  *
- *  - **Same-origin API URL** — every call uses a relative `/api/*` path. Netlify
+ *  - **Same-origin API URL** — every call uses a relative `/v1/*` path. Netlify
  *    proxies it to the backend, so the host-only `SameSite=Strict` refresh cookie
  *    and the readable `csrfToken` cookie stay on the app's own origin. An
  *    absolute API origin makes the browser call the API host directly, where JS
@@ -28,12 +28,15 @@ function readCsrfCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-/** Normalizes an admin endpoint to a same-origin `/api/*` path. */
+/** Normalizes an admin endpoint to a same-origin `/v1/*` path. */
 function buildApiUrl(path: string): string {
   if (path.startsWith('http')) return path;
-  return path.startsWith('/api')
-    ? path
-    : `/api${path.startsWith('/') ? '' : '/'}${path}`;
+  const versionless = path.startsWith('/api/')
+    ? path.slice(4)
+    : path === '/api' ? '/' : path;
+  return versionless.startsWith('/v1')
+    ? versionless
+    : `/v1${versionless.startsWith('/') ? '' : '/'}${versionless}`;
 }
 
 /**

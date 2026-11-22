@@ -26,7 +26,7 @@ export function ProductInquiriesAdmin() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch('/api/product-inquiries/admin');
+      const data = await apiFetch('/v1/product-inquiries/admin');
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load inquiries');
@@ -39,7 +39,7 @@ export function ProductInquiriesAdmin() {
 
   const setStatus = async (id: string, status: string) => {
     try {
-      await apiFetch(`/api/product-inquiries/${id}`, { method: 'PUT', body: { status } });
+      await apiFetch(`/v1/product-inquiries/${id}`, { method: 'PUT', body: { status } });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed');

@@ -31,7 +31,7 @@ export function EnhancedAdminDashboard() {
       setError(null);
       let rec: Rec = {};
       try {
-        const json = await apiFetch('/api/admin/dashboard/stats');
+        const json = await apiFetch('/v1/admin/dashboard/stats');
         rec = (json ?? {}) as Rec;
       } catch (e) {
         if (!cancelled) {

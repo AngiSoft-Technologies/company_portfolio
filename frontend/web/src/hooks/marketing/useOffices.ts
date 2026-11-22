@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/httpClient';
 
 /**
- * Fetches GET /api/offices (published offices only).
+ * Fetches GET /v1/offices (published offices only).
  * Returns [] on failure so the contact page degrades gracefully.
  */
 export function useOffices() {

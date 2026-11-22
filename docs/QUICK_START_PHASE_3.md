@@ -199,7 +199,7 @@ F5 (force refresh)
 ### Services Not Showing on Homepage
 ```bash
 # Check console for API errors (F12)
-# Check DevTools Network tab for GET /api/services
+# Check DevTools Network tab for GET /v1/services
 # Verify services have published: true
 ```
 

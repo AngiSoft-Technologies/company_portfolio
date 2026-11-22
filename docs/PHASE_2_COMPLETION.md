@@ -152,22 +152,22 @@ Service Table Schema:
 
 ### API Layer ✅
 ```
-POST /api/services
+POST /v1/services
 ├─ Body: {title, slug, category, description, priceFrom, targetAudience, scope, ...}
 ├─ Validation: Zod schema enforces types
 └─ Returns: Created service with all fields
 
-GET /api/services
+GET /v1/services
 ├─ Query: ?published=true&category=Development
 ├─ Returns: Array of services with metadata
 └─ Can filter by category
 
-PUT /api/services/:id
+PUT /v1/services/:id
 ├─ Body: Partial fields (updateSchema)
 ├─ Updates: Any field including category
 └─ Returns: Updated service
 
-DELETE /api/services/:id
+DELETE /v1/services/:id
 ├─ Removes service record
 └─ Returns: Confirmation
 ```

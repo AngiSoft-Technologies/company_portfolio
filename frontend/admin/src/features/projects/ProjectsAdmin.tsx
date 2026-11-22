@@ -101,9 +101,9 @@ export function ProjectsAdmin() {
         featured: form.featured,
       };
       if (editing) {
-        await apiFetch(`/api/projects/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        await apiFetch(`/v1/projects/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
       } else {
-        await apiFetch('/api/projects', { method: 'POST', body: payload });
+        await apiFetch('/v1/projects', { method: 'POST', body: payload });
       }
       setModalOpen(false);
       await refresh();

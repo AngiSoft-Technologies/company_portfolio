@@ -31,7 +31,7 @@ import {
 |
 | The public endpoint should return:
 |
-| GET /api/about-sections
+| GET /v1/about-sections
 |
 | [
 |   {

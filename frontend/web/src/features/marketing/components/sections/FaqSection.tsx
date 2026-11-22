@@ -17,7 +17,7 @@ const FaqSection = () => {
     useEffect(() => {
         let active = true;
 
-        Promise.all([apiGet('/api/faqs').catch(() => null), apiGet('/site/contact').catch(() => null)])
+        Promise.all([apiGet('/v1/faqs').catch(() => null), apiGet('/site/contact').catch(() => null)])
             .then(([response, contactData]) => {
                 if (!active) return;
                 setContact(contactData);

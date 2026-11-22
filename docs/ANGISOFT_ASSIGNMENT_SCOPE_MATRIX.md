@@ -43,7 +43,7 @@ async function assertAssigned(employeeId, permissionKey, scope) {
 }
 ```
 
-Example — `PUT /api/staff/products/:id`:
+Example — `PUT /v1/staff/products/:id`:
 1. `requirePermission('products.update_assigned')`
 2. `SELECT 1 FROM ProductTeamMember WHERE productId = :id AND employeeId = req.user.sub`
 3. If no row → 403, even though permission is held.

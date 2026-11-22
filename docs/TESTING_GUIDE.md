@@ -78,7 +78,7 @@ npm run dev
 **Verify in Browser Console:**
 ```javascript
 // In Developer Tools Console, copy-paste:
-fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(console.log)
+fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(console.log)
 // Should show your new blog post
 ```
 
@@ -103,7 +103,7 @@ fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(console.log)
 **Verify in Browser Console:**
 ```javascript
 // Check what the Blog section fetched
-fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(d => {
+fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(d => {
   console.log('Total blogs:', d.length);
   console.log('Published:', d.filter(b => b.published));
 })
@@ -144,7 +144,7 @@ fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(d => {
 - ✅ Success message
 - ✅ Post disappears from table
 - ✅ Homepage blog section no longer shows the post
-- ✅ Verify with: `fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(console.log)`
+- ✅ Verify with: `fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(console.log)`
 
 ---
 
@@ -197,11 +197,11 @@ fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(d => {
 1. Open browser DevTools → Network tab
 2. Go to http://localhost:5174
 3. Watch for these API calls:
-   - GET /api/services → Should return services
-   - GET /api/projects → Should return projects
-   - GET /api/blogs → Should return blogs
-   - GET /api/staff → Should return employees
-   - GET /api/testimonials → Should return testimonials
+   - GET /v1/services → Should return services
+   - GET /v1/projects → Should return projects
+   - GET /v1/blogs → Should return blogs
+   - GET /v1/staff → Should return employees
+   - GET /v1/testimonials → Should return testimonials
 4. Click each response tab to see the JSON
 ```
 
@@ -245,7 +245,7 @@ fetch('http://localhost:5000/api/blogs').then(r => r.json()).then(d => {
 # Check that backend has blogs route
 cd backend
 grep -n "app.use.*blogs" src/app.ts
-# Should show: app.use('/api/blogs', blogsRouter());
+# Should show: app.use('/v1/blogs', blogsRouter());
 
 # Check route is exported
 grep -n "blogsRouter" src/app.ts
@@ -257,7 +257,7 @@ grep -n "blogsRouter" src/app.ts
 ```javascript
 // In browser console, manually test the API:
 const token = localStorage.getItem('adminToken');
-fetch('http://localhost:5000/api/blogs', {
+fetch('http://localhost:5000/v1/blogs', {
   headers: token ? { 'Authorization': `Bearer ${token}` } : {}
 })
 .then(r => r.json())
@@ -271,7 +271,7 @@ fetch('http://localhost:5000/api/blogs', {
 
 ```javascript
 // Check what error the API returns:
-fetch('http://localhost:5000/api/blogs', {
+fetch('http://localhost:5000/v1/blogs', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -340,13 +340,13 @@ Copy and fill this in as you test:
 ### Test Unauthorized Access
 ```javascript
 // Try to call admin endpoint without token:
-fetch('http://localhost:5000/api/admin/dashboard/stats')
+fetch('http://localhost:5000/v1/admin/dashboard/stats')
 .then(r => r.json())
 .then(console.log)
 // Should return 401 Unauthorized
 
 // Try with invalid token:
-fetch('http://localhost:5000/api/admin/dashboard/stats', {
+fetch('http://localhost:5000/v1/admin/dashboard/stats', {
   headers: { 'Authorization': 'Bearer invalid-token' }
 })
 .then(r => r.json())
@@ -358,10 +358,10 @@ fetch('http://localhost:5000/api/admin/dashboard/stats', {
 ```javascript
 // CORS should only allow certain origins:
 // From different domain in console:
-fetch('http://localhost:5000/api/services')
+fetch('http://localhost:5000/v1/services')
 // Should work (public endpoint)
 
-fetch('http://localhost:5000/api/admin/dashboard/stats')
+fetch('http://localhost:5000/v1/admin/dashboard/stats')
 // Should fail (requires auth)
 ```
 
@@ -383,7 +383,7 @@ If all tests pass:
 
 | Issue | Solution |
 |-------|----------|
-| **404 on /api/blogs** | Check backend app.ts has `app.use('/api/blogs', blogsRouter())` |
+| **404 on /v1/blogs** | Check backend app.ts has `app.use('/v1/blogs', blogsRouter())` |
 | **Blog form won't submit** | Check browser console for error, verify httpClient token |
 | **Blog doesn't appear on homepage** | Verify `published: true` in admin, refresh page |
 | **CORS error** | Add frontend domain to backend CORS_ORIGIN in .env |
@@ -398,7 +398,7 @@ If all tests pass:
 ## 🤖 Automated Browser E2E (Playwright)
 
 The `e2e/` suite runs the real Vite dev servers (`web` :5173, `admin` :5174)
-with every `/api/**` call stubbed via `page.route` — no backend or database
+with every `/v1/**` call stubbed via `page.route` — no backend or database
 required.
 
 ```bash
@@ -411,5 +411,5 @@ Coverage: homepage hero + theme toggle, services/pricing/contact data
 rendering, the 3-step booking submit → redirect, client-portal magic-link →
 dashboard, admin login → dashboard, auth-guard redirect, payroll screen data,
 and the admin theme toggle + profile persistence. Stub handlers live in
-`e2e/fixtures/mockApi.ts` (`'METHOD /api/path'` → JSON body, `*` suffix for
+`e2e/fixtures/mockApi.ts` (`'METHOD /v1/path'` → JSON body, `*` suffix for
 prefixes, `{status, body}` envelope for non-200s).

@@ -79,14 +79,14 @@ const readCookie = (name: string): string => {
 
 const normalizeOrigin = (origin?: string): string => {
   if (!origin) return '';
-  return origin.replace(/\/+$/, '').replace(/\/api$/, '');
+  return origin.replace(/\/+$/, '').replace(/\/v1$/, '').replace(/\/api$/, '');
 };
 
 /**
  * API origin.
  *
  * Defaults to **same-origin (empty)** so requests go to the app's own domain and
- * are forwarded by the Netlify `/api/*` proxy. This matters because the backend
+ * are forwarded by the Netlify `/v1/*` proxy. This matters because the backend
  * sets the refresh token as a host-only, `SameSite=Strict` cookie: a
  * cross-origin call to `api.angisoft.co.ke` from `admin.angisoft.co.ke` would
  * never send it, so silent refresh would fail and sessions would die on reload.
@@ -97,9 +97,19 @@ const normalizeOrigin = (origin?: string): string => {
 const API_ORIGIN: string =
   normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 
+/**
+ * All API traffic is versioned under `/v1`. Legacy `/api/...` strings are
+ * rewritten here so a stale caller cannot silently fall off the versioned
+ * surface (the backend no longer mounts `/api`).
+ */
 const buildApiUrl = (endpoint: string): string => {
   if (endpoint.startsWith('http')) return endpoint;
-  const normalized = endpoint.startsWith('/api') ? endpoint : `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const path = endpoint.startsWith('/api/')
+    ? endpoint.slice(4)
+    : endpoint === '/api' ? '/' : endpoint;
+  const normalized = path.startsWith('/v1')
+    ? path
+    : `/v1${path.startsWith('/') ? '' : '/'}${path}`;
   return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
 };
 

@@ -10,6 +10,7 @@ import { useBookingSettings } from '@/hooks/client-portal/useBookingSettings';
 import { useServices } from '@/hooks/marketing/useServices';
 import { useBookingEntryContext } from '@/hooks/client-portal/useBookingEntryContext';
 import { getBookingProgressWithTokenPath } from '@/lib/marketing/booking/bookingRoutes';
+import BookingDepositPanel from '@/features/bookings/components/bookings/BookingDepositPanel';
 import {
     FaUser, FaEnvelope, FaPhone, FaProjectDiagram, FaFileAlt,
     FaCloudUploadAlt, FaCreditCard, FaCheckCircle, FaArrowLeft,
@@ -69,7 +70,6 @@ const BookingExperience = (props = {}) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [result, setResult] = useState(null);
-    const [clientSecret, setClientSecret] = useState(null);
 
     const [formData, setFormData] = useState({
         name: initialContact?.name || '',
@@ -236,8 +236,7 @@ const BookingExperience = (props = {}) => {
             onSuccess?.(data.booking);
             toast.success('Booking submitted successfully!');
 
-            if (data.clientSecret) {
-                setClientSecret(data.clientSecret);
+            if (data.paymentRequired) {
                 setStep(4);
                 return;
             }
@@ -265,7 +264,7 @@ const BookingExperience = (props = {}) => {
         color: colors.text,
     };
 
-    if (success && !clientSecret && !redirectAfterSuccess) {
+    if (success && !result?.paymentRequired && !redirectAfterSuccess) {
         return (
             <div className="booking-success">
                 <BookingSuccessActions
@@ -279,7 +278,7 @@ const BookingExperience = (props = {}) => {
 
     // Auto-redirect handles the success view; render confirmation that
     // redirects after a brief, visible transition.
-    if (success && !clientSecret && redirectAfterSuccess) {
+    if (success && !result?.paymentRequired && redirectAfterSuccess) {
         return (
             <div style={{ backgroundColor: colors.background, color: colors.text, paddingTop: '5.5rem' }} className="min-h-screen angi-page-shell--resume">
                 <div className="max-w-2xl mx-auto px-4 py-20">
@@ -302,18 +301,26 @@ const BookingExperience = (props = {}) => {
         );
     }
 
-    if (clientSecret) {
+    if (result?.paymentRequired) {
+        const depositBooking = {
+            ...(result.booking || {}),
+            details: { phase7Deposit: result.paymentContext },
+            client: { email: formData.email, phone: formData.phone },
+        };
         return (
             <div style={{ backgroundColor: colors.background, color: colors.text, paddingTop: '5.5rem' }} className="min-h-screen angi-page-shell--resume">
-                <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-                    <GlassmorphismCard className="p-12">
+                <div className="max-w-2xl mx-auto px-4 py-20">
+                    <GlassmorphismCard className="p-8 md:p-12">
                         <h1 className="text-3xl font-bold mb-4">Complete your deposit</h1>
-                        <p className="text-lg mb-6" style={{ color: colors.textSecondary }}>
+                        <p className="text-lg mb-6 text-center" style={{ color: colors.textSecondary }}>
                             Reference <span className="font-mono font-bold" style={{ color: colors.primary }}>{result?.booking?.publicReference}</span>
                         </p>
-                        <p className="text-sm" style={{ color: colors.textSecondary }}>
-                            Stripe checkout would mount here using <code>{clientSecret.slice(0, 12)}…</code>
-                        </p>
+                        <BookingDepositPanel
+                            booking={depositBooking}
+                            token={result.trackingToken}
+                            depositOverride={result.paymentContext}
+                            onPaid={() => navigate(getBookingProgressWithTokenPath(result.booking, result.trackingToken), { replace: true })}
+                        />
                         <div className="flex flex-wrap justify-center gap-4 mt-8">
                             <button onClick={() => navigate(getBookingProgressWithTokenPath(result.booking, result.trackingToken))} className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`, color: 'white' }}><FaFileAlt /> View booking</button>
                             <button onClick={() => navigate('/')} className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold" style={{ backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', color: colors.text, border: `2px solid ${colors.primary}` }}><FaHome /> Home</button>

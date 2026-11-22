@@ -85,13 +85,13 @@ export function StaffManagement() {
         avatarUrl: form.avatarUrl || undefined,
       };
       if (editing) {
-        // `/api/staff` is the public profile router (GET only). Employee
+        // `/v1/staff` is the public profile router (GET only). Employee
         // administration lives on the admin router.
-        await apiFetch(`/api/admin/employees/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        await apiFetch(`/v1/admin/employees/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
       } else {
         // No direct-create route exists by design — new staff are invited and
         // accept an emailed token, which sets their password and acceptedAt.
-        await apiFetch('/api/invite', {
+        await apiFetch('/v1/invite', {
           method: 'POST',
           body: { firstName: form.name, email: form.email, role: form.role },
         });

@@ -46,7 +46,7 @@ export function PortfolioApprovals() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch('/api/employee-profiles/portfolio-config/admin/all');
+      const data = await apiFetch('/v1/employee-profiles/portfolio-config/admin/all');
       setRows(Array.isArray(data) ? (data as PortfolioConfigRow[]) : []);
     } catch (e) {
       setError((e as Error).message || 'Failed to load portfolio configs');
@@ -63,7 +63,7 @@ export function PortfolioApprovals() {
     setBusyId(row.id);
     setError(null);
     try {
-      await apiFetch(`/api/employee-profiles/portfolio-config/${row.employeeId}/${action}`, { method: 'POST' });
+      await apiFetch(`/v1/employee-profiles/portfolio-config/${row.employeeId}/${action}`, { method: 'POST' });
       await load();
     } catch (e) {
       setError((e as Error).message || `Failed to ${action}`);

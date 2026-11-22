@@ -24,7 +24,7 @@ self.addEventListener('fetch', (event) => {
   // other hosts) — the browser handles those natively and SW fetch() of
   // no-cors/cross-origin resources rejects with NetworkError.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/socket.io')) return;
+  if (url.pathname.startsWith('/v1') || url.pathname.startsWith('/socket.io')) return;
 
   // Range requests (audio/video seeking) must pass straight through —
   // caching partial 206 responses corrupts the cache entry.

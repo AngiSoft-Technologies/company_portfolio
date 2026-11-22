@@ -10,11 +10,15 @@ import bookingsRouter from './modules/bookings/routes/bookings';
 import chatbotRouter from './modules/ai/routes/chatbot';
 import paymentsRouter from './modules/billing/routes/payments';
 import paymentConsoleRouter from './modules/billing/routes/payment-console';
+import moneyMovementRouter from './modules/billing/routes/money-movement';
+import mpesaCallbacksRouter from './modules/billing/routes/mpesa-callbacks';
+import mpesaRouter from './modules/billing/routes/mpesa';
 import authRouter from './modules/identity/routes/auth';
 import mfaRouter from './modules/identity/routes/mfa';
 import uploadsRouter from './modules/files/routes/uploads';
 import servicesRouter from './modules/cms/routes/services';
 import pricingPackagesRouter from './modules/cms/routes/pricing-packages';
+import catalogFeedRouter from './modules/cms/routes/catalog-feed';
 import officesRouter from './modules/cms/routes/offices';
 import projectsRouter from './modules/projects/routes/projects';
 import blogsRouter from './modules/cms/routes/blogs';
@@ -23,6 +27,7 @@ import serviceCategoriesRouter from './modules/cms/routes/service-categories';
 import settingsRouter from './modules/cms/routes/settings';
 import staffRouter from './modules/identity/routes/staff';
 import adminRouter from './shared/routes/admin';
+import runtimeConfigRouter from './shared/routes/runtime-config';
 import approvalsRouter from './shared/routes/approvals';
 import staffDashboardRouter from './modules/identity/routes/staff-dashboard';
 import clientProjectsRouter from './modules/projects/routes/client-projects';
@@ -48,6 +53,7 @@ import { publicJsonCache } from './shared/middleware/cache';
 import { csrfInit, csrfProtect } from './shared/middleware/csrf';
 import { errorHandler, notFoundHandler, asyncHandler } from './shared/middleware/errorHandler';
 import { initSentry } from './shared/services/monitoring/sentry';
+import { loadRuntimeConfig } from './shared/services/runtimeConfig';
 import { toPublicUrl } from './modules/files/services/storage/s3';
 import prisma from './db';
 
@@ -78,21 +84,46 @@ import aiAssistRouter from './modules/ai/routes/ai-assist';
 import renewalsRouter from './modules/crm/routes/renewals';
 import agentsRouter from './modules/agents/routes/agents';
 import boardroomRouter from './modules/boardroom/routes/boardroom';
+import communicationsAccountsRouter from './modules/communications/routes/accounts';
+import communicationsAuditRouter from './modules/communications/routes/audit';
+import communicationsCapabilitiesRouter from './modules/communications/routes/capabilities';
 import communicationsConnectionsRouter from './modules/communications/routes/connections';
-import communicationsWebhooksRouter from './modules/communications/routes/webhooks';
-import communicationsInboxRouter from './modules/communications/routes/inbox';
+import communicationsContactsRouter from './modules/communications/routes/contacts';
+import communicationsEmailRouter from './modules/communications/routes/email';
 import communicationsGrantsRouter from './modules/communications/routes/grants';
+import communicationsInboxRouter from './modules/communications/routes/inbox';
+import communicationsOverviewRouter from './modules/communications/routes/overview';
+import communicationsRulesRouter from './modules/communications/routes/rules';
 import communicationsTemplatesRouter from './modules/communications/routes/templates';
+import communicationsWebhooksRouter from './modules/communications/routes/webhooks';
 import communicationsWorkflowRouter from './modules/communications/routes/messages';
-import financeConnectionsRouter from './modules/finance/routes/connections';
-import financeReconciliationRouter from './modules/finance/routes/reconciliation';
-import financePayoutsRouter from './modules/finance/routes/payouts';
-import financeWebhooksRouter from './modules/finance/routes/webhooks';
+import {
+  financeAccountsRouter,
+  financeAuditRouter,
+  financeBeneficiariesRouter,
+  financeCapabilitiesRouter,
+  financeConnectionsRouter,
+  financeDisputesRouter,
+  financeOverviewRouter,
+  financePayoutsRouter,
+  financeReconciliationRouter,
+  financeRefundsRouter,
+  financeReportsRouter,
+  financeSettlementsRouter,
+  financeTransactionsRouter,
+  financeWebhooksRouter,
+} from './modules/finance';
 import employeeEmailsRouter from './modules/identity/routes/employee-emails';
 
 dotenv.config();
 initSentry();
 const app = express();
+// Refresh DB-backed runtime config at most every 30s so SUPER_ADMIN UI edits
+// propagate to every instance without blocking the request path.
+app.use((_req, _res, next) => {
+    void loadRuntimeConfig().catch(() => undefined);
+    next();
+});
 // gzip/deflate compression for all responses
 app.use(compression());
 // Slow-request observability (Phase 5.4): emit a structured JSON log line for
@@ -135,7 +166,16 @@ const allowed = getAllowedOrigins();
 app.use(cors({ origin: allowed, credentials: true } as any));
 // Signed webhooks need the pristine raw body (Stripe signature / Paystack HMAC),
 // so capture it BEFORE the global JSON parser runs for those paths only.
-app.use(['/api/payments/webhook', '/api/payments/paystack/webhook', '/api/communications/webhooks/whatsapp', '/api/finance/webhooks'], express.raw({ type: '*/*' }) as any);
+app.use([
+  '/v1/payments/webhook',
+  '/v1/payments/paystack/webhook',
+  '/v1/payments/paypal/webhook',
+  '/v1/communications/webhooks/whatsapp',
+  '/v1/communications/webhooks/telegram',
+  '/v1/communications/webhooks/meta',
+  '/v1/communications/webhooks/tiktok',
+  '/v1/finance/webhooks',
+], express.raw({ type: '*/*' }) as any);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -293,26 +333,26 @@ app.get('/', (req, res) => {
             <div class="grid">
                 <div class="tile">
                     <strong>Health Check</strong>
-                    <p class="muted">GET <code>/health</code> or <code>/api/health</code></p>
+                    <p class="muted">GET <code>/health</code> or <code>/v1/health</code></p>
                 </div>
                 <div class="tile">
                     <strong>Services</strong>
-                    <p class="muted">GET <code>/api/services</code></p>
+                    <p class="muted">GET <code>/v1/services</code></p>
                 </div>
                 <div class="tile">
                     <strong>Projects</strong>
-                    <p class="muted">GET <code>/api/projects</code></p>
+                    <p class="muted">GET <code>/v1/projects</code></p>
                 </div>
                 <div class="tile">
                     <strong>Blog</strong>
-                    <p class="muted">GET <code>/api/blogs</code></p>
+                    <p class="muted">GET <code>/v1/blogs</code></p>
                 </div>
             </div>
 
             <div class="actions">
                 <a class="btn" href="/health">View Health</a>
-                <a class="btn secondary" href="/api/services">Browse Services</a>
-                <a class="btn secondary" href="/api/projects">Browse Projects</a>
+                <a class="btn secondary" href="/v1/services">Browse Services</a>
+                <a class="btn secondary" href="/v1/projects">Browse Projects</a>
             </div>
 
             <p class="muted" style="margin-top: 16px;">Need access? Contact support@angisoft.co.ke or WhatsApp +254710398690.</p>
@@ -322,92 +362,115 @@ app.get('/', (req, res) => {
         `);
 });
 
-app.use('/api/auth/mfa', authRateLimiter, mfaRouter);
-app.use('/api/auth', authRateLimiter, authRouter);
-app.use('/api/invite', inviteRouter(prisma));
-app.use('/api/consent', consentRouter);
-app.use('/api/bookings', bookingsRouter(prisma));
-app.use('/api/payments', paymentsRouter(prisma));
-app.use('/api/admin/payments', paymentConsoleRouter(prisma));
-app.use('/api/uploads', uploadsRouter());
-app.use('/api/services', servicesRouter());
-app.use('/api/pricing-packages', pricingPackagesRouter(prisma));
-app.use('/api/offices', officesRouter(prisma));
-app.use('/api/projects', projectsRouter());
-app.use('/api/blogs', blogsRouter());
-app.use('/api/testimonials', testimonialsRouter());
-app.use('/api/service-categories', serviceCategoriesRouter());
-app.use('/api/settings', requireAuth, settingsRouter());
-app.use('/api/staff', staffRouter(prisma));
-app.use('/api/admin', adminRouter(prisma));
-app.use('/api/admin', aiConfigRouter(prisma));
-app.use('/api/admin', aiAssistRouter(prisma));
-app.use('/api/admin', renewalsRouter(prisma));
-app.use('/api/admin/agents', agentsRouter(prisma));
-app.use('/api/admin/boardroom', boardroomRouter(prisma));
-app.use('/api/admin/communications/connections', communicationsConnectionsRouter(prisma));
-app.use('/api/admin/communications/inbox', communicationsInboxRouter(prisma));
-app.use('/api/admin/communications/grants', communicationsGrantsRouter(prisma));
-app.use('/api/admin/communications/templates', communicationsTemplatesRouter(prisma));
-app.use('/api/admin/communications/workflow', communicationsWorkflowRouter(prisma));
-app.use('/api/communications/webhooks', communicationsWebhooksRouter(prisma));
-app.use('/api/admin/finance', financeConnectionsRouter(prisma));
-app.use('/api/admin/finance/reconciliation', financeReconciliationRouter(prisma));
-app.use('/api/admin/finance/payouts', financePayoutsRouter(prisma));
-app.use('/api/finance/webhooks', financeWebhooksRouter(prisma));
-app.use('/api/admin/staff', employeeEmailsRouter(prisma));
-app.use('/api/staff-dashboard', staffDashboardRouter(prisma));
-app.use('/api/client-projects', clientProjectsRouter(prisma));
-app.use('/api/client-portal', clientPortalRouter(prisma));
-app.use('/api/site', siteRouter(prisma));
-app.use('/api/newsletter', newsletterRouter(prisma));
-app.use('/api/faqs', faqRouter(prisma));
-app.use('/api/chatbot', chatbotRouter(prisma));
-app.use('/api/notifications', notificationsRouter());
-app.use('/api/announcements', announcementsRouter());
-app.use('/api/newsletters', newslettersRouter());
-app.use('/api/surveys', surveysRouter());
-app.use('/api/leads', leadsRouter());
-app.use('/api/support-tickets', supportTicketsRouter());
-app.use('/api/products', productsRouter());
-app.use('/api/roles', rolesRouter());
-app.use('/api/admin', staffAccessRouter());
-app.use('/api/employee-profiles', employeeProfilesRouter());
-app.use('/api/careers', careersRouter());
-app.use('/api/company-stats', companyStatsRouter());
-app.use('/api/home-sections', homeSectionsRouter());
-app.use('/api/about-sections', aboutSectionsRouter());
-app.use('/api/staff-blogs', staffBlogsRouter());
-app.use('/api/certifications', certificationsRouter());
-app.use('/api/product-inquiries', productInquiriesRouter());
-app.use('/api/opportunities', opportunitiesRouter());
-app.use('/api/quotes', quotesRouter());
-app.use('/api/invoices', invoicesRouter());
-app.use('/api/expenses', expensesRouter(prisma));
-app.use('/api/leave-requests', leaveRequestsRouter(prisma));
-app.use('/api/attendance', attendanceRouter(prisma));
-app.use('/api/payroll', payrollRouter(prisma));
-app.use('/api/approvals', approvalsRouter(prisma));
-app.use('/api/product-faqs', productFaqsRouter());
-app.use('/api/contact-enquiries', contactEnquiriesRouter());
-app.use('/api/industries', industriesRouter());
-app.use('/api/solutions', solutionsRouter());
+app.use('/v1/auth/mfa', authRateLimiter, mfaRouter);
+app.use('/v1/auth', authRateLimiter, authRouter);
+app.use('/v1/invite', inviteRouter(prisma));
+app.use('/v1/consent', consentRouter);
+app.use('/v1/bookings', bookingsRouter(prisma));
+app.use('/v1/payments', paymentsRouter(prisma));
+app.use('/v1/admin/payments', paymentConsoleRouter(prisma));
+app.use('/v1/admin/money', moneyMovementRouter(prisma));
+app.use('/v1/payments/mpesa', mpesaCallbacksRouter(prisma));
+app.use('/v1/payments/mpesa', mpesaRouter(prisma));
+app.use('/v1/uploads', uploadsRouter());
+app.use('/v1/services', servicesRouter());
+app.use('/v1/pricing-packages', pricingPackagesRouter(prisma));
+app.use('/v1/catalog', catalogFeedRouter(prisma));
+app.use('/v1/offices', officesRouter(prisma));
+app.use('/v1/projects', projectsRouter());
+app.use('/v1/blogs', blogsRouter());
+app.use('/v1/testimonials', testimonialsRouter());
+app.use('/v1/service-categories', serviceCategoriesRouter());
+app.use('/v1/settings', requireAuth, settingsRouter());
+app.use('/v1/staff', staffRouter(prisma));
+app.use('/v1/admin', adminRouter(prisma));
+app.use('/v1/admin/config', runtimeConfigRouter());
+app.use('/v1/admin', aiConfigRouter(prisma));
+app.use('/v1/admin', aiAssistRouter(prisma));
+app.use('/v1/admin', renewalsRouter(prisma));
+app.use('/v1/admin/agents', agentsRouter(prisma));
+app.use('/v1/admin/boardroom', boardroomRouter(prisma));
+app.use('/v1/admin/communications', communicationsOverviewRouter(prisma));
+app.use('/v1/admin/communications/accounts', communicationsAccountsRouter(prisma));
+app.use('/v1/admin/communications/audit', communicationsAuditRouter(prisma));
+app.use('/v1/admin/communications/capabilities', communicationsCapabilitiesRouter(prisma));
+app.use('/v1/admin/communications/connections', communicationsConnectionsRouter(prisma));
+app.use('/v1/admin/communications/contacts', communicationsContactsRouter(prisma));
+app.use('/v1/admin/communications/email', communicationsEmailRouter(prisma));
+app.use('/v1/admin/communications/grants', communicationsGrantsRouter(prisma));
+app.use('/v1/admin/communications/inbox', communicationsInboxRouter(prisma));
+app.use('/v1/admin/communications/rules', communicationsRulesRouter(prisma));
+app.use('/v1/admin/communications/templates', communicationsTemplatesRouter(prisma));
+app.use('/v1/admin/communications/workflow', communicationsWorkflowRouter(prisma));
+app.use('/v1/communications/webhooks', communicationsWebhooksRouter(prisma));
+
+app.use('/v1/admin/finance', financeOverviewRouter(prisma));
+app.use('/v1/admin/finance', financeAccountsRouter(prisma));
+app.use('/v1/admin/finance', financeAuditRouter(prisma));
+app.use('/v1/admin/finance', financeBeneficiariesRouter(prisma));
+app.use('/v1/admin/finance', financeCapabilitiesRouter(prisma));
+app.use('/v1/admin/finance', financeConnectionsRouter(prisma));
+app.use('/v1/admin/finance', financeDisputesRouter(prisma));
+app.use('/v1/admin/finance', financePayoutsRouter(prisma));
+app.use('/v1/admin/finance', financeReconciliationRouter(prisma));
+app.use('/v1/admin/finance', financeRefundsRouter(prisma));
+app.use('/v1/admin/finance', financeReportsRouter(prisma));
+app.use('/v1/admin/finance', financeSettlementsRouter(prisma));
+app.use('/v1/admin/finance', financeTransactionsRouter(prisma));
+app.use('/v1/finance/webhooks', financeWebhooksRouter(prisma));
+app.use('/v1/admin/staff', employeeEmailsRouter(prisma));
+app.use('/v1/staff-dashboard', staffDashboardRouter(prisma));
+app.use('/v1/client-projects', clientProjectsRouter(prisma));
+app.use('/v1/client-portal', clientPortalRouter(prisma));
+app.use('/v1/site', siteRouter(prisma));
+app.use('/v1/newsletter', newsletterRouter(prisma));
+app.use('/v1/faqs', faqRouter(prisma));
+app.use('/v1/chatbot', chatbotRouter(prisma));
+app.use('/v1/notifications', notificationsRouter());
+app.use('/v1/announcements', announcementsRouter());
+app.use('/v1/newsletters', newslettersRouter());
+app.use('/v1/surveys', surveysRouter());
+app.use('/v1/leads', leadsRouter());
+app.use('/v1/support-tickets', supportTicketsRouter());
+app.use('/v1/products', productsRouter());
+app.use('/v1/roles', rolesRouter());
+app.use('/v1/admin', staffAccessRouter());
+app.use('/v1/employee-profiles', employeeProfilesRouter());
+app.use('/v1/careers', careersRouter());
+app.use('/v1/company-stats', companyStatsRouter());
+app.use('/v1/home-sections', homeSectionsRouter());
+app.use('/v1/about-sections', aboutSectionsRouter());
+app.use('/v1/staff-blogs', staffBlogsRouter());
+app.use('/v1/certifications', certificationsRouter());
+app.use('/v1/product-inquiries', productInquiriesRouter());
+app.use('/v1/opportunities', opportunitiesRouter());
+app.use('/v1/quotes', quotesRouter());
+app.use('/v1/invoices', invoicesRouter());
+app.use('/v1/expenses', expensesRouter(prisma));
+app.use('/v1/leave-requests', leaveRequestsRouter(prisma));
+app.use('/v1/attendance', attendanceRouter(prisma));
+app.use('/v1/payroll', payrollRouter(prisma));
+app.use('/v1/approvals', approvalsRouter(prisma));
+app.use('/v1/product-faqs', productFaqsRouter());
+app.use('/v1/contact-enquiries', contactEnquiriesRouter());
+app.use('/v1/industries', industriesRouter());
+app.use('/v1/solutions', solutionsRouter());
 app.use('/health', healthRouter(prisma));
 // Compatibility alias: the health check was historically referenced as
-// `/api/health` (and Netlify's SPA fallback answered it with HTML, masking the
+// `/v1/health` (and Netlify's SPA fallback answered it with HTML, masking the
 // 404). Keep both paths live so monitors using either URL keep working.
-app.use('/api/health', healthRouter(prisma));
+app.use('/v1/health', healthRouter(prisma));
 
 // Analytics middleware
 app.use((req, res, next) => {
-    if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/health')) {
+    if (req.method === 'GET' && !req.path.startsWith('/v1/') && !req.path.startsWith('/health')) {
         trackPageView(req.path, req).catch(() => { });
     }
     next();
 });
 
 // Legacy admin route (kept for compatibility)
-app.post('/api/admin/revoke/:employeeId', requireAuth, asyncHandler(async (req, res) => {
+app.post('/v1/admin/revoke/:employeeId', requireAuth, asyncHandler(async (req, res) => {
     if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Not allowed' });
     const employeeId = (req.params as any).employeeId;
     await prisma.orm.public.RefreshToken.where((r) => r.employeeId.eq(employeeId)).delete();

@@ -4,7 +4,7 @@ import { apiGet } from '@/lib/httpClient';
 import { normalizeContactData } from '@/lib/marketing/contact/normalizeContactData';
 
 /**
- * Fetches GET /api/site/contact and normalizes it.
+ * Fetches GET /v1/site/contact and normalizes it.
  * Returns safe fallbacks so the form stays usable even while loading
  * or when contact data is missing — contact info / map / dynamic copy
  * are the only things gated on this data, not the form itself.

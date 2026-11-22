@@ -169,23 +169,23 @@ describe('HTTP security guards', () => {
     });
 
     describe('chatbot admin endpoints (P0.3)', () => {
-        it('GET /api/chatbot/conversations rejects anonymous callers', async () => {
+        it('GET /v1/chatbot/conversations rejects anonymous callers', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/chatbot/conversations');
+            const res = await request(app).get('/v1/chatbot/conversations');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/chatbot/conversations/:id rejects anonymous callers', async () => {
+        it('GET /v1/chatbot/conversations/:id rejects anonymous callers', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/chatbot/conversations/9f8c1d4e-1111-4222-8333-444455556666');
+            const res = await request(app).get('/v1/chatbot/conversations/9f8c1d4e-1111-4222-8333-444455556666');
             expect(res.status).toBe(401);
         });
 
-        it('PUT /api/chatbot/conversations/:id rejects anonymous callers', async () => {
+        it('PUT /v1/chatbot/conversations/:id rejects anonymous callers', async () => {
             const request = (await import('supertest')).default;
             const token = 'test-csrf-token-value';
             const res = await request(app)
-                .put('/api/chatbot/conversations/9f8c1d4e-1111-4222-8333-444455556666')
+                .put('/v1/chatbot/conversations/9f8c1d4e-1111-4222-8333-444455556666')
                 .set('Cookie', cookieHeader({ csrfToken: token }))
                 .set('x-csrf-token', token)
                 .send({ status: 'closed' });
@@ -201,7 +201,7 @@ describe('HTTP security guards', () => {
             // A live session (refresh cookie) but no matching header is exactly
             // the request a cross-site forgery would make.
             const res = await request(app)
-                .put('/api/settings/site_name')
+                .put('/v1/settings/site_name')
                 .set('Cookie', cookieHeader({ refreshToken: 'live-session-token' }))
                 .send({ value: 'x' });
             expect(res.status).toBe(403);
@@ -211,7 +211,7 @@ describe('HTTP security guards', () => {
         it('rejects a mismatched token', async () => {
             const request = (await import('supertest')).default;
             const res = await request(app)
-                .put('/api/settings/site_name')
+                .put('/v1/settings/site_name')
                 .set('Cookie', cookieHeader({ csrfToken: 'real-token', refreshToken: 'live-session-token' }))
                 .set('x-csrf-token', 'forged-token')
                 .send({ value: 'x' });
@@ -222,7 +222,7 @@ describe('HTTP security guards', () => {
             const request = (await import('supertest')).default;
             const token = 'test-csrf-token-value';
             const res = await request(app)
-                .put('/api/settings/site_name')
+                .put('/v1/settings/site_name')
                 .set('Cookie', cookieHeader({ csrfToken: token, refreshToken: 'live-session-token' }))
                 .set('x-csrf-token', token)
                 .send({ value: 'x' });
@@ -234,7 +234,7 @@ describe('HTTP security guards', () => {
             const request = (await import('supertest')).default;
             // No cookies means no ambient credentials to abuse, so forgot-password
             // and 2FA verification from a cold browser must not 403.
-            const res = await request(app).post('/api/auth/forgot').send({ email: 'a@b.co' });
+            const res = await request(app).post('/v1/auth/forgot').send({ email: 'a@b.co' });
             expect(res.status).toBe(200);
         });
     });
@@ -243,22 +243,22 @@ describe('HTTP security guards', () => {
         it('does not emit public cache headers for authenticated requests', async () => {
             const request = (await import('supertest')).default;
             const res = await request(app)
-                .get('/api/faqs')
+                .get('/v1/faqs')
                 .set('Authorization', 'Bearer some-admin-access-token');
             expect(res.headers['cache-control']).toBeUndefined();
         });
 
         it('still caches genuinely anonymous public reads', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/faqs');
+            const res = await request(app).get('/v1/faqs');
             expect(res.headers['cache-control']).toMatch(/public/);
         });
     });
 
     describe('route ordering (P0.6)', () => {
-        it('GET /api/bookings/admin reaches the admin handler, not /:id', async () => {
+        it('GET /v1/bookings/admin reaches the admin handler, not /:id', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/bookings/admin');
+            const res = await request(app).get('/v1/bookings/admin');
             // The admin handler runs requireAuth, so the error names
             // authentication — proving /:id (which demands an email) was not
             // reached first.
@@ -266,15 +266,15 @@ describe('HTTP security guards', () => {
             expect(String(res.body?.error ?? '')).not.toMatch(/email verification/i);
         });
 
-        it('GET /api/bookings/:id no longer exposes legacy email lookup', async () => {
+        it('GET /v1/bookings/:id no longer exposes legacy email lookup', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/bookings/9f8c1d4e-1111-4222-8333-444455556666');
+            const res = await request(app).get('/v1/bookings/9f8c1d4e-1111-4222-8333-444455556666');
             expect(res.status).toBe(404);
         });
 
-        it('GET /api/projects/staff reaches the staff handler, not /:id', async () => {
+        it('GET /v1/projects/staff reaches the staff handler, not /:id', async () => {
             const request = (await import('supertest')).default;
-            const res = await request(app).get('/api/projects/staff');
+            const res = await request(app).get('/v1/projects/staff');
             // /:id is public (optionalAuth) and would return 404 for a missing
             // project named "staff"; the staff handler returns 401 instead.
             expect(res.status).toBe(401);
@@ -287,7 +287,7 @@ describe('HTTP security guards', () => {
             const { signAccessToken } = await import('../src/modules/identity/utils/token');
             const token = signAccessToken({ sub: 'client_1', type: 'client' });
             const res = await request(app)
-                .get('/api/bookings/staff')
+                .get('/v1/bookings/staff')
                 .set('Authorization', `Bearer ${token}`);
             expect(res.status).toBe(401);
             expect(String(res.body?.error)).toMatch(/token type/i);
@@ -303,11 +303,11 @@ describe('HTTP security guards', () => {
                 bookingEvents: [],
             }];
             const noProof = await request(app)
-                .get('/api/bookings/reference/ANG-2026-A1B2C3D4');
+                .get('/v1/bookings/reference/ANG-2026-A1B2C3D4');
             const withEmail = await request(app)
-                .get('/api/bookings/reference/ANG-2026-A1B2C3D4?email=victim@example.com');
+                .get('/v1/bookings/reference/ANG-2026-A1B2C3D4?email=victim@example.com');
             const withToken = await request(app)
-                .get('/api/bookings/reference/ANG-2026-A1B2C3D4?token=secret-tracking-token');
+                .get('/v1/bookings/reference/ANG-2026-A1B2C3D4?token=secret-tracking-token');
             expect(noProof.status).toBe(404);
             expect(withEmail.status).toBe(404);
             expect(withToken.status).toBe(200);
@@ -315,7 +315,7 @@ describe('HTTP security guards', () => {
 
             const { signBookingAccessToken } = await import('../src/modules/identity/utils/token');
             const signed = await request(app)
-                .get('/api/bookings/reference/ANG-2026-A1B2C3D4')
+                .get('/v1/bookings/reference/ANG-2026-A1B2C3D4')
                 .query({ token: signBookingAccessToken('booking_1', 'ANG-2026-A1B2C3D4') });
             expect(signed.status).toBe(200);
         });
@@ -324,7 +324,7 @@ describe('HTTP security guards', () => {
             const request = (await import('supertest')).default;
             const { signBookingAccessToken } = await import('../src/modules/identity/utils/token');
             const res = await request(app)
-                .get('/api/bookings/staff')
+                .get('/v1/bookings/staff')
                 .set('Authorization', `Bearer ${signBookingAccessToken('booking_1', 'ANG-2026-A1B2C3D4')}`);
             expect(res.status).toBe(401);
         });
@@ -332,7 +332,7 @@ describe('HTTP security guards', () => {
         it('rejects malformed booking details without echoing parser internals', async () => {
             const request = (await import('supertest')).default;
             const res = await request(app)
-                .post('/api/bookings')
+                .post('/v1/bookings')
                 .field('email', 'guest@example.com')
                 .field('title', 'Broken details')
                 .field('details', '{ not-json');
@@ -352,7 +352,7 @@ describe('HTTP security guards', () => {
             }];
             const token = signAccessToken({ sub: 'emp_admin', role: 'ADMIN' });
             const res = await request(app)
-                .put('/api/admin/employees/emp_admin_target')
+                .put('/v1/admin/employees/emp_admin_target')
                 .set('Authorization', `Bearer ${token}`)
                 .send({ role: 'HR' });
             expect(res.status).toBe(403);
@@ -361,7 +361,7 @@ describe('HTTP security guards', () => {
 
             const superToken = signAccessToken({ sub: 'emp_super', role: 'SUPER_ADMIN' });
             const stripped = await request(app)
-                .put('/api/admin/employees/emp_admin_target')
+                .put('/v1/admin/employees/emp_admin_target')
                 .set('Authorization', `Bearer ${superToken}`)
                 .send({ firstName: 'Renamed', isSuperAdmin: true, passwordHash: 'pwned' });
             expect(stripped.status).toBe(200);
@@ -378,10 +378,10 @@ describe('HTTP security guards', () => {
             delete process.env.MPESA_CALLBACK_TOKEN;
             try {
                 const payhero = await request(app)
-                    .post('/api/payments/payhero/callback')
+                    .post('/v1/payments/payhero/callback')
                     .send({});
                 const mpesa = await request(app)
-                    .post('/api/payments/mpesa/callback')
+                    .post('/v1/payments/mpesa/callback')
                     .send({});
                 expect(payhero.status).toBe(503);
                 expect(mpesa.status).toBe(503);
@@ -397,14 +397,14 @@ describe('HTTP security guards', () => {
             process.env.PAYHERO_CALLBACK_TOKEN = 'correct-callback-secret';
             try {
                 const wrong = await request(app)
-                    .post('/api/payments/payhero/callback')
+                    .post('/v1/payments/payhero/callback')
                     .query({ token: 'wrong-secret' })
                     .send({});
                 const missing = await request(app)
-                    .post('/api/payments/payhero/callback')
+                    .post('/v1/payments/payhero/callback')
                     .send({});
                 const correct = await request(app)
-                    .post('/api/payments/payhero/callback')
+                    .post('/v1/payments/payhero/callback')
                     .query({ token: 'correct-callback-secret' })
                     .send({});
                 expect(wrong.status).toBe(403);

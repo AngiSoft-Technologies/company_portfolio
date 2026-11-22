@@ -3,7 +3,7 @@ import { useRef, useState, useCallback } from 'react';
 import { apiPost } from '@/lib/httpClient';
 
 /**
- * Submits a contact enquiry to POST /api/contact-enquiries (public, no auth).
+ * Submits a contact enquiry to POST /v1/contact-enquiries (public, no auth).
  *
  * The shared httpClient may reject on transport/non-2xx; we wrap it so this
  * hook NEVER throws and always returns/resolves a normalized result:

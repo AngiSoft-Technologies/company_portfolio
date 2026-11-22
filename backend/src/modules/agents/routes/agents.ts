@@ -10,7 +10,7 @@ import { runAgent } from '../services/agentRunner';
 import { getAgentRuntimeStatus, getWorkforceState } from '../services/agentStatus';
 
 /**
- * AI Workforce admin API — mounted at /api/admin/agents.
+ * AI Workforce admin API — mounted at /v1/admin/agents.
  *
  *   GET    /                 roster + latest run per agent
  *   GET    /runs             recent runs (optional ?agentKey=&limit=)

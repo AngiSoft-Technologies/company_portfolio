@@ -92,7 +92,7 @@ export function ClientProjectsManagement() {
       };
       if (editing) {
         // The client-projects router updates with PATCH, not PUT.
-        await apiFetch(`/api/client-projects/${encodeURIComponent(editing.id)}`, { method: 'PATCH', body: payload });
+        await apiFetch(`/v1/client-projects/${encodeURIComponent(editing.id)}`, { method: 'PATCH', body: payload });
       } else {
         // Client projects are derived from an accepted booking
         // (createClientProjectFromBooking) — there is no standalone POST.

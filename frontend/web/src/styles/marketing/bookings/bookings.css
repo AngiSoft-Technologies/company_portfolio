@@ -326,6 +326,63 @@
     margin: 0 0 12px;
 }
 
+/* ---------- Phase 7 deposit checkout ---------- */
+.booking-deposit-panel {
+    border: 1px solid var(--booking-border);
+    border-radius: var(--booking-radius);
+    padding: 20px;
+}
+.booking-deposit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.booking-deposit-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.booking-deposit-select,
+.booking-deposit-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--booking-border);
+    background: color-mix(in srgb, var(--card-bg) 10%, transparent);
+    color: var(--text-primary);
+    font: inherit;
+}
+.booking-deposit-note,
+.booking-deposit-status,
+.booking-deposit-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 6px 0 0;
+}
+.booking-deposit-note,
+.booking-deposit-status {
+    color: var(--text-secondary);
+}
+.booking-deposit-error {
+    color: var(--color-danger, var(--text-primary));
+}
+.booking-deposit-submit {
+    margin-top: 8px;
+}
+.booking-deposit-refresh {
+    margin-top: 10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 /* ---------- Actions ---------- */
 .booking-actions {
     display: flex;

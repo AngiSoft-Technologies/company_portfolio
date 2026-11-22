@@ -40,7 +40,7 @@ export function SurveysAdmin() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch('/api/surveys');
+      const data = await apiFetch('/v1/surveys');
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load surveys');
@@ -89,9 +89,9 @@ export function SurveysAdmin() {
           })),
       };
       if (editing) {
-        await apiFetch(`/api/surveys/${editing.id}`, { method: 'PUT', body: payload });
+        await apiFetch(`/v1/surveys/${editing.id}`, { method: 'PUT', body: payload });
       } else {
-        await apiFetch('/api/surveys', { method: 'POST', body: payload });
+        await apiFetch('/v1/surveys', { method: 'POST', body: payload });
       }
       setModalOpen(false);
       void load();
@@ -104,7 +104,7 @@ export function SurveysAdmin() {
 
   const setStatus = async (r: SurveyRow, status: string) => {
     try {
-      await apiFetch(`/api/surveys/${r.id}`, { method: 'PUT', body: { status } });
+      await apiFetch(`/v1/surveys/${r.id}`, { method: 'PUT', body: { status } });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Update failed');
@@ -114,7 +114,7 @@ export function SurveysAdmin() {
   const remove = async (r: SurveyRow) => {
     if (!window.confirm(`Delete "${r.title}"?`)) return;
     try {
-      await apiFetch(`/api/surveys/${r.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/surveys/${r.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -125,7 +125,7 @@ export function SurveysAdmin() {
     setResponsesFor(r);
     setResponses([]);
     try {
-      const data = await apiFetch(`/api/surveys/${r.id}/responses`);
+      const data = await apiFetch(`/v1/surveys/${r.id}/responses`);
       setResponses(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load responses');

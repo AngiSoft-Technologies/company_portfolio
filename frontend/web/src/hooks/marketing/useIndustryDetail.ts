@@ -4,7 +4,7 @@ import { apiGet } from '@/lib/httpClient';
 import { normalizeIndustries } from '@/lib/marketing/industries/industryHelpers';
 
 /**
- * Resolves a single industry by slug from the /api/site/industries payload.
+ * Resolves a single industry by slug from the /v1/site/industries payload.
  * The payload is a flat list, so we load the whole collection (cache-backed)
  * and pick the matching slug. Exposes loading/notFound/error states.
  */

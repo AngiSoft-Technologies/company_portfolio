@@ -94,7 +94,7 @@ export function ReportsAdmin() {
       setLoading(true);
       setError(null);
       try {
-        const json = (await apiFetch('/api/admin/reports/overview')) as ReportsOverview;
+        const json = (await apiFetch('/v1/admin/reports/overview')) as ReportsOverview;
         if (!cancelled) setData(json);
       } catch (e) {
         if (!cancelled) setError((e as Error).message || 'Failed to load reports');

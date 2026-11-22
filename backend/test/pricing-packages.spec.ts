@@ -95,7 +95,7 @@ beforeAll(async () => {
     const { default: pricingPackagesRouter } = await import('../src/modules/cms/routes/pricing-packages');
     app = express();
     app.use(express.json());
-    app.use('/api/pricing-packages', pricingPackagesRouter());
+    app.use('/v1/pricing-packages', pricingPackagesRouter());
     request = supertest;
 });
 
@@ -122,43 +122,43 @@ beforeEach(() => {
 
 describe('pricing-packages endpoints', () => {
     it('public list returns only published packages', async () => {
-        const res = await request(app).get('/api/pricing-packages');
+        const res = await request(app).get('/v1/pricing-packages');
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].slug).toBe('starter');
     });
 
     it('rejects unauthenticated admin list', async () => {
-        const res = await request(app).get('/api/pricing-packages/admin');
+        const res = await request(app).get('/v1/pricing-packages/admin');
         expect(res.status).toBe(401);
     });
 
     it('rejects admin list without services.manage_pricing', async () => {
-        const res = await request(app).get('/api/pricing-packages/admin').set(authed(MEMBER, 'STAFF'));
+        const res = await request(app).get('/v1/pricing-packages/admin').set(authed(MEMBER, 'STAFF'));
         expect(res.status).toBe(403);
     });
 
     it('admin list returns all packages including drafts', async () => {
-        const res = await request(app).get('/api/pricing-packages/admin').set(authed(ADMIN, 'ADMIN'));
+        const res = await request(app).get('/v1/pricing-packages/admin').set(authed(ADMIN, 'ADMIN'));
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(2);
     });
 
     it('creates a package and it appears publicly once published', async () => {
         const res = await request(app)
-            .post('/api/pricing-packages/admin')
+            .post('/v1/pricing-packages/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ name: 'Growth', slug: 'growth', price: 120000, published: true, features: ['SEO', 'Analytics'] });
         expect(res.status).toBe(201);
         expect(res.body.slug).toBe('growth');
 
-        const pub = await request(app).get('/api/pricing-packages');
+        const pub = await request(app).get('/v1/pricing-packages');
         expect(pub.body.map((p: any) => p.slug)).toContain('growth');
     });
 
     it('rejects invalid slug format', async () => {
         const res = await request(app)
-            .post('/api/pricing-packages/admin')
+            .post('/v1/pricing-packages/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ name: 'Bad', slug: 'Not A Slug!', price: 1 });
         expect(res.status).toBe(400);
@@ -166,18 +166,18 @@ describe('pricing-packages endpoints', () => {
 
     it('updates and deletes a package', async () => {
         const upd = await request(app)
-            .put('/api/pricing-packages/admin/pp_draft')
+            .put('/v1/pricing-packages/admin/pp_draft')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ published: true, price: 600000 });
         expect(upd.status).toBe(200);
         expect(Number(upd.body.price)).toBe(600000);
         expect(upd.body.published).toBe(true);
 
-        const pub = await request(app).get('/api/pricing-packages');
+        const pub = await request(app).get('/v1/pricing-packages');
         expect(pub.body.map((p: any) => p.slug)).toContain('enterprise');
 
         const del = await request(app)
-            .delete('/api/pricing-packages/admin/pp_draft')
+            .delete('/v1/pricing-packages/admin/pp_draft')
             .set(authed(ADMIN, 'ADMIN'));
         expect(del.status).toBe(200);
         expect(store.PricingPackage.find((p) => p.id === 'pp_draft')).toBeUndefined();

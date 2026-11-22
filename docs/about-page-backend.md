@@ -4,7 +4,7 @@
 > Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §6 (Content Coverage Ledger → About row).
 
 How the public **About Us** page is backed by PostgreSQL + Prisma, served over
-`GET /api/about-sections`, and edited from the admin CMS.
+`GET /v1/about-sections`, and edited from the admin CMS.
 
 > **Source of truth.** The frontend hook `frontend/src/hooks/useAboutPage.js` is
 > the canonical contract (`ABOUT_SECTION_KEYS`, `ABOUT_SCHEMA_VERSION`, and
@@ -69,11 +69,11 @@ CREATE INDEX "AboutSection_enabled_idx" ON "AboutSection"("enabled");
 
 ## 3. Endpoints
 
-Base path: `/api/about-sections` (mounted in `src/index.ts` via
+Base path: `/v1/about-sections` (mounted in `src/index.ts` via
 `aboutSectionsRouter()`).
 
 ### Public (no auth)
-`GET /api/about-sections`
+`GET /v1/about-sections`
 → `{ data: [ { id, key, enabled, sortOrder, content }, … ] }`
 (enabled rows only, ordered by `sortOrder` ascending).
 
@@ -81,7 +81,7 @@ Both an array and a `{ data: [...] }` shape are accepted by the frontend; this
 API returns the wrapped form.
 
 ### Admin (auth + RBAC — `ADMIN`, `MARKETING`, `CONTENT_CREATOR`)
-Mounted under `/api/about-sections/admin`:
+Mounted under `/v1/about-sections/admin`:
 
 | Method | Path              | Purpose                                  |
 |--------|-------------------|------------------------------------------|
@@ -123,14 +123,14 @@ uses the section rows, not that blob.
 `useAboutPage.js`:
 
 ```
-GET /api/about-sections  →  buildAboutFromSections(response)
+GET /v1/about-sections  →  buildAboutFromSections(response)
   → filter enabled && ABOUT_SECTION_KEYS.includes(key)
   → sort by sortOrder
   → about[key] = section.content
 ```
 
 `clientStats`, `clientHighlights`, and `testimonials` are likewise read from the
-same `AboutSection` source (testimonials via `/api/testimonials`).
+same `AboutSection` source (testimonials via `/v1/testimonials`).
 
 ## 6. Images / media
 

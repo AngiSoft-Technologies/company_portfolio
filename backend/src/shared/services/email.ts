@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getQueue } from '../../queue';
+import { getConfig } from './runtimeConfig';
 import { renderBrandedEmail, type EmailCta } from './emailTemplate';
 
 export {
@@ -25,50 +26,57 @@ export type { BrandedDocumentInput, BrandedEmailInput, EmailCta } from './emailT
 //   EMAIL_NOREPLY       = no-reply@angisoft.co.ke  (password resets, invites)
 //   EMAIL_UPDATES       = updates@angisoft.co.ke   (newsletter / subscriber updates)
 
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.zoho.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_SECURE = process.env.SMTP_SECURE !== 'false'; // default true for port 465
-
-// Zoho "from" addresses
-const EMAIL_FROM = process.env.EMAIL_FROM || 'info@angisoft.co.ke';
-const EMAIL_SUPPORT = process.env.EMAIL_SUPPORT || 'support@angisoft.co.ke';
-const EMAIL_NOREPLY = process.env.EMAIL_NOREPLY || 'no-reply@angisoft.co.ke';
-const EMAIL_UPDATES = process.env.EMAIL_UPDATES || 'updates@angisoft.co.ke';
-
-// Reusable transporter — single persistent connection pool
-const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-    pool: true,              // reuse connections
-    maxConnections: 5,       // Zoho allows up to 10 concurrent
-    maxMessages: 100,        // per connection before recycling
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 30_000,
-});
-
-// Verify SMTP connection on startup (non-blocking). Tests and CI must not
-// open a network connection just to import the app module graph.
-if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_SMTP_VERIFY !== '1') {
-    transporter.verify()
-        .then(() => console.log('📧 Zoho SMTP connection verified'))
-        .catch((err) => console.warn('⚠️  Zoho SMTP verification failed:', err.message));
+// SMTP settings are DB-backed so a SUPER_ADMIN can rotate them without a
+// redeploy. The transporter is rebuilt lazily whenever the settings change.
+function smtpConfig() {
+    const host = getConfig('SMTP_HOST', 'smtp.zoho.com');
+    const port = Number(getConfig('SMTP_PORT', '465'));
+    const user = getConfig('SMTP_USER');
+    const pass = getConfig('SMTP_PASS');
+    const secure = getConfig('SMTP_SECURE', 'true') !== 'false';
+    return { host, port, user, pass, secure };
 }
+
+let transporterCache: { key: string; value: nodemailer.Transporter } | null = null;
+
+function getTransporter(): nodemailer.Transporter {
+    const config = smtpConfig();
+    const key = JSON.stringify(config);
+    if (transporterCache?.key === key) return transporterCache.value;
+    const transporter = nodemailer.createTransport({
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        auth: config.user && config.pass ? { user: config.user, pass: config.pass } : undefined,
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 30_000,
+    });
+    transporterCache = { key, value: transporter };
+    // Non-blocking verification; tests and CI must not open a socket at import.
+    if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_SMTP_VERIFY !== '1') {
+        void transporter.verify()
+            .then(() => console.log('📧 Zoho SMTP connection verified'))
+            .catch((err) => console.warn('⚠️  Zoho SMTP verification failed:', err.message));
+    }
+    return transporter;
+}
+
+const fromAddress = (key: string, fallback: string) => getConfig(key, fallback);
 
 export type EmailPurpose = 'general' | 'support' | 'noreply' | 'updates';
 
 /** Resolve the "from" address by purpose */
 function resolveFrom(purpose: EmailPurpose = 'general'): string {
     switch (purpose) {
-        case 'support': return `"AngiSoft Support" <${EMAIL_SUPPORT}>`;
-        case 'noreply': return `"AngiSoft Technologies" <${EMAIL_NOREPLY}>`;
-        case 'updates': return `"AngiSoft Updates" <${EMAIL_UPDATES}>`;
+        case 'support': return `"AngiSoft Support" <${fromAddress('EMAIL_SUPPORT', 'support@angisoft.co.ke')}>`;
+        case 'noreply': return `"AngiSoft Technologies" <${fromAddress('EMAIL_NOREPLY', 'no-reply@angisoft.co.ke')}>`;
+        case 'updates': return `"AngiSoft Updates" <${fromAddress('EMAIL_UPDATES', 'updates@angisoft.co.ke')}>`;
         case 'general':
-        default:        return `"AngiSoft Technologies" <${EMAIL_FROM}>`;
+        default:        return `"AngiSoft Technologies" <${fromAddress('EMAIL_FROM', 'info@angisoft.co.ke')}>`;
     }
 }
 
@@ -138,7 +146,7 @@ export async function sendMailDirect(opts: MailOptions) {
             footerNote: opts.footerNote,
             unsubscribeUrl: opts.unsubscribeUrl,
         });
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
         from,
         to: opts.to,
         subject: opts.subject,

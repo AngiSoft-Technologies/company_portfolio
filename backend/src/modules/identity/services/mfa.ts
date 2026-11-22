@@ -1,3 +1,4 @@
+import { getConfig } from '../../../shared/services/runtimeConfig';
 import crypto from 'crypto';
 import prisma from '../../../db';
 import { newId, ts, tsMs } from '../../../prisma/db';
@@ -56,13 +57,13 @@ function otpMessage(code: string): string {
 }
 
 async function sendSms(to: string, text: string): Promise<boolean> {
-  const url = process.env.SMS_GATEWAY_URL;
+  const url = getConfig('SMS_GATEWAY_URL');
   if (!url) return false;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(process.env.SMS_GATEWAY_TOKEN ? { Authorization: `Bearer ${process.env.SMS_GATEWAY_TOKEN}` } : {}),
+      ...(getConfig('SMS_GATEWAY_TOKEN') ? { Authorization: `Bearer ${getConfig('SMS_GATEWAY_TOKEN')}` } : {}),
     },
     body: JSON.stringify({ to: normalizePhone(to), message: text, text }),
     signal: AbortSignal.timeout(10_000),
@@ -72,14 +73,14 @@ async function sendSms(to: string, text: string): Promise<boolean> {
 }
 
 async function sendWhatsapp(to: string, code: string): Promise<boolean> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = (getConfig('WHATSAPP_ACCESS_TOKEN') || getConfig('WHATSAPP_ACCESS_TOKENS'));
+  const phoneId = getConfig('WHATSAPP_PHONE_NUMBER_ID');
   const destination = normalizePhone(to);
 
   if (token && phoneId) {
-    const version = process.env.WHATSAPP_API_VERSION || 'v21.0';
-    const templateName = process.env.WHATSAPP_OTP_TEMPLATE_NAME;
-    const language = process.env.WHATSAPP_OTP_TEMPLATE_LANGUAGE || 'en';
+    const version = getConfig('WHATSAPP_API_VERSION', 'v23.0');
+    const templateName = getConfig('WHATSAPP_OTP_TEMPLATE_NAME');
+    const language = getConfig('WHATSAPP_OTP_TEMPLATE_LANGUAGE', 'en');
     const body = templateName
       ? {
           messaging_product: 'whatsapp',
@@ -109,13 +110,13 @@ async function sendWhatsapp(to: string, code: string): Promise<boolean> {
 
   // Generic gateway fallback: same endpoint as SMS, tagged with a channel so
   // providers that support both can route accordingly.
-  const url = process.env.SMS_GATEWAY_URL;
+  const url = getConfig('SMS_GATEWAY_URL');
   if (!url) return false;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(process.env.SMS_GATEWAY_TOKEN ? { Authorization: `Bearer ${process.env.SMS_GATEWAY_TOKEN}` } : {}),
+      ...(getConfig('SMS_GATEWAY_TOKEN') ? { Authorization: `Bearer ${getConfig('SMS_GATEWAY_TOKEN')}` } : {}),
     },
     body: JSON.stringify({ to: destination, message: otpMessage(code), text: otpMessage(code), channel: 'whatsapp' }),
     signal: AbortSignal.timeout(10_000),
@@ -148,11 +149,11 @@ export function availableFactors(employee: EmployeeLike): Array<{ type: MfaType;
     { type: 'TOTP', label: 'Authenticator app', available: true },
     { type: 'PASSKEY', label: 'Passkey / biometrics', available: true },
     { type: 'EMAIL', label: `Email (${employee.email})`, available: true },
-    { type: 'SMS', label: employee.phone ? `SMS (${employee.phone})` : 'SMS (no phone on file)', available: !!employee.phone && !!process.env.SMS_GATEWAY_URL },
+    { type: 'SMS', label: employee.phone ? `SMS (${employee.phone})` : 'SMS (no phone on file)', available: !!employee.phone && !!getConfig('SMS_GATEWAY_URL') },
     {
       type: 'WHATSAPP',
       label: employee.phone ? `WhatsApp (${employee.phone})` : 'WhatsApp (no phone on file)',
-      available: !!employee.phone && !!(process.env.WHATSAPP_ACCESS_TOKEN || process.env.SMS_GATEWAY_URL),
+      available: !!employee.phone && !!(getConfig('WHATSAPP_ACCESS_TOKEN') || getConfig('WHATSAPP_ACCESS_TOKENS') || getConfig('SMS_GATEWAY_URL')),
     },
     { type: 'BACKUP', label: 'Backup code', available: employee.twoFactorEnabled },
   ];

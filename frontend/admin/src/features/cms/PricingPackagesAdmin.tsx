@@ -51,8 +51,8 @@ export function PricingPackagesAdmin() {
     setError(null);
     try {
       const [pkgs, svcs] = await Promise.all([
-        apiFetch('/api/pricing-packages/admin'),
-        apiFetch('/api/services'),
+        apiFetch('/v1/pricing-packages/admin'),
+        apiFetch('/v1/services'),
       ]);
       setRows(Array.isArray(pkgs) ? pkgs : []);
       setServices(Array.isArray(svcs) ? svcs : []);
@@ -102,9 +102,9 @@ export function PricingPackagesAdmin() {
         sortOrder: Number(form.sortOrder) || 0,
       };
       if (editing) {
-        await apiFetch(`/api/pricing-packages/admin/${editing.id}`, { method: 'PUT', body });
+        await apiFetch(`/v1/pricing-packages/admin/${editing.id}`, { method: 'PUT', body });
       } else {
-        await apiFetch('/api/pricing-packages/admin', { method: 'POST', body });
+        await apiFetch('/v1/pricing-packages/admin', { method: 'POST', body });
       }
       setModalOpen(false);
       void load();
@@ -119,7 +119,7 @@ export function PricingPackagesAdmin() {
     if (!window.confirm(`Delete pricing package "${r.name}"?`)) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/pricing-packages/admin/${r.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/pricing-packages/admin/${r.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -135,7 +135,7 @@ export function PricingPackagesAdmin() {
     <div className="space-y-4">
       <PageHeader
         title="Pricing Packages"
-        subtitle="Structured pricing tiers/packages. Published packages are served at GET /api/pricing-packages."
+        subtitle="Structured pricing tiers/packages. Published packages are served at GET /v1/pricing-packages."
         actions={<Button onClick={openCreate}>New package</Button>}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}

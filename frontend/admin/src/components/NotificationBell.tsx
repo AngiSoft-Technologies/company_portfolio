@@ -28,7 +28,7 @@ export function NotificationBell() {
 
   const load = useCallback(async () => {
     try {
-      const json = (await apiFetch('/api/notifications')) as NotificationsResponse;
+      const json = (await apiFetch('/v1/notifications')) as NotificationsResponse;
       setItems(json.notifications ?? []);
       setUnread(json.unreadCount ?? 0);
     } catch {
@@ -53,7 +53,7 @@ export function NotificationBell() {
 
   const markAll = async () => {
     try {
-      await apiFetch('/api/notifications/mark-read', { method: 'POST', body: {} });
+      await apiFetch('/v1/notifications/mark-read', { method: 'POST', body: {} });
       setUnread(0);
       setItems((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch {

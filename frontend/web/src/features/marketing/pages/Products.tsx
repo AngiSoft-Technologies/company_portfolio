@@ -11,7 +11,7 @@ import '@/styles/marketing/product/product-list.css';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
 // Data-driven product listing. Mirrors the Product Detail architecture:
-// content is derived entirely from GET /api/products (normalized by
+// content is derived entirely from GET /v1/products (normalized by
 // useProducts). No hardcoded marketing copy.
 const Products = () => {
     const { mode } = useTheme();

@@ -30,10 +30,10 @@ export function StaffDashboard() {
         };
 
         const [projects, bookings, posts, leads] = await Promise.all([
-          loadSlice('/api/staff-dashboard/projects'),
-          loadSlice('/api/staff-dashboard/bookings'),
-          loadSlice('/api/staff-dashboard/posts'),
-          loadSlice('/api/leads'),
+          loadSlice('/v1/staff-dashboard/projects'),
+          loadSlice('/v1/staff-dashboard/bookings'),
+          loadSlice('/v1/staff-dashboard/posts'),
+          loadSlice('/v1/leads'),
         ]);
 
         if (!cancelled) {

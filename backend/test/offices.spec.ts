@@ -94,7 +94,7 @@ beforeAll(async () => {
     const { default: officesRouter } = await import('../src/modules/cms/routes/offices');
     app = express();
     app.use(express.json());
-    app.use('/api/offices', officesRouter());
+    app.use('/v1/offices', officesRouter());
     request = supertest;
 });
 
@@ -120,49 +120,49 @@ beforeEach(() => {
 
 describe('offices endpoints', () => {
     it('public list returns only published offices', async () => {
-        const res = await request(app).get('/api/offices');
+        const res = await request(app).get('/v1/offices');
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].slug).toBe('nairobi-hq');
     });
 
     it('rejects unauthenticated admin list', async () => {
-        const res = await request(app).get('/api/offices/admin');
+        const res = await request(app).get('/v1/offices/admin');
         expect(res.status).toBe(401);
     });
 
     it('rejects admin list without pages.update_contact', async () => {
-        const res = await request(app).get('/api/offices/admin').set(authed(MEMBER, 'STAFF'));
+        const res = await request(app).get('/v1/offices/admin').set(authed(MEMBER, 'STAFF'));
         expect(res.status).toBe(403);
     });
 
     it('admin list returns all offices including drafts', async () => {
-        const res = await request(app).get('/api/offices/admin').set(authed(ADMIN, 'ADMIN'));
+        const res = await request(app).get('/v1/offices/admin').set(authed(ADMIN, 'ADMIN'));
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(2);
     });
 
     it('creates an office and it appears publicly once published', async () => {
         const res = await request(app)
-            .post('/api/offices/admin')
+            .post('/v1/offices/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ name: 'Kisumu', slug: 'kisumu', city: 'Kisumu', published: true, hours: [{ days: 'Mon-Fri', hours: '8:00-16:00' }] });
         expect(res.status).toBe(201);
         expect(res.body.slug).toBe('kisumu');
 
-        const pub = await request(app).get('/api/offices');
+        const pub = await request(app).get('/v1/offices');
         expect(pub.body.map((o: any) => o.slug)).toContain('kisumu');
     });
 
     it('rejects invalid slug format and bad map URL', async () => {
         const badSlug = await request(app)
-            .post('/api/offices/admin')
+            .post('/v1/offices/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ name: 'Bad', slug: 'Not A Slug!' });
         expect(badSlug.status).toBe(400);
 
         const badMap = await request(app)
-            .post('/api/offices/admin')
+            .post('/v1/offices/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ name: 'Bad Map', slug: 'bad-map', mapUrl: 'not-a-url' });
         expect(badMap.status).toBe(400);
@@ -170,18 +170,18 @@ describe('offices endpoints', () => {
 
     it('updates and deletes an office', async () => {
         const upd = await request(app)
-            .put('/api/offices/admin/of_draft')
+            .put('/v1/offices/admin/of_draft')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ published: true, city: 'Kilifi' });
         expect(upd.status).toBe(200);
         expect(upd.body.published).toBe(true);
         expect(upd.body.city).toBe('Kilifi');
 
-        const pub = await request(app).get('/api/offices');
+        const pub = await request(app).get('/v1/offices');
         expect(pub.body.map((o: any) => o.slug)).toContain('mombasa');
 
         const del = await request(app)
-            .delete('/api/offices/admin/of_draft')
+            .delete('/v1/offices/admin/of_draft')
             .set(authed(ADMIN, 'ADMIN'));
         expect(del.status).toBe(200);
         expect(store.Office.find((o) => o.id === 'of_draft')).toBeUndefined();

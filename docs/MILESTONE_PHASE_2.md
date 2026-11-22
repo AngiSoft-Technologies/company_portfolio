@@ -90,10 +90,10 @@ updateSchema = createSchema.partial()
 ```
 
 **API Endpoints Ready**:
-- `POST /api/services` - Create with category
-- `GET /api/services` - Query by category
-- `PUT /api/services/:id` - Update including category
-- `DELETE /api/services/:id` - Delete service
+- `POST /v1/services` - Create with category
+- `GET /v1/services` - Query by category
+- `PUT /v1/services/:id` - Update including category
+- `DELETE /v1/services/:id` - Delete service
 
 ---
 

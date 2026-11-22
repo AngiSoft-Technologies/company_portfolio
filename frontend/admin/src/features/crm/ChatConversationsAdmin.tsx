@@ -21,7 +21,7 @@ export function ChatConversationsAdmin() {
     setLoading(true);
     setError(null);
     try {
-      const arr = toArr(await apiFetch('/api/support-tickets'));
+      const arr = toArr(await apiFetch('/v1/support-tickets'));
       setRows(arr.map((r) => ({ ...r, id: rowId(r) })));
     } catch (e) {
       setError((e as Error).message || 'Failed to load support tickets');
@@ -39,7 +39,7 @@ export function ChatConversationsAdmin() {
     setBusyId(row.id);
     setError(null);
     try {
-      await apiFetch(`/api/support-tickets/${encodeURIComponent(row.id)}`, { method: 'PUT', body: { status } });
+      await apiFetch(`/v1/support-tickets/${encodeURIComponent(row.id)}`, { method: 'PUT', body: { status } });
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
     } catch (e) {
       setError((e as Error).message || 'Failed to update ticket');
@@ -52,7 +52,7 @@ export function ChatConversationsAdmin() {
     setBusyId(row.id);
     setError(null);
     try {
-      await apiFetch(`/api/support-tickets/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
+      await apiFetch(`/v1/support-tickets/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
       await load();
     } catch (e) {
       setError((e as Error).message || 'Failed to delete ticket');

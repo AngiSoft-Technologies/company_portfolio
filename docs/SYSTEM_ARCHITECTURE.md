@@ -12,13 +12,13 @@
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │ 1. SYSTEM ADMIN PORTAL (admin.angisoft.co.ke)                        │  │
-│  │    ✓ Company Services CRUD         → /api/services (POST/PUT/DELETE) │  │
-│  │    ✓ Company Projects CRUD         → /api/projects (POST/PUT/DELETE) │  │
-│  │    ✓ Blog Posts CRUD               → /api/blogs (POST/PUT/DELETE)    │  │
-│  │    ✓ Testimonials CRUD             → /api/testimonials (...)         │  │
-│  │    ✓ Site Settings Management      → /api/settings (...)            │  │
-│  │    ✓ View Bookings & Payments      → /api/admin/bookings            │  │
-│  │    ✓ Dashboard & Analytics         → /api/admin/dashboard/stats      │  │
+│  │    ✓ Company Services CRUD         → /v1/services (POST/PUT/DELETE) │  │
+│  │    ✓ Company Projects CRUD         → /v1/projects (POST/PUT/DELETE) │  │
+│  │    ✓ Blog Posts CRUD               → /v1/blogs (POST/PUT/DELETE)    │  │
+│  │    ✓ Testimonials CRUD             → /v1/testimonials (...)         │  │
+│  │    ✓ Site Settings Management      → /v1/settings (...)            │  │
+│  │    ✓ View Bookings & Payments      → /v1/admin/bookings            │  │
+│  │    ✓ Dashboard & Analytics         → /v1/admin/dashboard/stats      │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                              ↓                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
@@ -33,26 +33,26 @@
 │                              ↓                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │ 2. PUBLIC FRONTEND (angisoft.co.ke)                                  │  │
-│  │    ✓ Services Section     → Fetches /api/services (published only)   │  │
-│  │    ✓ Projects Section     → Fetches /api/projects (published only)   │  │
-│  │    ✓ Blog Section         → Fetches /api/blogs (published only)      │  │
-│  │    ✓ Staff Section        → Fetches /api/staff (active employees)    │  │
-│  │    ✓ Testimonials Section → Fetches /api/testimonials (confirmed)    │  │
-│  │    ✓ About Section        → Static content (from /api/settings)      │  │
+│  │    ✓ Services Section     → Fetches /v1/services (published only)   │  │
+│  │    ✓ Projects Section     → Fetches /v1/projects (published only)   │  │
+│  │    ✓ Blog Section         → Fetches /v1/blogs (published only)      │  │
+│  │    ✓ Staff Section        → Fetches /v1/staff (active employees)    │  │
+│  │    ✓ Testimonials Section → Fetches /v1/testimonials (confirmed)    │  │
+│  │    ✓ About Section        → Static content (from /v1/settings)      │  │
 │  │    ✓ Booking Section      → Form with file upload & payment          │  │
 │  │    ✓ Contact Section      → Contact form → saves to bookings         │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │ 3. STAFF PORTAL (staff.angisoft.co.ke or /staff route)               │  │
-│  │    ✓ Employee Login        → /api/auth/login (staff credentials)    │  │
+│  │    ✓ Employee Login        → /v1/auth/login (staff credentials)    │  │
 │  │    ✓ Dashboard             → View own profile & portfolio stats      │  │
-│  │    ✓ Edit Profile/Bio      → PATCH /api/staff/{id}                  │  │
-│  │    ✓ Education History     → POST/PUT/DELETE /api/education         │  │
-│  │    ✓ Work Experience       → POST/PUT/DELETE /api/experience        │  │
-│  │    ✓ Skills               → POST/PUT/DELETE /api/skills             │  │
-│  │    ✓ View Assigned Bookings → /api/admin/bookings?assigned=me       │  │
-│  │    ✓ Update Booking Status → PUT /api/admin/bookings/{id}/review    │  │
+│  │    ✓ Edit Profile/Bio      → PATCH /v1/staff/{id}                  │  │
+│  │    ✓ Education History     → POST/PUT/DELETE /v1/education         │  │
+│  │    ✓ Work Experience       → POST/PUT/DELETE /v1/experience        │  │
+│  │    ✓ Skills               → POST/PUT/DELETE /v1/skills             │  │
+│  │    ✓ View Assigned Bookings → /v1/admin/bookings?assigned=me       │  │
+│  │    ✓ Update Booking Status → PUT /v1/admin/bookings/{id}/review    │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                              ↓                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
@@ -67,13 +67,13 @@
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │ 4. CLIENT INTERACTIONS (angisoft.co.ke)                              │  │
-│  │    ✓ Browse Services      → GET /api/services (published: true)      │  │
-│  │    ✓ View Projects        → GET /api/projects (published: true)      │  │
-│  │    ✓ Read Blog            → GET /api/blogs (published: true)         │  │
-│  │    ✓ Book Service         → POST /api/bookings (multipart + files)   │  │
-│  │    ✓ Payment              → Stripe/PayPal/M-Pesa via /api/payments   │  │
-│  │    ✓ Track Booking        → GET /api/bookings/{id}                   │  │
-│  │    ✓ Submit Contact Form  → POST /api/contact or /api/bookings      │  │
+│  │    ✓ Browse Services      → GET /v1/services (published: true)      │  │
+│  │    ✓ View Projects        → GET /v1/projects (published: true)      │  │
+│  │    ✓ Read Blog            → GET /v1/blogs (published: true)         │  │
+│  │    ✓ Book Service         → POST /v1/bookings (multipart + files)   │  │
+│  │    ✓ Payment              → Stripe/PayPal/M-Pesa via /v1/payments   │  │
+│  │    ✓ Track Booking        → GET /v1/bookings/{id}                   │  │
+│  │    ✓ Submit Contact Form  → POST /v1/contact or /v1/bookings      │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -88,11 +88,11 @@
 System Admin → /admin/services → BlogAdmin.jsx
   └─ Fill form (title, description, price, images)
      └─ Click "Create"
-        └─ POST /api/services { title, description, ...}
+        └─ POST /v1/services { title, description, ...}
            └─ Backend: prisma.service.create()
               └─ Database: INSERT INTO Service
                  └─ Response: { id, title, ... }
-                    └─ Frontend: fetch /api/services again
+                    └─ Frontend: fetch /v1/services again
                        └─ Display in table immediately
                           └─ User sees: "Service created successfully"
 ```
@@ -102,7 +102,7 @@ System Admin → /admin/services → BlogAdmin.jsx
 Public User → angisoft.co.ke → Home.jsx
   └─ Page loads
      └─ Services section calls useEffect()
-        └─ Fetches GET /api/services
+        └─ Fetches GET /v1/services
            └─ Backend filters: where { published: true }
               └─ Returns only published services
                  └─ Frontend renders in ServiceCard components
@@ -116,7 +116,7 @@ Developer Employee → /admin/staff-dashboard or /staff
      └─ Dashboard shows: Name, Bio, Avatar, Education, Experience, Skills
         └─ Click "Edit Education"
            └─ educationAdmin.jsx opens form
-              └─ POST /api/education { school, degree, dates, ... }
+              └─ POST /v1/education { school, degree, dates, ... }
                  └─ Backend: prisma.education.create({ employeeId, ... })
                     └─ Database: INSERT INTO Education
                        └─ Response: { id, school, ... }
@@ -131,7 +131,7 @@ Client → /book → Select Service & Pay
   └─ Enter payment info
      └─ Frontend: Stripe.confirmPayment()
         └─ Stripe: Process payment
-           └─ Stripe webhook → POST /api/payments/webhook
+           └─ Stripe webhook → POST /v1/payments/webhook
               └─ Backend: Verify signature
                  └─ prisma.payment.update({ status: 'SUCCEEDED' })
                     └─ prisma.booking.update({ depositPaidAt: now() })
@@ -149,16 +149,16 @@ Client → /book → Select Service & Pay
 | Component | Status | Path |
 |-----------|--------|------|
 | **Backend** | |
-| Services CRUD | ✅ Ready | /api/services |
-| Projects CRUD | ✅ Ready | /api/projects |
-| Blogs CRUD | ✅ Ready | /api/blogs |
-| Testimonials CRUD | ✅ Ready | /api/testimonials |
-| Admin Routes | ✅ Ready | /api/admin/* |
-| Staff Routes | ✅ Ready | /api/staff |
-| Settings | ✅ Ready | /api/settings |
-| Auth | ✅ Ready | /api/auth |
-| Bookings | ✅ Ready | /api/bookings |
-| Payments | ✅ Ready | /api/payments |
+| Services CRUD | ✅ Ready | /v1/services |
+| Projects CRUD | ✅ Ready | /v1/projects |
+| Blogs CRUD | ✅ Ready | /v1/blogs |
+| Testimonials CRUD | ✅ Ready | /v1/testimonials |
+| Admin Routes | ✅ Ready | /v1/admin/* |
+| Staff Routes | ✅ Ready | /v1/staff |
+| Settings | ✅ Ready | /v1/settings |
+| Auth | ✅ Ready | /v1/auth |
+| Bookings | ✅ Ready | /v1/bookings |
+| Payments | ✅ Ready | /v1/payments |
 | **Frontend** | |
 | AdminLayout | ✅ Done | /admin/* |
 | EnhancedAdminDashboard | ✅ Done | /admin |
@@ -183,7 +183,7 @@ Client → /book → Select Service & Pay
 | Item | Action Required |
 |------|-----------------|
 | Full Integration Test | Need to verify end-to-end flow |
-| Contact Messages Endpoint | Need GET /api/admin/contact-messages |
+| Contact Messages Endpoint | Need GET /v1/admin/contact-messages |
 | CORS Configuration | Update for admin.angisoft.co.ke domain |
 | Deployment | Setup separate domains |
 | Image Uploads in Admin | Add file picker to admin forms |
@@ -213,7 +213,7 @@ Client → /book → Select Service & Pay
 1. Go to http://localhost:5174/ (homepage)
 2. Scroll to Blog section
 3. Check: New blog post appears
-4. Console: Verify GET /api/blogs returns the post
+4. Console: Verify GET /v1/blogs returns the post
 5. Click "Read More" → should navigate to post details
 ```
 
@@ -246,33 +246,33 @@ Client → /book → Select Service & Pay
 ## 📍 Key Endpoints Reference
 
 ### Public (No Auth)
-- `GET /api/services` → Published services
-- `GET /api/projects` → Published projects
-- `GET /api/blogs` → Published blog posts
-- `GET /api/testimonials` → Confirmed testimonials
-- `GET /api/staff` → Active employees
-- `GET /api/settings` → Site settings
+- `GET /v1/services` → Published services
+- `GET /v1/projects` → Published projects
+- `GET /v1/blogs` → Published blog posts
+- `GET /v1/testimonials` → Confirmed testimonials
+- `GET /v1/staff` → Active employees
+- `GET /v1/settings` → Site settings
 
 ### Auth Required
-- `POST /api/bookings` → Create booking (files)
-- `GET /api/bookings/{id}` → Check booking status
-- `POST /api/payments` → Process payment
+- `POST /v1/bookings` → Create booking (files)
+- `GET /v1/bookings/{id}` → Check booking status
+- `POST /v1/payments` → Process payment
 
 ### Admin Only
-- `GET /api/admin/dashboard/stats` → Dashboard data
-- `GET /api/admin/bookings` → All bookings
-- `PUT /api/admin/bookings/{id}/review` → Approve/reject
-- `GET /api/admin/employees` → Staff management
-- `POST /api/services` → Create service (admin)
-- `PUT /api/services/{id}` → Update service (admin)
-- `DELETE /api/services/{id}` → Delete service (admin)
+- `GET /v1/admin/dashboard/stats` → Dashboard data
+- `GET /v1/admin/bookings` → All bookings
+- `PUT /v1/admin/bookings/{id}/review` → Approve/reject
+- `GET /v1/admin/employees` → Staff management
+- `POST /v1/services` → Create service (admin)
+- `PUT /v1/services/{id}` → Update service (admin)
+- `DELETE /v1/services/{id}` → Delete service (admin)
 
 ### Staff (Self)
-- `GET /api/staff/{id}` → Own profile
-- `PATCH /api/staff/{id}` → Update profile
-- `POST /api/education` → Add education
-- `POST /api/experience` → Add experience
-- `POST /api/skills` → Add skill
+- `GET /v1/staff/{id}` → Own profile
+- `PATCH /v1/staff/{id}` → Update profile
+- `POST /v1/education` → Add education
+- `POST /v1/experience` → Add experience
+- `POST /v1/skills` → Add skill
 
 ---
 

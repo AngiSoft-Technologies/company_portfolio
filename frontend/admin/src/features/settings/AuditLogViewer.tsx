@@ -40,7 +40,7 @@ export function AuditLogViewer() {
       if (entity.trim()) params.set('entity', entity.trim());
       if (action.trim()) params.set('action', action.trim());
       if (actorId.trim()) params.set('actorId', actorId.trim());
-      const json = (await apiFetch(`/api/admin/audit-logs?${params}`)) as AuditLogsResponse;
+      const json = (await apiFetch(`/v1/admin/audit-logs?${params}`)) as AuditLogsResponse;
       setData(json);
       setPage(json.page);
     } catch (e) {

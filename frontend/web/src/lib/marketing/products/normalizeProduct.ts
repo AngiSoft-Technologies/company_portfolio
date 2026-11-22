@@ -55,7 +55,7 @@ function truncate(text, max) {
 }
 
 /**
- * @param {object} raw - raw Product record from /api/products or /api/products/:slug
+ * @param {object} raw - raw Product record from /v1/products or /v1/products/:slug
  * @returns {object|null} normalized product
  */
 export function normalizeProduct(raw = {}) {

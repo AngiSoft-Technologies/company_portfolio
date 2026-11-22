@@ -116,7 +116,7 @@ const CareBot = () => {
     if (!deviceFingerprint && !conversationId && !visitorInfo.email) return;
     historyLoadedRef.current = true;
     try {
-      const data = await apiPost('/api/chatbot/history', {
+      const data = await apiPost('/v1/chatbot/history', {
         conversationId: conversationId || undefined,
         deviceFingerprint: deviceFingerprint || undefined,
         visitorName: visitorInfo.name || undefined,
@@ -163,7 +163,7 @@ const CareBot = () => {
     }
 
     try {
-      const data = await apiPost('/api/chatbot/chat', {
+      const data = await apiPost('/v1/chatbot/chat', {
         conversationId: conversationId || undefined,
         visitorName: visitorInfo.name || undefined,
         visitorEmail: visitorInfo.email || undefined,

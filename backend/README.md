@@ -99,17 +99,17 @@ Config comes from `backend/.env` (no `.env.example` template). Key variables:
 
 ## API Endpoints
 
-The server exposes REST endpoints under `/api/`:
+The server exposes REST endpoints under `/v1/`:
 
-- `/api/auth` — Login, register, 2FA, password reset
-- `/api/services` — Public service listings
-- `/api/projects` — Portfolio projects
-- `/api/blog` — Blog posts (draft/published)
-- `/api/staff` — Staff profiles
-- `/api/testimonials` — Client testimonials
-- `/api/contact` — Contact form submissions
-- `/api/checkout` — Stripe payment sessions
-- `/api/admin/*` — Admin CMS endpoints (role-protected)
+- `/v1/auth` — Login, register, 2FA, password reset
+- `/v1/services` — Public service listings
+- `/v1/projects` — Portfolio projects
+- `/v1/blog` — Blog posts (draft/published)
+- `/v1/staff` — Staff profiles
+- `/v1/testimonials` — Client testimonials
+- `/v1/contact` — Contact form submissions
+- `/v1/checkout` — Stripe payment sessions
+- `/v1/admin/*` — Admin CMS endpoints (role-protected)
 
 Health check: `GET /health`
 

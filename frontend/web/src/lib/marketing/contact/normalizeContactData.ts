@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Safely normalize the /api/site/contact response into a stable shape.
+// Safely normalize the /v1/site/contact response into a stable shape.
 // The backend Setting value may be missing/partial — never fabricate
 // operational details (office hours, response times). Use verified fallbacks.
 

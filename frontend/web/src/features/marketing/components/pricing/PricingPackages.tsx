@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Structured pricing packages (PricingPackage records via /api/pricing-packages).
+// Structured pricing packages (PricingPackage records via /v1/pricing-packages).
 const PERIOD_LABELS = {
     one_time: 'one-time',
     monthly: '/ month',

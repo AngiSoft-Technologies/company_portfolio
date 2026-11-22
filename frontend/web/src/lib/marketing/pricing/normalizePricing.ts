@@ -2,10 +2,10 @@
 // Normalizes the Pricing page data sources into a flat, UI-ready shape.
 //
 // Two real backend sources feed the page:
-//   1. /api/site/pricing  -> a `Setting` (site_pricing) with rich editorial
+//   1. /v1/site/pricing  -> a `Setting` (site_pricing) with rich editorial
 //      content: badge, title, subtitle, intro, pricingFactors[], estimatedRanges[],
 //      engagementModels[], process[], faq[], cta.
-//   2. /api/services      -> normalized Service records (each with priceFrom,
+//   2. /v1/services      -> normalized Service records (each with priceFrom,
 //      currency, scope, features[], pricingType, pricingFactors[], etc.).
 //
 // Nothing is invented here. Every field rendered by the UI comes from one of
@@ -102,7 +102,7 @@ export function withPricing(service) {
     };
 }
 
-/** Normalize one PricingPackage row from /api/pricing-packages. */
+/** Normalize one PricingPackage row from /v1/pricing-packages. */
 function normalizePackage(raw) {
     if (!raw || typeof raw !== 'object') return null;
     const price = raw.price != null ? Number(raw.price) : null;

@@ -55,7 +55,7 @@ Legend:
   component renders above a sibling data section).
 - `clientStats`, `clientHighlights` are genuine `AboutSection` rows passed to
   `AboutClientsSlider` — not separate endpoints.
-- `testimonials` is read from `/api/testimonials` (its own model) and merged in
+- `testimonials` is read from `/v1/testimonials` (its own model) and merged in
   by the hook; it is **not** an `AboutSection` row.
 - `heroSlides` + `intro` both feed `AboutHeroSlider`.
 - Repeated/relational content (industries, services, clients, technologies,

@@ -1,4 +1,4 @@
-/** Row shapes returned by /api/opportunities, /api/quotes, /api/invoices.
+/** Row shapes returned by /v1/opportunities, /v1/quotes, /v1/invoices.
  * Money fields are Prisma Numeric(18,2) — serialized as decimal strings. */
 
 export interface MoneyLineItem {

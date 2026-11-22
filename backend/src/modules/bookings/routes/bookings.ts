@@ -11,11 +11,20 @@ import { logAudit } from '../../../shared/services/audit';
 import { generatePublicReference, generateTrackingToken } from '../../../modules/bookings/services/bookingReference';
 import { logBookingEvent, BOOKING_EVENT_TYPES, EVENT_VISIBILITY } from '../../../modules/bookings/services/bookingEvents';
 import { toMoney } from '../../billing/utils/money';
+import {
+    generateReference,
+    initializePayment,
+    isProviderConfigured,
+    PaymentProviderError,
+    withScopeLock,
+    type ProviderId,
+} from '../../billing/services/payments';
+import { paypalSettlementCurrency } from '../../billing/services/payments/paypalService';
+import { resolvePaymentMethod } from '../../billing/services/payments/methods';
 import { createNotification } from '../../notifications/services/notifications';
 import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 import { sendMail } from '../../../shared/services/email';
 import { signBookingAccessToken, verifyBookingAccessToken } from '../../identity/utils/token';
-// stripe types may not be available until dependency is installed; keep runtime require below
 
 const BOOKING_UPLOAD_MIME_TYPES = new Set([
     'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -33,15 +42,6 @@ const upload = multer({
 const bookingUpload = (req: any, res: any, next: any) =>
     upload.array('files', 5)(req, res, (err: any) =>
         err ? res.status(400).json({ error: 'Upload failed' }) : next());
-
-const stripeSecret = process.env.STRIPE_SECRET || '';
-let stripe: any = null;
-if (stripeSecret) {
-    // require at runtime so CI/dev can install stripe when needed
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Stripe = require('stripe');
-    stripe = new Stripe(stripeSecret, { apiVersion: '2024-11-15' });
-}
 
 // ─── Allowed booking source values (validated server-side) ─────
 export const SOURCE_VALUES = [
@@ -296,6 +296,67 @@ function parseBookingDetails(raw: unknown): Record<string, unknown> | null {
     return value as Record<string, unknown>;
 }
 
+interface BookingDeposit {
+    amount: number;
+    currency: string;
+}
+
+/** Store the server-validated deposit amount with the booking, not in the browser. */
+function withBookingDeposit(
+    details: Record<string, unknown> | null,
+    deposit: BookingDeposit | null,
+): Record<string, unknown> | null {
+    if (!deposit) return details;
+    const { phase7Deposit: _ignored, ...rest } = details ?? {};
+    return {
+        ...rest,
+        phase7Deposit: { amount: deposit.amount, currency: deposit.currency, required: true },
+    };
+}
+
+/** Read the deposit amount back from the booking before initiating any charge. */
+function readBookingDeposit(booking: { details?: unknown; currency?: string | null }): BookingDeposit | null {
+    let raw = booking.details;
+    if (typeof raw === 'string') {
+        try { raw = JSON.parse(raw); } catch { return null; }
+    }
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const value = (raw as Record<string, unknown>).phase7Deposit;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const record = value as Record<string, unknown>;
+    const amount = Number(record.amount);
+    const currency = String(record.currency || booking.currency || 'KES').trim().toUpperCase();
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    return { amount, currency };
+}
+
+/** Safe browser response for a pending/resumable booking deposit. */
+function serializeDepositPayment(payment: any, existing = false) {
+    const meta = (payment?.metadata as any) || {};
+    const links = Array.isArray(meta.links) ? meta.links : [];
+    const approvalUrl = String(
+        meta.checkoutUrl
+        || meta.approvalUrl
+        || links.find((l: any) => l?.rel === 'approve' || l?.rel === 'payer-action')?.href
+        || '',
+    );
+    const provider = String(payment?.provider || '');
+    return {
+        existing,
+        provider,
+        method: String(meta.method || ''),
+        reference: String(payment?.reference || meta.reference || ''),
+        kind: provider === 'PAYPAL' ? 'redirect' : 'stk',
+        checkoutUrl: provider === 'PAYPAL' && approvalUrl.startsWith('https://') ? approvalUrl : undefined,
+        orderId: provider === 'PAYPAL' ? String(payment?.providerId || '') : undefined,
+        amount: Number(payment?.amount),
+        currency: String(payment?.currency || ''),
+        originalAmount: Number(meta.originalAmount ?? payment?.amount),
+        originalCurrency: String(meta.originalCurrency || payment?.currency || ''),
+        status: String(payment?.status || 'PENDING'),
+    };
+}
+
 // Resolve a booking for a customer by public reference + short-lived access
 // token. Email alone is never proof of control. Never leak existence on bad
 // token.
@@ -349,8 +410,9 @@ export default function bookingsRouter(prisma: Db) {
         return Boolean(booking.assignedToId && booking.assignedToId === req.user?.sub);
     };
 
-    // POST /api/bookings - create booking (workflow-seeded) with optional files
-    // and optionally create a Stripe PaymentIntent for deposit.
+    // POST /v1/bookings - create booking (workflow-seeded) with optional files.
+    // A requested deposit is persisted server-side; the browser receives only a
+    // capability-gated checkout link from the later token-gated deposit route.
     router.post('/', publicFormLimiter, bookingUpload, async (req, res) => {
         try {
             const parsed = publicBookingSchema.safeParse(req.body);
@@ -378,6 +440,13 @@ export default function bookingsRouter(prisma: Db) {
             } catch {
                 return res.status(400).json({ error: 'Invalid booking details' });
             }
+            const deposit = b.depositRequired && depositAmount != null
+                ? { amount: Number(depositAmount), currency }
+                : null;
+            if (deposit && (!Number.isFinite(deposit.amount) || deposit.amount <= 0)) {
+                return res.status(400).json({ error: 'Invalid deposit amount' });
+            }
+            safeDetails = withBookingDeposit(safeDetails, deposit);
 
             // upsert client
             let client = await prisma.orm.public.Client.where({ email }).first();
@@ -464,34 +533,13 @@ export default function bookingsRouter(prisma: Db) {
                 return created;
             });
 
-            // If deposit requested, create Stripe PaymentIntent + Payment record.
-            if (b.depositRequired && depositAmount) {
-                const amount = Math.round(Number(depositAmount) * 100);
-                const curr = currency || 'KES';
-                if (!stripe) return res.status(500).json({ error: 'Payment provider not configured' });
-                const paymentIntent = await stripe.paymentIntents.create({
-                    amount,
-                    currency: curr.toLowerCase(),
-                    metadata: { bookingId: booking.id, clientEmail: client.email },
-                    description: `Deposit for booking ${booking.id}`,
-                    automatic_payment_methods: { enabled: true },
-                });
-                await prisma.orm.public.Payment.create({
-                    id: newId(),
-                    updatedAt: ts(),
-                    bookingId: booking.id,
-                    clientId: client.id,
-                    amount: toMoney(depositAmount),
-                    currency: curr,
-                    provider: 'STRIPE' as any,
-                    providerId: paymentIntent.id,
-                    status: 'PENDING' as any,
-                    metadata: { raw: paymentIntent },
-                });
+            // The amount is now persisted with the booking and is only ever
+            // charged after the client proves control of the tracking token via
+            // POST /v1/bookings/reference/:publicReference/deposit.
+            if (deposit) {
                 return res.status(201).json({
                     message: 'Booking created',
                     bookingId: booking.id,
-                    clientSecret: paymentIntent.client_secret,
                     booking: {
                         id: booking.id,
                         publicReference: booking.publicReference,
@@ -502,7 +550,12 @@ export default function bookingsRouter(prisma: Db) {
                     trackingPath: `/bookings/${booking.publicReference}`,
                     trackingToken: booking.trackingToken,
                     paymentRequired: true,
-                    paymentContext: { clientSecret: paymentIntent.client_secret, provider: 'STRIPE', amount: Number(depositAmount), currency: curr },
+                    paymentContext: {
+                        amount: deposit.amount,
+                        currency: deposit.currency,
+                        originalAmount: deposit.amount,
+                        originalCurrency: deposit.currency,
+                    },
                 });
             }
 
@@ -524,6 +577,214 @@ export default function bookingsRouter(prisma: Db) {
         } catch (err: any) {
             console.error(err);
             res.status(500).json({ error: 'Server error' });
+        }
+    });
+
+    const bookingDepositSchema = z.object({
+        method: z.string().min(1).max(80),
+        phone: z.string().trim().max(50).optional(),
+        email: z.string().email().max(254).optional(),
+    }).strict();
+
+    // POST /v1/bookings/reference/:publicReference/deposit
+    // Token-gated checkout initiation. The browser chooses a method only; the
+    // amount, currency and booking identity all come from the persisted row.
+    router.post('/reference/:publicReference/deposit', publicFormLimiter, async (req, res) => {
+        let bookingIdForLog: string | undefined;
+        try {
+            const token = typeof req.query.token === 'string' ? req.query.token : undefined;
+            if (!token) return res.status(404).json({ error: 'Booking not found' });
+            const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
+            if (!booking) return res.status(404).json({ error: 'Booking not found' });
+            bookingIdForLog = (booking as any).id;
+
+            const parsed = bookingDepositSchema.safeParse(req.body ?? {});
+            if (!parsed.success) return res.status(400).json({ error: 'Select a valid payment method' });
+            const { method, phone, email: bodyEmail } = parsed.data;
+
+            const deposit = readBookingDeposit(booking);
+            if (!deposit) return res.status(409).json({ error: 'This booking has no deposit due' });
+            if (booking.depositPaidAt || booking.status === 'DEPOSIT_PAID') {
+                return res.status(409).json({ error: 'Deposit already paid' });
+            }
+            if (['CANCELLED', 'COMPLETED'].includes(String(booking.status))) {
+                return res.status(409).json({ error: 'Booking is closed for payment' });
+            }
+
+            const methodDef = resolvePaymentMethod(method);
+            if (!methodDef) {
+                const known = resolvePaymentMethod(method, true);
+                return res.status(known ? 503 : 400).json({
+                    error: known?.reason || `Unknown payment method: ${method}`,
+                });
+            }
+            const provider = methodDef.provider as ProviderId;
+            if (!['PAYPAL', 'PAYHERO', 'MPESA'].includes(provider)) {
+                return res.status(400).json({ error: 'Unsupported deposit provider' });
+            }
+            if (!isProviderConfigured(provider)) {
+                return res.status(503).json({ error: `${provider} is not configured for this deployment` });
+            }
+
+            const client = (booking as any).client || {};
+            const payPhone = String(phone || client.phone || '').trim();
+            const payEmail = String(bodyEmail || client.email || '').trim().toLowerCase();
+            if (methodDef.requiresPhone && !payPhone) {
+                return res.status(400).json({ error: 'A phone number is required for this payment method' });
+            }
+            if (methodDef.requiresEmail && !payEmail) {
+                return res.status(400).json({ error: 'An email address is required for this payment method' });
+            }
+
+            // No FX is performed here. PayPal rejects KES outright; mobile money
+            // rejects non-KES quotes. The original amount/currency are preserved
+            // in metadata for reconciliation and refunds.
+            let settlementCurrency: string;
+            if (provider === 'PAYPAL') {
+                try {
+                    settlementCurrency = paypalSettlementCurrency(deposit.currency);
+                } catch (err: any) {
+                    return res.status(409).json({ error: err?.message || 'PayPal cannot settle this currency' });
+                }
+            } else {
+                if (deposit.currency !== 'KES') {
+                    return res.status(409).json({
+                        error: `${provider} settles KES only. This deposit is quoted in ${deposit.currency}; choose PayPal or request a KES quote.`,
+                    });
+                }
+                settlementCurrency = 'KES';
+            }
+            const amount = Number(toMoney(deposit.amount));
+
+            const frontendBase = String(process.env.FRONTEND_URL || 'https://angisoft.co.ke').replace(/\/+$/, '');
+            const accessToken = signBookingAccessToken(booking.id, booking.publicReference);
+            // `access` carries booking authorization; PayPal's own `token`
+            // query parameter is reserved for the approved order id.
+            const bookingUrl = `${frontendBase}/bookings/${encodeURIComponent(booking.publicReference)}?access=${encodeURIComponent(accessToken)}&deposit=1`;
+
+            const outcome = await withScopeLock(prisma, `booking-deposit:${booking.id}`, async (tx) => {
+                const prior = await tx.orm.public.Payment
+                    .where({ bookingId: booking.id })
+                    .orderBy((p: any) => p.createdAt.desc())
+                    .limit(50)
+                    .all();
+                const paid = prior.find((p: any) =>
+                    p.status === 'SUCCEEDED' && (p.metadata as any)?.purpose === 'booking_deposit');
+                if (paid) return { alreadyPaid: true as const, payment: paid };
+                const pending = prior.find((p: any) =>
+                    p.status === 'PENDING' && (p.metadata as any)?.purpose === 'booking_deposit');
+                if (pending) return { existing: true as const, payment: pending };
+
+                const reference = generateReference('DEP');
+                const result = await initializePayment({
+                    provider,
+                    amount,
+                    currency: settlementCurrency,
+                    email: payEmail || undefined,
+                    phone: payPhone || undefined,
+                    channelId: methodDef.channelId,
+                    reference,
+                    description: `Deposit for booking ${booking.publicReference}`,
+                    returnUrl: `${bookingUrl}&paypal=success`,
+                    cancelUrl: `${bookingUrl}&paypal=cancel`,
+                    metadata: {
+                        purpose: 'booking_deposit',
+                        bookingId: booking.id,
+                        publicReference: booking.publicReference,
+                        clientId: client.id,
+                        method: methodDef.id,
+                        actor: 'client',
+                        reference,
+                        originalAmount: deposit.amount,
+                        originalCurrency: deposit.currency,
+                        settlementCurrency,
+                    },
+                });
+
+                let row: any;
+                const metadata = JSON.parse(JSON.stringify({
+                    ...(result.details || {}),
+                    purpose: 'booking_deposit',
+                    bookingId: booking.id,
+                    publicReference: booking.publicReference,
+                    clientId: client.id,
+                    method: methodDef.id,
+                    actor: 'client',
+                    reference,
+                    originalAmount: deposit.amount,
+                    originalCurrency: deposit.currency,
+                    settlementCurrency,
+                    checkoutUrl: result.checkoutUrl || '',
+                }));
+                try {
+                    row = await tx.orm.public.Payment.create({
+                        id: newId(),
+                        updatedAt: ts(),
+                        bookingId: booking.id,
+                        clientId: client.id,
+                        amount: toMoney(amount),
+                        currency: settlementCurrency,
+                        provider: result.provider as any,
+                        providerId: result.providerId,
+                        reference,
+                        status: 'PENDING' as any,
+                        channelId: methodDef.channelId ? String(methodDef.channelId) : null,
+                        metadata,
+                    });
+                } catch {
+                    row = (await tx.orm.public.Payment.where({ reference }).first())
+                        || (await tx.orm.public.Payment.where({ providerId: result.providerId }).first());
+                }
+                await logBookingEvent(tx as any, {
+                    bookingId: booking.id,
+                    type: BOOKING_EVENT_TYPES.PAYMENT_REQUESTED,
+                    title: 'Deposit checkout started',
+                    description: `${methodDef.label} checkout opened for booking ${booking.publicReference}.`,
+                    stage: booking.currentStage,
+                    status: booking.status,
+                    visibility: EVENT_VISIBILITY.CUSTOMER,
+                    actorType: 'client',
+                    actorId: client.id || null,
+                    metadata: { method: methodDef.id, provider, reference, amount, currency: settlementCurrency },
+                } as any);
+                return { payment: row, result };
+            });
+
+            if ('alreadyPaid' in outcome) {
+                return res.status(409).json({ error: 'Deposit already paid' });
+            }
+            if ('existing' in outcome) {
+                return res.json({
+                    ...serializeDepositPayment(outcome.payment, true),
+                    message: 'A deposit checkout is already pending for this booking.',
+                });
+            }
+
+            await logAudit({
+                action: 'booking_deposit_initiated',
+                entity: 'Payment',
+                entityId: outcome.payment?.id,
+                meta: {
+                    bookingId: booking.id,
+                    publicReference: booking.publicReference,
+                    method: methodDef.id,
+                    provider,
+                    reference: outcome.payment?.reference,
+                },
+            });
+            res.status(201).json({
+                ...serializeDepositPayment(outcome.payment),
+                message: provider === 'PAYPAL'
+                    ? 'Continue to PayPal to approve your deposit.'
+                    : 'Check your phone and approve the payment prompt.',
+            });
+        } catch (err: any) {
+            console.error('Booking deposit initiation failed', {
+                bookingId: bookingIdForLog,
+                error: err?.message,
+            });
+            const status = err instanceof PaymentProviderError ? 502 : 500;
+            res.status(status).json({ error: status === 502 ? 'Payment provider is unavailable' : 'Server error' });
         }
     });
 
@@ -563,7 +824,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // GET /api/bookings/reference/:publicReference - canonical customer progress view
+    // GET /v1/bookings/reference/:publicReference - canonical customer progress view
     router.get('/reference/:publicReference', async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -578,7 +839,7 @@ export default function bookingsRouter(prisma: Db) {
     // Email-only booking enumeration was removed. Customers use the signed
     // tracking link from /reference/:publicReference/access/request instead.
 
-    // GET /api/bookings/reference/:publicReference/events - customer-visible timeline
+    // GET /v1/bookings/reference/:publicReference/events - customer-visible timeline
     router.get('/reference/:publicReference/events', async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -593,7 +854,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // POST /api/bookings/reference/:publicReference/messages - customer note
+    // POST /v1/bookings/reference/:publicReference/messages - customer note
     router.post('/reference/:publicReference/messages', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -619,7 +880,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // POST /api/bookings/reference/:publicReference/files - upload additional file
+    // POST /v1/bookings/reference/:publicReference/files - upload additional file
     router.post('/reference/:publicReference/files', publicFormLimiter, bookingUpload, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -651,7 +912,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // POST /api/bookings/reference/:publicReference/actions - run a supported customer action
+    // POST /v1/bookings/reference/:publicReference/actions - run a supported customer action
     router.post('/reference/:publicReference/actions', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -671,7 +932,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // PATCH /api/bookings/reference/:publicReference/cancel - customer cancels (if allowed)
+    // PATCH /v1/bookings/reference/:publicReference/cancel - customer cancels (if allowed)
     router.patch('/reference/:publicReference/cancel', publicFormLimiter, async (req, res) => {
         try {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
@@ -701,7 +962,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // GET /api/bookings/staff - bookings assigned to the current staff member
+    // GET /v1/bookings/staff - bookings assigned to the current staff member
     router.get('/staff', requireAuth, async (req: AuthRequest, res) => {
         try {
             const bookings = await prisma.orm.public.Booking
@@ -717,7 +978,7 @@ export default function bookingsRouter(prisma: Db) {
     });
 
     // ─── Admin workflow endpoints ──────────────────────────────
-    // GET /api/bookings/admin - all bookings (admin/marketing)
+    // GET /v1/bookings/admin - all bookings (admin/marketing)
     router.get('/admin', requireAuth, requireAccess('bookings.view_all', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
             const bookings = await prisma.orm.public.Booking
@@ -734,7 +995,7 @@ export default function bookingsRouter(prisma: Db) {
     // Legacy lookup by internal id + email was removed: internal ids are
     // guessable and email is self-asserted. Use the signed reference link.
 
-    // POST /api/bookings/:id/review - Admin review booking (accept/reject)
+    // POST /v1/bookings/:id/review - Admin review booking (accept/reject)
     router.post('/:id/review', requireAuth, requireAccess('bookings.update_assigned', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
             const parsed = reviewSchema.safeParse(req.body);
@@ -801,7 +1062,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // PATCH /api/bookings/admin/:id/stage - safe stage transition (admin)
+    // PATCH /v1/bookings/admin/:id/stage - safe stage transition (admin)
     router.patch('/admin/:id/stage', requireAuth, requireAccess('bookings.change_stage', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
             const { stage } = req.body;
@@ -839,7 +1100,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // PATCH /api/bookings/admin/:id/status - status change (admin) with stage sync
+    // PATCH /v1/bookings/admin/:id/status - status change (admin) with stage sync
     router.patch('/admin/:id/status', requireAuth, requireAccess('bookings.update_assigned', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
             const { status } = req.body as { status: BookingStatus };
@@ -884,7 +1145,7 @@ export default function bookingsRouter(prisma: Db) {
         }
     });
 
-    // POST /api/bookings/admin/:id/events - admin adds an event
+    // POST /v1/bookings/admin/:id/events - admin adds an event
     router.post('/admin/:id/events', requireAuth, requireAccess('bookings.add_progress', ['ADMIN', 'MARKETING']), async (req, res) => {
         try {
             const parsed = adminEventSchema.safeParse(req.body);

@@ -35,8 +35,8 @@ export function NewslettersAdmin() {
     setError(null);
     try {
       const [list, s] = await Promise.all([
-        apiFetch('/api/newsletters'),
-        apiFetch('/api/newsletters/stats').catch(() => null),
+        apiFetch('/v1/newsletters'),
+        apiFetch('/v1/newsletters/stats').catch(() => null),
       ]);
       setRows(Array.isArray(list) ? list : []);
       setStats(s as Stats | null);
@@ -68,9 +68,9 @@ export function NewslettersAdmin() {
     try {
       const body = { ...form, scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null };
       if (editing) {
-        await apiFetch(`/api/newsletters/${editing.id}`, { method: 'PUT', body });
+        await apiFetch(`/v1/newsletters/${editing.id}`, { method: 'PUT', body });
       } else {
-        await apiFetch('/api/newsletters', { method: 'POST', body });
+        await apiFetch('/v1/newsletters', { method: 'POST', body });
       }
       setModalOpen(false);
       void load();
@@ -84,7 +84,7 @@ export function NewslettersAdmin() {
   const send = async (id: string) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/newsletters/${id}/send`, { method: 'POST' });
+      await apiFetch(`/v1/newsletters/${id}/send`, { method: 'POST' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Send failed');
@@ -96,7 +96,7 @@ export function NewslettersAdmin() {
   const remove = async (id: string) => {
     if (!window.confirm('Delete this campaign?')) return;
     try {
-      await apiFetch(`/api/newsletters/${id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/newsletters/${id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');

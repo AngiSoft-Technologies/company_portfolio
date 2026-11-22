@@ -43,7 +43,7 @@ export function SystemPanel() {
       let h: HealthData = {};
       let env: EnvEntry[] = [];
       try {
-        // The health router is mounted at `/health` (not `/api/health`).
+        // The health router is mounted at `/health` (not `/v1/health`).
         const json = ((await apiFetch('/health')) ?? {}) as Record<string, unknown>;
         h = {
           status: json.status ?? json.health,
@@ -55,7 +55,7 @@ export function SystemPanel() {
       }
       const viteEnv = { ...(import.meta.env as Record<string, unknown>) };
       try {
-        const json = ((await apiFetch('/api/admin/settings')) ?? {}) as Record<string, unknown>;
+        const json = ((await apiFetch('/v1/admin/settings')) ?? {}) as Record<string, unknown>;
         const nested = typeof json.env === 'object' && json.env !== null ? (json.env as Record<string, unknown>) : {};
         env = maskEnv(Object.keys(nested).length > 0 ? { ...viteEnv, ...nested } : viteEnv);
       } catch {

@@ -13,21 +13,21 @@ const TTL_SECONDS = Math.max(0, Number(process.env.PUBLIC_CACHE_TTL || 60));
 
 /** Public, unauthenticated content endpoints safe for CDN-level caching. */
 const PUBLIC_CACHE_ROUTES = [
-    '/api/services',
-    '/api/projects',
-    '/api/blogs',
-    '/api/testimonials',
-    '/api/faqs',
-    '/api/solutions',
-    '/api/industries',
-    '/api/announcements',
-    '/api/company-stats',
-    '/api/home-sections',
-    '/api/about-sections',
-    '/api/certifications',
-    '/api/careers',
-    '/api/products',
-    '/api/product-faqs',
+    '/v1/services',
+    '/v1/projects',
+    '/v1/blogs',
+    '/v1/testimonials',
+    '/v1/faqs',
+    '/v1/solutions',
+    '/v1/industries',
+    '/v1/announcements',
+    '/v1/company-stats',
+    '/v1/home-sections',
+    '/v1/about-sections',
+    '/v1/certifications',
+    '/v1/careers',
+    '/v1/products',
+    '/v1/product-faqs',
 ];
 
 function isCacheable(req: Request): boolean {

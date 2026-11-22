@@ -127,7 +127,7 @@ describe('MFA login gate', () => {
     const employee = await addEmployee();
 
     const res = await request(app)
-      .post('/api/auth/login')
+      .post('/v1/auth/login')
       .send({ email: employee.email, password: 'Password123!', remember: false });
 
     expect(res.status).toBe(200);
@@ -154,12 +154,12 @@ describe('MFA login gate', () => {
     });
 
     const login = await request(app)
-      .post('/api/auth/login')
+      .post('/v1/auth/login')
       .send({ email: employee.email, password: 'Password123!' });
     expect(login.status).toBe(200);
     expect(login.body.mfaRequired).toBe(true);
 
-    const start = await request(app).post('/api/auth/mfa/start').send({
+    const start = await request(app).post('/v1/auth/mfa/start').send({
       loginTicket: login.body.loginTicket,
       method: 'EMAIL',
       destination: 'attacker@example.com',

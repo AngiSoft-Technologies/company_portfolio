@@ -5,11 +5,11 @@ import { formatCurrency } from '@/lib/marketing/format';
 import { FaCreditCard } from 'react-icons/fa';
 
 /**
- * Payment summary widget. Shows any recorded payments and the outstanding
- * balance relative to quotedAmount, with a "Pay now" trigger that the page
- * wires to the Stripe flow when a clientSecret exists.
+ * Payment summary widget. Shows recorded payments and the outstanding balance
+ * relative to quotedAmount. Deposits are opened by BookingDepositPanel using
+ * the capability-gated Phase 7 rails; no payment secret reaches this card.
  */
-const BookingPaymentCard = ({ booking, onPay, paying }) => {
+const BookingPaymentCard = ({ booking }) => {
     const { colors } = useTheme();
     const payments = booking?.payments || [];
     const paid = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -38,11 +38,6 @@ const BookingPaymentCard = ({ booking, onPay, paying }) => {
                 <p className="booking-payment-outstanding">
                     Outstanding: <strong>{formatCurrency(outstanding, booking.quotedCurrency || booking.currency)}</strong>
                 </p>
-            )}
-            {booking?.clientSecret && outstanding > 0 && (
-                <button className="btn btn-primary" disabled={paying} onClick={onPay}>
-                    Pay {formatCurrency(outstanding, booking.quotedCurrency || booking.currency)}
-                </button>
             )}
         </div>
     );

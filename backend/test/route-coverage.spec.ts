@@ -154,133 +154,133 @@ describe('route coverage: previously unguarded/untested routers', () => {
     });
 
     describe('bookings staff + admin endpoints', () => {
-        it('GET /api/bookings/staff rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/bookings/staff');
+        it('GET /v1/bookings/staff rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/bookings/staff');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/bookings/staff returns the caller\'s bookings', async () => {
+        it('GET /v1/bookings/staff returns the caller\'s bookings', async () => {
             store.Booking = [
                 { id: 'b1', assignedToId: 'emp_1', title: 'Mine' },
                 { id: 'b2', assignedToId: 'emp_2', title: 'Theirs' },
             ];
             const res = await request(app)
-                .get('/api/bookings/staff')
+                .get('/v1/bookings/staff')
                 .set(authed('emp_1', 'EMPLOYEE'));
             expect(res.status).toBe(200);
             expect(res.body).toHaveLength(1);
             expect(res.body[0].id).toBe('b1');
         });
 
-        it('GET /api/bookings/admin rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/bookings/admin');
+        it('GET /v1/bookings/admin rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/bookings/admin');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/bookings/admin rejects a role without bookings.view_all', async () => {
+        it('GET /v1/bookings/admin rejects a role without bookings.view_all', async () => {
             const res = await request(app)
-                .get('/api/bookings/admin')
+                .get('/v1/bookings/admin')
                 .set(authed('emp_client', 'CLIENT'));
             expect(res.status).toBe(403);
         });
 
-        it('GET /api/bookings/admin allows SUPER_ADMIN via the wildcard', async () => {
+        it('GET /v1/bookings/admin allows SUPER_ADMIN via the wildcard', async () => {
             const res = await request(app)
-                .get('/api/bookings/admin')
+                .get('/v1/bookings/admin')
                 .set(authed('emp_root', 'SUPER_ADMIN'));
             expect(res.status).toBe(200);
         });
 
-        it('PATCH /api/bookings/admin/:id/stage rejects anonymous callers', async () => {
+        it('PATCH /v1/bookings/admin/:id/stage rejects anonymous callers', async () => {
             const res = await request(app)
-                .patch('/api/bookings/admin/b1/stage')
+                .patch('/v1/bookings/admin/b1/stage')
                 .send({ stage: 'IN_PROGRESS' });
             expect(res.status).toBe(401);
         });
     });
 
     describe('client-projects', () => {
-        it('GET /api/client-projects rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/client-projects');
+        it('GET /v1/client-projects rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/client-projects');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/client-projects returns an empty list for a member', async () => {
+        it('GET /v1/client-projects returns an empty list for a member', async () => {
             const res = await request(app)
-                .get('/api/client-projects')
+                .get('/v1/client-projects')
                 .set(authed('emp_1', 'EMPLOYEE'));
             expect(res.status).toBe(200);
             expect(res.body.projects).toEqual([]);
         });
 
-        it('GET /api/client-projects/:id 404s for an unknown project', async () => {
+        it('GET /v1/client-projects/:id 404s for an unknown project', async () => {
             const res = await request(app)
-                .get('/api/client-projects/nope')
+                .get('/v1/client-projects/nope')
                 .set(authed('emp_1', 'EMPLOYEE'));
             expect(res.status).toBe(404);
         });
 
-        it('POST /api/client-projects/:id/comments rejects anonymous callers', async () => {
+        it('POST /v1/client-projects/:id/comments rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/client-projects/p1/comments')
+                .post('/v1/client-projects/p1/comments')
                 .send({ body: 'hi' });
             expect(res.status).toBe(401);
         });
     });
 
     describe('notifications', () => {
-        it('GET /api/notifications rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/notifications');
+        it('GET /v1/notifications rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/notifications');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/notifications returns the caller\'s notifications', async () => {
+        it('GET /v1/notifications returns the caller\'s notifications', async () => {
             store.Notification = [
                 { id: 'n1', userId: 'emp_1', read: false, title: 'Hi' },
                 { id: 'n2', userId: 'emp_2', read: false, title: 'Theirs' },
             ];
             const res = await request(app)
-                .get('/api/notifications')
+                .get('/v1/notifications')
                 .set(authed('emp_1', 'EMPLOYEE'));
             expect(res.status).toBe(200);
             expect(res.body.notifications).toHaveLength(1);
             expect(res.body.unreadCount).toBe(1);
         });
 
-        it('POST /api/notifications/mark-read rejects anonymous callers', async () => {
+        it('POST /v1/notifications/mark-read rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/notifications/mark-read')
+                .post('/v1/notifications/mark-read')
                 .send({});
             expect(res.status).toBe(401);
         });
     });
 
     describe('files/uploads', () => {
-        it('POST /api/uploads/sign rejects anonymous callers', async () => {
+        it('POST /v1/uploads/sign rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/uploads/sign')
+                .post('/v1/uploads/sign')
                 .send({ filename: 'a.png', contentType: 'image/png' });
             expect(res.status).toBe(401);
         });
 
-        it('POST /api/uploads/confirm rejects anonymous callers', async () => {
+        it('POST /v1/uploads/confirm rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/uploads/confirm')
+                .post('/v1/uploads/confirm')
                 .send({ key: 'public/a.png' });
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/uploads/files/:fileId/download rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/uploads/files/f1/download');
+        it('GET /v1/uploads/files/:fileId/download rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/uploads/files/f1/download');
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/uploads stays public but only lists public files', async () => {
+        it('GET /v1/uploads stays public but only lists public files', async () => {
             store.File = [
                 { id: 'f1', metadata: { public: true }, createdAt: '2026-01-01' },
                 { id: 'f2', metadata: { public: false }, createdAt: '2026-01-02' },
             ];
-            const res = await request(app).get('/api/uploads');
+            const res = await request(app).get('/v1/uploads');
             expect(res.status).toBe(200);
             expect(res.body).toHaveLength(1);
             expect(res.body[0].id).toBe('f1');
@@ -288,27 +288,27 @@ describe('route coverage: previously unguarded/untested routers', () => {
     });
 
     describe('staff-dashboard + employee-profiles auth gates', () => {
-        it('GET /api/staff-dashboard/effective-access rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/staff-dashboard/effective-access');
+        it('GET /v1/staff-dashboard/effective-access rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/staff-dashboard/effective-access');
             expect(res.status).toBe(401);
         });
 
-        it('PUT /api/staff-dashboard/profile rejects anonymous callers', async () => {
+        it('PUT /v1/staff-dashboard/profile rejects anonymous callers', async () => {
             const res = await request(app)
-                .put('/api/staff-dashboard/profile')
+                .put('/v1/staff-dashboard/profile')
                 .send({ preferences: { theme: 'dark' } });
             expect(res.status).toBe(401);
         });
 
-        it('POST /api/employee-profiles/portfolio rejects anonymous callers', async () => {
+        it('POST /v1/employee-profiles/portfolio rejects anonymous callers', async () => {
             const res = await request(app)
-                .post('/api/employee-profiles/portfolio')
+                .post('/v1/employee-profiles/portfolio')
                 .send({});
             expect(res.status).toBe(401);
         });
 
-        it('GET /api/employee-profiles/portfolio/admin rejects anonymous callers', async () => {
-            const res = await request(app).get('/api/employee-profiles/portfolio/admin');
+        it('GET /v1/employee-profiles/portfolio/admin rejects anonymous callers', async () => {
+            const res = await request(app).get('/v1/employee-profiles/portfolio/admin');
             expect(res.status).toBe(401);
         });
     });

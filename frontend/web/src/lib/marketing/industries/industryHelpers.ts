@@ -29,7 +29,7 @@ export function getIndustryRoute(slugOrIndustry) {
 
 const DEFAULT_BG = '/uploads/public/images/services/it-consulting.jpg';
 
-// Normalize one raw industry record from /api/site/industries.
+// Normalize one raw industry record from /v1/site/industries.
 export function normalizeIndustry(raw, index = 0) {
     if (!raw || typeof raw !== 'object') return null;
 

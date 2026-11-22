@@ -90,9 +90,9 @@ export function AIConfigAdmin() {
         active: form.active,
       };
       if (editing) {
-        await apiFetch(`/api/admin/ai-config/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
+        await apiFetch(`/v1/admin/ai-config/${encodeURIComponent(editing.id)}`, { method: 'PUT', body: payload });
       } else {
-        await apiFetch('/api/admin/ai-config', { method: 'POST', body: payload });
+        await apiFetch('/v1/admin/ai-config', { method: 'POST', body: payload });
       }
       setModalOpen(false);
       await refresh();

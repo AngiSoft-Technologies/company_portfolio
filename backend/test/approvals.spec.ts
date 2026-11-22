@@ -101,7 +101,7 @@ beforeAll(async () => {
     const { default: approvalsRouter } = await import('../src/shared/routes/approvals');
     app = express();
     app.use(express.json());
-    app.use('/api/approvals', approvalsRouter());
+    app.use('/v1/approvals', approvalsRouter());
     request = supertest;
 });
 
@@ -137,7 +137,7 @@ beforeEach(() => {
 
 const createChain = () =>
     request(app)
-        .post('/api/approvals')
+        .post('/v1/approvals')
         .set(authed(REQUESTER, 'STAFF'))
         .send({
             entityType: 'quote',
@@ -153,25 +153,25 @@ const createChain = () =>
 
 describe('approval chains', () => {
     it('rejects unauthenticated access', async () => {
-        expect((await request(app).get('/api/approvals')).status).toBe(401);
-        expect((await request(app).post('/api/approvals')).status).toBe(401);
+        expect((await request(app).get('/v1/approvals')).status).toBe(401);
+        expect((await request(app).post('/v1/approvals')).status).toBe(401);
     });
 
     it('requires approvals.manage to create and validates step permissions', async () => {
         const denied = await request(app)
-            .post('/api/approvals')
+            .post('/v1/approvals')
             .set(authed(OUTSIDER, 'STAFF'))
             .send({ entityType: 'custom', entityId: 'x', title: 't', steps: [{ permission: 'quotes.approve' }] });
         expect(denied.status).toBe(403);
 
         const bad = await request(app)
-            .post('/api/approvals')
+            .post('/v1/approvals')
             .set(authed(REQUESTER, 'STAFF'))
             .send({ entityType: 'custom', entityId: 'x', title: 't', steps: [{ permission: 'not.a.real.key' }] });
         expect(bad.status).toBe(400);
 
         const noSteps = await request(app)
-            .post('/api/approvals')
+            .post('/v1/approvals')
             .set(authed(REQUESTER, 'STAFF'))
             .send({ entityType: 'custom', entityId: 'x', title: 't', steps: [] });
         expect(noSteps.status).toBe(400);
@@ -184,28 +184,28 @@ describe('approval chains', () => {
 
         // Step 2 approver cannot jump ahead while step 1 is pending.
         const jump = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER2, 'STAFF'))
             .send({ decision: 'approved' });
         expect(jump.status).toBe(403);
 
         // Requester cannot decide their own request.
         const self = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(REQUESTER, 'STAFF'))
             .send({ decision: 'approved' });
         expect(self.status).toBe(403);
 
         // Outsider lacks approvals.respond.
         const outsider = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(OUTSIDER, 'STAFF'))
             .send({ decision: 'approved' });
         expect(outsider.status).toBe(403);
 
         // Step 1 approver approves → still pending (step 2 remains).
         const s1 = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER1, 'STAFF'))
             .send({ decision: 'approved', note: 'LGTM' });
         expect(s1.status).toBe(200);
@@ -215,14 +215,14 @@ describe('approval chains', () => {
 
         // Step 1 approver cannot decide step 2 (lacks invoices.issue).
         const wrongPerm = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER1, 'STAFF'))
             .send({ decision: 'approved' });
         expect(wrongPerm.status).toBe(403);
 
         // Step 2 approver completes the chain.
         const s2 = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER2, 'STAFF'))
             .send({ decision: 'approved' });
         expect(s2.status).toBe(200);
@@ -231,7 +231,7 @@ describe('approval chains', () => {
 
         // Terminal state rejects further decisions.
         const late = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER1, 'STAFF'))
             .send({ decision: 'approved' });
         expect(late.status).toBe(409);
@@ -241,7 +241,7 @@ describe('approval chains', () => {
         const created = await createChain();
         const id = created.body.id;
         const rej = await request(app)
-            .post(`/api/approvals/${id}/decide`)
+            .post(`/v1/approvals/${id}/decide`)
             .set(authed(APPROVER1, 'STAFF'))
             .send({ decision: 'rejected', note: 'Price too high' });
         expect(rej.status).toBe(200);
@@ -251,16 +251,16 @@ describe('approval chains', () => {
 
     it('mine=1 lists only requests where the caller holds the next step', async () => {
         await createChain();
-        const forA1 = await request(app).get('/api/approvals?mine=1').set(authed(APPROVER1, 'STAFF'));
+        const forA1 = await request(app).get('/v1/approvals?mine=1').set(authed(APPROVER1, 'STAFF'));
         expect(forA1.status).toBe(200);
         expect(forA1.body).toHaveLength(1);
 
         // After step 1 is decided, it moves to APPROVER2's queue.
         const id = forA1.body[0].id;
-        await request(app).post(`/api/approvals/${id}/decide`).set(authed(APPROVER1, 'STAFF')).send({ decision: 'approved' });
-        const forA1After = await request(app).get('/api/approvals?mine=1').set(authed(APPROVER1, 'STAFF'));
+        await request(app).post(`/v1/approvals/${id}/decide`).set(authed(APPROVER1, 'STAFF')).send({ decision: 'approved' });
+        const forA1After = await request(app).get('/v1/approvals?mine=1').set(authed(APPROVER1, 'STAFF'));
         expect(forA1After.body).toHaveLength(0);
-        const forA2 = await request(app).get('/api/approvals?mine=1').set(authed(APPROVER2, 'STAFF'));
+        const forA2 = await request(app).get('/v1/approvals?mine=1').set(authed(APPROVER2, 'STAFF'));
         expect(forA2.body).toHaveLength(1);
     });
 
@@ -269,12 +269,12 @@ describe('approval chains', () => {
         const id = created.body.id;
 
         const outsiderCancel = await request(app)
-            .post(`/api/approvals/${id}/cancel`)
+            .post(`/v1/approvals/${id}/cancel`)
             .set(authed(OUTSIDER, 'STAFF'));
         expect(outsiderCancel.status).toBe(403);
 
         const requesterCancel = await request(app)
-            .post(`/api/approvals/${id}/cancel`)
+            .post(`/v1/approvals/${id}/cancel`)
             .set(authed(REQUESTER, 'STAFF'));
         expect(requesterCancel.status).toBe(200);
         expect(requesterCancel.body.status).toBe('cancelled');

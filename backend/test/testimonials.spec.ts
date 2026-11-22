@@ -100,7 +100,7 @@ beforeAll(async () => {
     const { default: testimonialsRouter } = await import('../src/modules/cms/routes/testimonials');
     app = express();
     app.use(express.json());
-    app.use('/api/testimonials', testimonialsRouter());
+    app.use('/v1/testimonials', testimonialsRouter());
     request = supertest;
 });
 
@@ -115,23 +115,23 @@ beforeEach(() => {
 
 describe('testimonials endpoints', () => {
     it('public list returns only confirmed, non-rejected testimonials', async () => {
-        const res = await request(app).get('/api/testimonials');
+        const res = await request(app).get('/v1/testimonials');
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].id).toBe('t_pub');
     });
 
     it('featured list returns featured confirmed testimonials', async () => {
-        const res = await request(app).get('/api/testimonials/featured');
+        const res = await request(app).get('/v1/testimonials/featured');
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].id).toBe('t_pub');
     });
 
     it('get by id hides unconfirmed testimonials from anonymous callers', async () => {
-        const hidden = await request(app).get('/api/testimonials/t_pending');
+        const hidden = await request(app).get('/v1/testimonials/t_pending');
         expect(hidden.status).toBe(404);
-        const visible = await request(app).get('/api/testimonials/t_pub');
+        const visible = await request(app).get('/v1/testimonials/t_pub');
         expect(visible.status).toBe(200);
         expect(visible.body.id).toBe('t_pub');
     });

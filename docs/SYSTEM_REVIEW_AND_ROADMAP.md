@@ -33,7 +33,7 @@
 
 ### What genuinely works (the ~50% that's real)
 
-- **Public pages** (`frontend/src/pages/`, `frontend/src/components/`) — built by the owner, fetch from `/api/*`, database-driven, with a real theme (`ThemeContext.jsx`), layout (`AppLayout.jsx`), and content seeded from `backend/prisma/seed.ts` (hero, about, contact, footer, branding, navigation, industries, tech platforms, pricing, booking copy, 11 services, 4 products, FAQs, testimonials, blog posts, job postings).
+- **Public pages** (`frontend/src/pages/`, `frontend/src/components/`) — built by the owner, fetch from `/v1/*`, database-driven, with a real theme (`ThemeContext.jsx`), layout (`AppLayout.jsx`), and content seeded from `backend/prisma/seed.ts` (hero, about, contact, footer, branding, navigation, industries, tech platforms, pricing, booking copy, 11 services, 4 products, FAQs, testimonials, blog posts, job postings).
 - **Backend foundation** — Express + TS + Prisma, auth endpoints, content CRUD routes, booking stage machine, client-project workflow, uploads, health. These are *implemented as code* but are not fully usable end-to-end (see gaps).
 
 ### What does NOT work from the user's seat (the 7/10 that's missing)
@@ -43,7 +43,7 @@
 | 1 | **RBAC admin UI** | **No role-management screen exists.** No `/admin/roles`, no UI to create roles, create permissions, assign permissions to roles, or define what a permission does. Backend tables exist (`AppRole`, `Permission`, `RolePermission`, `EmployeeRoleAssignment`, `EmployeePermission`, `Department`, `Position`, `PermissionPreset`) and `roles.ts` has CRUD endpoints — but the admin never calls them. |
 | 2 | **RBAC contract consistency** | Three **incompatible permission key systems**: seed hardcodes `'content.view'`, `'staff.manage'` (`seed.ts:69-94`); frontend catalogue uses `'staff.view'`, `'staff.assign_permissions'` (`staff-access.ts:35-112`); backend routes check `'services.create'`, `'projects.update_assigned'` (`services.ts`, `projects.ts`). A role granted one set doesn't gate routes checking another. |
 | 3 | **Staff Access screen** | `StaffAccess.jsx` exists but is **broken end-to-end**: assignments never load (`StaffAccess.jsx:102` reads `current.assignments`, backend returns `current.assignmentScopes` at `staff-access.ts:302-307`), and saving identity fails (frontend sends `{identity:{...}}`, backend schema expects flat `departmentId/positionId/...` at `staff-access.ts:121-135`). |
-| 4 | **2FA** | Backend endpoints exist (`/api/auth/2fa/enroll|verify`, `twofactor.ts`) but **the frontend has zero references to 2FA** (grep across `frontend/src`: no matches). No enroll UI, no login prompt, no backup-code screen. Users cannot enable or use it. |
+| 4 | **2FA** | Backend endpoints exist (`/v1/auth/2fa/enroll|verify`, `twofactor.ts`) but **the frontend has zero references to 2FA** (grep across `frontend/src`: no matches). No enroll UI, no login prompt, no backup-code screen. Users cannot enable or use it. |
 | 5 | **Token storage / multi-account** | `adminToken`, `clientPortalToken`, booking IDs, visitor data all in **localStorage** across ~15 files (`AdminLogin.jsx:26`, `ClientPortalAccess.jsx:24`, `routes.jsx:80,92`, `httpClient.js:38,108`, etc.). localStorage is shared across tabs and readable by any injected script. **No multi-account support** — two admins on one browser overwrite one token slot. sessionStorage used only for booking drafts. IndexedDB: unused. |
 | 6 | **CSRF** | **No CSRF protection anywhere.** Refresh cookie is `httpOnly` but `sameSite:'lax'` only (`auth.ts:40`); grep for `csrf|x-csrf|xsrf` = zero results. |
 | 7 | **JWT secret fallback** | HS256 with hardcoded fallback `'dev_secret'` (`token.ts:22`) and `'supersecretkey'` in legacy `middleware/auth.js:2`. If `JWT_SECRET` is unset in prod, tokens are signed with a public key. |
@@ -53,7 +53,7 @@
 | 11 | **Scroll restoration** | **Broken.** No `ScrollRestoration`, no `scrollTo(0,0)` on route change (grep confirms; the only `window.scrollTo` is an in-page story animation `AboutNumberStory.jsx:381`). Navigating from the bottom of one page lands at the bottom of the next. |
 | 12 | **State management** | Redux/RTK installed but **never wired** (no store, no `<Provider>` in `main.jsx`). State is per-page `useState` + module caches. No cross-tab sync, no session abstraction. |
 | 13 | **Blog display** | 20+ components and per-type templates exist, but owner reports the presentation is not professional. Treat as needing UX/design pass. |
-| 14 | **Admin cockpit defects** | Dead endpoint calls (`/api/admin/me`, `/api/admin-messages`, `/api/logs/*`, `/api/version*` — none exist in backend), hardcoded dashboard status + `+12%` trend, web-triggered "Upgrade Backend/Frontend Dependencies" buttons in `SystemPanel.jsx:89-118`. |
+| 14 | **Admin cockpit defects** | Dead endpoint calls (`/v1/admin/me`, `/v1/admin-messages`, `/v1/logs/*`, `/v1/version*` — none exist in backend), hardcoded dashboard status + `+12%` trend, web-triggered "Upgrade Backend/Frontend Dependencies" buttons in `SystemPanel.jsx:89-118`. |
 | 15 | **Data-model correctness** | Money stored as `Float` (`Payment.amount`, `Booking.priceEstimate/budgetAmount/quotedAmount`, `Service.priceFrom` — `schema.prisma:211,250,253,316,348`). `settingsController.ts` is a non-persisting stub. Heavy `Json` columns for queryable data (pricing, features, settings). |
 | 16 | **Operations** | `start:prod` runs migrate+seed every boot; in-memory queue (jobs lost on restart); only 2 test files, no backend CI, no payments/webhook tests; `sourcemap:true` in prod build (`vite.config.js:52`). |
 
@@ -63,7 +63,7 @@
 
 | Owner's requirement | Current reality | Status |
 |---|---|---|
-| Public company profile, services, products, blog, staff, testimonials | Public pages fetch from `/api/*`, seeded content | ~50% (owner-built, needs polish) |
+| Public company profile, services, products, blog, staff, testimonials | Public pages fetch from `/v1/*`, seeded content | ~50% (owner-built, needs polish) |
 | Public can book services and follow progress | Booking form + stage machine exist; **client follow-up is email-token, not a real account** | ~40% |
 | Client portal with login | One-time magic-link JWT in localStorage, no refresh/revocation | ~20% |
 | Clients rate the company / give testimonials | **No public submission path** (admin-only creation) | 0% |
@@ -109,7 +109,7 @@
 5. **Wire nav + route guards** to effective permissions (`frontend` calls the `effectivePermissions` endpoint).
 
 ### Phase 2 — CMS completion (make the admin manage everything)
-1. Fix dead admin endpoint calls (`/api/admin/me`, `/api/admin-messages`, logs, version) — wire or remove.
+1. Fix dead admin endpoint calls (`/v1/admin/me`, `/v1/admin-messages`, logs, version) — wire or remove.
 2. Replace hardcoded dashboard status/trends with real `/health` + computed stats; remove the dependency-upgrade buttons.
 3. Harden the generic CRUD (`AdminCrudPage.jsx`): pagination, server-side search, accessible delete confirmations, optimistic updates, role-gated visibility.
 4. Add missing admin CRUD: Industries, Solutions, Pricing packages (documented as missing in `docs/PUBLIC_CONTENT_ADMIN_MATRIX.md`).
@@ -118,7 +118,7 @@
 ### Phase 3 — Client experience (real accounts + feedback)
 1. Client login/session (reuse auth foundation from Phase 0) replacing email-as-credential + magic-link-only.
 2. Booking follow-up within the portal; notifications.
-3. **Public testimonial/rating submission** with moderation queue (new `POST /api/testimonials` public path + admin approve/reject).
+3. **Public testimonial/rating submission** with moderation queue (new `POST /v1/testimonials` public path + admin approve/reject).
 4. Support tickets visible to clients.
 
 ### Phase 4 — CRM build

@@ -38,21 +38,21 @@
   - ✅ Integrated with Suspense fallback loading
 
 ### 4. **Backend Infrastructure** (Already Existed)
-- **Services:** `/api/services` (GET, POST, PUT, DELETE)
-- **Projects:** `/api/projects` (GET, POST, PUT, DELETE)
-- **Blogs:** `/api/blogs` (GET, POST, PUT, DELETE) ← BlogAdmin uses this
-- **Testimonials:** `/api/testimonials` (GET, POST, PUT, DELETE)
-- **Settings:** `/api/settings` (GET, PUT)
-- **Admin Routes:** `/api/admin/*` (bookings, employees, dashboard)
-- **Staff Routes:** `/api/staff` (GET employee profiles)
+- **Services:** `/v1/services` (GET, POST, PUT, DELETE)
+- **Projects:** `/v1/projects` (GET, POST, PUT, DELETE)
+- **Blogs:** `/v1/blogs` (GET, POST, PUT, DELETE) ← BlogAdmin uses this
+- **Testimonials:** `/v1/testimonials` (GET, POST, PUT, DELETE)
+- **Settings:** `/v1/settings` (GET, PUT)
+- **Admin Routes:** `/v1/admin/*` (bookings, employees, dashboard)
+- **Staff Routes:** `/v1/staff` (GET employee profiles)
 
 ### 5. **Frontend Components Already Fetching from Backend**
 ```javascript
-✅ Blog.jsx          → GET /api/blogs (published only)
-✅ Services.jsx      → GET /api/services (published only)
-✅ Projects.jsx      → GET /api/projects (published only)
-✅ Staff.jsx         → GET /api/staff (active employees)
-✅ Testimonials.jsx  → GET /api/testimonials (confirmed only)
+✅ Blog.jsx          → GET /v1/blogs (published only)
+✅ Services.jsx      → GET /v1/services (published only)
+✅ Projects.jsx      → GET /v1/projects (published only)
+✅ Staff.jsx         → GET /v1/staff (active employees)
+✅ Testimonials.jsx  → GET /v1/testimonials (confirmed only)
 ```
 
 ### 6. **Authentication & Security**
@@ -90,7 +90,7 @@ Click "+ New [Item]" → Modal opens
   ↓
 Fill form → Click "Create"
   ↓
-POST /api/[item] with form data
+POST /v1/[item] with form data
   ↓
 Backend: prisma.[model].create()
   ↓
@@ -107,7 +107,7 @@ Public User → angisoft.co.ke
   ↓
 Page loads → useEffect() in each section
   ↓
-Section calls: GET /api/[item]?published=true
+Section calls: GET /v1/[item]?published=true
   ↓
 Backend filters: where { published: true }
   ↓
@@ -126,7 +126,7 @@ Login with employee credentials
   ↓
 Update sections (bio, education, experience, skills)
   ↓
-POST/PUT /api/[section] with employee ID
+POST/PUT /v1/[section] with employee ID
   ↓
 Backend: prisma.[model].create({ employeeId, ... })
   ↓
@@ -161,26 +161,26 @@ Staff section on homepage fetches and displays
 ```
 ✅ Hero                - Landing hero with video background
 ✅ About               - Company about information
-✅ Services            - Fetches from /api/services
-✅ Projects            - Fetches from /api/projects
-✅ Staff               - Fetches from /api/staff
-✅ Blog                - Fetches from /api/blogs
-✅ Testimonials        - Fetches from /api/testimonials
+✅ Services            - Fetches from /v1/services
+✅ Projects            - Fetches from /v1/projects
+✅ Staff               - Fetches from /v1/staff
+✅ Blog                - Fetches from /v1/blogs
+✅ Testimonials        - Fetches from /v1/testimonials
 ✅ Contact             - Contact form (to be integrated)
 ```
 
 ### Backend Routes (10+ Total)
 ```
-✅ /api/auth           - Login/logout/refresh
-✅ /api/services       - Service CRUD (public + admin)
-✅ /api/projects       - Project CRUD (public + admin)
-✅ /api/blogs          - Blog CRUD (public + admin)
-✅ /api/testimonials   - Testimonial CRUD (public + admin)
-✅ /api/staff          - Staff list (public)
-✅ /api/bookings       - Create/view bookings
-✅ /api/payments       - Payment processing
-✅ /api/admin/*        - Admin-only endpoints
-✅ /api/settings       - Site settings
+✅ /v1/auth           - Login/logout/refresh
+✅ /v1/services       - Service CRUD (public + admin)
+✅ /v1/projects       - Project CRUD (public + admin)
+✅ /v1/blogs          - Blog CRUD (public + admin)
+✅ /v1/testimonials   - Testimonial CRUD (public + admin)
+✅ /v1/staff          - Staff list (public)
+✅ /v1/bookings       - Create/view bookings
+✅ /v1/payments       - Payment processing
+✅ /v1/admin/*        - Admin-only endpoints
+✅ /v1/settings       - Site settings
 ```
 
 ---
@@ -230,7 +230,7 @@ Staff section on homepage fetches and displays
 - 🔧 `/frontend/src/routes.jsx` (Added BlogAdmin import + route)
 
 ### No Backend Changes Needed
-- ✅ All blog endpoints already exist in `/api/blogs`
+- ✅ All blog endpoints already exist in `/v1/blogs`
 - ✅ Authentication already configured
 - ✅ CRUD operations already implemented
 - ✅ Database models already created (BlogPost table)
@@ -261,7 +261,7 @@ Before running tests, verify:
 
 ### Phase 2: Contact Integration (TOMORROW)
 1. Create ContactMessage model in Prisma
-2. Add POST /api/contact endpoint
+2. Add POST /v1/contact endpoint
 3. Create contact admin view page
 4. Update Contacts.jsx to POST to backend
 
@@ -355,7 +355,7 @@ Before moving to Contact integration:
 
 2. **Is the Staff section showing employee portfolios?**
    - Yes → Staff system working
-   - No → Check /api/staff endpoint
+   - No → Check /v1/staff endpoint
 
 3. **Can you login and access protected routes?**
    - Yes → Auth working

@@ -76,7 +76,7 @@ export async function saveJson(
   endpoint: string,
   body: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const json = (await apiFetch(`/api${endpoint}`, { method, body })) as Record<string, unknown> | null;
+  const json = (await apiFetch(`/v1${endpoint}`, { method, body })) as Record<string, unknown> | null;
   return json ?? {};
 }
 

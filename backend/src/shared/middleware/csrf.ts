@@ -36,18 +36,22 @@ const CSRF_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30d
 
 // Paths that are public/anonymous and must not require the CSRF header.
 const CSRF_BYPASS_PATHS: RegExp[] = [
-  /^\/api\/bookings\/?$/,                 // public booking submission (POST)
-  /^\/api\/contact-enquiries\/?$/,        // public contact form
-  /^\/api\/product-inquiries\/?$/,        // public product inquiry
-  /^\/api\/newsletter\/subscribe\/?$/,    // public newsletter signup
-  /^\/api\/invite\/accept\/?$/,           // invite acceptance
-  /^\/api\/payments\/webhook\/?$/,        // Stripe webhook (signature-verified)
-  /^\/api\/payments\/paystack\/webhook\/?$/, // Paystack webhook (HMAC-verified)
-  /^\/api\/communications\/webhooks\/.*$/, // Provider webhooks (signature/verify-token checked)
-  /^\/api\/chatbot\/?$/,                  // public chatbot
-  /^\/api\/consent\/?$/,                  // privacy + terms acceptance (rate-limited)
-  /^\/api\/surveys\/active\/?$/,          // public survey responses
-  /^\/api\/leads\/?$/,                    // public lead capture (already role-gated server-side)
+  /^\/v1\/bookings\/?$/,                 // public booking submission (POST)
+  /^\/v1\/bookings\/reference\/[^/]+\/deposit\/?$/, // token-gated public deposit initiation
+  /^\/v1\/contact-enquiries\/?$/,        // public contact form
+  /^\/v1\/product-inquiries\/?$/,        // public product inquiry
+  /^\/v1\/newsletter\/subscribe\/?$/,    // public newsletter signup
+  /^\/v1\/invite\/accept\/?$/,           // invite acceptance
+  /^\/v1\/payments\/webhook\/?$/,        // Stripe webhook (signature-verified)
+  /^\/v1\/payments\/paystack\/webhook\/?$/, // Paystack webhook (HMAC-verified)
+  /^\/v1\/payments\/paypal\/webhook\/?$/, // PayPal webhook (verify-signature API)
+  /^\/v1\/payments\/mpesa\/(callback|c2b\/validation|c2b\/confirmation)\/?$/, // M-Pesa result/C2B callbacks (token checked / recorded as events)
+  /^\/v1\/communications\/webhooks\/.*$/, // Provider webhooks (signature/verify-token checked)
+  /^\/v1\/finance\/webhooks\/.*$/, // Finance provider webhooks (signature/token checked)
+  /^\/v1\/chatbot\/?$/,                  // public chatbot
+  /^\/v1\/consent\/?$/,                  // privacy + terms acceptance (rate-limited)
+  /^\/v1\/surveys\/active\/?$/,          // public survey responses
+  /^\/v1\/leads\/?$/,                    // public lead capture (already role-gated server-side)
 ];
 
 export function issueCsrfCookie(res: Response): string {

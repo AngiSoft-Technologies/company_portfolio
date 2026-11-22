@@ -13,7 +13,7 @@ import ProductSkeleton from '../components/product/ProductSkeleton';
 import '@/styles/marketing/product/product-detail.css';
 
 // Modern, data-driven product landing page.
-// All content is derived from the canonical GET /api/products/:slug response
+// All content is derived from the canonical GET /v1/products/:slug response
 // (normalized by useProductDetail). No hardcoded marketing copy.
 const ProductDetail = () => {
     const { slug } = useParams();

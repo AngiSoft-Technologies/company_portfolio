@@ -6,10 +6,12 @@ import { createPaymentIntent } from './stripeService';
 import * as paystack from './paystackService';
 import * as mpesa from './mpesaService';
 import * as payhero from './payheroService';
+import * as paypal from './paypalService';
 import { toMoney, type MoneyInput } from '../../utils/money';
 import { recordInvoicePayment } from '../../../crm/services/invoices';
 import { createNotification } from '../../../notifications/services/notifications';
 import { recordProviderEvent } from '../../../../shared/services/providerEvents';
+import { postLedgerEntry, resolveFinanceAccount, recordLedgerFailure } from '../../../finance/services/ledger';
 
 /**
  * Payment gateway — one internal API, interchangeable providers, all feeding
@@ -20,6 +22,7 @@ import { recordProviderEvent } from '../../../../shared/services/providerEvents'
  *   PAYSTACK — card/mobile-money/bank/USSD redirect.    webhook: HMAC-SHA512 signed
  *   MPESA    — Safaricom Daraja STK Push.               callback: reference-matched (unsigned)
  *   PAYHERO  — M-Pesa STK + Kenyan bank/sacco paybills. callback: reference-matched (unsigned)
+ *   PAYPAL   — PayPal wallet/cards/Pay Later via Orders v2. webhook: PayPal verify-signature API
  *
  * Reliability contracts (Prisma 8 edition):
  *   - Idempotency: `applyPaymentOutcome` upserts by providerId (unique), so
@@ -31,7 +34,7 @@ import { recordProviderEvent } from '../../../../shared/services/providerEvents'
  *   - Every path is env-gated (`isConfigured()`) and fails closed.
  */
 
-export type ProviderId = 'STRIPE' | 'PAYSTACK' | 'MPESA' | 'PAYHERO';
+export type ProviderId = 'STRIPE' | 'PAYSTACK' | 'MPESA' | 'PAYHERO' | 'PAYPAL';
 
 export interface InitPaymentArgs {
     provider: ProviderId;
@@ -42,6 +45,8 @@ export interface InitPaymentArgs {
     reference?: string; // optional; generated when absent
     channelId?: number; // PayHero channel override (defaults to env PAYHERO_CHANNEL_ID)
     description?: string;
+    returnUrl?: string; // PayPal buyer-return URL (defaults to FRONTEND_URL/portal)
+    cancelUrl?: string; // PayPal buyer-cancel URL
     metadata?: Record<string, unknown>;
 }
 
@@ -67,6 +72,7 @@ export function isProviderConfigured(provider: ProviderId) {
         case 'PAYSTACK': return paystack.isConfigured();
         case 'MPESA': return mpesa.isConfigured();
         case 'PAYHERO': return payhero.isConfigured();
+        case 'PAYPAL': return paypal.isConfigured();
         default: return false;
     }
 }
@@ -144,6 +150,28 @@ export async function initializePayment(args: InitPaymentArgs): Promise<PaymentI
                 description: args.description
             });
             return { provider: 'PAYHERO', providerId: result.checkoutRequestId, kind: 'stk', details: result };
+        }
+        case 'PAYPAL': {
+            if (!paypal.isConfigured()) throw new PaymentProviderError('PayPal not configured');
+            const result = await paypal.createOrder({
+                amount,
+                currency: args.currency,
+                reference,
+                description: args.description,
+                email: args.email,
+                invoiceId: String(args.metadata?.invoiceId || ''),
+                bookingId: String(args.metadata?.bookingId || ''),
+                clientId: String(args.metadata?.clientId || ''),
+                returnUrl: args.returnUrl,
+                cancelUrl: args.cancelUrl,
+            });
+            return {
+                provider: 'PAYPAL',
+                providerId: result.orderId,
+                kind: 'redirect',
+                checkoutUrl: result.approvalUrl,
+                details: result.details,
+            };
         }
         default:
             throw new PaymentProviderError(`Unsupported payment provider: ${args.provider}`);
@@ -260,28 +288,43 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
             });
             if (!deduped) {
                 const amount = toMoney(input.amount ?? payment.amount ?? 0);
-                await prisma.orm.public.LedgerEntry.create({
-                    id: newId(),
-                    financeAccountId: null,
+                const account = await resolveFinanceAccount(prisma, String(input.provider), String(input.providerId));
+                // Phase 7: idempotent ledger + FinanceTransaction posting. The
+                // service records a ReconciliationItem and throws on failure;
+                // never swallow a missing ledger entry.
+                await postLedgerEntry(prisma, {
                     provider: String(input.provider),
                     externalRef: String(input.providerId),
                     entryType: 'PAYMENT',
                     direction: 'IN',
                     amount,
-                    fee: toMoney(0),
-                    net: amount,
+                    fee: 0,
                     currency: String(input.currency || payment.currency || 'KES'),
                     status,
+                    financeAccountId: account?.id ?? null,
+                    accountRef: account?.externalId ?? account?.id ?? null,
                     sourceType: payment.bookingId ? 'BOOKING' : (input.invoiceId ? 'INVOICE' : 'PAYMENT'),
                     sourceId: payment.bookingId || input.invoiceId || payment.id,
                     providerEventId: event.id,
-                    metadata: { paymentId: payment.id, reference: payment.reference, bookingId: payment.bookingId, clientId: payment.clientId } as any,
-                    occurredAt: ts(),
-                    createdAt: ts(),
-                } as any).catch(() => {});
+                    metadata: { paymentId: payment.id, reference: payment.reference, bookingId: payment.bookingId, clientId: payment.clientId },
+                });
             }
         } catch (err: any) {
-            console.warn('Finance ledger posting skipped', err?.message);
+            // Ledger posting failed after the provider settled; persist an
+            // explicit exception instead of silently losing the money movement.
+            console.error('Finance ledger posting failed', err?.message || err);
+            if (!(err as any)?.exceptionRecorded) {
+                await recordLedgerFailure(prisma, {
+                    message: err?.message || 'Ledger posting failed',
+                    error: err,
+                    provider: String(input.provider),
+                    externalRef: String(input.providerId),
+                    amount: input.amount ?? payment.amount ?? 0,
+                    currency: String(input.currency || payment.currency || 'KES'),
+                    sourceType: 'PAYMENT',
+                    sourceId: payment.id,
+                }).catch(() => null);
+            }
         }
     }
 

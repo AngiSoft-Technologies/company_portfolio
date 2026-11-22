@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Hook for a single service's detail, loaded by slug from /api/services/:slug.
+// Hook for a single service's detail, loaded by slug from /v1/services/:slug.
 // Uses the same canonical API source as useServices — no About/CMS fallback.
 import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/httpClient';

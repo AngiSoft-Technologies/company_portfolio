@@ -1,17 +1,17 @@
 // @ts-nocheck
 const normalizeOrigin = (origin?: string) => {
   if (!origin) return '';
-  return origin.replace(/\/+$/, '').replace(/\/api$/, '');
+  return origin.replace(/\/+$/, '').replace(/\/v1$/, '').replace(/\/api$/, '');
 };
 
-// Same-origin by default: /api/* and /uploads/* are proxied by Netlify, which
+// Same-origin by default: /v1/* and /uploads/* are proxied by Netlify, which
 // also lets the SameSite=Strict refresh cookie be sent. Legacy upload URLs keep
 // resolving through the CDN.
 const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 const CDN_ORIGIN = normalizeOrigin(import.meta.env.VITE_CDN_BASE_URL as string) ||
   (import.meta.env.PROD ? 'https://cdn.angisoft.co.ke' : API_ORIGIN);
 
-export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN}/api` : '/api';
+export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN}/v1` : '/v1';
 export const ASSET_BASE_URL = CDN_ORIGIN;
 
 const normalizeAssetPath = (value: string) => {
@@ -30,7 +30,7 @@ export const resolveAssetUrl = (value: string): string => {
   if (normalized.startsWith('/uploads/')) {
     return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
   }
-  if (normalized.startsWith('/api/uploads/')) {
+  if (normalized.startsWith('/v1/uploads/')) {
     return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
   }
   return normalized;

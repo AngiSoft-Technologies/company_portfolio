@@ -18,7 +18,7 @@ export function usePipelineResource<T>(endpoint: string, params?: Record<string,
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const json = await apiFetch(`/api${endpoint}${query ? `?${query}` : ''}`);
+      const json = await apiFetch(`/v1${endpoint}${query ? `?${query}` : ''}`);
       setRows(normalizeRows<T>(json));
       setError(null);
     } catch (e) {
@@ -37,19 +37,19 @@ export function usePipelineResource<T>(endpoint: string, params?: Record<string,
 }
 
 export function createRecord(endpoint: string, body: unknown) {
-  return apiFetch(`/api${endpoint}`, { method: 'POST', body }) as Promise<Record<string, unknown>>;
+  return apiFetch(`/v1${endpoint}`, { method: 'POST', body }) as Promise<Record<string, unknown>>;
 }
 
 export function updateRecord(endpoint: string, id: string, body: unknown) {
-  return apiFetch(`/api${endpoint}/${id}`, { method: 'PATCH', body }) as Promise<Record<string, unknown>>;
+  return apiFetch(`/v1${endpoint}/${id}`, { method: 'PATCH', body }) as Promise<Record<string, unknown>>;
 }
 
 export function deleteRecord(endpoint: string, id: string) {
-  return apiFetch(`/api${endpoint}/${id}`, { method: 'DELETE' });
+  return apiFetch(`/v1${endpoint}/${id}`, { method: 'DELETE' });
 }
 
 export function actionRecord(endpoint: string, id: string, action: string, body?: unknown) {
-  return apiFetch(`/api${endpoint}/${id}/${action}`, { method: 'POST', body: body ?? {} }) as Promise<
+  return apiFetch(`/v1${endpoint}/${id}/${action}`, { method: 'POST', body: body ?? {} }) as Promise<
     Record<string, unknown>
   >;
 }
@@ -57,7 +57,7 @@ export function actionRecord(endpoint: string, id: string, action: string, body?
 /** Best-effort fetch of a secondary collection (e.g. leads for a select). Returns [] on failure. */
 export async function fetchOptions<T>(endpoint: string): Promise<T[]> {
   try {
-    const json = await apiFetch(`/api${endpoint}`);
+    const json = await apiFetch(`/v1${endpoint}`);
     return normalizeRows<T>(json);
   } catch {
     return [];

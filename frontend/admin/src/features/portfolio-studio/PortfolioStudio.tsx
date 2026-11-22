@@ -7,7 +7,7 @@ import { Button, Card, EmptyState, Field, PageHeader, Spinner, inputClass } from
 /**
  * Portfolio Studio (plan Phase 3.4) — self-service editor for the logged-in
  * employee's public portfolio. Persists theme/layout/section order+visibility
- * plus a free-form draft payload through `/api/employee-profiles/portfolio-config`.
+ * plus a free-form draft payload through `/v1/employee-profiles/portfolio-config`.
  * Publishing snapshots the draft server-side (`publishedConfig`) and bumps the
  * version; the public `/staff/:id` payload then exposes it as `portfolioStudio`.
  */
@@ -122,7 +122,7 @@ export function PortfolioStudio() {
     setLoading(true);
     setError(null);
     try {
-      const row = (await apiFetch(`/api/employee-profiles/portfolio-config/${employeeId}`)) as PortfolioConfig | null;
+      const row = (await apiFetch(`/v1/employee-profiles/portfolio-config/${employeeId}`)) as PortfolioConfig | null;
       setConfig(row);
       if (row) {
         setTheme(row.theme || 'default');
@@ -253,7 +253,7 @@ export function PortfolioStudio() {
     setError(null);
     setNotice(null);
     try {
-      const saved = (await apiFetch(`/api/employee-profiles/portfolio-config/${employeeId}`, {
+      const saved = (await apiFetch(`/v1/employee-profiles/portfolio-config/${employeeId}`, {
         method: 'PUT',
         body: {
           theme,
@@ -277,7 +277,7 @@ export function PortfolioStudio() {
     setError(null);
     setNotice(null);
     try {
-      const saved = (await apiFetch(`/api/employee-profiles/portfolio-config/${employeeId}/publish`, {
+      const saved = (await apiFetch(`/v1/employee-profiles/portfolio-config/${employeeId}/publish`, {
         method: 'POST',
       })) as PortfolioConfig;
       setConfig(saved);
@@ -295,7 +295,7 @@ export function PortfolioStudio() {
     setError(null);
     setNotice(null);
     try {
-      const saved = (await apiFetch(`/api/employee-profiles/portfolio-config/${employeeId}/unpublish`, {
+      const saved = (await apiFetch(`/v1/employee-profiles/portfolio-config/${employeeId}/unpublish`, {
         method: 'POST',
       })) as PortfolioConfig;
       setConfig(saved);

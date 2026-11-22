@@ -2,8 +2,8 @@
 
 > **🎯 TARGET** — Normative dashboard acceptance spec; not yet implemented in current admin.<br>
 > **Gaps from canonical plan (`ANGISOFT_DIGITAL_HQ_PLAN.md` §8):**
-> - Current staff dashboard calls `/api/admin/staff-dashboard`; backend mounts at `/api/staff-dashboard` → standardize.
-> - Admin dashboard calls `/api/admin/dashboard/overview`; backend exposes `/api/admin/dashboard/stats` → align.
+> - Current staff dashboard calls `/v1/admin/staff-dashboard`; backend mounts at `/v1/staff-dashboard` → standardize.
+> - Admin dashboard calls `/v1/admin/dashboard/overview`; backend exposes `/v1/admin/dashboard/stats` → align.
 > - Permission keys in this matrix (`analytics.view_dashboard`, `publications.review`, `audit.view`) don't match current catalogue → migrate to canonical registry.
 > - Effective-permission response must include scoped counts (`assignmentCounts`) for widget logic.
 > - Empty-widget rule: permission held but zero assignments → show empty state with "Create first [record]" CTA.
@@ -71,7 +71,7 @@ if has('analytics.view_dashboard'):
 ### Admin / Super Admin
 | Widget | Data source | Permission |
 |---|---|---|
-| Admin Summary | `/api/admin/dashboard/stats` | `analytics.view_dashboard` |
+| Admin Summary | `/v1/admin/dashboard/stats` | `analytics.view_dashboard` |
 | All Bookings | `Booking` | `bookings.view_all` |
 | Staff Directory | `Employee` | `staff.view` |
 | Content Queue | `BlogPost` review | `publications.review` |
@@ -81,4 +81,4 @@ if has('analytics.view_dashboard'):
 If a permission is present but no assigned records exist (e.g. `products.view_assigned` with zero team products), the widget shows a **"No products assigned yet"** empty state — never a silent blank or a fake global list.
 
 ## Admin dashboard (`EnhancedAdminDashboard.jsx`)
-Keep the existing stat cards (`totalBookings`, `pendingBookings`, `totalServices`, `totalProjects`, `totalStaff`, `totalClients`, `recentBookings`) but gate each behind `analytics.view_*` and add: enquiries count, publications-in-review count, media count. These read existing `/api/admin/dashboard/stats`.
+Keep the existing stat cards (`totalBookings`, `pendingBookings`, `totalServices`, `totalProjects`, `totalStaff`, `totalClients`, `recentBookings`) but gate each behind `analytics.view_*` and add: enquiries count, publications-in-review count, media count. These read existing `/v1/admin/dashboard/stats`.

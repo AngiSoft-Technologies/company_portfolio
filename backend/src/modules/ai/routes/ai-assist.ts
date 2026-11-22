@@ -5,7 +5,7 @@ import db, { type Db } from '../../../db';
 import { scoreLead, triageTicket, suggestContent, reviewDiff } from '../services/aiAssist';
 
 /**
- * AI assistance endpoints (Phase 4.5). Mounted at /api/admin alongside
+ * AI assistance endpoints (Phase 4.5). Mounted at /v1/admin alongside
  * ai-config; each endpoint is gated by the permission of the domain it
  * assists so assist access mirrors the underlying data access.
  */

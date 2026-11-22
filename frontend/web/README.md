@@ -67,7 +67,7 @@ a non-default backend:
 VITE_API_BASE_URL=http://localhost:5000
 ```
 
-**Production hosting leaves this unset.** Netlify proxies `/api/*` and
+**Production hosting leaves this unset.** Netlify proxies `/v1/*` and
 `/uploads/*` to the API, so API traffic is same-origin and the browser sends the
 `SameSite=Strict` refresh cookie. Setting an absolute base reintroduces
 cross-origin cookie breakage — see `docs/NETLIFY.md` §Routing.

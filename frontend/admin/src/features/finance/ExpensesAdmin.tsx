@@ -39,7 +39,7 @@ export function ExpensesAdmin() {
     setError(null);
     try {
       const qs = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
-      const data = await apiFetch(`/api/expenses${qs}`);
+      const data = await apiFetch(`/v1/expenses${qs}`);
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load expenses');
@@ -75,9 +75,9 @@ export function ExpensesAdmin() {
         category: form.category || null,
       };
       if (editing) {
-        await apiFetch(`/api/expenses/${editing.id}`, { method: 'PUT', body });
+        await apiFetch(`/v1/expenses/${editing.id}`, { method: 'PUT', body });
       } else {
-        await apiFetch('/api/expenses', { method: 'POST', body });
+        await apiFetch('/v1/expenses', { method: 'POST', body });
       }
       setModalOpen(false);
       void load();
@@ -91,7 +91,7 @@ export function ExpensesAdmin() {
   const act = async (id: string, action: string, body?: unknown) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/expenses/${id}/${action}`, { method: 'POST', body });
+      await apiFetch(`/v1/expenses/${id}/${action}`, { method: 'POST', body });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : `${action} failed`);

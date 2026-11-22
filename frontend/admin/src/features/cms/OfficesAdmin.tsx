@@ -46,7 +46,7 @@ export function OfficesAdmin() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch('/api/offices/admin');
+      const data = await apiFetch('/v1/offices/admin');
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load offices');
@@ -104,9 +104,9 @@ export function OfficesAdmin() {
         sortOrder: Number(form.sortOrder) || 0,
       };
       if (editing) {
-        await apiFetch(`/api/offices/admin/${editing.id}`, { method: 'PUT', body });
+        await apiFetch(`/v1/offices/admin/${editing.id}`, { method: 'PUT', body });
       } else {
-        await apiFetch('/api/offices/admin', { method: 'POST', body });
+        await apiFetch('/v1/offices/admin', { method: 'POST', body });
       }
       setModalOpen(false);
       void load();
@@ -121,7 +121,7 @@ export function OfficesAdmin() {
     if (!window.confirm(`Delete office "${r.name}"?`)) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/offices/admin/${r.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/offices/admin/${r.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -137,7 +137,7 @@ export function OfficesAdmin() {
     <div className="space-y-4">
       <PageHeader
         title="Offices & Locations"
-        subtitle="Structured office locations shown on the public contact page. Served at GET /api/offices."
+        subtitle="Structured office locations shown on the public contact page. Served at GET /v1/offices."
         actions={<Button onClick={openCreate}>New office</Button>}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}

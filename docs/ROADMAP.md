@@ -35,7 +35,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done.
    (`provider` + `providerId` / reference / `CheckoutRequestID`), never insert blindly.
 4. **Observability before scale.** Log webhook decisions, queue job outcomes, and
    replica-lag/health in a queryable format before load is added.
-5. **One source of truth for content.** Public UI reads `/api/*`; never hardcode
+5. **One source of truth for content.** Public UI reads `/v1/*`; never hardcode
    business content in components.
 
 ---
@@ -56,7 +56,7 @@ AWS, or MinIO work the same way.
   endpoints (used by `frontend/src/components/FileUpload.jsx`) become storage-agnostic:
   - S3 configured → memory-buffer multer → `uploadObject()` → `File` row with
     `metadata.storage = 's3'`, `metadata.key`, and either a public URL or
-    `/api/uploads/files/:id/raw` proxy.
+    `/v1/uploads/files/:id/raw` proxy.
   - Not configured → existing disk-storage behaviour (unchanged).
 - Private downloads (`/files/:id/download`) and a new public proxy
   (`/files/:id/raw`) stream from S3 when the row is S3-backed.
@@ -77,7 +77,7 @@ S3_PUBLIC_BASE_URL=https://your-bucket.t3.storage.dev   # public CDN host for pu
 - Get keys/bucket from the Tigris dashboard (`t3 buckets create` / access keys), or
   Cloudflare R2 / AWS S3 with the same env shape.
 - `S3_PUBLIC_BASE_URL` is optional; when unset, public S3 files are served through
-  `/api/uploads/files/:id/raw`.
+  `/v1/uploads/files/:id/raw`.
 
 **Verification**: backend `tsc` + build + vitest; manual "upload an image then a
 private document in admin, then restart the container" test in staging.
@@ -148,7 +148,7 @@ backend/src/services/payments/
 - Webhook/callback router (`payments.ts`): per-provider verification then a single idempotent
   `applyPaymentSuccess(provider, providerId, amount, currency, metadata, bookingId)` that upserts the
   `Payment` row and flips the booking to `DEPOSIT_PAID` (existing behaviour).
-- Charge initiation endpoint `POST /api/payments/initiate` (auth + role/booking-ownership checks,
+- Charge initiation endpoint `POST /v1/payments/initiate` (auth + role/booking-ownership checks,
   mirrors `create-intent` strike-pass rules). No new public write surface.
 - Reconciliation: extend `scripts/reconcile-*.js` pattern to all providers (`status` sync by natural key).
 
@@ -165,7 +165,7 @@ PAYSTACK_SECRET_KEY=sk_live_...
 PAYHERO_API_USERNAME=...
 PAYHERO_API_PASSWORD=...
 PAYHERO_CHANNEL_ID=0            # registered till/paybill/bank channel id
-PAYHERO_CALLBACK_URL=https://api.angisoft.co.ke/api/payments/payhero/callback
+PAYHERO_CALLBACK_URL=https://api.angisoft.co.ke/v1/payments/payhero/callback
 
 # M-Pesa Daraja
 MPESA_ENV=sandbox               # sandbox | production
@@ -173,7 +173,7 @@ MPESA_CONSUMER_KEY=...
 MPESA_CONSUMER_SECRET=...
 MPESA_SHORTCODE=174379
 MPESA_PASSKEY=...
-MPESA_CALLBACK_URL=https://api.angisoft.co.ke/api/payments/mpesa/callback
+MPESA_CALLBACK_URL=https://api.angisoft.co.ke/v1/payments/mpesa/callback
 ```
 
 **Security matrix (webhook ack)**
@@ -212,7 +212,7 @@ MPESA_CALLBACK_URL=https://api.angisoft.co.ke/api/payments/mpesa/callback
 ### 3.3 Caching
 - **Done**: `backend/src/middleware/cache.ts` (public JSON cache) + `backend/src/services/cache.ts`
   (Redis when `REDIS_URL`, in-memory fallback; fail-soft; `purgeCache(prefix)` helper). Only
-  unauthenticated `GET` routes from an explicit allow-list (`/api/services`, projects, blogs,
+  unauthenticated `GET` routes from an explicit allow-list (`/v1/services`, projects, blogs,
   testimonials, faqs, solutions, industries, announcements, company-stats, home-sections,
   about-sections, certifications, careers, products, product-faqs) are cached. Responses get
   `Cache-Control: public, s-maxage=<PUBLIC_CACHE_TTL>` (default 60 s) so a CDN can cache them too.
@@ -282,4 +282,4 @@ MPESA_CALLBACK_URL=https://api.angisoft.co.ke/api/payments/mpesa/callback
 | (this session) | 4 | Frontend `hooks/useRealtime.js` (socket singleton, JWT agent, subscribe/emit); `BookingProgress.jsx` live-refreshes on `booking:event` (joins room via tracking token); Vite `/socket.io` ws proxy; 92 hardcoded `/uploads/public` literals routed through `resolveAssetUrl` across 9 data/util/component files + 10 runtime components. Brand-palette alignment: `BRAND_COLORS`/`constants.js` → official palette; old hexes (`#0A3DFF`→`#0875FF`, `#00C2FF`→`#00AFFF`, `#39FF6A`→`#27D94B`, `#3B6FFF`→`#3B9AFF`, etc.) swept across `index.css` + 24 components (137 replacements, build green; per-product gradient hues `#8A2BE2`/`#EF4444` preserved). |
 | (this session) | 3 | Redis-gated queue adoption (`queue/index.ts`: BullMQ when `REDIS_URL`, in-memory fallback with the `'send'`/`'emails'` processor-lookup bug fixed + `closeWorkers()` wired into `index.ts` graceful shutdown; runtime smoke verified). Redis-gated public JSON cache (`middleware/cache.ts` + `services/cache.ts`, allow-listed public GET routes, `s-maxage` headers, `purgeCache`, env `CACHE_ENABLED`/`PUBLIC_CACHE_TTL`; runtime smoke verified). MCP read-only server (`mcp/tools.ts` + `mcp/index.ts`; stdio via `npm run mcp:stdio`, HTTP via `MCP_HTTP_ENABLED` on `/mcp`; `@modelcontextprotocol/sdk@1.30`). gRPC deliberately doc-only (§3.6). `.env.example` updated. Verified: tsc + build + auth.spec 3/3. |
 | (this session) | 5 | Fly.io "one ecosystem" wiring: shared Redis helper `services/redis.ts` (REDIS_FAMILY + auto-IPv6 for `*.upstash.io`; used by queue, cache, readyz, realtime); `s3.ts` honors `AWS_*` secret names (`fly storage create`) + auto-derives `<bucket>.t3.tigrisfiles.io` public CDN (S3_PUBLIC_BASE_URL corrected in `.env`); Socket.IO Redis adapter `@socket.io/redis-adapter` wired into `realtime/index.ts` behind `REDIS_URL` (fail-soft to in-process; teardown in `closeRealtime`); workers-only entrypoint `src/worker.ts` + `start:worker` script → Fly `worker` process group; `backend/fly.toml` (`web`+`worker` processes, `[http_service]` `/health/readyz` check, `release_command = "npx prisma migrate deploy"`, jnb region, secrets guide). `.env.example` deleted per user preference — runtime `backend/.env` is the single config source (updated in place: REDIS_URL/REDIS_FAMILY/CACHE_ENABLED/PUBLIC_CACHE_TTL/CDN base). Docs updated: AGENTS.md, CLAUDE.md, backend/README.md (Fly.io deploy + worker script), docs/ARCHITECTURE.md. Verified: tsc + build + auth.spec 3/3. Live deploy/Redis/Tigris E2E requires user Fly auth + live keys. |
-| (this session) | 6 | **LIVE on Fly.io**: app `company-portfolio` (user's own app; user fly.toml: single `app` process, lhr, scale-to-zero, `release_command = npx prisma migrate deploy`). Linked secrets on the app from `backend/.env` (Neon `DATABASE_URL`, Tigris `S3_*` → `my-company-portfolio` bucket, `REDIS_URL` + `REDIS_FAMILY=6`) via `scripts/fly-secrets.sh` (fixed `--only` filter bug; earlier full-sweep overwrote JWT/SMTP/OpenAI secrets with matching `.env` values — source-of-truth alignment, disclosed). `fly redis create` Upstash `company-portfolio-redis` (PAYG, `--enable-prodpack=false` to skip the TTY prompt). Deployed via `fly deploy -a company-portfolio --local-only` (depot/`api.depot.dev` unreachable; `docker push registry.fly.io/...` → "app repository not found"). Custom domain `api.angisoft.co.ke` cert attached (`fly certs add`, shared v4 `66.241.124.205` + pre-existing v6 `2a09:8280:1::198:5fd8:0`; DNS records pending at registrar → A + AAAA). **Verified live**: `/health/readyz` 200 `{ready:true, database:true, redis:true, workers:[emails,file-processing,reconciliation]}`; `/api/services` 200 real data. Netlify `/uploads/*` proxy + `PAYHERO_CALLBACK_URL` + frontend `/api` base all keep `api.angisoft.co.ke` unchanged (domain now routes to Fly). `angisoft-api` test app left dormant (user: leave as-is). |
+| (this session) | 6 | **LIVE on Fly.io**: app `company-portfolio` (user's own app; user fly.toml: single `app` process, lhr, scale-to-zero, `release_command = npx prisma migrate deploy`). Linked secrets on the app from `backend/.env` (Neon `DATABASE_URL`, Tigris `S3_*` → `my-company-portfolio` bucket, `REDIS_URL` + `REDIS_FAMILY=6`) via `scripts/fly-secrets.sh` (fixed `--only` filter bug; earlier full-sweep overwrote JWT/SMTP/OpenAI secrets with matching `.env` values — source-of-truth alignment, disclosed). `fly redis create` Upstash `company-portfolio-redis` (PAYG, `--enable-prodpack=false` to skip the TTY prompt). Deployed via `fly deploy -a company-portfolio --local-only` (depot/`api.depot.dev` unreachable; `docker push registry.fly.io/...` → "app repository not found"). Custom domain `api.angisoft.co.ke` cert attached (`fly certs add`, shared v4 `66.241.124.205` + pre-existing v6 `2a09:8280:1::198:5fd8:0`; DNS records pending at registrar → A + AAAA). **Verified live**: `/health/readyz` 200 `{ready:true, database:true, redis:true, workers:[emails,file-processing,reconciliation]}`; `/v1/services` 200 real data. Netlify `/uploads/*` proxy + `PAYHERO_CALLBACK_URL` + frontend `/v1` base all keep `api.angisoft.co.ke` unchanged (domain now routes to Fly). `angisoft-api` test app left dormant (user: leave as-is). |

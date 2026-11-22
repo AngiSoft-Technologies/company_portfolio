@@ -32,7 +32,7 @@ export function normalizeRows<T>(data: unknown, transform?: (rows: unknown) => T
 
 /**
  * All admin data access goes through `apiFetch`, which uses the same-origin
- * `/api/*` proxy, the in-memory Bearer token, the CSRF double-submit header,
+ * `/v1/*` proxy, the in-memory Bearer token, the CSRF double-submit header,
  * and the 401 refresh retry. A raw `fetch` here silently produced anonymous
  * requests that every guarded endpoint rejected.
  */
@@ -48,7 +48,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
   const refresh = async () => {
     setLoading(true);
     try {
-      const json = await apiFetch(`/api${config.endpoint}`);
+      const json = await apiFetch(`/v1${config.endpoint}`);
       setRows(normalizeRows<T>(json, config.transform));
       setError(null);
     } catch (e) {
@@ -61,7 +61,7 @@ export function useCrud<T, C extends CrudConfig<T> = CrudConfig<T>>(config: C): 
 
   const remove = async (id: string): Promise<boolean> => {
     try {
-      await apiFetch(`/api${config.endpoint}/${id}`, { method: 'DELETE' });
+      await apiFetch(`/v1${config.endpoint}/${id}`, { method: 'DELETE' });
       toast.success('Deleted successfully');
       await refresh();
       return true;

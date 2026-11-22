@@ -17,7 +17,7 @@ Backend API:                        http://localhost:5000/api
 ```
 Web:        https://angisoft.co.ke
 Admin:      https://admin.angisoft.co.ke
-API:        https://api.angisoft.co.ke/api   (Netlify proxies /api/* same-origin)
+API:        https://api.angisoft.co.ke/api   (Netlify proxies /v1/* same-origin)
 CDN uploads: https://cdn.angisoft.co.ke       (Tigris bucket)
 ```
 

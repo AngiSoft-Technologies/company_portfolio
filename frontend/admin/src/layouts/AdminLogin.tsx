@@ -153,7 +153,7 @@ export function AdminLogin() {
     setLoading(true);
     setError(null);
     try {
-      // Same-origin `/api/*` proxy + CSRF double-submit header via the shared client.
+      // Same-origin `/v1/*` proxy + CSRF double-submit header via the shared client.
       const json = (await apiRequest('POST', '/auth/login', {
         email,
         password,

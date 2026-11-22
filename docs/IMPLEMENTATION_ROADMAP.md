@@ -196,11 +196,11 @@ npm run dev
 **Steps**:
 1. Open DevTools → Network tab
 2. Create blog post, check network request
-3. Should see POST /api/blogs request
+3. Should see POST /v1/blogs request
 4. Response should include created blog ID
-5. Create service, check POST /api/services request
+5. Create service, check POST /v1/services request
 6. Response should include service with all fields
-7. Refresh homepage, check GET /api/blogs request
+7. Refresh homepage, check GET /v1/blogs request
 8. Response should include all created posts
 
 **Success Criteria**:
@@ -420,7 +420,7 @@ npx prisma migrate dev
 ```bash
 # Solution: Check API call
 1. Open DevTools → Network tab
-2. Check GET /api/services response
+2. Check GET /v1/services response
 3. Verify published: true on services
 4. Check browser console for errors
 5. Verify Services.jsx makes API call

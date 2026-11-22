@@ -1,0 +1,12 @@
+export { default as CommunicationsOverview } from './CommunicationsOverview';
+export { default as CommunicationsHub } from './CommunicationsHub';
+export { default as CommunicationsInbox } from './CommunicationsInbox';
+export { default as EmailAdmin } from './EmailAdmin';
+export { default as WhatsAppAdmin } from './WhatsAppAdmin';
+export { default as TelegramAdmin } from './TelegramAdmin';
+export { default as SocialAdmin } from './SocialAdmin';
+export { default as MetaCommandCenter } from './MetaCommandCenter';
+export { default as TemplatesAdmin } from './TemplatesAdmin';
+export { default as RulesAdmin } from './RulesAdmin';
+export { default as ContactsAdmin } from './ContactsAdmin';
+export { default as CommunicationsSettings } from './SettingsAdmin';

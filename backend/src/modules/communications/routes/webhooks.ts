@@ -1,157 +1,232 @@
 import express, { Router } from 'express';
 import type { Db } from '../../../db';
-import { newId, ts } from '../../../prisma/db';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import { decryptSecret } from '../../../shared/services/secrets';
-import { extractWhatsAppMessages, extractWhatsAppStatuses, verifyMetaSignature } from '../services/whatsappCloud';
+import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getQueue } from '../../../queue';
+import { verifyMetaSignature } from '../services/whatsappCloud';
+import { verifyMetaVerifyToken } from '../services/metaSocial';
+import { verifyTelegramWebhook } from '../services/telegram';
+import { processProviderEvent } from '../services/eventProcessor';
+import { ProviderCapabilityError } from '../services/capabilities';
+
+export { processProviderEvent } from '../services/eventProcessor';
+
+const WEBHOOK_QUEUE = 'communications-webhooks';
 
 async function getConnectionSecret(prisma: Db, connectionId: string, kind: string) {
-  const row = await prisma.orm.public.ProviderSecret.where({ connectionId, kind } as any).orderBy((s: any) => s.createdAt.desc()).first();
+  const row = await prisma.orm.public.ProviderSecret.where({ connectionId, kind } as any)
+    .orderBy((s: any) => s.createdAt.desc()).first().catch(() => null) as any;
   if (!row) return null;
-  return decryptSecret({ ciphertext: row.ciphertext, iv: row.iv, authTag: row.authTag, keyVersion: row.keyVersion });
+  return decryptSecret({ ciphertext: row.ciphertext, iv: row.iv, authTag: row.authTag, keyVersion: Number(row.keyVersion || 1) });
+}
+
+function devAllowsUnsigned(flag: string): boolean {
+  return process.env.NODE_ENV !== 'production' && getConfig(flag) === 'true';
+}
+
+function externalEventIdOf(payload: any): string | null {
+  const id = payload?.entry?.[0]?.id ?? payload?.update_id ?? payload?.event_id ?? payload?.events?.[0]?.event_id;
+  return id ? String(id) : null;
 }
 
 export default function communicationsWebhooksRouter(prisma: Db) {
   const router = Router();
 
-  // Meta webhook verification
+  /** Meta/WhatsApp webhook verification handshake. */
   router.get('/whatsapp', async (req, res) => {
     const mode = req.query['hub.mode'];
     const token = String(req.query['hub.verify_token'] || '');
     const challenge = req.query['hub.challenge'];
-    const connections = await prisma.orm.public.ProviderConnection.where({ domain: 'COMMUNICATIONS', provider: 'WHATSAPP_META' } as any).all();
-    for (const c of connections) {
-      const cfg: any = c.config || {};
-      const expected = cfg.verifyToken || process.env.WHATSAPP_VERIFY_TOKEN;
-      if (mode === 'subscribe' && expected && token === expected) {
-        return res.status(200).send(String(challenge ?? ''));
-      }
+    const expected = getConfig('WHATSAPP_VERIFY_TOKEN');
+    if (mode === 'subscribe' && expected && token === expected) {
+      return res.status(200).send(String(challenge ?? ''));
+    }
+    const connections = await prisma.orm.public.ProviderConnection
+      .where({ domain: 'COMMUNICATIONS', provider: 'WHATSAPP_META' } as any).all().then((rows: any[]) => rows, () => [] as any[]) as any[];
+    for (const connection of connections) {
+      const dbVerify = await getConnectionSecret(prisma, connection.id, 'WEBHOOK_SECRET').catch(() => null);
+      if (mode === 'subscribe' && dbVerify && token === dbVerify) return res.status(200).send(String(challenge ?? ''));
     }
     return res.sendStatus(403);
   });
 
-  // Meta webhook events (raw body for signature verification)
-  router.post('/whatsapp', express.raw({ type: '*/*' }) as any, async (req: any, res) => {
-    try {
-      const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? {}));
-      const payload = JSON.parse(raw.toString('utf8') || '{}');
-      const signature = req.headers['x-hub-signature-256'] as string | undefined;
-
-      const connections = await prisma.orm.public.ProviderConnection.where({ domain: 'COMMUNICATIONS', provider: 'WHATSAPP_META' } as any).all();
-      let matched: any = null;
-      let signatureValid = false;
-      for (const c of connections) {
-        let secret = (c.config as any)?.appSecret || process.env.WHATSAPP_APP_SECRET || '';
-        try {
-          const dbSecret = await getConnectionSecret(prisma, c.id, 'API_SECRET');
-          if (dbSecret) secret = dbSecret;
-        } catch {}
-        if (secret && verifyMetaSignature(raw, signature, secret)) {
-          matched = c; signatureValid = true; break;
-        }
-      }
-      const allowUnsigned = process.env.WHATSAPP_ALLOW_UNSIGNED_WEBHOOKS === 'true' && process.env.NODE_ENV !== 'production';
-      if (!signatureValid) {
-        await recordProviderEvent(prisma, {
-          connectionId: matched?.id ?? null,
-          provider: 'WHATSAPP_META',
-          domain: 'COMMUNICATIONS',
-          externalEventId: payload?.entry?.[0]?.id,
-          eventType: 'whatsapp.webhook.rejected',
-          signatureValid: false,
-          payload,
-          headers: { 'x-hub-signature-256': signature },
-          status: allowUnsigned ? 'RECEIVED' : 'FAILED',
-          error: 'Invalid or missing X-Hub-Signature-256',
-        }).catch(() => {});
-        if (!allowUnsigned) return res.sendStatus(403);
-      }
-      if (!matched) {
-        await recordProviderEvent(prisma, {
-          connectionId: null, provider: 'WHATSAPP_META', domain: 'COMMUNICATIONS',
-          externalEventId: payload?.entry?.[0]?.id, eventType: 'whatsapp.webhook.unmatched',
-          signatureValid, payload, headers: { 'x-hub-signature-256': signature },
-          status: 'FAILED', error: 'No matching WhatsApp connection found',
-        }).catch(() => {});
-        return res.sendStatus(403);
-      }
-
-      const externalEventId = payload?.entry?.[0]?.id;
-      const { event, deduped } = await recordProviderEvent(prisma, {
-        connectionId: matched.id,
-        provider: 'WHATSAPP_META',
-        domain: 'COMMUNICATIONS',
-        externalEventId,
-        eventType: 'whatsapp.webhook',
-        signatureValid,
-        payload,
-        headers: { 'x-hub-signature-256': signature },
-        status: 'RECEIVED',
-      });
-      if (deduped) return res.sendStatus(200);
-
-      const statuses = extractWhatsAppStatuses(payload);
-      for (const st of statuses) {
-        if (!st.id) continue;
-        await (prisma.orm.public.ConversationMessage.where({ providerMessageId: st.id } as any).updateAll({ deliveryStatus: st.status.toUpperCase(), metadata: { status: st } as any } as any) as unknown as Promise<any>).catch(() => {});
-      }
-
-      const messages = extractWhatsAppMessages(payload);
-      for (const msg of messages) {
-        let account = await prisma.orm.public.CommunicationAccount.where({ provider: 'WHATSAPP_META', externalId: msg.phoneNumberId ?? null } as any).first();
-        if (!account && matched) {
-          account = await prisma.orm.public.CommunicationAccount.create({
-            id: newId(), connectionId: matched.id, channel: 'WHATSAPP', provider: 'WHATSAPP_META',
-            name: msg.displayPhoneNumber ? `WhatsApp ${msg.displayPhoneNumber}` : 'WhatsApp Account',
-            address: msg.displayPhoneNumber ?? null, externalId: msg.phoneNumberId ?? null,
-            status: 'ACTIVE', capabilities: {} as any, config: {} as any, createdById: matched.createdById ?? null,
-            createdAt: ts(), updatedAt: ts(),
-          } as any);
-        }
-        if (!account) continue;
-
-        const identityValue = msg.from;
-        let identity: any = await prisma.orm.public.ContactIdentity.where({ channel: 'WHATSAPP', value: identityValue } as any).include('contact').first();
-        if (!identity) {
-          const contact = await prisma.orm.public.Contact.create({ id: newId(), name: msg.name ?? null, createdAt: ts(), updatedAt: ts() } as any);
-          const createdIdentity = await prisma.orm.public.ContactIdentity.create({
-            id: newId(), contactId: contact.id, channel: 'WHATSAPP', value: identityValue, externalId: identityValue, metadata: { name: msg.name } as any, createdAt: ts(),
-          } as any);
-          identity = { ...(createdIdentity as any), contact };
-        }
-
-        const threadId = `wa:${msg.from}`;
-        let convo = await prisma.orm.public.Conversation.where({ accountId: account.id, externalThreadId: threadId } as any).first();
-        const now = ts();
-        if (!convo) {
-          convo = await prisma.orm.public.Conversation.create({
-            id: newId(), accountId: account.id, contactId: (identity as any).contactId, channel: 'WHATSAPP', externalThreadId: threadId,
-            subject: msg.name ? `WhatsApp: ${msg.name}` : `WhatsApp: ${msg.from}`,
-            status: 'OPEN', priority: 'NORMAL', lastMessageAt: now, lastMessagePreview: msg.text ?? `[${msg.type}]`,
-            metadata: { from: msg.from } as any, createdAt: now, updatedAt: now,
-          } as any);
-        } else {
-          await prisma.orm.public.Conversation.where({ id: convo.id }).update({ lastMessageAt: now, lastMessagePreview: msg.text ?? `[${msg.type}]`, updatedAt: now, status: 'OPEN' } as any);
-        }
-
-        const existingMsg = msg.id ? await prisma.orm.public.ConversationMessage.where({ providerMessageId: msg.id } as any).first() : null;
-        if (!existingMsg) {
-          await prisma.orm.public.ConversationMessage.create({
-            id: newId(), conversationId: convo.id, providerMessageId: msg.id ?? null, direction: 'INBOUND', senderType: 'CONTACT',
-            senderId: (identity as any).contactId, senderAddress: msg.from, bodyText: msg.text ?? null,
-            bodyRich: { type: msg.type, raw: msg } as any, deliveryStatus: 'RECEIVED',
-            sentAt: msg.timestamp ? new Date(Number(msg.timestamp) * 1000).toISOString() : now, receivedAt: now, createdAt: now,
-          } as any);
-        }
-      }
-
-      await prisma.orm.public.ProviderEvent.where({ id: event.id }).update({ status: 'PROCESSED', processedAt: ts(), signatureValid } as any);
-      return res.sendStatus(200);
-    } catch (err: any) {
-      console.error('whatsapp webhook error', err);
-      return res.sendStatus(200); // acknowledge to avoid retries storm; event/error logged above where possible
+  /** Facebook/Instagram webhook verification handshake. */
+  router.get('/meta', async (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = String(req.query['hub.verify_token'] || '');
+    const challenge = req.query['hub.challenge'];
+    if (mode === 'subscribe' && verifyMetaVerifyToken(token)) {
+      return res.status(200).send(String(challenge ?? ''));
     }
+    const connections = await prisma.orm.public.ProviderConnection
+      .where((c: any) => c.domain.eq('COMMUNICATIONS'))
+      .where((c: any) => c.provider.in(['META_FACEBOOK', 'META_INSTAGRAM']))
+      .all().then((rows: any[]) => rows, () => [] as any[]) as any[];
+    for (const connection of connections) {
+      const dbVerify = await getConnectionSecret(prisma, connection.id, 'WEBHOOK_SECRET').catch(() => null);
+      if (mode === 'subscribe' && dbVerify && token === dbVerify) return res.status(200).send(String(challenge ?? ''));
+    }
+    return res.sendStatus(403);
   });
+
+  /** TikTok verification (challenge + configured token / vault secret). */
+  router.get('/tiktok', async (req, res) => {
+    const token = String(req.query['hub.verify_token'] || req.query['verify_token'] || '');
+    const challenge = req.query['hub.challenge'] ?? req.query.challenge;
+    const expected = getConfig('TIKTOK_VERIFY_TOKEN');
+    if (expected && token === expected) return res.status(200).send(String(challenge ?? ''));
+    const connections = await prisma.orm.public.ProviderConnection
+      .where({ domain: 'COMMUNICATIONS', provider: 'TIKTOK' } as any).all().then((rows: any[]) => rows, () => [] as any[]) as any[];
+    for (const connection of connections) {
+      const dbVerify = await getConnectionSecret(prisma, connection.id, 'WEBHOOK_SECRET').catch(() => null);
+      if (token && dbVerify === token) return res.status(200).send(String(challenge ?? ''));
+    }
+    return res.sendStatus(403);
+  });
+
+  type VerifyResult = { valid: boolean; connection: any | null; provider: string; ignored?: boolean };
+
+  async function verifyRequest(route: string, req: any, payload: any, raw: Buffer): Promise<VerifyResult> {
+    if (route === 'whatsapp') {
+      const signature = req.headers['x-hub-signature-256'] as string | undefined;
+      const connections = await prisma.orm.public.ProviderConnection
+        .where({ domain: 'COMMUNICATIONS', provider: 'WHATSAPP_META' } as any).all().then((rows: any[]) => rows, () => [] as any[]) as any[];
+      for (const connection of connections) {
+        let secret = getConfig('WHATSAPP_APP_SECRET') || getConfig('META_APP_SECRET');
+        const dbSecret = await getConnectionSecret(prisma, connection.id, 'API_SECRET').catch(() => null);
+        if (dbSecret) secret = dbSecret;
+        if (secret && verifyMetaSignature(raw, signature, secret)) {
+          return { valid: true, connection, provider: 'WHATSAPP_META' };
+        }
+      }
+      if (devAllowsUnsigned('WHATSAPP_ALLOW_UNSIGNED_WEBHOOKS')) {
+        return { valid: true, connection: connections[0] ?? null, provider: 'WHATSAPP_META' };
+      }
+      return { valid: false, connection: null, provider: 'WHATSAPP_META' };
+    }
+
+    if (route === 'telegram') {
+      const connection = await prisma.orm.public.ProviderConnection
+        .where({ domain: 'COMMUNICATIONS', provider: 'TELEGRAM' } as any).first().catch(() => null) as any;
+      const valid = await verifyTelegramWebhook(prisma, {
+        headerToken: req.headers['x-telegram-bot-api-secret-token'] as string | undefined,
+        connectionId: connection?.id,
+      });
+      return { valid, connection: valid ? connection : null, provider: 'TELEGRAM' };
+    }
+
+    if (route === 'meta') {
+      const requested = String(req.query.network || '').toUpperCase();
+      const provider = requested === 'META_FACEBOOK' || requested === 'META_INSTAGRAM'
+        ? requested
+        : String(payload?.object || '').toLowerCase().includes('instagram') ? 'META_INSTAGRAM' : 'META_FACEBOOK';
+      const signature = req.headers['x-hub-signature-256'] as string | undefined;
+      const connections = await prisma.orm.public.ProviderConnection
+        .where({ domain: 'COMMUNICATIONS', provider } as any).all().then((rows: any[]) => rows, () => [] as any[]) as any[];
+      for (const connection of connections) {
+        let secret = getConfig('META_APP_SECRET') || getConfig('WHATSAPP_APP_SECRET');
+        const dbSecret = await getConnectionSecret(prisma, connection.id, 'API_SECRET').catch(() => null);
+        if (dbSecret) secret = dbSecret;
+        if (secret && verifyMetaSignature(raw, signature, secret)) return { valid: true, connection, provider };
+      }
+      if (devAllowsUnsigned('META_ALLOW_UNSIGNED_WEBHOOKS')) {
+        return { valid: true, connection: connections[0] ?? null, provider };
+      }
+      return { valid: false, connection: null, provider };
+    }
+
+    // TikTok
+    const signature = req.headers['x-tiktok-signature'] as string | undefined;
+    const connection = await prisma.orm.public.ProviderConnection
+      .where({ domain: 'COMMUNICATIONS', provider: 'TIKTOK' } as any).first().catch(() => null) as any;
+    let secret = getConfig('TIKTOK_WEBHOOK_SECRET');
+    if (connection?.id) secret = await getConnectionSecret(prisma, connection.id, 'WEBHOOK_SECRET').catch(() => null) || secret;
+    const valid = Boolean(secret && signature && verifyMetaSignature(raw, signature, secret));
+    return {
+      valid: valid || (Boolean(connection) && devAllowsUnsigned('TIKTOK_ALLOW_UNSIGNED_WEBHOOKS')),
+      connection: valid || devAllowsUnsigned('TIKTOK_ALLOW_UNSIGNED_WEBHOOKS') ? connection : null,
+      provider: 'TIKTOK',
+    };
+  }
+
+  async function handleWebhook(route: string, req: any, res: any) {
+    const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? {}));
+    let payload: any;
+    try {
+      payload = JSON.parse(raw.toString('utf8') || '{}');
+    } catch {
+      await recordProviderEvent(prisma, {
+        provider: route.toUpperCase(), domain: 'COMMUNICATIONS', eventType: `${route}.webhook.invalid_json`,
+        signatureValid: false, payload: { raw: raw.toString('utf8').slice(0, 500) },
+        status: 'FAILED', error: 'Invalid JSON payload',
+      }).then(() => undefined, () => undefined);
+      return res.sendStatus(400);
+    }
+
+    const verified = await verifyRequest(route, req, payload, raw).catch(() => ({ valid: false, connection: null, provider: route.toUpperCase() }));
+    const signatureHeader = route === 'telegram'
+      ? { 'x-telegram-bot-api-secret-token': req.headers['x-telegram-bot-api-secret-token'] ? 'present' : null }
+      : route === 'tiktok'
+        ? { 'x-tiktok-signature': req.headers['x-tiktok-signature'] ? 'present' : null }
+        : { 'x-hub-signature-256': req.headers['x-hub-signature-256'] ? 'present' : null };
+
+    if (!verified.valid) {
+      await recordProviderEvent(prisma, {
+        connectionId: verified.connection?.id ?? null, provider: verified.provider, domain: 'COMMUNICATIONS',
+        externalEventId: externalEventIdOf(payload), eventType: `${route}.webhook.rejected`,
+        signatureValid: false, payload, headers: signatureHeader, status: 'FAILED',
+        error: 'Missing or invalid webhook signature/token',
+      }).then(() => undefined, () => undefined);
+      return res.sendStatus(403);
+    }
+    if (!verified.connection) {
+      await recordProviderEvent(prisma, {
+        connectionId: null, provider: verified.provider, domain: 'COMMUNICATIONS',
+        externalEventId: externalEventIdOf(payload), eventType: `${route}.webhook.unmatched`,
+        signatureValid: true, payload, headers: signatureHeader, status: 'FAILED',
+        error: 'No matching provider connection found',
+      }).then(() => undefined, () => undefined);
+      return res.sendStatus(403);
+    }
+
+    const { event, deduped } = await recordProviderEvent(prisma, {
+      connectionId: verified.connection.id,
+      provider: verified.provider,
+      domain: 'COMMUNICATIONS',
+      externalEventId: externalEventIdOf(payload),
+      eventType: `${route}.webhook`,
+      signatureValid: true,
+      payload,
+      headers: signatureHeader,
+      status: 'RECEIVED',
+    });
+    if (deduped && (event as any)?.status === 'PROCESSED') return res.sendStatus(200);
+    if (deduped && (event as any)?.status === 'IGNORED') return res.sendStatus(200);
+
+    // A queued replay uses the same idempotent processor; the HTTP response is
+    // only acknowledged after inline processing succeeds (or is ignored).
+    try {
+      await getQueue(WEBHOOK_QUEUE).add('process-provider-event', { eventId: event.id, provider: verified.provider });
+    } catch (err) {
+      console.warn('[communications] webhook queue enqueue failed; processing inline:', err instanceof Error ? err.message : err);
+    }
+    try {
+      await processProviderEvent(prisma, event);
+      return res.sendStatus(200);
+    } catch (err) {
+      const message = err instanceof ProviderCapabilityError ? err.message : 'Webhook processing failed';
+      console.warn('[communications] webhook processing failed:', message);
+      // Non-2xx tells the provider to retry; the event stays FAILED for the
+      // retry worker. Never acknowledge an unprocessed event.
+      return res.status(500).json({ error: message });
+    }
+  }
+
+  router.post('/whatsapp', express.raw({ type: '*/*' }) as any, (req, res) => handleWebhook('whatsapp', req, res));
+  router.post('/telegram', express.raw({ type: '*/*' }) as any, (req, res) => handleWebhook('telegram', req, res));
+  router.post('/meta', express.raw({ type: '*/*' }) as any, (req, res) => handleWebhook('meta', req, res));
+  router.post('/tiktok', express.raw({ type: '*/*' }) as any, (req, res) => handleWebhook('tiktok', req, res));
 
   return router;
 }

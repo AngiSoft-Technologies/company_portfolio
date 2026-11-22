@@ -5,9 +5,9 @@
  * Admin/Staff Portal reconstruction.
  *
  * Exposes:
- *   - GET  /api/admin/staff/:id/access   (read full access state for a staff member)
- *   - PUT  /api/admin/staff/:id/access   (full assignment write)
- *   - CRUD for Department, Position, PermissionPreset under /api/admin/*
+ *   - GET  /v1/admin/staff/:id/access   (read full access state for a staff member)
+ *   - PUT  /v1/admin/staff/:id/access   (full assignment write)
+ *   - CRUD for Department, Position, PermissionPreset under /v1/admin/*
  *
  * All endpoints require admin-level access through `requireAccess`: reads need
  * `staff.view`, writes need `staff.assign_permissions` /

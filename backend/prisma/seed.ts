@@ -213,7 +213,7 @@ async function main() {
 
     // Break the flat about object into composed AboutSection rows (one row per
     // key), preserving the declared order. This makes the About page editable as
-    // individual DB rows via the admin CMS (/api/about-sections).
+    // individual DB rows via the admin CMS (/v1/about-sections).
     // Canonical ordering matches the frontend ABOUT_SECTION_KEYS contract so the
     // page composer assembles sections in the intended visual sequence.
     const seedAboutSections = async (about: Record<string, any>) => {

@@ -9,7 +9,7 @@
 > Treat seeded positions as live catalogue; this document as rationale for additions/renames/future hiring. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §7.
 
 Positions derived from **real platform responsibilities**, not generic titles.
-Public profile type = what the Staff List (`pages/StaffList.jsx`) and `GET /api/staff` should show.
+Public profile type = what the Staff List (`pages/StaffList.jsx`) and `GET /v1/staff` should show.
 System role (SUPER_ADMIN/ADMIN/STAFF) is **separate** — never exposed publicly.
 
 | Position | Department | Evidence | Supported Services | Supported Products | Internal Responsibilities | Suggested Permissions | Required Now | Future Role | Public Profile Type |

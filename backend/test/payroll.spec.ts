@@ -125,7 +125,7 @@ beforeAll(async () => {
     const { default: payrollRouter } = await import('../src/modules/identity/routes/payroll');
     app = express();
     app.use(express.json());
-    app.use('/api/payroll', payrollRouter());
+    app.use('/v1/payroll', payrollRouter());
     request = supertest;
 });
 
@@ -159,29 +159,29 @@ beforeEach(() => {
 
 describe('payroll endpoints', () => {
     it('rejects unauthenticated access', async () => {
-        expect((await request(app).get('/api/payroll/me')).status).toBe(401);
-        expect((await request(app).get('/api/payroll/admin')).status).toBe(401);
+        expect((await request(app).get('/v1/payroll/me')).status).toBe(401);
+        expect((await request(app).get('/v1/payroll/admin')).status).toBe(401);
     });
 
     it('/me returns only the caller\'s payslips', async () => {
-        const res = await request(app).get('/api/payroll/me').set(authed(STAFF, 'STAFF'));
+        const res = await request(app).get('/v1/payroll/me').set(authed(STAFF, 'STAFF'));
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].employeeId).toBe(STAFF);
     });
 
     it('admin list requires payroll.view', async () => {
-        const denied = await request(app).get('/api/payroll/admin').set(authed(STAFF, 'STAFF'));
+        const denied = await request(app).get('/v1/payroll/admin').set(authed(STAFF, 'STAFF'));
         expect(denied.status).toBe(403);
 
-        const res = await request(app).get('/api/payroll/admin').set(authed(ADMIN, 'ADMIN'));
+        const res = await request(app).get('/v1/payroll/admin').set(authed(ADMIN, 'ADMIN'));
         expect(res.status).toBe(200);
         expect(res.body[0].employee?.firstName).toBe('Ada');
     });
 
     it('creates a payslip with auto net = gross − deductions', async () => {
         const res = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({
                 employeeId: STAFF, period: '2026-11', grossAmount: 120000,
@@ -194,7 +194,7 @@ describe('payroll endpoints', () => {
 
     it('rejects bad period format', async () => {
         const res = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: 'Nov-2026', grossAmount: 1 });
         expect(res.status).toBe(400);
@@ -202,35 +202,35 @@ describe('payroll endpoints', () => {
 
     it('approve moves draft → approved, blocks self-approval and non-draft', async () => {
         const create = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2026-12', grossAmount: 50000 });
         const id = create.body.id;
 
         // employee cannot approve own payslip even with permission
         store.EmployeePermission.push({ employeeId: STAFF, permissionKey: 'payroll.approve', effect: 'GRANT' });
-        const selfApprove = await request(app).post(`/api/payroll/admin/${id}/approve`).set(authed(STAFF, 'STAFF'));
+        const selfApprove = await request(app).post(`/v1/payroll/admin/${id}/approve`).set(authed(STAFF, 'STAFF'));
         expect(selfApprove.status).toBe(403);
 
-        const approved = await request(app).post(`/api/payroll/admin/${id}/approve`).set(authed(APPROVER, 'HR'));
+        const approved = await request(app).post(`/v1/payroll/admin/${id}/approve`).set(authed(APPROVER, 'HR'));
         expect(approved.status).toBe(200);
         expect(approved.body.status).toBe('approved');
         expect(approved.body.approvedById).toBe(APPROVER);
 
-        const again = await request(app).post(`/api/payroll/admin/${id}/approve`).set(authed(APPROVER, 'HR'));
+        const again = await request(app).post(`/v1/payroll/admin/${id}/approve`).set(authed(APPROVER, 'HR'));
         expect(again.status).toBe(409);
     });
 
     it('mark-paid requires approved status', async () => {
         const draft = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2027-01', grossAmount: 50000 });
-        const early = await request(app).post(`/api/payroll/admin/${draft.body.id}/mark-paid`).set(authed(ADMIN, 'ADMIN'));
+        const early = await request(app).post(`/v1/payroll/admin/${draft.body.id}/mark-paid`).set(authed(ADMIN, 'ADMIN'));
         expect(early.status).toBe(409);
 
-        await request(app).post(`/api/payroll/admin/${draft.body.id}/approve`).set(authed(ADMIN, 'ADMIN'));
-        const paid = await request(app).post(`/api/payroll/admin/${draft.body.id}/mark-paid`).set(authed(ADMIN, 'ADMIN'));
+        await request(app).post(`/v1/payroll/admin/${draft.body.id}/approve`).set(authed(ADMIN, 'ADMIN'));
+        const paid = await request(app).post(`/v1/payroll/admin/${draft.body.id}/mark-paid`).set(authed(ADMIN, 'ADMIN'));
         expect(paid.status).toBe(200);
         expect(paid.body.status).toBe('paid');
         expect(paid.body.paidAt).toBeTruthy();
@@ -238,54 +238,54 @@ describe('payroll endpoints', () => {
 
     it('edits and deletes only draft payslips', async () => {
         const create = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2027-02', grossAmount: 40000 });
         const id = create.body.id;
 
         const upd = await request(app)
-            .put(`/api/payroll/admin/${id}`)
+            .put(`/v1/payroll/admin/${id}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({ grossAmount: 45000, deductions: [{ label: 'PAYE', amount: 10000 }] });
         expect(upd.status).toBe(200);
         expect(Number(upd.body.netAmount)).toBe(35000);
 
-        await request(app).post(`/api/payroll/admin/${id}/approve`).set(authed(ADMIN, 'ADMIN'));
+        await request(app).post(`/v1/payroll/admin/${id}/approve`).set(authed(ADMIN, 'ADMIN'));
         const editApproved = await request(app)
-            .put(`/api/payroll/admin/${id}`)
+            .put(`/v1/payroll/admin/${id}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({ grossAmount: 99999 });
         expect(editApproved.status).toBe(409);
 
-        const delApproved = await request(app).delete(`/api/payroll/admin/${id}`).set(authed(ADMIN, 'ADMIN'));
+        const delApproved = await request(app).delete(`/v1/payroll/admin/${id}`).set(authed(ADMIN, 'ADMIN'));
         expect(delApproved.status).toBe(409);
     });
 
     it('payroll runs: create → link payslip → complete snapshots totals', async () => {
         // duplicate period rejected
         const run = await request(app)
-            .post('/api/payroll/runs')
+            .post('/v1/payroll/runs')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-03', name: 'March payroll' });
         expect(run.status).toBe(201);
         const runId = run.body.id;
 
         const dup = await request(app)
-            .post('/api/payroll/runs')
+            .post('/v1/payroll/runs')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-03' });
         expect(dup.status).toBe(409);
 
         // payslip for a different period can't join the run
         const wrongPeriod = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2027-04', grossAmount: 1000, payrollRunId: runId });
         expect(wrongPeriod.status).toBe(400);
 
         // link a payslip to the run
         const slip = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({
                 employeeId: STAFF, period: '2027-03', grossAmount: 90000,
@@ -295,14 +295,14 @@ describe('payroll endpoints', () => {
         expect(slip.body.payrollRunId).toBe(runId);
 
         // detail returns linked payslips with employee names
-        const detail = await request(app).get(`/api/payroll/runs/${runId}`).set(authed(ADMIN, 'ADMIN'));
+        const detail = await request(app).get(`/v1/payroll/runs/${runId}`).set(authed(ADMIN, 'ADMIN'));
         expect(detail.status).toBe(200);
         expect(detail.body.payslips).toHaveLength(1);
         expect(detail.body.payslips[0].employee.firstName).toBe('Ada');
 
         // complete snapshots totals (requires payroll.approve)
         const completed = await request(app)
-            .post(`/api/payroll/runs/${runId}/complete`)
+            .post(`/v1/payroll/runs/${runId}/complete`)
             .set(authed(APPROVER, 'HR'));
         expect(completed.status).toBe(200);
         expect(completed.body.status).toBe('completed');
@@ -312,12 +312,12 @@ describe('payroll endpoints', () => {
         expect(completed.body.payslipCount).toBe(1);
 
         // terminal: can't complete again or cancel
-        expect((await request(app).post(`/api/payroll/runs/${runId}/complete`).set(authed(APPROVER, 'HR'))).status).toBe(409);
-        expect((await request(app).post(`/api/payroll/runs/${runId}/cancel`).set(authed(ADMIN, 'ADMIN'))).status).toBe(409);
+        expect((await request(app).post(`/v1/payroll/runs/${runId}/complete`).set(authed(APPROVER, 'HR'))).status).toBe(409);
+        expect((await request(app).post(`/v1/payroll/runs/${runId}/cancel`).set(authed(ADMIN, 'ADMIN'))).status).toBe(409);
 
         // payslips can't be added to a completed run
         const late = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2027-03', grossAmount: 1, payrollRunId: runId });
         // 409 unique (employeeId,period) may hit first depending on order — accept either guard
@@ -326,11 +326,11 @@ describe('payroll endpoints', () => {
 
     it('payroll runs: cancel a draft run', async () => {
         const run = await request(app)
-            .post('/api/payroll/runs')
+            .post('/v1/payroll/runs')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-05' });
         const cancelled = await request(app)
-            .post(`/api/payroll/runs/${run.body.id}/cancel`)
+            .post(`/v1/payroll/runs/${run.body.id}/cancel`)
             .set(authed(ADMIN, 'ADMIN'));
         expect(cancelled.status).toBe(200);
         expect(cancelled.body.status).toBe('cancelled');
@@ -339,7 +339,7 @@ describe('payroll endpoints', () => {
     it('salary structures: upsert, list, generate payslips, skip existing', async () => {
         // upsert structure for STAFF
         const put = await request(app)
-            .put(`/api/payroll/admin/structures/${STAFF}`)
+            .put(`/v1/payroll/admin/structures/${STAFF}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({
                 basicSalary: 80000,
@@ -355,7 +355,7 @@ describe('payroll endpoints', () => {
 
         // upsert replaces the structure (still one row per employee)
         const put2 = await request(app)
-            .put(`/api/payroll/admin/structures/${STAFF}`)
+            .put(`/v1/payroll/admin/structures/${STAFF}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({
                 basicSalary: 90000,
@@ -371,13 +371,13 @@ describe('payroll endpoints', () => {
 
         // unknown employee rejected
         const missing = await request(app)
-            .put('/api/payroll/admin/structures/emp_ghost')
+            .put('/v1/payroll/admin/structures/emp_ghost')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ basicSalary: 1 });
         expect(missing.status).toBe(404);
 
         // list includes employee names
-        const list = await request(app).get('/api/payroll/admin/structures').set(authed(ADMIN, 'ADMIN'));
+        const list = await request(app).get('/v1/payroll/admin/structures').set(authed(ADMIN, 'ADMIN'));
         expect(list.status).toBe(200);
         expect(list.body).toHaveLength(1);
         expect(list.body[0].employee.firstName).toBe('Ada');
@@ -385,7 +385,7 @@ describe('payroll endpoints', () => {
         // generate payslips for the period — gross = basic + allowances,
         // net = gross - deductions; STAFF already has 2026-10 seeded so use 2026-11
         const gen = await request(app)
-            .post('/api/payroll/admin/generate')
+            .post('/v1/payroll/admin/generate')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2026-11' });
         expect(gen.status).toBe(200);
@@ -394,7 +394,7 @@ describe('payroll endpoints', () => {
 
         // second generate skips the existing payslip
         const gen2 = await request(app)
-            .post('/api/payroll/admin/generate')
+            .post('/v1/payroll/admin/generate')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2026-11' });
         expect(gen2.body.created).toBe(0);
@@ -410,26 +410,26 @@ describe('payroll endpoints', () => {
 
     it('generate respects payroll run period and draft status', async () => {
         await request(app)
-            .put(`/api/payroll/admin/structures/${STAFF}`)
+            .put(`/v1/payroll/admin/structures/${STAFF}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({ basicSalary: 50000 });
 
         const run = await request(app)
-            .post('/api/payroll/runs')
+            .post('/v1/payroll/runs')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-06' });
         expect(run.status).toBe(201);
 
         // wrong period rejected
         const wrong = await request(app)
-            .post('/api/payroll/admin/generate')
+            .post('/v1/payroll/admin/generate')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-07', payrollRunId: run.body.id });
         expect(wrong.status).toBe(400);
 
         // matching period links generated payslips to the run
         const gen = await request(app)
-            .post('/api/payroll/admin/generate')
+            .post('/v1/payroll/admin/generate')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2027-06', payrollRunId: run.body.id });
         expect(gen.status).toBe(200);
@@ -441,7 +441,7 @@ describe('payroll endpoints', () => {
     it('statutory: preview endpoint and generate with applyStatutory', async () => {
         // preview for gross 100000 (default KE-ish rates)
         const preview = await request(app)
-            .get('/api/payroll/admin/statutory-preview?gross=100000')
+            .get('/v1/payroll/admin/statutory-preview?gross=100000')
             .set(authed(ADMIN, 'ADMIN'));
         expect(preview.status).toBe(200);
         const labels = preview.body.deductions.map((d: any) => d.label);
@@ -450,13 +450,13 @@ describe('payroll endpoints', () => {
         expect(preview.body.total).toBeCloseTo(32633.35, 2);
 
         const bad = await request(app)
-            .get('/api/payroll/admin/statutory-preview?gross=abc')
+            .get('/v1/payroll/admin/statutory-preview?gross=abc')
             .set(authed(ADMIN, 'ADMIN'));
         expect(bad.status).toBe(400);
 
         // structure with a non-statutory loan + a stale statutory line
         await request(app)
-            .put(`/api/payroll/admin/structures/${STAFF}`)
+            .put(`/v1/payroll/admin/structures/${STAFF}`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({
                 basicSalary: 100000,
@@ -467,7 +467,7 @@ describe('payroll endpoints', () => {
             });
 
         const gen = await request(app)
-            .post('/api/payroll/admin/generate')
+            .post('/v1/payroll/admin/generate')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ period: '2028-01', applyStatutory: true });
         expect(gen.status).toBe(200);
@@ -488,13 +488,13 @@ describe('payroll endpoints', () => {
 
         // draft payslip → 409
         const draftRes = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-02', grossAmount: 1000 });
         expect(draftRes.status).toBe(201);
         const draft = draftRes.body;
         const blocked = await request(app)
-            .post(`/api/payroll/admin/${draft.id}/send`)
+            .post(`/v1/payroll/admin/${draft.id}/send`)
             .set(authed(ADMIN, 'ADMIN'));
         expect(blocked.status).toBe(409);
         expect(sendMailMock).not.toHaveBeenCalled();
@@ -502,7 +502,7 @@ describe('payroll endpoints', () => {
         // seeded paid payslip for STAFF → sends to employee email
         const paid = store.Payslip.find((p) => p.status === 'paid');
         const sent = await request(app)
-            .post(`/api/payroll/admin/${paid.id}/send`)
+            .post(`/v1/payroll/admin/${paid.id}/send`)
             .set(authed(ADMIN, 'ADMIN'));
         expect(sent.status).toBe(200);
         expect(sent.body.sentTo).toBe('ada@x.co');
@@ -520,23 +520,23 @@ describe('payroll endpoints', () => {
         // Seeded payslip is already paid → 409
         const paid = store.Payslip.find((p) => p.status === 'paid')!;
         const onPaid = await request(app)
-            .post(`/api/payroll/admin/${paid.id}/pay-out`)
+            .post(`/v1/payroll/admin/${paid.id}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'));
         expect(onPaid.status).toBe(409);
 
         // Create + approve a draft payslip
         const created = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-03', grossAmount: 50000 });
         const draftId = created.body.id;
         await request(app)
-            .post(`/api/payroll/admin/${draftId}/approve`)
+            .post(`/v1/payroll/admin/${draftId}/approve`)
             .set(authed(APPROVER, 'ADMIN'));
 
         // Pay out → creates Payout, marks payslip paid, notifies
         const res = await request(app)
-            .post(`/api/payroll/admin/${draftId}/pay-out`)
+            .post(`/v1/payroll/admin/${draftId}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         expect(res.status).toBe(200);
@@ -555,22 +555,22 @@ describe('payroll endpoints', () => {
 
         // Idempotent retry → reused, no second withdraw
         const again = await request(app)
-            .post(`/api/payroll/admin/${draftId}/pay-out`)
+            .post(`/v1/payroll/admin/${draftId}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         // payslip now paid → 409 before payout lookup; create a fresh approved slip to test reuse
         expect(again.status).toBe(409);
 
         const created2 = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-04', grossAmount: 60000 });
         const id2 = created2.body.id;
         await request(app)
-            .post(`/api/payroll/admin/${id2}/approve`)
+            .post(`/v1/payroll/admin/${id2}/approve`)
             .set(authed(APPROVER, 'ADMIN'));
         const first = await request(app)
-            .post(`/api/payroll/admin/${id2}/pay-out`)
+            .post(`/v1/payroll/admin/${id2}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         expect(first.status).toBe(200);
@@ -579,12 +579,12 @@ describe('payroll endpoints', () => {
         // payslip is not possible (unique employee+period). Instead simulate the
         // reuse branch by pre-seeding a Payout for a new slip's reference.
         const created3 = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-05', grossAmount: 70000 });
         const id3 = created3.body.id;
         await request(app)
-            .post(`/api/payroll/admin/${id3}/approve`)
+            .post(`/v1/payroll/admin/${id3}/approve`)
             .set(authed(APPROVER, 'ADMIN'));
         store.Payout.push({
             id: 'po_prior', reference: `SAL-${id3}`, provider: 'PAYHERO',
@@ -592,7 +592,7 @@ describe('payroll endpoints', () => {
             createdAt: new Date(), updatedAt: new Date(),
         });
         const reused = await request(app)
-            .post(`/api/payroll/admin/${id3}/pay-out`)
+            .post(`/v1/payroll/admin/${id3}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         expect(reused.status).toBe(200);
@@ -602,15 +602,15 @@ describe('payroll endpoints', () => {
         // Provider failure → 502, payout FAILED, payslip stays approved
         payheroWithdraw.mockRejectedValueOnce(new Error('provider down'));
         const created4 = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-06', grossAmount: 80000 });
         const id4 = created4.body.id;
         await request(app)
-            .post(`/api/payroll/admin/${id4}/approve`)
+            .post(`/v1/payroll/admin/${id4}/approve`)
             .set(authed(APPROVER, 'ADMIN'));
         const failed = await request(app)
-            .post(`/api/payroll/admin/${id4}/pay-out`)
+            .post(`/v1/payroll/admin/${id4}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         expect(failed.status).toBe(502);
@@ -621,15 +621,15 @@ describe('payroll endpoints', () => {
         // Unconfigured provider → 503
         payheroConfigured.mockReturnValue(false);
         const created5 = await request(app)
-            .post('/api/payroll/admin')
+            .post('/v1/payroll/admin')
             .set(authed(ADMIN, 'ADMIN'))
             .send({ employeeId: STAFF, period: '2028-07', grossAmount: 90000 });
         const id5 = created5.body.id;
         await request(app)
-            .post(`/api/payroll/admin/${id5}/approve`)
+            .post(`/v1/payroll/admin/${id5}/approve`)
             .set(authed(APPROVER, 'ADMIN'));
         const unconfigured = await request(app)
-            .post(`/api/payroll/admin/${id5}/pay-out`)
+            .post(`/v1/payroll/admin/${id5}/pay-out`)
             .set(authed(ADMIN, 'ADMIN'))
             .send({});
         expect(unconfigured.status).toBe(503);

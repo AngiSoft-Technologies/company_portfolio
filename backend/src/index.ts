@@ -2,9 +2,17 @@ import app from './app';
 import { validateDatabaseConnection, disconnectDatabase } from './db';
 import { initRealtime, closeRealtime } from './shared/services/realtime';
 import { getAllowedOrigins } from './shared/config/origins';
+import { loadRuntimeConfig } from './shared/services/runtimeConfig';
 import { startEmailWorker } from './workers/emailWorker';
 import { startFileProcessor } from './workers/fileProcessor';
 import { startReconciliationWorker } from './workers/reconciliationWorker';
+import { startProviderEventsWorker } from './workers/providerEventsWorker';
+import { startMpesaStkRecoveryWorker } from './workers/mpesaStkRecovery';
+import { startCommunicationsMailSync } from './workers/communicationsMailSync';
+import { startCommunicationsScheduledSends } from './workers/communicationsScheduledSends';
+import { startCommunicationsSlaMonitor } from './workers/communicationsSla';
+import { startCommunicationsTokenRefresh } from './workers/communicationsTokenRefresh';
+import { startCommunicationsWebhookRetry } from './workers/communicationsWebhookRetry';
 import { startSlaMonitor } from './workers/slaMonitor';
 import { startRenewalMonitor } from './workers/renewalMonitor';
 import { startAttendanceDeriveMonitor } from './workers/attendanceDerive';
@@ -23,6 +31,9 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  await loadRuntimeConfig(true);
+  setInterval(() => void loadRuntimeConfig(true).catch(() => undefined), 30_000).unref();
+
   const server = app.listen(PORT, HOST, () =>
     console.log(`🚀 Server running on http://${HOST}:${PORT}`)
   );
@@ -40,6 +51,13 @@ async function bootstrap() {
   try { startEmailWorker(); console.log('✅ Email worker started'); } catch (err: any) { console.warn('⚠️ Email worker:', err.message); }
   try { startFileProcessor(); console.log('✅ File processor started'); } catch (err: any) { console.warn('⚠️ File processor:', err.message); }
   try { startReconciliationWorker(); console.log('✅ Reconciliation worker started'); } catch (err: any) { console.warn('⚠️ Reconciliation worker:', err.message); }
+  try { startProviderEventsWorker(); console.log('✅ Provider events worker started'); } catch (err: any) { console.warn('⚠️ Provider events worker:', err.message); }
+  try { startMpesaStkRecoveryWorker(); console.log('✅ M-Pesa STK recovery worker started'); } catch (err: any) { console.warn('⚠️ M-Pesa STK recovery worker:', err.message); }
+  try { monitorTimers.push(startCommunicationsMailSync()); console.log('✅ Communications mail sync started'); } catch (err: any) { console.warn('⚠️ Communications mail sync:', err.message); }
+  try { monitorTimers.push(startCommunicationsScheduledSends()); console.log('✅ Communications scheduled sends started'); } catch (err: any) { console.warn('⚠️ Communications scheduled sends:', err.message); }
+  try { monitorTimers.push(startCommunicationsSlaMonitor()); console.log('✅ Communications SLA monitor started'); } catch (err: any) { console.warn('⚠️ Communications SLA:', err.message); }
+  try { monitorTimers.push(startCommunicationsTokenRefresh()); console.log('✅ Communications token refresh started'); } catch (err: any) { console.warn('⚠️ Communications token refresh:', err.message); }
+  try { monitorTimers.push(startCommunicationsWebhookRetry()); console.log('✅ Communications webhook retry started'); } catch (err: any) { console.warn('⚠️ Communications webhook retry:', err.message); }
   try { startAgentScheduler(); console.log('✅ Agent scheduler started'); } catch (err: any) { console.warn('⚠️ Agent scheduler:', err.message); }
 
   // Graceful shutdown on SIGTERM / SIGINT

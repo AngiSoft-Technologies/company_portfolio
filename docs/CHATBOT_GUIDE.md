@@ -3,7 +3,7 @@
 > **💡 HYPOTHESIS** — Implementation guide for chatbot feature; **admin endpoints were unguarded (now fixed in Phase 0)**.<br>
 > **Security note (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §4, Phase 0.3):** `GET /chatbot/conversations`, `GET /chatbot/conversations/:id`, `PUT /chatbot/conversations/:id` now require `requireAuth` + `requirePermission('chatbot.view_all')`.<br>
 > **Missing:** Rate/spend limits on AI calls; admin UI for conversation review (marked missing in Content Coverage Ledger).<br>
-> Current frontend: `frontend/web/src/features/ai-assistant/components/ChatBot.tsx` uses relative `/api/chatbot/*` requests.
+> Current frontend: `frontend/web/src/features/ai-assistant/components/ChatBot.tsx` uses relative `/v1/chatbot/*` requests.
 
 ## Overview
 The AngiSoft chatbot is an advanced AI-powered assistant that:
@@ -33,7 +33,7 @@ The AngiSoft chatbot is an advanced AI-powered assistant that:
    ```
 
 3. **Message Flow**
-   - User messages sent to `/api/chatbot/chat` endpoint
+   - User messages sent to `/v1/chatbot/chat` endpoint
    - Bot returns AI response + product recommendations
    - Conversation ID tracked for session continuity
 
@@ -44,7 +44,7 @@ The AngiSoft chatbot is an advanced AI-powered assistant that:
 
 **1. Send Message**
 ```bash
-POST /api/chatbot/chat
+POST /v1/chatbot/chat
 Content-Type: application/json
 
 {
@@ -72,7 +72,7 @@ Response:
 
 **2. Get Conversation (Admin)**
 ```bash
-GET /api/chatbot/conversations/{conversationId}
+GET /v1/chatbot/conversations/{conversationId}
 
 Response:
 {
@@ -92,7 +92,7 @@ Response:
 
 **3. List Conversations (Admin)**
 ```bash
-GET /api/chatbot/conversations?status=open&page=1&limit=20
+GET /v1/chatbot/conversations?status=open&page=1&limit=20
 
 Response:
 {
@@ -104,7 +104,7 @@ Response:
 
 **4. Update Conversation (Admin)**
 ```bash
-PUT /api/chatbot/conversations/{conversationId}
+PUT /v1/chatbot/conversations/{conversationId}
 
 {
   "status": "closed",
@@ -233,7 +233,7 @@ function App() {
 
 ### Frontend - Send Message
 ```javascript
-const response = await fetch('/api/chatbot/chat', {
+const response = await fetch('/v1/chatbot/chat', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -253,7 +253,7 @@ console.log(data.recommendations); // [Service objects]
 ### Backend - Log Conversation
 ```typescript
 // Auto-logged when message is received
-// Access via: GET /api/chatbot/conversations/{id}
+// Access via: GET /v1/chatbot/conversations/{id}
 ```
 
 ## Deployment Checklist
@@ -263,7 +263,7 @@ console.log(data.recommendations); // [Service objects]
 - [ ] Update CORS_ORIGIN to include Netlify domain (if needed)
 - [ ] Test chat on staging environment
 - [ ] Set up Sentry logging for error tracking
-- [ ] Add rate limiting to `/api/chatbot/chat` endpoint (optional)
+- [ ] Add rate limiting to `/v1/chatbot/chat` endpoint (optional)
 - [ ] Create admin dashboard for viewing conversations
 - [ ] Set up email notifications for high-intent leads
 

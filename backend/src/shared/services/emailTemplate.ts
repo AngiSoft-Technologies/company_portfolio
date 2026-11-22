@@ -12,6 +12,8 @@
  * `EMAIL_LOGO_URL` to override the default.
  */
 
+import { getConfig } from './runtimeConfig';
+
 export const ANGISOFT_BRAND = {
   name: 'AngiSoft Technologies',
   shortName: 'AngiSoft',
@@ -22,9 +24,10 @@ export const ANGISOFT_BRAND = {
   whatsappUrl: 'https://wa.me/254710398690',
   privacyUrl: 'https://angisoft.co.ke/privacy',
   termsUrl: 'https://angisoft.co.ke/terms',
-  logoUrl:
-    process.env.EMAIL_LOGO_URL ||
-    'https://cdn.angisoft.co.ke/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.png',
+  get logoUrl() {
+    return getConfig('EMAIL_LOGO_URL') ||
+      'https://cdn.angisoft.co.ke/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.png';
+  },
   colors: {
     navy: '#07142B',
     abyss: '#061324',

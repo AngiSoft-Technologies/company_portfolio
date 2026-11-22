@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (restoredRef.current) return;
     restoredRef.current = true;
     if (localStorage.getItem('angisoft-theme-mode')) return;
-    apiFetch('/api/staff-dashboard/effective-access')
+    apiFetch('/v1/staff-dashboard/effective-access')
       .then((json) => {
         const t = (json as { preferences?: { theme?: string } } | null)?.preferences?.theme;
         if ((t === 'light' || t === 'dark') && t !== theme.mode) theme.setMode(t);
@@ -34,7 +34,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleMode = () => {
     const next: ThemeMode = theme.mode === 'dark' ? 'light' : 'dark';
     theme.setMode(next);
-    apiFetch('/api/staff-dashboard/profile', {
+    apiFetch('/v1/staff-dashboard/profile', {
       method: 'PUT',
       body: { preferences: { theme: next } },
     }).catch(() => {});

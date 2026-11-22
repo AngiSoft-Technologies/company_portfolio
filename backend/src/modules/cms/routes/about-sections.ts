@@ -78,7 +78,7 @@ const reorderSchema = z.array(
 export const aboutSectionsRouter = (prisma: Db = db) => {
   const router = Router();
 
-  // GET /api/about-sections
+  // GET /v1/about-sections
   // Returns the enabled, ordered section list used to compose the About page.
   router.get(
     '/',

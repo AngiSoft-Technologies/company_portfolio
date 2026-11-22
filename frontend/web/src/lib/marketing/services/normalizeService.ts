@@ -47,7 +47,7 @@ function truncate(text, max) {
 }
 
 /**
- * @param {object} raw - raw Service record from /api/services or /api/services/:slug
+ * @param {object} raw - raw Service record from /v1/services or /v1/services/:slug
  * @returns {object} normalized service
  */
 export function normalizeService(raw = {}) {

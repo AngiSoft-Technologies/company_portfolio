@@ -1,11 +1,17 @@
 // @ts-nocheck
 import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { clientApiGet, clientApiPost } from '@/lib/httpClient';
 import { useTheme } from '@/lib/theme';
 import GlassmorphismCard from '@/features/marketing/components/modern/GlassmorphismCard';
 import ScrollReveal from '@/features/marketing/components/modern/ScrollReveal';
+import PaymentMethodPicker, { type PaymentMethodOption } from '@/features/client-portal/components/PaymentMethodPicker';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
+
+// Short-lived hand-off between the PayPal approval redirect and the capture
+// call. sessionStorage survives the same-tab round trip without leaking the
+// reference into a URL, history entry or third-party analytics.
+const PAYPAL_ORDER_KEY = 'angisoft.paypal.pending';
 
 const ClientDashboard = () => {
   const { colors } = useTheme();
@@ -18,6 +24,61 @@ const ClientDashboard = () => {
   const [feedback, setFeedback] = useState({ text: '', rating: 5 });
   const [feedbackState, setFeedbackState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
   const [payState, setPayState] = useState<Record<string, 'sending' | 'stk' | 'redirect' | 'error' | 'unavailable'>>({});
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
+  const [paypalResult, setPaypalResult] = useState<{ status: 'success' | 'error' | 'cancelled'; text: string } | null>(null);
+  const captureStarted = useRef(false);
+
+  // Buyer return from PayPal. PayPal appends `?token=<orderId>&PayerID=…` to
+  // the configured return URL; we pair it with the reference kept in
+  // sessionStorage and ask the server to capture. The webhook is the
+  // authoritative settlement path and is idempotent if it arrives first.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get('paypal');
+    if (!flag || captureStarted.current) return;
+    captureStarted.current = true;
+    const clearUrl = () => window.history.replaceState({}, '', window.location.pathname);
+
+    if (flag === 'cancel') {
+      setPaypalResult({ status: 'cancelled', text: 'PayPal checkout was cancelled. No charge was made.' });
+      sessionStorage.removeItem(PAYPAL_ORDER_KEY);
+      clearUrl();
+      return;
+    }
+    if (flag !== 'success') return;
+
+    const orderId = params.get('token') || '';
+    let pending: any = null;
+    try { pending = JSON.parse(sessionStorage.getItem(PAYPAL_ORDER_KEY) || 'null'); } catch { /* ignore */ }
+    const reference = String(pending?.reference || '');
+    if (!orderId || !reference || (pending?.orderId && pending.orderId !== orderId)) {
+      setPaypalResult({ status: 'error', text: 'We could not match this PayPal checkout to a payment. Contact support if you were charged.' });
+      clearUrl();
+      return;
+    }
+
+    void (async () => {
+      try {
+        const result = await clientApiPost('/payments/paypal/capture', { orderId, reference });
+        const confirmed = ['COMPLETED', 'SUCCEEDED'].includes(String(result?.status));
+        setPaypalResult({
+          status: confirmed ? 'success' : 'error',
+          text: confirmed
+            ? `Payment confirmed${result?.payerEmail ? ` for ${result.payerEmail}` : ''}. Your invoice has been updated.`
+            : (result?.error || 'PayPal has not confirmed the payment yet. It will update automatically once confirmed.'),
+        });
+      } catch (e) {
+        setPaypalResult({ status: 'error', text: (e as any)?.message || 'Could not confirm your PayPal payment.' });
+      } finally {
+        sessionStorage.removeItem(PAYPAL_ORDER_KEY);
+        clearUrl();
+        try {
+          const i = await clientApiGet('/client-portal/invoices');
+          setInvoices(i?.invoices || []);
+        } catch { /* keep the previously loaded list */ }
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -34,6 +95,8 @@ const ClientDashboard = () => {
       setQuotes(q?.quotes || []);
       setProjects(pjs?.projects || []);
       setNotifications(n?.notifications || []);
+      const cfg = await clientApiGet('/payments/methods').catch(() => ({}));
+      setPaymentMethods(Array.isArray(cfg?.methods) ? cfg.methods : []);
       setLoading(false);
     };
     void load();
@@ -54,27 +117,43 @@ const ClientDashboard = () => {
     }
   };
 
-  const payInvoice = async (inv) => {
+  const payInvoice = async (inv, method: PaymentMethodOption, phone: string) => {
+    if (!method?.available) return;
     setPayState((s) => ({ ...s, [inv.id]: 'sending' }));
-    // Try mobile-money providers first, then the card redirect as fallback.
-    const providers = ['MPESA', 'PAYHERO', 'PAYSTACK'];
-    let lastErr = '';
-    for (const provider of providers) {
-      try {
-        const res = await clientApiPost(`/client-portal/invoices/${inv.id}/pay`, { provider });
-        if (res?.kind === 'redirect' && res.checkoutUrl) {
-          window.open(res.checkoutUrl, '_blank', 'noopener');
-          setPayState((s) => ({ ...s, [inv.id]: 'redirect' }));
-        } else {
-          setPayState((s) => ({ ...s, [inv.id]: 'stk' }));
+    try {
+      const res = await clientApiPost(`/client-portal/invoices/${inv.id}/pay`, {
+        method: method.id,
+        provider: method.provider,
+        phone: phone || undefined,
+      });
+
+      if (method.provider === 'PAYPAL' && res?.kind === 'redirect' && res.checkoutUrl) {
+        let orderId = String(res.orderId || '');
+        if (!orderId) {
+          try { orderId = new URL(res.checkoutUrl).searchParams.get('token') || ''; } catch { /* ignore */ }
         }
+        sessionStorage.setItem(PAYPAL_ORDER_KEY, JSON.stringify({
+          orderId,
+          reference: res.reference,
+          invoiceId: inv.id,
+          method: method.id,
+        }));
+        // Same-tab navigation so the return URL can complete the capture.
+        window.location.assign(res.checkoutUrl);
+        setPayState((s) => ({ ...s, [inv.id]: 'redirect' }));
         return;
-      } catch (e) {
-        lastErr = String(e?.message || '');
-        if (!/not configured/i.test(lastErr)) break;
       }
+
+      if (res?.kind === 'redirect' && res.checkoutUrl) {
+        window.open(res.checkoutUrl, '_blank', 'noopener');
+        setPayState((s) => ({ ...s, [inv.id]: 'redirect' }));
+      } else {
+        setPayState((s) => ({ ...s, [inv.id]: 'stk' }));
+      }
+    } catch (e) {
+      const msg = String((e as any)?.message || '');
+      setPayState((s) => ({ ...s, [inv.id]: /not configured|unavailable|disabled/i.test(msg) ? 'unavailable' : 'error' }));
     }
-    setPayState((s) => ({ ...s, [inv.id]: /not configured/i.test(lastErr) ? 'unavailable' : 'error' }));
   };
 
   const activeProjects = useMemo(() => bookings.filter((booking) => booking.clientProject), [bookings]);
@@ -95,6 +174,26 @@ const ClientDashboard = () => {
             <Link to="/book" className="rounded-full px-6 py-3 font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>New booking</Link>
           </div>
         </ScrollReveal>
+
+        {paypalResult && (
+          <div
+            role="status"
+            className="mb-6 flex items-start justify-between gap-4 rounded-2xl px-5 py-4"
+            style={{
+              backgroundColor: `${paypalResult.status === 'success' ? colors.primary : colors.secondary}14`,
+              border: `1px solid ${paypalResult.status === 'success' ? colors.primary : colors.borderLight}`,
+              color: colors.text,
+            }}
+          >
+            <div>
+              <p className="font-bold" style={{ color: paypalResult.status === 'success' ? colors.primary : colors.textSecondary }}>
+                {paypalResult.status === 'success' ? 'Payment received' : paypalResult.status === 'cancelled' ? 'Checkout cancelled' : 'Payment not confirmed'}
+              </p>
+              <p className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{paypalResult.text}</p>
+            </div>
+            <button type="button" onClick={() => setPaypalResult(null)} aria-label="Dismiss" style={{ color: colors.textMuted }}>✕</button>
+          </div>
+        )}
 
         <div className="mb-8 grid gap-5 md:grid-cols-3">
           {[['Total bookings', bookings.length], ['Active projects', activeProjects.length], ['Average progress', `${averageProgress}%`]].map(([label, value]) => (
@@ -235,15 +334,11 @@ const ClientDashboard = () => {
                           <>
                             <p className="text-xs" style={{ color: colors.secondary }}>Balance {inv.currency} {Number(inv.balanceDue).toLocaleString()}</p>
                             {['draft', 'void', 'paid'].includes(inv.status) ? null : (
-                              <button
-                                type="button"
-                                onClick={() => void payInvoice(inv)}
-                                disabled={payState[inv.id] === 'sending'}
-                                className="mt-1 rounded-full px-3 py-1 text-xs font-bold text-white disabled:opacity-50"
-                                style={{ background: colors.primary }}
-                              >
-                                {payState[inv.id] === 'sending' ? 'Sending…' : 'Pay now'}
-                              </button>
+                              <PaymentMethodPicker
+                                methods={paymentMethods}
+                                busy={payState[inv.id] === 'sending'}
+                                onPay={(method, phone) => void payInvoice(inv, method, phone)}
+                              />
                             )}
                             {payState[inv.id] === 'stk' ? (
                               <p className="mt-1 text-xs font-semibold" style={{ color: colors.secondary }}>Check your phone to complete payment.</p>

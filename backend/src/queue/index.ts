@@ -7,7 +7,8 @@
 // drains synchronously via setImmediate. No extra infra required.
 //
 // Both paths expose the same contract so callers never know which is active:
-//   getQueue(name).add(jobName, data) -> Promise<{ id }>
+//   getQueue(name).add(jobName, data, opts?) -> Promise<{ id }>
+//   opts.delayMs schedules a one-shot job instead of immediate execution.
 //   createWorker(name, processor)     -> { isRunning }
 //   getWorkers()                      -> [{ name, running }]
 //   closeWorkers()                    -> graceful shutdown (Redis path)
@@ -27,8 +28,13 @@ interface QueueJob {
 
 type JobProcessor = (job: QueueJob) => Promise<unknown> | unknown;
 
+export interface QueueAddOptions {
+    /** Delay in milliseconds before a job becomes visible to a worker. */
+    delayMs?: number;
+}
+
 export interface QueueHandle {
-    add(jobName: string, data: unknown): Promise<{ id: string }>;
+    add(jobName: string, data: unknown, opts?: QueueAddOptions): Promise<{ id: string }>;
 }
 
 /** True when Redis is configured; flips the queue to the BullMQ backend. */
@@ -100,7 +106,7 @@ class InMemoryQueue implements QueueHandle {
 
     constructor(private name: string) {}
 
-    async add(jobName: string, data: unknown) {
+    async add(jobName: string, data: unknown, opts?: QueueAddOptions) {
         const id = `${this.name}-${Date.now()}-${Math.random()}`;
         const job: QueueJob = {
             id,
@@ -117,7 +123,16 @@ class InMemoryQueue implements QueueHandle {
         // only used jobName ('send'), so jobs were queued but never drained.
         const processor = this.processors.get(this.name) ?? this.processors.get(jobName);
         if (processor) {
-            setImmediate(() => this.processJob(id, processor));
+            const delayMs = Math.max(0, Math.trunc(Number(opts?.delayMs) || 0));
+            const run = () => { void this.processJob(id, processor); };
+            if (delayMs > 0) {
+                // Timers must not keep a test/worker process alive; production
+                // Redis jobs are delayed by BullMQ and survive restarts.
+                const timer = setTimeout(() => setImmediate(run), delayMs);
+                timer.unref?.();
+            } else {
+                setImmediate(run);
+            }
         }
 
         return { id };
@@ -160,8 +175,9 @@ const runningWorkers = new Map<string, boolean>();
 export function getQueue(name: string): QueueHandle {
     if (useRedis()) {
         return {
-            add: async (jobName, data) => {
-                const job = await getBullQueue(name).add(jobName, data);
+            add: async (jobName, data, opts) => {
+                const delayMs = Math.max(0, Math.trunc(Number(opts?.delayMs) || 0));
+                const job = await getBullQueue(name).add(jobName, data, delayMs > 0 ? { delay: delayMs } : undefined);
                 return { id: job.id as string };
             },
         };

@@ -32,7 +32,7 @@ plan, the plan wins.
 | 📜 **HISTORICAL** | Read-only baseline; do not cite for current status | 6 | `ADMIN_AND_STAFF_CODEBASE_AUDIT.md`, `SYSTEM_REVIEW_AND_ROADMAP.md`, `SYSTEM_ARCHITECTURE.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `IMPLEMENTATION_ROADMAP.md` |
 | 💡 **HYPOTHESIS** | Ideation / content backlog only | 3 | `BRAND_EXPANSION_STRATEGY.md`, `CHATBOT_GUIDE.md`, `SERVICES_DATABASE.md` |
 | ✅ **COMPLETE** | Frozen milestone summary | 8 | `MILESTONE_PHASE_2.md`, `PHASE_2_COMPLETION.md`, `SESSION_SUMMARY.md`, `VERIFICATION_CHECKLIST.md`, `PROJECT_STATUS.md`, `CHANGELOG.md`, `DOCUMENTATION_GUIDE.md`, `REDIS_REMOVAL.md` |
-| 🛠 **OPERATIONAL** | Current reference / runbook | 15 | `NETLIFY.md`, `BACKUP_RESTORE.md`, `TESTING_GUIDE.md`, `QUICK_REFERENCE.md`, `QUICK_START_PHASE_3.md`, `DESIGN_PROVENANCE.md`, `ANGISOFT_PERMISSION_CATALOGUE.md`, `about-page-backend.md`, `about-page-data-matrix.md`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, plus this index |
+| 🛠 **OPERATIONAL** | Current reference / runbook | 22 | `NETLIFY.md`, `BACKUP_RESTORE.md`, `TESTING_GUIDE.md`, `QUICK_REFERENCE.md`, `QUICK_START_PHASE_3.md`, `DESIGN_PROVENANCE.md`, `ANGISOFT_PERMISSION_CATALOGUE.md`, `PAYMENTS.md`, `PAYPAL_DOCS_SUMMARY.md`, `PAYPAL_RESOURCE_UTILIZATION_PLAN.md`, `META_DOCS_SUMMARY.md`, `META_RESOURCE_UTILIZATION_PLAN.md`, `DARAJA_RESOURCE_UTILIZATION_PLAN.md`, `SECRETS_ARCHITECTURE.md`, `about-page-backend.md`, `about-page-data-matrix.md`, `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, plus this index |
 
 Full rules: `ANGISOFT_DIGITAL_HQ_PLAN.md` §11 (Reconciliation Rules) and §15 (Document Migration Checklist).
 
@@ -55,6 +55,26 @@ Full rules: `ANGISOFT_DIGITAL_HQ_PLAN.md` §11 (Reconciliation Rules) and §15 (
 ### 2. **`AGENTS.md`** — repository conventions, commands, deployment quirks
 
 ### 3. **`ANGISOFT_DESIGN_SYSTEM_RULES.md`** — the normative design law
+
+### 4. **`PAYMENTS.md`** — PayPal, PayHero and Daraja money movement
+
+- [`PAYPAL_DOCS_SUMMARY.md`](PAYPAL_DOCS_SUMMARY.md) — summary of the supplied PayPal docs.
+- [`PAYPAL_RESOURCE_UTILIZATION_PLAN.md`](PAYPAL_RESOURCE_UTILIZATION_PLAN.md) — what we use, defer or decline, and why.
+- [`DARAJA_RESOURCE_UTILIZATION_PLAN.md`](DARAJA_RESOURCE_UTILIZATION_PLAN.md) — full local Daraja pack catalogue, gaps closed, config keys and pre-production checklist.
+
+### 5. **`SECRETS_ARCHITECTURE.md`** — root secrets vs database vault
+
+- Authoritative split of all `backend/.env` keys, keyring rotation procedure, seed command
+  (`npm run config:seed`), API routes and the `/settings/vault` SUPER_ADMIN screen.
+
+### 6. **`META_DOCS_SUMMARY.md`** — all Meta developer resources (not only WhatsApp)
+
+- [`META_DOCS_SUMMARY.md`](META_DOCS_SUMMARY.md) — consolidated understanding of every
+  Meta doc family: core APIs, auth, webhooks, AI/MCP, social, messaging, marketing,
+  commerce, work, data portability, gaming and privacy.
+- [`META_RESOURCE_UTILIZATION_PLAN.md`](META_RESOURCE_UTILIZATION_PLAN.md) — all 59
+  resources mapped to an AngiSoft use, status and owner; WhatsApp is one channel among
+  many.
 
 The seven-badge classification table above is authoritative for every Markdown file
 in this repository. Use it instead of the per-file summaries that previously lived

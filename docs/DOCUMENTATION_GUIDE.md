@@ -173,10 +173,10 @@ See: [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md) - Data Model section
 
 ### API Endpoints
 See: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - API Endpoints section
-- POST /api/services (create)
-- GET /api/services (list)
-- PUT /api/services/:id (update)
-- DELETE /api/services/:id (delete)
+- POST /v1/services (create)
+- GET /v1/services (list)
+- PUT /v1/services/:id (update)
+- DELETE /v1/services/:id (delete)
 
 ### Admin Workflow
 See: [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) - Test Suite section

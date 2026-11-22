@@ -64,12 +64,12 @@ Sections in order (mirrors the user's flow):
 4. **Record assignments** — Products (multi-select → `ProductTeamMember`), Projects (`ProjectEmployee`), Bookings, Enquiries, Publication-review queue.
 5. **Effective access preview** — read-only computed list (DENY shown struck-through red, GRANT green, ASSIGNMENT blue) before save.
 
-**Backend contract:** `GET /api/admin/staff/:id/access` returns `{ professional, preset, permissions: [{key, source, effect}], assignments }`.
-`PUT /api/admin/staff/:id/access` persists identity + `EmployeePermission` rows + assignment rows. Call `clearPermissionCache(employeeId)` after write (reuse existing cache-bust in `permissions.ts`).
+**Backend contract:** `GET /v1/admin/staff/:id/access` returns `{ professional, preset, permissions: [{key, source, effect}], assignments }`.
+`PUT /v1/admin/staff/:id/access` persists identity + `EmployeePermission` rows + assignment rows. Call `clearPermissionCache(employeeId)` after write (reuse existing cache-bust in `permissions.ts`).
 
 ## 4. Frontend must not be the security boundary
 
-Per audit §6.1, today `services.put/:id` etc. only check `requireAuth`. After reconstruction, `PUT /api/staff/products/:id` must: (a) `requirePermission('products.update_assigned')`, AND (b) verify `ProductTeamMember` row for `req.user.sub` before writing. Frontend hiding of the edit button is UX only.
+Per audit §6.1, today `services.put/:id` etc. only check `requireAuth`. After reconstruction, `PUT /v1/staff/products/:id` must: (a) `requirePermission('products.update_assigned')`, AND (b) verify `ProductTeamMember` row for `req.user.sub` before writing. Frontend hiding of the edit button is UX only.
 
 ## 5. Why presets are not roles
 

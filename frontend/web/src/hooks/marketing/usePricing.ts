@@ -2,8 +2,8 @@
 // Loads and normalizes everything the Pricing page needs from real backend data.
 //
 // Sources (no prices invented — all come from the API):
-//   - /api/site/pricing : editorial pricing content (Setting site_pricing)
-//   - /api/services      : published Service records (each with priceFrom)
+//   - /v1/site/pricing : editorial pricing content (Setting site_pricing)
+//   - /v1/services      : published Service records (each with priceFrom)
 //
 // The two fetches run in parallel; a failure on one source must not blank the
 // page, so we use Promise.allSettled and surface a real error state.

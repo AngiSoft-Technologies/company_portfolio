@@ -9,9 +9,9 @@ import { useEffectiveAccess } from '@/lib/permissions';
  * (plan Phase 1.3, §5.2).
  *
  * The permission list is not hardcoded here: it comes from the registry via
- * `GET /api/roles/catalogue`, so this screen can never drift from the keys the
+ * `GET /v1/roles/catalogue`, so this screen can never drift from the keys the
  * route guards actually enforce. A role created here gates a route immediately
- * because `PUT/POST /api/roles` writes `RolePermission` rows and clears the
+ * because `PUT/POST /v1/roles` writes `RolePermission` rows and clears the
  * permission caches.
  */
 
@@ -122,8 +122,8 @@ export function RolesAdmin() {
     setLoading(true);
     try {
       const [rolesJson, catalogueJson] = await Promise.all([
-        apiFetch('/api/roles'),
-        apiFetch('/api/roles/catalogue'),
+        apiFetch('/v1/roles'),
+        apiFetch('/v1/roles/catalogue'),
       ]);
       const next = normalizeRoles(rolesJson);
       setRoles(next);
@@ -205,9 +205,9 @@ export function RolesAdmin() {
         permissionKeys: [...selectedKeys],
       };
       if (creating) {
-        await apiFetch('/api/roles', { method: 'POST', body });
+        await apiFetch('/v1/roles', { method: 'POST', body });
       } else if (selectedId) {
-        await apiFetch(`/api/roles/${encodeURIComponent(selectedId)}`, { method: 'PUT', body });
+        await apiFetch(`/v1/roles/${encodeURIComponent(selectedId)}`, { method: 'PUT', body });
       }
       const next = await load();
       const savedRole = creating

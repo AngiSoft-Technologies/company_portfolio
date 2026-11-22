@@ -25,7 +25,7 @@ const fetchUploads = (ownerType) => {
 
 /**
  * Reads public synced media from the backend uploads endpoint
- * (GET /api/uploads) instead of relying on hard-coded static paths.
+ * (GET /v1/uploads) instead of relying on hard-coded static paths.
  *
  * Returns:
  *  - files:     all public File rows

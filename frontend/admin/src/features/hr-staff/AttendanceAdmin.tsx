@@ -108,8 +108,8 @@ export function AttendanceAdmin() {
       if (to) params.set('to', to);
       const qs = params.toString();
       const [attendance, holidayRows] = await Promise.all([
-        apiFetch(`/api/attendance/admin${qs ? `?${qs}` : ''}`),
-        apiFetch('/api/attendance/admin/holidays'),
+        apiFetch(`/v1/attendance/admin${qs ? `?${qs}` : ''}`),
+        apiFetch('/v1/attendance/admin/holidays'),
       ]);
       setRows(Array.isArray(attendance) ? attendance : []);
       setHolidays(Array.isArray(holidayRows) ? holidayRows : []);
@@ -123,7 +123,7 @@ export function AttendanceAdmin() {
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    apiFetch('/api/admin/employees')
+    apiFetch('/v1/admin/employees')
       .then((data) => {
         const list = Array.isArray(data) ? data : (data as { data?: unknown[] })?.data ?? [];
         setEmployees(Array.isArray(list) ? (list as EmployeeOption[]) : []);
@@ -135,7 +135,7 @@ export function AttendanceAdmin() {
     setBusy(true);
     setSelfMsg(null);
     try {
-      await apiFetch(`/api/attendance/${action}`, { method: 'POST' });
+      await apiFetch(`/v1/attendance/${action}`, { method: 'POST' });
       setSelfMsg(action === 'check-in' ? 'Checked in.' : 'Checked out.');
       void load();
     } catch (e) {
@@ -149,7 +149,7 @@ export function AttendanceAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch('/api/attendance/admin', {
+      await apiFetch('/v1/attendance/admin', {
         method: 'POST',
         body: {
           employeeId: form.employeeId,
@@ -174,7 +174,7 @@ export function AttendanceAdmin() {
     if (!window.confirm('Delete this attendance record?')) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/attendance/admin/${r.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/attendance/admin/${r.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -187,7 +187,7 @@ export function AttendanceAdmin() {
     setBusy(true);
     setError(null);
     try {
-      await apiFetch('/api/attendance/admin/holidays', {
+      await apiFetch('/v1/attendance/admin/holidays', {
         method: 'POST',
         body: { date: holidayForm.date, name: holidayForm.name, isHalfDay: holidayForm.isHalfDay },
       });
@@ -205,7 +205,7 @@ export function AttendanceAdmin() {
     if (!window.confirm(`Delete holiday "${h.name}"?`)) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/attendance/admin/holidays/${h.id}`, { method: 'DELETE' });
+      await apiFetch(`/v1/attendance/admin/holidays/${h.id}`, { method: 'DELETE' });
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed');
@@ -219,7 +219,7 @@ export function AttendanceAdmin() {
     setBusy(true);
     setError(null);
     try {
-      const data = await apiFetch(`/api/attendance/admin/schedules?employeeId=${encodeURIComponent(scheduleEmp)}`);
+      const data = await apiFetch(`/v1/attendance/admin/schedules?employeeId=${encodeURIComponent(scheduleEmp)}`);
       const days: Record<number, DayDraft> = {};
       for (let i = 0; i < 7; i++) days[i] = { startTime: '', endTime: '', isWorkingDay: false };
       for (const row of (Array.isArray(data) ? data : []) as ScheduleRow[]) {
@@ -247,7 +247,7 @@ export function AttendanceAdmin() {
       if (reportTo) params.set('to', reportTo);
       if (employeeFilter) params.set('employeeId', employeeFilter);
       const qs = params.toString();
-      const data = await apiFetch(`/api/attendance/admin/report${qs ? `?${qs}` : ''}`);
+      const data = await apiFetch(`/v1/attendance/admin/report${qs ? `?${qs}` : ''}`);
       const list = (data as { employees?: Omit<ReportRow, 'id'>[] })?.employees ?? [];
       setReportRows(list.map((r) => ({ ...r, id: r.employeeId })));
     } catch (e) {
@@ -292,7 +292,7 @@ export function AttendanceAdmin() {
     setImportResult(null);
     setError(null);
     try {
-      const res = (await apiFetch('/api/attendance/admin/import', {
+      const res = (await apiFetch('/v1/attendance/admin/import', {
         method: 'POST',
         body: { rows },
       })) as { created: number; updated: number; errors: Array<{ row: number; error: string }> };
@@ -313,7 +313,7 @@ export function AttendanceAdmin() {
     setDeriveMsg(null);
     setError(null);
     try {
-      const res = (await apiFetch('/api/attendance/admin/derive', {
+      const res = (await apiFetch('/v1/attendance/admin/derive', {
         method: 'POST',
         body: deriveDate ? { workDate: deriveDate } : {},
       })) as { workDate: string; holiday: boolean; holidayMarked: number; absentCreated: number; skipped: number };
@@ -338,7 +338,7 @@ export function AttendanceAdmin() {
         endTime: d.endTime || null,
         isWorkingDay: d.isWorkingDay,
       }));
-      await apiFetch(`/api/attendance/admin/schedules/${encodeURIComponent(scheduleEmp)}`, {
+      await apiFetch(`/v1/attendance/admin/schedules/${encodeURIComponent(scheduleEmp)}`, {
         method: 'PUT',
         body: { days },
       });

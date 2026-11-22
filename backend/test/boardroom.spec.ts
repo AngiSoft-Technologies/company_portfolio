@@ -119,7 +119,7 @@ describe('AI Boardroom API', () => {
 
     async function openMeeting(): Promise<string> {
         const res = await request(app)
-            .post('/api/admin/boardroom/sessions')
+            .post('/v1/admin/boardroom/sessions')
             .set(owner())
             .send({});
         expect(res.status).toBe(201);
@@ -127,9 +127,9 @@ describe('AI Boardroom API', () => {
     }
 
     it('rejects anonymous and non-owner callers', async () => {
-        expect((await request(app).get('/api/admin/boardroom/sessions')).status).toBe(401);
+        expect((await request(app).get('/v1/admin/boardroom/sessions')).status).toBe(401);
         const admin = await request(app)
-            .get('/api/admin/boardroom/sessions')
+            .get('/v1/admin/boardroom/sessions')
             .set(authed('emp_admin', 'ADMIN'));
         expect(admin.status).toBe(403);
     });
@@ -138,7 +138,7 @@ describe('AI Boardroom API', () => {
         const id = await openMeeting();
         expect(rows('AgentRun').some((r) => r.id === id && r.agentKey === 'boardroom')).toBe(true);
         const list = await request(app)
-            .get('/api/admin/boardroom/sessions')
+            .get('/v1/admin/boardroom/sessions')
             .set(owner());
         expect(list.status).toBe(200);
         expect(list.body.sessions).toHaveLength(1);
@@ -149,13 +149,13 @@ describe('AI Boardroom API', () => {
     it('posts a question, gathers agent replies and rejects malformed input', async () => {
         const id = await openMeeting();
         const bad = await request(app)
-            .post(`/api/admin/boardroom/sessions/${id}/messages`)
+            .post(`/v1/admin/boardroom/sessions/${id}/messages`)
             .set(owner())
             .send({ content: 'hi', unexpected: true });
         expect(bad.status).toBe(400);
 
         const res = await request(app)
-            .post(`/api/admin/boardroom/sessions/${id}/messages`)
+            .post(`/v1/admin/boardroom/sessions/${id}/messages`)
             .set(owner())
             .send({ content: 'Review the NDA and contract terms please', askAll: true });
         expect(res.status).toBe(200);
@@ -168,7 +168,7 @@ describe('AI Boardroom API', () => {
     it('finalizes minutes and mirrors action items into the approval queue', async () => {
         const id = await openMeeting();
         const res = await request(app)
-            .post(`/api/admin/boardroom/sessions/${id}/finalize`)
+            .post(`/v1/admin/boardroom/sessions/${id}/finalize`)
             .set(owner())
             .send({
                 decision: 'Proceed only after owner sign-off',

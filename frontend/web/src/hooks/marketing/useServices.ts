@@ -24,7 +24,7 @@ function writeCache(services) {
 }
 
 /**
- * Load all published services from /api/services.
+ * Load all published services from /v1/services.
  * @returns {{ services, categories, featuredServices, loading, error, refetch }}
  */
 export function useServices() {

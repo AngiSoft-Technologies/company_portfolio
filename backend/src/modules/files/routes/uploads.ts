@@ -148,11 +148,11 @@ function publicUploadUrl(filePath: string) {
 }
 
 function privateDownloadUrl(fileId: string) {
-    return `/api/uploads/files/${fileId}/download`;
+    return `/v1/uploads/files/${fileId}/download`;
 }
 
 function rawProxyUrl(fileId: string) {
-    return `/api/uploads/files/${fileId}/raw`;
+    return `/v1/uploads/files/${fileId}/raw`;
 }
 
 function safeUnlink(filePath?: string) {

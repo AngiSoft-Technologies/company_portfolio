@@ -6,6 +6,17 @@ import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { encryptSecret, hasEncryptionKey } from '../../../shared/services/secrets';
 import { logAudit } from '../../../shared/services/audit';
+import financeOverviewRouter from './overview';
+import financeTransactionsRouter from './transactions';
+import financeAccountsRouter from './accounts';
+import financeAuditRouter from './audit';
+import financeBeneficiariesRouter from './beneficiaries';
+import financeCapabilitiesRouter from './capabilities';
+import financeDisputesRouter from './disputes';
+import financeReconciliationRouter from './reconciliation';
+import financeRefundsRouter from './refunds';
+import financeReportsRouter from './reports';
+import financeSettlementsRouter from './settlements';
 
 const upsertSchema = z.object({
   provider: z.string().min(1),
@@ -23,7 +34,7 @@ export default function financeConnectionsRouter(prisma: Db) {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', requireAccess('finance.connections.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
+  router.get(['/', '/connections'], requireAccess('finance.connections.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
     const connections = await (prisma.orm.public.ProviderConnection
       .where({ domain: 'FINANCE' } as any)
       .orderBy((c: any) => c.createdAt.desc())
@@ -33,7 +44,7 @@ export default function financeConnectionsRouter(prisma: Db) {
     res.json({ connections: connections.map((c: any) => ({ ...c, secrets: (c.secrets || []).map((s: any) => ({ ...s, masked: '••••' })) })) });
   });
 
-  router.post('/', requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.post(['/', '/connections'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = upsertSchema.parse(req.body);
     const now = ts();
     const connection = await prisma.orm.public.ProviderConnection.create({
@@ -57,7 +68,7 @@ export default function financeConnectionsRouter(prisma: Db) {
     res.status(201).json({ connection: full ?? connection });
   });
 
-  router.patch('/:id', requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.patch(['/connections/:id', '/:id'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = upsertSchema.partial().parse(req.body);
     const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'FINANCE' } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });
@@ -84,31 +95,32 @@ export default function financeConnectionsRouter(prisma: Db) {
     res.json({ connection });
   });
 
-  router.get('/transactions', requireAccess('finance.transactions.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (req, res) => {
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const [ledgerEntries, payments, payouts] = await Promise.all([
-      (prisma.orm.public.LedgerEntry.orderBy((e: any) => e.occurredAt.desc()).limit(limit).all() as unknown as Promise<any[]>).catch(() => [] as any),
-      (prisma.orm.public.Payment.orderBy((p: any) => p.createdAt.desc()).limit(limit).include('booking', (b: any) => b.select('id', 'publicReference')).all() as unknown as Promise<any[]>).catch(() => [] as any),
-      (prisma.orm.public.Payout.orderBy((p: any) => p.createdAt.desc()).limit(limit).all() as unknown as Promise<any[]>).catch(() => [] as any),
-    ]);
-    res.json({ ledgerEntries, payments, payouts });
+  router.delete(['/connections/:id', '/:id'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+    const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'FINANCE' } as any).first();
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    await prisma.orm.public.ProviderConnection.where({ id: existing.id }).delete();
+    await logAudit({
+      actorId: req.user?.sub, actorRole: req.user?.role as any, action: 'finance.connection.delete',
+      entity: 'ProviderConnection', entityId: existing.id, meta: { provider: existing.provider },
+    });
+    res.json({ deleted: true });
   });
 
-  router.get('/overview', requireAccess('finance.overview.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
-    const [connections, payments, payouts, events] = await Promise.all([
-      (prisma.orm.public.ProviderConnection.where({ domain: 'FINANCE' } as any).all() as unknown as Promise<any[]>).catch(() => [] as any),
-      (prisma.orm.public.Payment.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
-      (prisma.orm.public.Payout.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
-      (prisma.orm.public.ProviderEvent.where({ domain: 'FINANCE' } as any).orderBy((e: any) => e.createdAt.desc()).limit(10).all() as unknown as Promise<any[]>).catch(() => [] as any),
-    ]);
-    const byStatus = (rows: any[]) => rows.reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>);
-    res.json({
-      connections: { total: connections.length, byStatus: byStatus(connections) },
-      payments: { total: payments.length, byStatus: byStatus(payments) },
-      payouts: { total: payouts.length, byStatus: byStatus(payouts) },
-      recentEvents: events,
-    });
-  });
+  // Backwards compatibility with the Phase 7A mount point: delegate to the
+  // Phase 7B/C implementations instead of returning legacy shapes. This also
+  // makes every Finance Hub surface available under the single
+  // `/v1/admin/finance` mount until the central router registers them directly.
+  router.use('/transactions', financeTransactionsRouter(prisma));
+  router.use('/overview', financeOverviewRouter(prisma));
+  router.use('/accounts', financeAccountsRouter(prisma));
+  router.use('/reconciliation', financeReconciliationRouter(prisma));
+  router.use('/beneficiaries', financeBeneficiariesRouter(prisma));
+  router.use('/refunds', financeRefundsRouter(prisma));
+  router.use('/disputes', financeDisputesRouter(prisma));
+  router.use('/settlements', financeSettlementsRouter(prisma));
+  router.use('/reports', financeReportsRouter(prisma));
+  router.use('/audit', financeAuditRouter(prisma));
+  router.use('/capabilities', financeCapabilitiesRouter(prisma));
 
   return router;
 }

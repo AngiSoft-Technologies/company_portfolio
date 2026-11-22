@@ -25,13 +25,13 @@ export function ContactsAdmin() {
     let arr: Rec[] = [];
     let err: string | null = null;
     try {
-      arr = toArr(await apiFetch('/api/leads'));
+      arr = toArr(await apiFetch('/v1/leads'));
     } catch (e) {
       err = (e as Error).message || 'Failed to load leads';
     }
     if (arr.length === 0) {
       try {
-        arr = toArr(await apiFetch('/api/contact-enquiries'));
+        arr = toArr(await apiFetch('/v1/contact-enquiries'));
         err = null;
       } catch {
         /* keep primary error */
@@ -50,7 +50,7 @@ export function ContactsAdmin() {
     setBusyId(row.id);
     setError(null);
     try {
-      await apiFetch(`/api/leads/${encodeURIComponent(row.id)}`, { method: 'PUT', body: { status } });
+      await apiFetch(`/v1/leads/${encodeURIComponent(row.id)}`, { method: 'PUT', body: { status } });
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status } : r)));
     } catch (e) {
       setError((e as Error).message || 'Failed to update status');
@@ -63,7 +63,7 @@ export function ContactsAdmin() {
     setBusyId(row.id);
     setError(null);
     try {
-      await apiFetch(`/api/leads/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
+      await apiFetch(`/v1/leads/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
       await load();
     } catch (e) {
       setError((e as Error).message || 'Failed to delete lead');

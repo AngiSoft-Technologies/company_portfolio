@@ -23,7 +23,7 @@ export default function employeeEmailsRouter(prisma: Db) {
     res.json({ emails });
   });
 
-  router.post('/:employeeId/emails', requireAccess('staff.manage', ['ADMIN', 'SUPER_ADMIN', 'HR']), async (req: AuthRequest, res) => {
+  router.post('/:employeeId/emails', requireAccess('staff.update', ['ADMIN', 'SUPER_ADMIN', 'HR']), async (req: AuthRequest, res) => {
     const employeeId = req.params.employeeId;
     const body = upsertSchema.parse(req.body);
     const email = normalizeEmail(body.email);
@@ -37,7 +37,7 @@ export default function employeeEmailsRouter(prisma: Db) {
     res.status(201).json({ email: row });
   });
 
-  router.delete('/:employeeId/emails/:emailId', requireAccess('staff.manage', ['ADMIN', 'SUPER_ADMIN', 'HR']), async (req: AuthRequest, res) => {
+  router.delete('/:employeeId/emails/:emailId', requireAccess('staff.update', ['ADMIN', 'SUPER_ADMIN', 'HR']), async (req: AuthRequest, res) => {
     const { employeeId, emailId } = req.params as any;
     const row = await prisma.orm.public.EmployeeEmail.where({ id: emailId, employeeId } as any).first().catch(() => null);
     if (!row) return res.status(404).json({ error: 'Not found' });

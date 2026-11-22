@@ -21,7 +21,7 @@ const NewsletterUnsubscribe = () => {
             return;
         }
 
-        apiGet(`/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`)
+        apiGet(`/v1/newsletter/unsubscribe?token=${encodeURIComponent(token)}`)
             .then((data) => {
                 setStatus('success');
                 setMessage(data?.message || 'You have been successfully unsubscribed. You will no longer receive updates.');

@@ -9,9 +9,17 @@
 // adds consumers, never duplicate processing of the same job.
 
 import { validateDatabaseConnection, disconnectDatabase } from './db';
+import { loadRuntimeConfig } from './shared/services/runtimeConfig';
 import { startEmailWorker } from './workers/emailWorker';
 import { startFileProcessor } from './workers/fileProcessor';
 import { startReconciliationWorker } from './workers/reconciliationWorker';
+import { startProviderEventsWorker } from './workers/providerEventsWorker';
+import { startMpesaStkRecoveryWorker } from './workers/mpesaStkRecovery';
+import { startCommunicationsMailSync } from './workers/communicationsMailSync';
+import { startCommunicationsScheduledSends } from './workers/communicationsScheduledSends';
+import { startCommunicationsSlaMonitor } from './workers/communicationsSla';
+import { startCommunicationsTokenRefresh } from './workers/communicationsTokenRefresh';
+import { startCommunicationsWebhookRetry } from './workers/communicationsWebhookRetry';
 import { startSlaMonitor } from './workers/slaMonitor';
 import { startRenewalMonitor } from './workers/renewalMonitor';
 import { startAttendanceDeriveMonitor } from './workers/attendanceDerive';
@@ -26,11 +34,21 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  await loadRuntimeConfig(true);
+  setInterval(() => void loadRuntimeConfig(true).catch(() => undefined), 30_000).unref();
+
   const monitorTimers: (NodeJS.Timeout | null)[] = [];
   for (const [label, start] of [
     ['email', startEmailWorker],
     ['file processor', startFileProcessor],
     ['reconciliation', startReconciliationWorker],
+    ['provider events', startProviderEventsWorker],
+    ['mpesa stk recovery', startMpesaStkRecoveryWorker],
+    ['communications mail sync', () => { monitorTimers.push(startCommunicationsMailSync()); }],
+    ['communications scheduled sends', () => { monitorTimers.push(startCommunicationsScheduledSends()); }],
+    ['communications SLA', () => { monitorTimers.push(startCommunicationsSlaMonitor()); }],
+    ['communications token refresh', () => { monitorTimers.push(startCommunicationsTokenRefresh()); }],
+    ['communications webhook retry', () => { monitorTimers.push(startCommunicationsWebhookRetry()); }],
     ['sla monitor', () => { monitorTimers.push(startSlaMonitor()); }],
     ['renewal monitor', () => { monitorTimers.push(startRenewalMonitor()); }],
     ['attendance derive monitor', () => { monitorTimers.push(startAttendanceDeriveMonitor()); }],

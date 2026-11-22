@@ -1966,6 +1966,7 @@ model SalaryStructure {
     email      String
     isPrimary  Boolean            @default(false)
     verifiedAt TimestampString(3)?
+    verificationTokenHash String?
     source     String             @default("manual")
     createdAt  TimestampString(3) @default(now())
     updatedAt  TimestampString(3)
@@ -2076,6 +2077,8 @@ model SalaryStructure {
     status       String               @default("ACTIVE")
     capabilities Jsonb?
     config       Jsonb?
+    lastSyncAt   TimestampString(3)?
+    lastError    String?
     createdById  String?
     createdAt    TimestampString(3)   @default(now())
     updatedAt    TimestampString(3)
@@ -2095,6 +2098,7 @@ model SalaryStructure {
     accountId   String
     employeeId  String
     scopes      String[]             @default([]) @noCheck(elementNotNull)
+    expiresAt   TimestampString(3)?
     createdById String?
     createdAt   TimestampString(3)   @default(now())
     account     CommunicationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "CommunicationGrant_accountId_fkey")
@@ -2110,6 +2114,9 @@ model SalaryStructure {
     name        String?
     company     String?
     notes       String?
+    clientId    String?
+    leadId      String?
+    employeeId  String?
     createdAt   TimestampString(3) @default(now())
     updatedAt   TimestampString(3)
     identities  ContactIdentity[]
@@ -2146,6 +2153,9 @@ model SalaryStructure {
     assigneeId       String?
     lastMessageAt    TimestampString(3)?
     lastMessagePreview String?
+    windowExpiresAt  TimestampString(3)?
+    slaDueAt         TimestampString(3)?
+    slaBreachedAt    TimestampString(3)?
     metadata         Jsonb?
     createdAt        TimestampString(3)    @default(now())
     updatedAt        TimestampString(3)
@@ -2236,6 +2246,35 @@ model SalaryStructure {
   @@map("LedgerEntry")
 }
 
+  // ── Phase 7 completion: normalized finance transaction view ─────────────
+  model FinanceTransaction {
+    id              String             @id(map: "FinanceTransaction_pkey")
+    provider        String
+    externalRef     String?
+    transactionType String
+    direction       String
+    amount          Decimal
+    fee             Decimal            @default(0)
+    net             Decimal            @default(0)
+    currency        String             @default("KES")
+    status          String             @default("PENDING")
+    accountRef      String?
+    customerRef     String?
+    sourceType      String?
+    sourceId        String?
+    providerEventId String?
+    metadata        Jsonb?
+    occurredAt      TimestampString(3)
+    createdAt       TimestampString(3) @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([provider, externalRef], map: "FinanceTransaction_provider_externalRef_idx")
+    @@index([status, occurredAt], map: "FinanceTransaction_status_occurredAt_idx")
+    @@index([sourceType, sourceId], map: "FinanceTransaction_sourceType_sourceId_idx")
+    @@index([providerEventId], map: "FinanceTransaction_providerEventId_idx")
+  @@map("FinanceTransaction")
+}
+
   model ReconciliationRun {
     id               String             @id(map: "ReconciliationRun_pkey")
     provider         String
@@ -2254,6 +2293,220 @@ model SalaryStructure {
     @@index([provider, createdAt], map: "ReconciliationRun_provider_createdAt_idx")
     @@index([status], map: "ReconciliationRun_status_idx")
   @@map("ReconciliationRun")
+}
+
+  // ── Phase 7 completion: finance workflow models ─────────────────────────
+  model ReconciliationItem {
+    id           String             @id(map: "ReconciliationItem_pkey")
+    runId        String
+    type         String
+    sourceType   String?
+    sourceId     String?
+    externalRef  String?
+    amount       Decimal            @default(0)
+    currency     String             @default("KES")
+    status       String             @default("OPEN")
+    note         String?
+    resolvedById String?
+    metadata     Jsonb?
+    createdAt    TimestampString(3) @default(now())
+    resolvedAt   TimestampString(3)?
+
+    @@index([runId, status], map: "ReconciliationItem_runId_status_idx")
+    @@index([type], map: "ReconciliationItem_type_idx")
+    @@index([externalRef], map: "ReconciliationItem_externalRef_idx")
+  @@map("ReconciliationItem")
+}
+
+  model Refund {
+    id            String             @id(map: "Refund_pkey")
+    paymentId     String?
+    provider      String
+    externalRef   String?
+    amount        Decimal
+    currency      String             @default("KES")
+    reason        String?
+    status        String             @default("PENDING")
+    requestedById String?
+    approvedById  String?
+    metadata      Jsonb?
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([paymentId], map: "Refund_paymentId_idx")
+    @@index([provider, externalRef], map: "Refund_provider_externalRef_idx")
+    @@index([status], map: "Refund_status_idx")
+  @@map("Refund")
+}
+
+  model Dispute {
+    id           String             @id(map: "Dispute_pkey")
+    paymentId    String?
+    provider     String
+    externalRef  String?
+    status       String             @default("OPEN")
+    reason       String?
+    amount       Decimal            @default(0)
+    currency     String             @default("KES")
+    dueAt        TimestampString(3)?
+    metadata     Jsonb?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+
+    @@index([provider, externalRef], map: "Dispute_provider_externalRef_idx")
+    @@index([status], map: "Dispute_status_idx")
+  @@map("Dispute")
+}
+
+  model Settlement {
+    id               String             @id(map: "Settlement_pkey")
+    provider         String
+    financeAccountId String?
+    externalRef      String?
+    gross            Decimal            @default(0)
+    fees             Decimal            @default(0)
+    net              Decimal            @default(0)
+    currency         String             @default("KES")
+    periodStart      TimestampString(3)?
+    periodEnd        TimestampString(3)?
+    status           String             @default("PENDING")
+    metadata         Jsonb?
+    createdAt        TimestampString(3) @default(now())
+
+    @@index([provider, externalRef], map: "Settlement_provider_externalRef_idx")
+    @@index([status], map: "Settlement_status_idx")
+  @@map("Settlement")
+}
+
+  model Beneficiary {
+    id            String             @id(map: "Beneficiary_pkey")
+    name          String
+    channel       String
+    phoneNumber   String?
+    accountNumber String?
+    bankCode      String?
+    networkCode   String?
+    currency      String             @default("KES")
+    isActive      Boolean            @default(true)
+    metadata      Jsonb?
+    createdById   String?
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([channel, isActive], map: "Beneficiary_channel_isActive_idx")
+  @@map("Beneficiary")
+}
+
+  model PayoutApproval {
+    id            String             @id(map: "PayoutApproval_pkey")
+    payoutId      String
+    requestedById String?
+    approvedById  String?
+    status        String             @default("PENDING")
+    decisionNote  String?
+    decidedAt     TimestampString(3)?
+    createdAt     TimestampString(3) @default(now())
+
+    @@index([payoutId, status], map: "PayoutApproval_payoutId_status_idx")
+  @@map("PayoutApproval")
+}
+
+  // ── Phase 7 completion: communications workflow models ──────────────────
+  model ConversationParticipant {
+    id             String             @id(map: "ConversationParticipant_pkey")
+    conversationId String
+    employeeId     String
+    role           String             @default("WATCHER")
+    createdAt      TimestampString(3) @default(now())
+
+    @@index([conversationId], map: "ConversationParticipant_conversationId_idx")
+    @@index([employeeId], map: "ConversationParticipant_employeeId_idx")
+  @@map("ConversationParticipant")
+}
+
+  model RoutingRule {
+    id          String             @id(map: "RoutingRule_pkey")
+    name        String
+    enabled     Boolean            @default(true)
+    priority    Int                @default(100)
+    channel     String?
+    conditions  Jsonb?
+    actions     Jsonb?
+    createdById String?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([enabled, priority], map: "RoutingRule_enabled_priority_idx")
+  @@map("RoutingRule")
+}
+
+  model EmailSendAsIdentity {
+    id          String             @id(map: "EmailSendAsIdentity_pkey")
+    accountId   String
+    email       String
+    displayName String?
+    status      String             @default("PENDING")
+    verifiedAt  TimestampString(3)?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([accountId, email], map: "EmailSendAsIdentity_accountId_email_idx")
+  @@map("EmailSendAsIdentity")
+}
+
+  model EmailDraft {
+    id             String             @id(map: "EmailDraft_pkey")
+    accountId      String
+    conversationId String?
+    toAddresses    String[]
+    ccAddresses    String[]
+    subject        String?
+    body           String?
+    status         String             @default("DRAFT")
+    createdById    String?
+    createdAt      TimestampString(3) @default(now())
+    updatedAt      TimestampString(3)
+
+    @@index([accountId, status], map: "EmailDraft_accountId_status_idx")
+  @@map("EmailDraft")
+}
+
+  model EmailThread {
+    id               String             @id(map: "EmailThread_pkey")
+    accountId        String
+    externalThreadId String
+    subject          String?
+    lastMessageAt    TimestampString(3)?
+    createdAt        TimestampString(3) @default(now())
+
+    @@index([accountId, externalThreadId], map: "EmailThread_accountId_externalThreadId_idx")
+  @@map("EmailThread")
+}
+
+  model EmailFolder {
+    id         String             @id(map: "EmailFolder_pkey")
+    accountId  String
+    name       String
+    externalId String?
+    unreadCount Int                @default(0)
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+
+    @@index([accountId, name], map: "EmailFolder_accountId_name_idx")
+  @@map("EmailFolder")
+}
+
+  model EmailAttachment {
+    id         String             @id(map: "EmailAttachment_pkey")
+    messageId  String
+    filename   String
+    mimeType   String?
+    size       Int                @default(0)
+    storageKey String?
+    createdAt  TimestampString(3) @default(now())
+
+    @@index([messageId], map: "EmailAttachment_messageId_idx")
+  @@map("EmailAttachment")
 }
 
   model CommunicationTemplate {

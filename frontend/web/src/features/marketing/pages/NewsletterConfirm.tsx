@@ -21,7 +21,7 @@ const NewsletterConfirm = () => {
             return;
         }
 
-        apiGet(`/api/newsletter/confirm?token=${encodeURIComponent(token)}`)
+        apiGet(`/v1/newsletter/confirm?token=${encodeURIComponent(token)}`)
             .then((data) => {
                 setStatus('success');
                 setMessage(data?.message || 'Your subscription has been confirmed! You\'ll now receive our updates.');

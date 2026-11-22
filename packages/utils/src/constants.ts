@@ -7,16 +7,16 @@ export const APP_TAGLINE = 'Innovative Software Solutions';
 
 const normalizeOrigin = (origin?: string): string => {
   if (!origin) return origin as string;
-  return origin.replace(/\/+$/, '').replace(/\/api$/, '');
+  return origin.replace(/\/+$/, '').replace(/\/v1$/, '').replace(/\/api$/, '');
 };
 
 // Same-origin by default: API traffic goes through the app's own Netlify
-// `/api/*` proxy, so the host-only SameSite=Strict refresh cookie is sent.
+// `/v1/*` proxy, so the host-only SameSite=Strict refresh cookie is sent.
 // An explicit VITE_API_BASE_URL opts into cross-origin (no cookie auth).
 // Public uploads stay on the CDN via VITE_ASSET_BASE_URL.
 const API_ORIGIN =
   normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
-export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/api` : '/api';
+export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/+$/, '')}/v1` : '/v1';
 export const ASSET_BASE_URL = normalizeOrigin(import.meta.env.VITE_ASSET_BASE_URL as string) || API_ORIGIN;
 
 const normalizeAssetPath = (p: string): string => {
@@ -32,7 +32,7 @@ export const resolveAssetUrl = (value?: string | null): string | null | undefine
   if (normalized.startsWith('/uploads/')) {
     return ASSET_BASE_URL ? `${ASSET_BASE_URL}${normalized}` : normalized;
   }
-  if (normalized.startsWith('/api/uploads/')) {
+  if (normalized.startsWith('/v1/uploads/')) {
     return API_ORIGIN ? `${API_ORIGIN}${normalized}` : normalized;
   }
   return normalized;

@@ -16,7 +16,7 @@ function writeCache(industries) {
 }
 
 /**
- * Loads the industries collection from /api/site/industries.
+ * Loads the industries collection from /v1/site/industries.
  * Keeps a short in-memory cache so repeat navigations paint instantly.
  */
 export function useIndustries() {

@@ -2,30 +2,78 @@ import { Router, raw } from 'express';
 import type { Db } from '../../../db';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import { logAudit } from '../../../shared/services/audit';
+import { normalizeProvider } from '../services/capabilityMatrix';
+import { verifyWebhook } from '../services/providers';
+import { errorStatus } from './helpers';
+
+// Importing the processor registers FINANCE handlers with the central worker.
+import '../services/eventProcessor';
+export { processProviderEvent } from '../services/eventProcessor';
+
+const ALLOWED = new Set(['PESAFLOW', 'PAYPAL', 'PAYHERO', 'MPESA', 'GENERIC']);
+
+/** Never persist raw credentials or signature material in ProviderEvent.headers. */
+export function safeWebhookHeaders(headers: Record<string, any>): Record<string, string> {
+  const safe: Record<string, string> = {};
+  const interesting = [
+    'paypal-auth-algo', 'paypal-cert-url', 'paypal-transmission-id', 'paypal-transmission-time',
+    'x-pesaflow-signature', 'x-signature', 'x-callback-token', 'x-payhero-token', 'token',
+    'content-type', 'x-request-id', 'x-event-id',
+  ];
+  for (const key of interesting) {
+    const value = headers?.[key];
+    if (value === undefined) continue;
+    safe[key] = /token|signature|secret|password/i.test(key) ? '***' : String(value).slice(0, 500);
+  }
+  return safe;
+}
 
 export default function financeWebhooksRouter(prisma: Db) {
   const router = Router();
 
-  // Generic capability-gated webhook endpoint for providers not yet fully wired.
-  // It records ProviderEvent for audit/idempotency; production provider-specific signature validation must be added per adapter before enabling live.
+  /** Provider webhook inbox: verify → dedupe/record → enqueue processing. */
   router.post('/:provider', raw({ type: '*/*' }), async (req: any, res) => {
-    const provider = String(req.params.provider || '').toUpperCase();
-    const allowed = new Set(['PESAFLOW', 'PAYPAL', 'GENERIC']);
-    if (!allowed.has(provider)) return res.status(404).json({ error: 'Unknown finance webhook provider' });
-    const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body || {});
+    const provider = normalizeProvider(req.params.provider);
+    if (!ALLOWED.has(provider)) return res.status(404).json({ error: 'Unknown finance webhook provider' });
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
+
     let payload: any = {};
-    try { payload = JSON.parse(rawBody || '{}'); } catch { payload = { raw: rawBody }; }
-    const externalEventId = String(payload?.id || payload?.eventId || payload?.resource?.id || payload?.data?.id || '');
+    try { payload = JSON.parse(rawBody.toString('utf8') || '{}'); } catch { payload = { raw: rawBody.toString('utf8') }; }
+
+    let signatureValid = false;
+    try {
+      // GENERIC is intentionally fail-closed in production (no verifier).
+      signatureValid = provider === 'GENERIC'
+        ? process.env.NODE_ENV !== 'production'
+        // Only HTTP headers are signature material. Query params are routing
+        // data and must never be merged into the verifier's header bag.
+        : await verifyWebhook(provider, rawBody, req.headers as Record<string, any>);
+    } catch (err: any) {
+      return res.status(errorStatus(err)).json({ error: String(err?.message || 'Webhook verification failed').slice(0, 500) });
+    }
+    if (!signatureValid) {
+      return res.status(400).json({ error: 'Webhook signature verification failed' });
+    }
+
+    const externalEventId = String(
+      payload?.id || payload?.eventId || payload?.resource?.id || payload?.data?.id
+      || payload?.Body?.stkCallback?.CheckoutRequestID || '',
+    );
     const event = await recordProviderEvent(prisma, {
-      provider, domain: 'FINANCE', externalEventId: externalEventId || null,
+      provider,
+      domain: 'FINANCE',
+      externalEventId: externalEventId || null,
       eventType: String(payload?.event_type || payload?.event || payload?.type || `${provider.toLowerCase()}.webhook`),
-      signatureValid: false, payload, headers: req.headers as any, status: 'RECEIVED',
-      error: 'Signature verification not configured for this provider adapter',
-    }).catch((e: any) => ({ error: e?.message || 'failed' } as any));
-    await logAudit({ action: 'finance.webhook.received', entity: 'ProviderEvent', entityId: (event as any)?.event?.id, meta: { provider, externalEventId: externalEventId || null } }).catch(() => {});
-    // Fail closed in production until adapter verifies signature.
-    if (process.env.NODE_ENV === 'production') return res.status(202).json({ received: true, verification: 'pending_adapter' });
-    return res.status(200).json({ received: true, deduped: Boolean((event as any)?.deduped) });
+      signatureValid,
+      payload,
+      headers: safeWebhookHeaders(req.headers as Record<string, any>) as any,
+      status: 'RECEIVED',
+    });
+    await logAudit({
+      action: 'finance.webhook.received', entity: 'ProviderEvent', entityId: event.event.id,
+      meta: { provider, externalEventId: externalEventId || null, deduped: event.deduped },
+    }).catch(() => undefined);
+    return res.status(event.deduped ? 200 : 202).json({ received: true, deduped: event.deduped });
   });
 
   return router;

@@ -9,10 +9,10 @@ import { asStr } from '@/lib/format';
 /**
  * Staff Access — per-employee permission and assignment editor.
  *
- * Talks to the real endpoints mounted under `/api/admin`:
- *   GET  /api/admin/employees            — staff list
- *   GET  /api/admin/staff/:id/access     — full access state for one employee
- *   PUT  /api/admin/staff/:id/access     — replace identity, direct permissions, assignments
+ * Talks to the real endpoints mounted under `/v1/admin`:
+ *   GET  /v1/admin/employees            — staff list
+ *   GET  /v1/admin/staff/:id/access     — full access state for one employee
+ *   PUT  /v1/admin/staff/:id/access     — replace identity, direct permissions, assignments
  *
  * Precedence reminder (see docs/ANGISOFT_DIGITAL_HQ_PLAN.md §5.3):
  *   SYSTEM(60) → DENY(50) → GRANT(40) → ASSIGNMENT(30) → PRESET(20) → ROLE(10)
@@ -239,7 +239,7 @@ export function StaffAccess() {
   const loadStaff = useCallback(async () => {
     setStaffLoading(true);
     try {
-      const json = (await apiFetch('/api/admin/employees')) as unknown;
+      const json = (await apiFetch('/v1/admin/employees')) as unknown;
       setStaff(
         toArr(json).map((r) => ({
           id: field(r, 'id'),
@@ -260,7 +260,7 @@ export function StaffAccess() {
     setError(null);
     setSaved(false);
     try {
-      const raw = (await apiFetch(`/api/admin/staff/${encodeURIComponent(employeeId)}/access`)) as RawAccess;
+      const raw = (await apiFetch(`/v1/admin/staff/${encodeURIComponent(employeeId)}/access`)) as RawAccess;
       const next = flattenAccess(raw);
       setAccess(next);
       setDepartmentId(next.employee.departmentId ?? '');
@@ -356,7 +356,7 @@ export function StaffAccess() {
     setSaveError(null);
     setSaved(false);
     try {
-      await apiFetch(`/api/admin/staff/${encodeURIComponent(access.employee.id)}/access`, {
+      await apiFetch(`/v1/admin/staff/${encodeURIComponent(access.employee.id)}/access`, {
         method: 'PUT',
         body: {
           departmentId: departmentId || null,

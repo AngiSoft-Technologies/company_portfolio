@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { apiPost, safeGet } from '@/lib/httpClient';
 import { API_BASE_URL } from '@/lib/marketing/constants';
@@ -13,6 +13,10 @@ import BookingSummaryCard from '@/features/bookings/components/bookings/BookingS
 import BookingTimeline from '@/features/bookings/components/bookings/BookingTimeline';
 import BookingQuotationCard from '@/features/bookings/components/bookings/BookingQuotationCard';
 import BookingPaymentCard from '@/features/bookings/components/bookings/BookingPaymentCard';
+import BookingDepositPanel, {
+    clearDepositCheckout,
+    readDepositCheckout,
+} from '@/features/bookings/components/bookings/BookingDepositPanel';
 import BookingCommunication from '@/features/bookings/components/bookings/BookingCommunication';
 import BookingAttachments from '@/features/bookings/components/bookings/BookingAttachments';
 import BookingActions from '@/features/bookings/components/bookings/BookingActions';
@@ -37,8 +41,14 @@ const BookingProgress = () => {
     const [busy, setBusy] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
+    const paypalCaptureStarted = useRef(false);
 
-    const token = searchParams.get('token') || '';
+    // PayPal reuses `token` for the approved order id. On the deposit return
+    // the booking authorization is carried in `access`; never let the order id
+    // be mistaken for a booking tracking token.
+    const paypalFlag = searchParams.get('paypal');
+    const accessParam = searchParams.get('access') || '';
+    const token = accessParam || (paypalFlag ? '' : searchParams.get('token') || '');
 
     const load = async () => {
         if (!token) {
@@ -67,16 +77,79 @@ const BookingProgress = () => {
     const refetch = () => load();
     const authQuery = token ? `?token=${encodeURIComponent(token)}` : '';
 
+    // Buyer return from PayPal. PayPal appends `?token=<orderId>` to the return
+    // URL; the signed booking authorization is carried in `access`. We pair the
+    // order with the reference saved before redirecting and ask the server to
+    // capture. The webhook remains authoritative and is idempotent.
+    useEffect(() => {
+        if (!reference || !paypalFlag || paypalCaptureStarted.current) return;
+        paypalCaptureStarted.current = true;
+        const canonicalUrl = () => {
+            const path = window.location.pathname;
+            return token ? `${path}?token=${encodeURIComponent(token)}` : path;
+        };
+        const clearUrl = () => window.history.replaceState({}, '', canonicalUrl());
+
+        if (paypalFlag === 'cancel') {
+            clearDepositCheckout(reference);
+            toast.info('PayPal checkout was cancelled. No charge was made.');
+            clearUrl();
+            return;
+        }
+        if (paypalFlag !== 'success') return;
+
+        const orderId = searchParams.get('token') || '';
+        const pending = readDepositCheckout(reference);
+        if (!orderId || !token || !pending?.reference || (pending.orderId && pending.orderId !== orderId)) {
+            toast.error('We could not match this PayPal deposit to a booking. Contact support if you were charged.');
+            clearDepositCheckout(reference);
+            clearUrl();
+            return;
+        }
+
+        void (async () => {
+            try {
+                const result: any = await apiPost(
+                    '/payments/paypal/capture',
+                    { orderId, reference: pending.reference },
+                    token,
+                );
+                const confirmed = ['COMPLETED', 'SUCCEEDED'].includes(String(result?.status));
+                if (confirmed) {
+                    toast.success(`Deposit confirmed${result?.payerEmail ? ` for ${result.payerEmail}` : ''}.`);
+                } else {
+                    toast.error(result?.error || 'PayPal has not confirmed the deposit yet. It will update automatically.');
+                }
+            } catch {
+                // apiPost already surfaces the provider error to the user.
+            } finally {
+                clearDepositCheckout(reference);
+                clearUrl();
+                refetch();
+            }
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reference]);
+
     // 'act' = one of the server-allowed actions (or a message/file/action op)
     const runAction = async (action, payload) => {
         setBusy(true);
-        const res = await apiPost(`/bookings/reference/${reference}/actions${authQuery}`, { action, ...payload }, token || null);
-        setBusy(false);
-        if (res.ok && res.data?.booking) {
-            setBooking(res.data.booking);
-            toast.success(res.data.message || 'Updated');
-        } else {
-            toast.error(res.data?.message || 'Action failed');
+        try {
+            const data: any = await apiPost(
+                `/bookings/reference/${reference}/actions${authQuery}`,
+                { action, ...payload },
+                token || null,
+            );
+            if (data?.id || data?.publicReference) {
+                setBooking(data);
+                toast.success(data.message || 'Updated');
+            } else {
+                toast.error(data?.error || 'Action failed');
+            }
+        } catch (err) {
+            toast.error((err as any)?.message || 'Action failed');
+        } finally {
+            setBusy(false);
         }
     };
 
@@ -126,11 +199,19 @@ const BookingProgress = () => {
 
     const handleSend = async (text) => {
         setSending(true);
-        const res = await apiPost(`/bookings/reference/${reference}/messages${authQuery}`, { message: text }, token || null);
-        setSending(false);
-        if (res.ok && res.data?.booking) setBooking(res.data.booking);
-        else if (res.ok && res.data?.event) setBooking((b) => ({ ...b, events: [...(b.events || []), res.data.event] }));
-        else toast.error('Message failed');
+        try {
+            const data: any = await apiPost(
+                `/bookings/reference/${reference}/messages${authQuery}`,
+                { message: text },
+                token || null,
+            );
+            if (data?.ok) refetch();
+            else toast.error(data?.error || 'Message failed');
+        } catch (err) {
+            toast.error((err as any)?.message || 'Message failed');
+        } finally {
+            setSending(false);
+        }
     };
 
     const availableActions = useMemo(() => booking?.availableActions || [], [booking]);
@@ -177,6 +258,11 @@ const BookingProgress = () => {
                             reacting={busy}
                         />
                         <BookingPaymentCard booking={booking} />
+                        <BookingDepositPanel
+                            booking={booking}
+                            token={token}
+                            onPaid={refetch}
+                        />
                         <div className="booking-section">
                             <h3 className="booking-section-title">Activity</h3>
                             <BookingTimeline events={booking.events || []} />

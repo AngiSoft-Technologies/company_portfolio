@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { Db } from '../../../db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
+import { setConfigValue } from '../../../shared/services/runtimeConfig';
 import { z } from 'zod';
 import { logAudit } from '../../../shared/services/audit';
 import {
@@ -93,6 +94,16 @@ export default function aiConfigRouter(prisma: Db) {
         return res.status(400).json({ error: 'Base URL and model are required.' });
       }
 
+      // A new key is a credential change: store it encrypted and restrict it to
+      // SUPER_ADMIN, even though the rest of the AI form is ADMIN-editable.
+      const submitted = req.body?.config?.apiKey ?? req.body?.apiKey;
+      if (typeof submitted === 'string' && submitted && !MASK_RE.test(submitted)) {
+        if (req.user?.role !== 'SUPER_ADMIN') {
+          return res.status(403).json({ error: 'Only SUPER_ADMIN may change the AI provider key' });
+        }
+        await setConfigValue('AI_API_KEY', submitted);
+      }
+
       await saveAIConfig(prisma as any, config);
       await logAudit({
         action: 'update_ai_config',
@@ -103,7 +114,8 @@ export default function aiConfigRouter(prisma: Db) {
         meta: { provider: config.provider, model: config.model, baseUrl: config.baseUrl },
       });
 
-      res.json({ config, masked: toMasked(config) });
+      const masked = toMasked(config);
+      res.json({ config: masked, masked });
     } catch (err: any) {
       console.error('Failed to save AI config:', err);
       res.status(500).json({ error: 'Failed to save AI configuration' });

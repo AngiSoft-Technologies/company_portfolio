@@ -65,7 +65,7 @@ export function FileUploadManager() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const json = await apiFetch('/api/uploads', { method: 'POST', body: fd });
+      const json = await apiFetch('/v1/uploads', { method: 'POST', body: fd });
       const rec = (json ?? {}) as Record<string, unknown>;
       const uploaded = toUploadRows(rec);
       const name = uploaded[0]?.name ?? file.name;

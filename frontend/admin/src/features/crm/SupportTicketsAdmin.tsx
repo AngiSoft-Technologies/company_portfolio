@@ -47,7 +47,7 @@ export function SupportTicketsAdmin() {
     setError(null);
     try {
       const qs = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
-      const data = await apiFetch(`/api/support-tickets${qs}`);
+      const data = await apiFetch(`/v1/support-tickets${qs}`);
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load tickets');
@@ -61,7 +61,7 @@ export function SupportTicketsAdmin() {
   const openDetail = async (id: string) => {
     setBusy(true);
     try {
-      const data = (await apiFetch(`/api/support-tickets/${id}`)) as TicketDetail;
+      const data = (await apiFetch(`/v1/support-tickets/${id}`)) as TicketDetail;
       setDetail(data);
       setReply('');
       setInternal(false);
@@ -76,7 +76,7 @@ export function SupportTicketsAdmin() {
     if (!detail) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/support-tickets/${detail.id}`, { method: 'PUT', body: patch });
+      await apiFetch(`/v1/support-tickets/${detail.id}`, { method: 'PUT', body: patch });
       await openDetail(detail.id);
       void load();
     } catch (e) {
@@ -90,7 +90,7 @@ export function SupportTicketsAdmin() {
     if (!detail || !reply.trim()) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/support-tickets/${detail.id}/messages`, {
+      await apiFetch(`/v1/support-tickets/${detail.id}/messages`, {
         method: 'POST',
         body: { body: reply.trim(), internal },
       });

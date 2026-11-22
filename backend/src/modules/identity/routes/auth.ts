@@ -140,7 +140,7 @@ router.post('/refresh', async (req, res) => {
     const factors = await enrolledFactors(emp);
     if (factors.length === 0) {
         await prisma.orm.public.RefreshToken.where({ employeeId: emp.id }).updateAll({ revoked: true });
-        res.clearCookie('refreshToken', { path: '/api/auth' });
+        res.clearCookie('refreshToken', { path: '/v1/auth' });
         const setupTicket = await createSetupTicket(emp);
         const all = availableFactors(emp);
         return res.status(403).json({
@@ -168,7 +168,7 @@ router.post('/logout', async (req, res) => {
             .updateAndCount({ revoked: true })
             .catch(() => { });
     }
-    res.clearCookie('refreshToken', { path: '/api/auth' });
+    res.clearCookie('refreshToken', { path: '/v1/auth' });
     res.json({ ok: true });
 });
 

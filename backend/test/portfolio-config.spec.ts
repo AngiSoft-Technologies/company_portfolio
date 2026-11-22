@@ -102,7 +102,7 @@ beforeAll(async () => {
     const { default: employeeProfilesRouter } = await import('../src/modules/identity/routes/employee-profiles');
     app = express();
     app.use(express.json());
-    app.use('/api/employee-profiles', employeeProfilesRouter());
+    app.use('/v1/employee-profiles', employeeProfilesRouter());
     request = supertest;
 });
 
@@ -138,19 +138,19 @@ beforeEach(() => {
 
 describe('portfolio-config endpoints', () => {
     it('rejects unauthenticated reads of the draft config', async () => {
-        const res = await request(app).get(`/api/employee-profiles/portfolio-config/${EMPLOYEE}`);
+        const res = await request(app).get(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}`);
         expect(res.status).toBe(401);
     });
 
     it('returns null publicly until published', async () => {
-        const res = await request(app).get(`/api/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
+        const res = await request(app).get(`/v1/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
         expect(res.status).toBe(200);
         expect(res.body).toBeNull();
     });
 
     it('lets an owner read their draft config', async () => {
         const res = await request(app)
-            .get(`/api/employee-profiles/portfolio-config/${EMPLOYEE}`)
+            .get(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
         expect(res.status).toBe(200);
         expect(res.body.draftConfig.testimonials).toHaveLength(1);
@@ -163,14 +163,14 @@ describe('portfolio-config endpoints', () => {
             effect: 'GRANT',
         });
         const res = await request(app)
-            .get(`/api/employee-profiles/portfolio-config/${EMPLOYEE}`)
+            .get(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}`)
             .set(authed('emp_other', 'DEVELOPER'));
         expect(res.status).toBe(403);
     });
 
     it('publish snapshots draftConfig, bumps version, and records history', async () => {
         const res = await request(app)
-            .post(`/api/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
+            .post(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
         expect(res.status).toBe(200);
         expect(res.body.published).toBe(true);
@@ -182,10 +182,10 @@ describe('portfolio-config endpoints', () => {
 
     it('exposes the published snapshot via the public endpoint', async () => {
         await request(app)
-            .post(`/api/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
+            .post(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
 
-        const res = await request(app).get(`/api/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
+        const res = await request(app).get(`/v1/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
         expect(res.status).toBe(200);
         expect(res.body.theme).toBe('ocean');
         expect(res.body.layout).toBe('spotlight');
@@ -195,25 +195,25 @@ describe('portfolio-config endpoints', () => {
 
     it('unpublish hides the config publicly but keeps the draft', async () => {
         await request(app)
-            .post(`/api/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
+            .post(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}/publish`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
         const unpub = await request(app)
-            .post(`/api/employee-profiles/portfolio-config/${EMPLOYEE}/unpublish`)
+            .post(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}/unpublish`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
         expect(unpub.status).toBe(200);
         expect(unpub.body.published).toBe(false);
 
-        const pub = await request(app).get(`/api/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
+        const pub = await request(app).get(`/v1/employee-profiles/portfolio-config/public/${EMPLOYEE}`);
         expect(pub.body).toBeNull();
 
         const draft = await request(app)
-            .get(`/api/employee-profiles/portfolio-config/${EMPLOYEE}`)
+            .get(`/v1/employee-profiles/portfolio-config/${EMPLOYEE}`)
             .set(authed(EMPLOYEE, 'DEVELOPER'));
         expect(draft.body.draftConfig.testimonials).toHaveLength(1);
     });
 
     it('admin list requires auth', async () => {
-        const res = await request(app).get('/api/employee-profiles/portfolio-config/admin/all');
+        const res = await request(app).get('/v1/employee-profiles/portfolio-config/admin/all');
         expect(res.status).toBe(401);
     });
 });

@@ -39,12 +39,12 @@ sequenceDiagram
   participant Admin
   participant Backend
   participant Email
-  Admin->>Backend: POST /api/invite {email, role, name}
+  Admin->>Backend: POST /v1/invite {email, role, name}
   Backend->>DB: INSERT employee (inviteToken, expiry)
   Backend->>Email: send invite link (with token)
   Email->>User: Deliver invite
   User->>Frontend: open invite link (token)
-  Frontend->>Backend: POST /api/invite/accept {token, password}
+  Frontend->>Backend: POST /v1/invite/accept {token, password}
   Backend->>DB: set passwordHash, acceptedAt, clear token
   Backend->>Email: confirmation email
 ```
@@ -62,16 +62,16 @@ sequenceDiagram
   participant Email
 
   Client->>Frontend: fill booking form (+ files)
-  Frontend->>Backend: POST /api/bookings (multipart)
+  Frontend->>Backend: POST /v1/bookings (multipart)
   Backend->>DB: create Client if new
   Backend->>Storage: store uploaded files (R2/S3)
   Backend->>DB: create Booking, File records
   Backend->>Email: notify admin
-  Admin->>Backend: POST /api/bookings/:id/review {accept}
+  Admin->>Backend: POST /v1/bookings/:id/review {accept}
   Backend->>DB: booking.status = ACCEPTED
   Backend->>Email: send client link to accept terms + pay
   Client->>Frontend: click pay link
-  Frontend->>Backend: POST /api/payments/create {bookingId, amount, provider}
+  Frontend->>Backend: POST /v1/payments/create {bookingId, amount, provider}
   Backend->>Payment: create Checkout Session (Stripe) or provide PayPal/M-Pesa instructions
   Payment->>Client: redirect to Stripe Checkout
   Payment->>Backend(webhook): notify payment success

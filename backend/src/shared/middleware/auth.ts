@@ -52,7 +52,7 @@ export function setRefreshCookie(res: Response, token: string, remember = true) 
     // credential is a browser-session cookie; with it, 30 days. The refresh
     // endpoint uses `current.remember` so the choice survives rotation.
     const maxAge = remember ? 30 * 24 * 60 * 60 * 1000 : undefined;
-    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'strict', path: '/api/auth', ...(maxAge ? { maxAge } : {}) });
+    res.cookie('refreshToken', token, { httpOnly: true, secure, sameSite: 'strict', path: '/v1/auth', ...(maxAge ? { maxAge } : {}) });
     // Double-submit CSRF token: readable by JS, echoed back as x-csrf-token.
     // (Fully enforced once the frontend migrates to cookie-based sessions;
     // today the app authenticates via the Authorization header, which is

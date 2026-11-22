@@ -88,21 +88,21 @@ import app from '../src/app';
 // simple smoke tests to verify routes wired up
 describe('auth flows', () => {
     it('blocks unauthenticated invite creation', async () => {
-        const inviteRes = await request(app).post('/api/invite').send({ firstName: 'Test', lastName: 'User', email: 't@example.com' });
+        const inviteRes = await request(app).post('/v1/invite').send({ firstName: 'Test', lastName: 'User', email: 't@example.com' });
         expect(inviteRes.status).toBe(401);
     });
 
     it('forgot/reset returns ok for unknown email and handles reset for known', async () => {
-        const forgotRes = await request(app).post('/api/auth/forgot').send({ email: 'doesnotexist@example.com' });
+        const forgotRes = await request(app).post('/v1/auth/forgot').send({ email: 'doesnotexist@example.com' });
         expect(forgotRes.status).toBe(200);
         expect(forgotRes.body.ok).toBeTruthy();
     });
 
     it('requires auth for 2FA enroll and verify', async () => {
-        const enroll = await request(app).post('/api/auth/2fa/enroll').send({ email: '2fa@example.com' });
+        const enroll = await request(app).post('/v1/auth/2fa/enroll').send({ email: '2fa@example.com' });
         expect(enroll.status).toBe(401);
 
-        const verify = await request(app).post('/api/auth/2fa/verify').send({ email: '2fa@example.com', token: '000000' });
+        const verify = await request(app).post('/v1/auth/2fa/verify').send({ email: '2fa@example.com', token: '000000' });
         expect(verify.status).toBe(401);
     });
 });

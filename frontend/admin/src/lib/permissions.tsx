@@ -12,7 +12,7 @@ import { apiFetch } from '@/lib/adminApi';
 /**
  * Effective-access provider (plan §8, Phase 1.5).
  *
- * One call to `/api/staff-dashboard/effective-access` gives the admin shell the
+ * One call to `/v1/staff-dashboard/effective-access` gives the admin shell the
  * authoritative answer to "what may this person see and do?". Navigation, route
  * visibility and action buttons all read from here instead of hardcoding roles
  * — which is what kept un-migrated roles locked out (plan §12).
@@ -90,7 +90,7 @@ export function EffectiveAccessProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const json = (await apiFetch('/api/staff-dashboard/effective-access')) as EffectiveAccess;
+      const json = (await apiFetch('/v1/staff-dashboard/effective-access')) as EffectiveAccess;
       setAccess({
         ...json,
         permissions: json?.permissions ?? [],
