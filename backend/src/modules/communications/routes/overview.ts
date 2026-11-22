@@ -3,6 +3,7 @@ import type { Db } from '../../../db';
 import { ts, tsMs } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
+import { toSafeWebhookEvent } from '../../../shared/routes/webhookInbox';
 import { listCapabilityMatrix } from '../services/capabilities';
 import { getMetaFeatureFlags, listMetaCapabilities } from '../services/metaCapabilities';
 import { canAccessAccount } from '../services/access';
@@ -76,7 +77,9 @@ export default function communicationsOverviewRouter(prisma: Db) {
       metaCapabilities: listMetaCapabilities(),
       metaFeatureFlags: getMetaFeatureFlags(),
       recentConversations: visibleConversations,
-      recentEvents: recentEvents.slice(-10).reverse(),
+      // Deeply redacted: callback payloads can carry signatures, tokenised URLs
+      // and payer PII. The webhook inbox is the only payload-display surface.
+      recentEvents: recentEvents.slice(-10).reverse().map(toSafeWebhookEvent),
     });
   });
 
