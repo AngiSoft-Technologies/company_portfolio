@@ -61,7 +61,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
       if (!hasEncryptionKey()) return res.status(400).json({ error: 'APP_ENCRYPTION_KEY is required to store secrets' });
       const enc = encryptSecret(body.secret);
       await prisma.orm.public.ProviderSecret.create({
-        id: newId(), connectionId: connection.id, kind: body.secretKind ?? 'API_KEY',
+        id: newId(), connectionId: existing.id, kind: body.secretKind ?? 'API_KEY',
         ciphertext: enc.ciphertext, iv: enc.iv, authTag: enc.authTag, keyVersion: enc.keyVersion,
         createdById: req.user?.sub ?? null, createdAt: now, updatedAt: now,
       } as any);
@@ -83,7 +83,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     const body = upsertSchema.partial().parse(req.body);
     const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'COMMUNICATIONS' } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });
-    const connection = await prisma.orm.public.ProviderConnection.where({ id: existing.id }).update({
+    const connection: any = await prisma.orm.public.ProviderConnection.where({ id: existing.id }).update({
       ...('provider' in body ? { provider: body.provider } : {}),
       ...('name' in body ? { name: body.name } : {}),
       ...('status' in body ? { status: body.status } : {}),
@@ -97,7 +97,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
       if (!hasEncryptionKey()) return res.status(400).json({ error: 'APP_ENCRYPTION_KEY is required to store secrets' });
       const enc = encryptSecret(body.secret);
       await prisma.orm.public.ProviderSecret.create({
-        id: newId(), connectionId: connection.id, kind: body.secretKind ?? 'API_KEY',
+        id: newId(), connectionId: existing.id, kind: body.secretKind ?? 'API_KEY',
         ciphertext: enc.ciphertext, iv: enc.iv, authTag: enc.authTag, keyVersion: enc.keyVersion,
         rotatedAt: ts(), createdById: req.user?.sub ?? null, createdAt: ts(), updatedAt: ts(),
       } as any);
