@@ -20,6 +20,7 @@ import type { Db } from '../../db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { requireAccess } from '../middleware/roles';
 import { logAudit } from '../services/audit';
+import { integrationEndpointsPayload } from '../services/integrationEndpoints';
 
 /** Keys whose VALUES must never leave the server. */
 const SENSITIVE_KEY = /token|secret|password|authorization|signature|api[-_]?key|apikey|x-api-key|passkey|credential|cookie|private[-_]?key/i;
@@ -123,6 +124,26 @@ export default function webhookInboxRouter(prisma: Db) {
       });
 
       res.json({ events: filtered.slice(0, limit).map(toSafeWebhookEvent) });
+    },
+  );
+
+  /**
+   * Read-only catalogue of the canonical /v1 callback/return URLs to register
+   * in each provider dashboard. Same gating + audit as the inbox because it
+   * exposes the tokenised-URL shape (masked) for the east-Africa rails.
+   * Never returns a secret value — only key NAMES and masked path templates.
+   */
+  router.get(
+    '/endpoints',
+    requireAccess('administration.audit', ['SUPER_ADMIN']),
+    async (req: AuthRequest, res) => {
+      await logAudit({
+        actorId: req.user?.sub,
+        actorRole: req.user?.role as any,
+        action: 'administration.integration_endpoints.view',
+        entity: 'IntegrationEndpoint',
+      });
+      res.json(integrationEndpointsPayload());
     },
   );
 

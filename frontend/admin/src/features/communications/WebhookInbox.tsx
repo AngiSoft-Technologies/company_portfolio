@@ -35,6 +35,106 @@ function statusTone(status: string): string {
   return 'amber';
 }
 
+interface IntegrationEndpoint {
+  provider: string;
+  domain: string;
+  purpose: string;
+  method: 'GET' | 'POST';
+  path: string;
+  authModel: string;
+  configKeys: string[];
+  tokenized: boolean;
+  legacy?: boolean;
+  notes?: string;
+}
+
+interface IntegrationEndpointsPayload {
+  apiOrigin: string;
+  siteOrigin: string | null;
+  note: string;
+  endpoints: IntegrationEndpoint[];
+}
+
+/** Read-only catalogue of the canonical /v1 URLs to register in provider dashboards. */
+function IntegrationEndpoints() {
+  const [data, setData] = useState<IntegrationEndpointsPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (!show) return;
+    let active = true;
+    apiFetch('/v1/admin/webhook-inbox/endpoints')
+      .then((json) => { if (active) setData(json as IntegrationEndpointsPayload); })
+      .catch((e) => { if (active) setError((e as Error).message || 'Failed to load integration endpoints'); });
+    return () => { active = false; };
+  }, [show]);
+
+  return (
+    <Card className="mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="font-semibold">Provider endpoint registry</h3>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Canonical /v1 callback and return URLs to register in each provider dashboard. Read-only — no secret values are shown.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setShow((v) => !v)}>
+          {show ? 'Hide' : 'Show endpoints'}
+        </Button>
+      </div>
+      {show ? (
+        <div className="mt-4">
+          {error ? <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {data ? (
+            <>
+              <div className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] p-3 text-xs">
+                <div><span className="text-[var(--text-muted)]">API origin: </span><span className="font-mono">{data.apiOrigin}</span></div>
+                {data.siteOrigin ? (
+                  <div className="mt-1"><span className="text-[var(--text-muted)]">Site origin: </span><span className="font-mono">{data.siteOrigin}</span></div>
+                ) : null}
+                <p className="mt-2 text-[var(--text-muted)]">{data.note}</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] text-xs uppercase tracking-wide text-[var(--text-muted)]">
+                      <th className="py-2 pr-4">Provider</th>
+                      <th className="py-2 pr-4">Method</th>
+                      <th className="py-2 pr-4">Path</th>
+                      <th className="py-2 pr-4">Verification</th>
+                      <th className="py-2 pr-4">Config keys</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.endpoints.map((ep, i) => (
+                      <tr key={`${ep.provider}-${ep.path}-${i}`} className="border-b border-[var(--border-light)] last:border-0 align-top">
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          <div className="font-medium">{ep.provider}</div>
+                          <div className="text-xs text-[var(--text-muted)]">{ep.domain}</div>
+                          {ep.legacy ? <div className="mt-1"><Badge tone="slate">legacy</Badge></div> : null}
+                          {ep.tokenized ? <div className="mt-1"><Badge tone="amber">tokenized</Badge></div> : null}
+                        </td>
+                        <td className="py-2 pr-4 font-mono text-xs">{ep.method}</td>
+                        <td className="py-2 pr-4 font-mono text-xs break-all">{ep.path}</td>
+                        <td className="py-2 pr-4 text-xs">{ep.authModel}</td>
+                        <td className="py-2 pr-4 text-xs">
+                          {ep.configKeys.length ? ep.configKeys.map((k) => <div key={k} className="font-mono">{k}</div>) : <span className="text-[var(--text-muted)]">—</span>}
+                          {ep.notes ? <div className="mt-1 max-w-xs text-[var(--text-muted)]">{ep.notes}</div> : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
 export function WebhookInbox() {
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [domain, setDomain] = useState('');
@@ -74,6 +174,8 @@ export function WebhookInbox() {
         title="Webhook Inbox"
         subtitle="Read-only inbound provider events across communications and finance. Sensitive values are redacted."
       />
+
+      <IntegrationEndpoints />
 
       <Card className="mb-4">
         <div className="grid gap-3 sm:grid-cols-5">

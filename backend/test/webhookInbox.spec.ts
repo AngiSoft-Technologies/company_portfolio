@@ -130,3 +130,40 @@ describe('webhook inbox route (read-only)', () => {
     expect(rows).toHaveLength(2);
   });
 });
+
+describe('integration endpoints catalogue (read-only)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('lists canonical /v1 paths with no secret values', async () => {
+    const response = await request(app).get('/v1/admin/webhook-inbox/endpoints');
+    expect(response.status).toBe(200);
+    const body = response.body;
+    expect(body.apiOrigin).toBe('https://api.angisoft.co.ke');
+    expect(Array.isArray(body.endpoints)).toBe(true);
+    const paths = body.endpoints.map((e: any) => e.path as string);
+    expect(paths).toContain('/v1/payments/paypal/webhook');
+    expect(paths).toContain('/v1/finance/webhooks/PAYHERO');
+    expect(paths).toContain('/v1/payments/mpesa/callback?token=••••');
+    // No forbidden aliases anywhere in the catalogue.
+    const all = JSON.stringify(body);
+    expect(all).not.toMatch(/\/api\/|\/mpesa-extended|\/v1\/payments\/daraja/);
+    // Config values are never resolved — only KEY NAMES appear.
+    expect(all).not.toMatch(/SUPER_SECRET|abc&sig/);
+    expect(h.logAudit).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'administration.integration_endpoints.view',
+      entity: 'IntegrationEndpoint',
+    }));
+  });
+
+  it('marks tokenised Daraja URLs and legacy rails explicitly', async () => {
+    const response = await request(app).get('/v1/admin/webhook-inbox/endpoints');
+    const endpoints = response.body.endpoints as any[];
+    const stk = endpoints.find((e) => e.path.startsWith('/v1/payments/mpesa/callback'));
+    expect(stk?.tokenized).toBe(true);
+    expect(stk?.configKeys).toContain('MPESA_CALLBACK_TOKEN');
+    const payhero = endpoints.find((e) => e.path === '/v1/finance/webhooks/PAYHERO');
+    expect(payhero?.tokenized).toBe(false);
+    const legacy = endpoints.filter((e) => e.legacy);
+    expect(legacy.map((e) => e.provider).sort()).toEqual(['PAYSTACK', 'STRIPE']);
+  });
+});
