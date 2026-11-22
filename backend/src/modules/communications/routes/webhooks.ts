@@ -93,7 +93,7 @@ export default function communicationsWebhooksRouter(prisma: Db) {
       const statuses = extractWhatsAppStatuses(payload);
       for (const st of statuses) {
         if (!st.id) continue;
-        await prisma.orm.public.ConversationMessage.where({ providerMessageId: st.id } as any).updateAll({ deliveryStatus: st.status.toUpperCase(), metadata: { status: st } as any } as any).catch(() => {});
+        await (prisma.orm.public.ConversationMessage.where({ providerMessageId: st.id } as any).updateAll({ deliveryStatus: st.status.toUpperCase(), metadata: { status: st } as any } as any) as unknown as Promise<any>).catch(() => {});
       }
 
       const messages = extractWhatsAppMessages(payload);

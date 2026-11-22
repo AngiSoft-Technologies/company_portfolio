@@ -102,7 +102,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
         rotatedAt: ts(), createdById: req.user?.sub ?? null, createdAt: ts(), updatedAt: ts(),
       } as any);
     }
-    await logAudit({ actorId: req.user?.sub, actorRole: req.user?.role as any, action: 'communications.connection.update', entity: 'ProviderConnection', entityId: connection.id, meta: { provider: connection.provider, status: connection.status } });
+    await logAudit({ actorId: req.user?.sub, actorRole: req.user?.role as any, action: 'communications.connection.update', entity: 'ProviderConnection', entityId: existing.id, meta: { provider: (connection as any)?.provider ?? existing.provider, status: (connection as any)?.status ?? existing.status } });
     res.json({ connection });
   });
 
