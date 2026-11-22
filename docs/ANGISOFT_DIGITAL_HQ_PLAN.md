@@ -60,6 +60,7 @@ answers "where are we?" without reading code.
 | Phase 4 — Automation & Intelligence | ✅ Implemented | Workflow triggers (booking→project, payment→invoice, SLA→alert), approval rules + multi-step approval chains (`ApprovalRequest`), cross-dept reports, AI assist, renewals + automation worker |
 | Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets, security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 11 specs); Lighthouse + admin route×theme sweep remain |
 | **Phase 6 — AI Workforce** | ✅ Implemented | 12-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security, PA, relationships/contracts) with 24/7 scheduled runs, structured reports, owner notifications, SUPER_ADMIN AI Boardroom at `/admin/boardroom`, admin UI at `/agents`, `agents.*` permissions |
+| **Phase 7 — Communications & Finance Command Center** | 🔄 In progress | Foundation landed in code (ProviderConnection/Secret/Event, comms/finance routes, RBAC keys, admin nav/screens). WhatsApp Cloud webhook+inbox MVP wired; Zoho Mail/Telegram/Meta/TikTok adapters, full finance ledger reconciliation, approvals, and production hardening remain. See §18. |
 
 ### Critical Production Blockers (P0 — must fix before any feature work)
 
@@ -728,6 +729,123 @@ mixed into the additive schema change.
 All implementation work proceeds from this document. Document updates follow the migration checklist above. No other document carries authoritative status for current or target state.
 
 ---
+
+## 18. Phase 7 — Communications & Finance Command Center (Proposed, 2026-11-22)
+
+> **Status:** In progress (2026-11-22). Foundation code landed: additive Prisma models/migrations (not yet applied in this workspace), encrypted secret service, provider event dedupe, `communications.*`/`finance.*` permissions, admin routes/screens, WhatsApp Cloud webhook verify/receive + inbox send MVP. Remaining work is listed in §18.10 and must be completed before claiming production-ready.
+
+### 18.1 Why Phase 7
+
+The platform already has the right primitives: `SUPER_ADMIN`/effective permissions, `AuditLog`, BullMQ/Redis, `payment-console`, PayHero/Paystack/M-Pesa service code, and Zoho SMTP transactional email. It does **not** yet have a provider-connection vault, webhook/event inbox, unified communications inbox, delegated mailbox access, or a normalized finance ledger. Phase 7 adds those as domain modules, not as disconnected settings pages.
+
+### 18.2 Design principles
+
+- **Provider adapters behind a unified domain model.** UI/workflows speak `connection`, `mailbox`, `conversation`, `transaction`, `payout`, `ledger entry`, not provider-specific nouns.
+- **Normalize what you query/join/report on; JSONB what you store/inspect/evolve.** Statuses, assignees, account IDs, money, timestamps, external IDs, and permissions are relational. Raw provider payloads, flexible metadata, drafts, and capability maps are JSONB.
+- **Official APIs only.** Zoho Mail API/OAuth for mailbox management; WhatsApp Cloud API/Meta embedded signup; Telegram Bot API; Meta Graph APIs for FB/IG. No scraping/unofficial clients.
+- **Capability-gated providers.** UI shows supported/unsupported actions from a provider capability matrix. TikTok and some PesaFlow/PayPal features may be read-only, unavailable, or external-approval-gated.
+- **Dangerous actions are governed.** Payouts, refunds, connection/config changes, send-as grants, webhook secret rotation, and exports require `HIGH` permissions, audit, and where appropriate `ApprovalRequest` + step-up MFA.
+- **System mail stays simple.** Keep Zoho SMTP for transactional system mail (`noreply/support/updates/info`) until Zoho Mail API inbox/sync is proven; then decide whether system senders remain SMTP or move to API send-as identities.
+
+### 18.3 Current grounding
+
+| Area | Current | Phase 7 target |
+|---|---|---|
+| Identity | `Employee.email` unique, `additionalEmails String[]` added, `SUPER_ADMIN` exists | Normalized `EmployeeEmail` (primary/additional, verified, login-capable), owner account consolidation migration, delegated access grants |
+| Email | `shared/services/email.ts` Zoho SMTP, purpose-based from | Zoho Mail OAuth connections, mailbox sync, inbox/compose, delegated scopes, audit |
+| Billing | `Payment`, `PaymentChannel`, `PaymentWallet`, `Payout`; PayHero console strong; Paystack/M-Pesa partial | Finance Hub: connections, provider events, normalized ledger, reconciliation, refunds/disputes, PesaFlow/PayPal adapters |
+| Admin UI | Feature screens + `useCrud` + `@angisoft/api-client` | `features/communications/*`, `features/finance/*`, command-center overviews, connection wizards, audit drawers |
+| Audit/security | `AuditLog`, CSRF, RBAC, env secrets | Encrypted secret vault, provider event store, webhook signature verification, scoped grants, export/read audit for sensitive mail/finance data |
+
+### 18.4 Database strategy: Postgres + JSONB, not Mongo
+
+Postgres is the right primary store. JSONB gives document flexibility where needed; relational tables keep integrity and reporting.
+
+**Use relational tables for**: employees, emails, contacts, accounts/connections, grants, conversations, messages index fields, transactions, ledger entries, payouts, refunds, invoices, approvals, permissions, assignments, audit metadata keys.
+**Use JSONB for**: raw provider payloads (`ProviderEvent.payload`), provider capabilities/config snapshots, rich message bodies/blocks, template variable schemas, UI drafts/preferences, webhook headers, reconciliation diffs, import/export metadata.
+
+**JSONB rules**
+- Never put hot join/filter fields only inside JSONB. Mirror them as columns (`status`, `assigneeId`, `accountId`, `externalId`, `createdAt`, `amount`, `currency`).
+- Add GIN indexes only for JSONB paths actually queried.
+- For large/high-write tables (`ConversationMessage`, `ProviderEvent`, `LedgerEntry`, `AuditLog`), plan monthly partitioning/retention/archival.
+- Money is `Decimal(18,2)` or integer minor units everywhere; audit and convert remaining `Float` money fields before Finance Hub v2.
+
+### 18.5 Proposed data model (additive, contract-first)
+
+#### Shared foundation
+- `ProviderConnection` — `id`, `domain` (`COMMUNICATIONS|FINANCE`), `provider`, `name`, `status` (`DRAFT|CONNECTED|DEGRADED|DISCONNECTED`), `environment` (`SANDBOX|LIVE`), `externalAccountId`, `capabilities JsonB`, `config JsonB`, `secretRef`, `webhookSecretRef`, `createdById`, `lastSyncAt`, timestamps.
+- `ProviderSecret` — encrypted secret envelope: `id`, `connectionId`, `kind` (`OAUTH_REFRESH|API_KEY|WEBHOOK_SECRET|TOKEN`), `ciphertext`, `iv`, `authTag`, `keyVersion`, `rotatedAt`, `createdById`. Raw secrets never logged or returned.
+- `ProviderEvent` — immutable inbox: `id`, `connectionId`, `provider`, `externalEventId`, `eventType`, `signatureValid`, `payload JsonB`, `headers JsonB`, `status` (`RECEIVED|PROCESSED|FAILED|IGNORED`), `dedupeKey`, `processedAt`, `error`, timestamps. Unique `(connectionId, externalEventId)` or dedupe key.
+- `ExternalSyncCursor` — `connectionId`, `resourceType`, `cursor`, `lastSuccessAt`, `lastError`.
+
+#### Identity / access
+- `EmployeeEmail` — normalized replacement path for `additionalEmails`: `id`, `employeeId`, `email` unique normalized, `isPrimary`, `verifiedAt`, `verificationTokenHash`, `source`, timestamps. Login resolves primary or verified additional email.
+- `ResourceGrant` or extend employee-permission model for account-scoped delegation: principal employee/role/team, resource type/id, scopes, grantedBy, expiresAt.
+
+#### Communications
+- `CommunicationAccount` — mailbox/channel identity linked to `ProviderConnection`; address/phone/pageId/botId, display name, sync state.
+- `Contact` + `ContactIdentity` — unified person/org identity across email/phone/WhatsApp/social handles; optional links to `Client`, `Lead`, `Employee`.
+- `Conversation` — `accountId`, `contactId`, `channel`, `externalThreadId`, `subject`, `status`, `assigneeId`, `priority`, `lastMessageAt`, `windowExpiresAt` (WhatsApp), metadata JSONB.
+- `ConversationMessage` — `conversationId`, `providerMessageId`, `direction`, `senderType`, `senderExternalId`, `bodyText`, `bodyRich JsonB`, `attachments JsonB` or child table, `deliveryStatus`, `sentAt`, `receivedAt`.
+- `ConversationParticipant` — internal watchers/assignees/collision detection.
+- `CommunicationTemplate` — channel-aware templates, variables, approval state.
+- `RoutingRule` — conditions/actions (assign, tag, SLA, notify, create lead/ticket).
+- Email-specific: `EmailThread`, `EmailFolder`, `EmailAttachment`, `EmailDraft`, `EmailSendAsIdentity`.
+
+#### Finance
+- `FinanceAccount` — normalized account/channel/wallet/bank destination linked to `ProviderConnection`; capability map.
+- `LedgerEntry` — immutable, append-only: `id`, `accountId`, `providerEventId`, `type`, `direction`, `amount Decimal(18,2)`, `fee`, `net`, `currency`, `status`, `externalRef`, `bookingId/invoiceId/payoutId`, `postedAt`, metadata JSONB.
+- `FinanceTransaction` — normalized provider transaction view for UI/search.
+- `Refund`, `Dispute`, `Settlement`, `ReconciliationRun`, `ReconciliationItem`, `Beneficiary`, `PayoutApproval`.
+- Evolve existing `Payment`, `PaymentChannel`, `PaymentWallet`, `Payout` by mapping them into the new ledger/event model before adding new providers.
+
+### 18.6 Permission registry additions
+
+Add canonical keys in `permissionRegistry.ts` (grouped, HIGH for money/config/export):
+
+- **Communications**: `communications.overview.view`, `communications.accounts.view/manage/connect/disconnect`, `communications.grants.manage`, `communications.inbox.view/assign/respond`, `communications.email.read/compose/send_as/manage/delete`, `communications.whatsapp.read/respond/manage_templates`, `communications.telegram.read/respond/manage`, `communications.social.read/respond/manage`, `communications.templates.manage`, `communications.rules.manage`, `communications.audit.view`, `communications.export`.
+- **Finance**: `finance.overview.view`, `finance.connections.view/manage`, `finance.accounts.view/manage`, `finance.transactions.view/export`, `finance.payments.collect/refund`, `finance.payouts.view/create/approve`, `finance.reconciliation.view/run/resolve`, `finance.disputes.view/manage`, `finance.reports.view`, `finance.audit.view`.
+
+`SUPER_ADMIN` gets all through existing wildcard behavior, but explicit DENY still wins and sensitive actions should also require audit/approval/MFA as policy.
+
+### 18.7 Backend / frontend layout
+
+**Backend**
+- `backend/src/modules/communications/` — `routes/`, `services/providers/zoho|whatsapp|telegram|meta|tiktok`, `services/sync`, `services/inbox`, `webhooks/`.
+- `backend/src/modules/finance/` — evolve from or wrap `modules/billing/`; `routes/`, `services/providers/payhero|paystack|mpesa|pesaflow|paypal`, `services/ledger`, `services/reconciliation`.
+- `backend/src/shared/services/secrets.ts` — AES-GCM encrypt/decrypt, key versioning, redaction.
+- `backend/src/shared/services/providerEvents.ts` — verify, dedupe, persist, dispatch.
+- `backend/src/workers/` — mail sync, webhook processing, reconciliation, scheduled sends, token refresh.
+- `backend/src/queue/` — per-domain queues with idempotent jobs.
+
+**Frontend admin**
+- `frontend/admin/src/features/communications/` — Overview, Inbox, Email, WhatsApp, Telegram, Social, Templates, Rules, Contacts, Settings.
+- `frontend/admin/src/features/finance/` — Overview, Connections, Accounts, Transactions, Collections, Payouts, Reconciliation, Refunds/Disputes, Reports, Settings.
+- Shared UI: connection wizard, capability badges, sync/health state, audit drawer, dangerous-action confirmation, empty/loading/error states.
+
+### 18.8 Delivery slices
+
+| Slice | Scope | Exit criteria |
+|---|---|---|
+| **7A Foundation** | Secret vault, ProviderConnection/ProviderEvent/SyncCursor schema, permission keys, audit conventions, admin nav shells | Secrets encrypted; webhook events dedupe; permissions visible in Role/Staff Access; no provider logic yet |
+| **7B Finance Hub v1** | Wrap existing PayHero/Paystack/M-Pesa in Finance Hub; unified transactions ledger + reconciliation basics | Existing payment console still works; ledger entries created idempotently; reconciliation report generated |
+| **7C Finance Hub v2** | PesaFlow + PayPal adapters, refunds/disputes/settlements, payout approvals, reports, money-type cleanup | Capability matrix accurate; high-risk actions audited/approved; money fields standardized |
+| **7D Communications v1** | Zoho OAuth, mailbox sync, inbox/compose, grants, audit | Super admin connects mailboxes; delegated user can read/compose only granted scopes; sends/audits recorded |
+| **7E WhatsApp + Telegram** | Unified conversation model, webhooks, templates, assignments | Inbound/outbound messages land in one inbox; WhatsApp window/template rules enforced |
+| **7F Meta/TikTok/Automation** | FB/IG, capability-gated TikTok, routing rules, AI draft assist, SLA automations | Adapters feature-flagged; routing/audit proven; AI actions are assistive and logged |
+
+### 18.9 Risks / non-goals
+
+- **Not day 1**: full TikTok parity, unofficial API scraping, storing raw provider passwords/tokens, replacing all SMTP before inbox is stable.
+- **External dependencies**: Zoho OAuth app/scopes, Meta app review/business verification, PayPal/PesaFlow account capabilities and regional compliance.
+- **Data migration risk**: consolidating `admin@angisoft.co.ke` shell into `sangera@angisoft.co.ke` requires FK reassignment/audit; do as explicit script with dry-run.
+- **Performance risk**: inbox/message/event tables grow fast; design indexes, partitioning, retention, and archive before high-volume channels go live.
+
+### 18.10 Immediate next implementation after this doc
+
+1. Finish identity consolidation properly: `EmployeeEmail` table or verified additional-email flow, login lookup by verified email, data migration for legacy admin shell, admin UI.
+2. Build 7A foundation: `shared/services/secrets.ts`, `ProviderConnection/ProviderEvent`, permission keys, audit helpers.
+3. Pick first vertical: **Finance Hub v1** for fast value, or **Zoho + WhatsApp** for customer operations.
 
 ## 17. Production verification checklist (after next deploy)
 

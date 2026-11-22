@@ -62,6 +62,8 @@ export type PermissionGroup =
     | 'Analytics'
     | 'Chatbot'
     | 'AI Workforce'
+    | 'Communications'
+    | 'Finance'
     | 'Administration';
 
 export type PermissionRisk = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -320,6 +322,36 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'agents.view', display: 'View AI Agents', description: 'See the automated agent roster, run history and reports', group: 'AI Workforce', risk: 'LOW', order: 10 },
     { key: 'agents.run', display: 'Run AI Agents', description: 'Trigger an agent run manually', group: 'AI Workforce', risk: 'MEDIUM', order: 11 },
     { key: 'agents.manage', display: 'Manage AI Agents', description: 'Pause/resume agents and change their schedules', group: 'AI Workforce', risk: 'HIGH', order: 12 },
+
+    // ── Communications ───────────────────────────────────────────────────
+    { key: 'communications.overview.view', display: 'View Communications Overview', description: 'View communications dashboard, channel health and inbox metrics', group: 'Communications', risk: 'LOW', order: 10 },
+    { key: 'communications.accounts.view', display: 'View Communication Accounts', description: 'View connected mailboxes, WhatsApp/social accounts and sync status', group: 'Communications', risk: 'LOW', order: 11 },
+    { key: 'communications.accounts.manage', display: 'Manage Communication Accounts', description: 'Connect, disconnect and configure communication provider accounts', group: 'Communications', risk: 'HIGH', order: 12 },
+    { key: 'communications.grants.manage', display: 'Manage Communication Access', description: 'Grant or revoke mailbox/channel access to employees and roles', group: 'Communications', risk: 'HIGH', order: 13 },
+    { key: 'communications.inbox.view', display: 'View Unified Inbox', description: 'View conversations and messages across granted channels', group: 'Communications', risk: 'MEDIUM', order: 14 },
+    { key: 'communications.inbox.respond', display: 'Respond in Inbox', description: 'Reply, assign, tag and manage conversations in granted channels', group: 'Communications', risk: 'MEDIUM', order: 15 },
+    { key: 'communications.email.read', display: 'Read Email', description: 'Read messages in granted mailboxes', group: 'Communications', risk: 'MEDIUM', order: 16 },
+    { key: 'communications.email.compose', display: 'Compose Email', description: 'Compose and send email from granted mailboxes', group: 'Communications', risk: 'MEDIUM', order: 17 },
+    { key: 'communications.email.manage', display: 'Manage Email', description: 'Manage folders, rules, sync and mailbox settings for granted accounts', group: 'Communications', risk: 'HIGH', order: 18 },
+    { key: 'communications.templates.manage', display: 'Manage Communication Templates', description: 'Create and edit templates/snippets for communications channels', group: 'Communications', risk: 'MEDIUM', order: 19 },
+    { key: 'communications.audit.view', display: 'View Communications Audit', description: 'View communications audit logs and provider events', group: 'Communications', risk: 'HIGH', order: 20 },
+
+    // ── Finance ──────────────────────────────────────────────────────────
+    { key: 'finance.overview.view', display: 'View Finance Overview', description: 'View finance dashboard, balances, and operational alerts', group: 'Finance', risk: 'LOW', order: 10 },
+    { key: 'finance.connections.view', display: 'View Finance Connections', description: 'View payment provider connections and capability status', group: 'Finance', risk: 'LOW', order: 11 },
+    { key: 'finance.connections.manage', display: 'Manage Finance Connections', description: 'Connect, configure, rotate secrets and disconnect finance providers', group: 'Finance', risk: 'HIGH', order: 12 },
+    { key: 'finance.accounts.view', display: 'View Finance Accounts', description: 'View payment channels, wallets, bank accounts and balances', group: 'Finance', risk: 'MEDIUM', order: 13 },
+    { key: 'finance.accounts.manage', display: 'Manage Finance Accounts', description: 'Create and update finance accounts/channels and operational settings', group: 'Finance', risk: 'HIGH', order: 14 },
+    { key: 'finance.transactions.view', display: 'View Finance Transactions', description: 'View transactions, ledger entries and provider events', group: 'Finance', risk: 'MEDIUM', order: 15 },
+    { key: 'finance.transactions.export', display: 'Export Finance Transactions', description: 'Export finance transactions and reports', group: 'Finance', risk: 'HIGH', order: 16 },
+    { key: 'finance.payments.collect', display: 'Collect Payments', description: 'Create payment requests, links, and collection actions', group: 'Finance', risk: 'HIGH', order: 17 },
+    { key: 'finance.payments.refund', display: 'Refund Payments', description: 'Create refunds and reversals', group: 'Finance', risk: 'HIGH', order: 18 },
+    { key: 'finance.payouts.view', display: 'View Payouts', description: 'View payouts, beneficiaries and payout status', group: 'Finance', risk: 'MEDIUM', order: 19 },
+    { key: 'finance.payouts.create', display: 'Create Payouts', description: 'Create payout requests and beneficiary transfers', group: 'Finance', risk: 'HIGH', order: 20 },
+    { key: 'finance.payouts.approve', display: 'Approve Payouts', description: 'Approve or reject payout requests', group: 'Finance', risk: 'HIGH', order: 21 },
+    { key: 'finance.reconciliation.view', display: 'View Reconciliation', description: 'View reconciliation runs and exceptions', group: 'Finance', risk: 'MEDIUM', order: 22 },
+    { key: 'finance.reconciliation.manage', display: 'Manage Reconciliation', description: 'Run reconciliation and resolve exceptions', group: 'Finance', risk: 'HIGH', order: 23 },
+    { key: 'finance.reports.view', display: 'View Finance Reports', description: 'View finance reports and summaries', group: 'Finance', risk: 'MEDIUM', order: 24 },
 ];
 
 export const PERMISSION_KEYS: readonly string[] = PERMISSIONS.map((p) => p.key);
@@ -367,6 +399,8 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     'Analytics',
     'Chatbot',
     'AI Workforce',
+    'Communications',
+    'Finance',
     'Administration',
 ];
 

@@ -160,6 +160,7 @@ namespace public {
     firstName               String
     lastName                String
     email                   String
+    additionalEmails        String[]                   @default([]) @noCheck(elementNotNull)
     phone                   String?
     role                    pg.enum(Role)              @default("DEVELOPER")
     username                String?
@@ -229,6 +230,12 @@ namespace public {
     mfaMethods              MfaMethod[]
     mfaChallenges           MfaChallenge[]
     webAuthnCredentials     WebAuthnCredential[]
+    providerConnectionsCreated ProviderConnection[]       @relation(name: "ProviderConnection_createdByIdToEmployee")
+    communicationAccountsCreated CommunicationAccount[]    @relation(name: "CommunicationAccount_createdByIdToEmployee")
+    communicationGrants     CommunicationGrant[]       @relation(name: "CommunicationGrant_employeeIdToEmployee")
+    conversationsAssigned   Conversation[]             @relation(name: "Conversation_assigneeIdToEmployee")
+    financeAccountsCreated  FinanceAccount[]           @relation(name: "FinanceAccount_createdByIdToEmployee")
+    employeeEmails          EmployeeEmail[]
     departmentDepartment    Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_departmentId_fkey")
     position                Position?                  @relation(fields: [positionId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Employee_positionId_fkey")
     opportunities   Opportunity[]
@@ -1951,4 +1958,322 @@ model SalaryStructure {
     RANGE = "RANGE"
     EXACT = "EXACT"
   }
+
+
+  model EmployeeEmail {
+    id         String             @id(map: "EmployeeEmail_pkey")
+    employeeId String
+    email      String
+    isPrimary  Boolean            @default(false)
+    verifiedAt TimestampString(3)?
+    source     String             @default("manual")
+    createdAt  TimestampString(3) @default(now())
+    updatedAt  TimestampString(3)
+    employee   Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "EmployeeEmail_employeeId_fkey")
+
+    @@index([email], map: "EmployeeEmail_email_key", unique: true)
+    @@index([employeeId], map: "EmployeeEmail_employeeId_idx")
+    @@index([employeeId, isPrimary], map: "EmployeeEmail_employeeId_isPrimary_idx")
+  @@map("EmployeeEmail")
+}
+
+  model ProviderConnection {
+    id                String                 @id(map: "ProviderConnection_pkey")
+    domain            String
+    provider          String
+    name              String
+    status            String                 @default("DRAFT")
+    environment       String                 @default("LIVE")
+    externalAccountId String?
+    capabilities      Jsonb?
+    config            Jsonb?
+    webhookSecretRef  String?
+    lastSyncAt        TimestampString(3)?
+    lastError         String?
+    createdById       String?
+    createdAt         TimestampString(3)     @default(now())
+    updatedAt         TimestampString(3)
+    createdBy         Employee?              @relation(name: "ProviderConnection_createdByIdToEmployee", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProviderConnection_createdById_fkey")
+    secrets           ProviderSecret[]
+    events            ProviderEvent[]
+    syncCursors       ExternalSyncCursor[]
+    communicationAccounts CommunicationAccount[]
+    financeAccounts   FinanceAccount[]
+
+    @@index([domain, provider], map: "ProviderConnection_domain_provider_idx")
+    @@index([status], map: "ProviderConnection_status_idx")
+    @@index([createdById], map: "ProviderConnection_createdById_idx")
+  @@map("ProviderConnection")
+}
+
+  model ProviderSecret {
+    id           String             @id(map: "ProviderSecret_pkey")
+    connectionId String
+    kind         String
+    ciphertext   String
+    iv           String
+    authTag      String
+    keyVersion   Int                @default(1)
+    rotatedAt    TimestampString(3)?
+    createdById  String?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+    connection   ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ProviderSecret_connectionId_fkey")
+
+    @@index([connectionId, kind], map: "ProviderSecret_connectionId_kind_idx")
+  @@map("ProviderSecret")
+}
+
+  model ProviderEvent {
+    id              String              @id(map: "ProviderEvent_pkey")
+    connectionId    String?
+    provider        String
+    domain          String
+    externalEventId String?
+    eventType       String
+    signatureValid  Boolean             @default(false)
+    dedupeKey       String
+    payload         Jsonb?
+    headers         Jsonb?
+    status          String              @default("RECEIVED")
+    error           String?
+    processedAt     TimestampString(3)?
+    createdAt       TimestampString(3)  @default(now())
+    connection      ProviderConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ProviderEvent_connectionId_fkey")
+
+    @@index([dedupeKey], map: "ProviderEvent_dedupeKey_key", unique: true)
+    @@index([connectionId, createdAt], map: "ProviderEvent_connectionId_createdAt_idx")
+    @@index([provider, eventType], map: "ProviderEvent_provider_eventType_idx")
+    @@index([status], map: "ProviderEvent_status_idx")
+  @@map("ProviderEvent")
+}
+
+  model ExternalSyncCursor {
+    id            String             @id(map: "ExternalSyncCursor_pkey")
+    connectionId  String
+    resourceType  String
+    cursor        String?
+    lastSuccessAt TimestampString(3)?
+    lastError     String?
+    metadata      Jsonb?
+    createdAt     TimestampString(3) @default(now())
+    updatedAt     TimestampString(3)
+    connection    ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ExternalSyncCursor_connectionId_fkey")
+
+    @@index([connectionId, resourceType], map: "ExternalSyncCursor_connectionId_resourceType_key", unique: true)
+    @@index([connectionId], map: "ExternalSyncCursor_connectionId_idx")
+  @@map("ExternalSyncCursor")
+}
+
+  model CommunicationAccount {
+    id           String               @id(map: "CommunicationAccount_pkey")
+    connectionId String
+    channel      String
+    provider     String
+    name         String
+    address      String?
+    externalId   String?
+    status       String               @default("ACTIVE")
+    capabilities Jsonb?
+    config       Jsonb?
+    createdById  String?
+    createdAt    TimestampString(3)   @default(now())
+    updatedAt    TimestampString(3)
+    connection   ProviderConnection   @relation(fields: [connectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "CommunicationAccount_connectionId_fkey")
+    createdBy    Employee?            @relation(name: "CommunicationAccount_createdByIdToEmployee", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "CommunicationAccount_createdById_fkey")
+    grants       CommunicationGrant[]
+    conversations Conversation[]
+
+    @@index([connectionId], map: "CommunicationAccount_connectionId_idx")
+    @@index([channel, status], map: "CommunicationAccount_channel_status_idx")
+    @@index([address], map: "CommunicationAccount_address_idx")
+  @@map("CommunicationAccount")
+}
+
+  model CommunicationGrant {
+    id          String               @id(map: "CommunicationGrant_pkey")
+    accountId   String
+    employeeId  String
+    scopes      String[]             @default([]) @noCheck(elementNotNull)
+    createdById String?
+    createdAt   TimestampString(3)   @default(now())
+    account     CommunicationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "CommunicationGrant_accountId_fkey")
+    employee    Employee             @relation(name: "CommunicationGrant_employeeIdToEmployee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "CommunicationGrant_employeeId_fkey")
+
+    @@index([accountId, employeeId], map: "CommunicationGrant_accountId_employeeId_key", unique: true)
+    @@index([employeeId], map: "CommunicationGrant_employeeId_idx")
+  @@map("CommunicationGrant")
+}
+
+  model Contact {
+    id          String            @id(map: "Contact_pkey")
+    name        String?
+    company     String?
+    notes       String?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    identities  ContactIdentity[]
+    conversations Conversation[]
+
+  @@map("Contact")
+}
+
+  model ContactIdentity {
+    id         String             @id(map: "ContactIdentity_pkey")
+    contactId  String
+    channel    String
+    value      String
+    externalId String?
+    verifiedAt TimestampString(3)?
+    metadata   Jsonb?
+    createdAt  TimestampString(3) @default(now())
+    contact    Contact            @relation(fields: [contactId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ContactIdentity_contactId_fkey")
+
+    @@index([channel, value], map: "ContactIdentity_channel_value_key", unique: true)
+    @@index([contactId], map: "ContactIdentity_contactId_idx")
+  @@map("ContactIdentity")
+}
+
+  model Conversation {
+    id               String                @id(map: "Conversation_pkey")
+    accountId        String
+    contactId        String?
+    channel          String
+    externalThreadId String?
+    subject          String?
+    status           String                @default("OPEN")
+    priority         String                @default("NORMAL")
+    assigneeId       String?
+    lastMessageAt    TimestampString(3)?
+    lastMessagePreview String?
+    metadata         Jsonb?
+    createdAt        TimestampString(3)    @default(now())
+    updatedAt        TimestampString(3)
+    account          CommunicationAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "Conversation_accountId_fkey")
+    contact          Contact?              @relation(fields: [contactId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Conversation_contactId_fkey")
+    assignee         Employee?             @relation(name: "Conversation_assigneeIdToEmployee", fields: [assigneeId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "Conversation_assigneeId_fkey")
+    messages         ConversationMessage[]
+
+    @@index([accountId, externalThreadId], map: "Conversation_accountId_externalThreadId_key", unique: true)
+    @@index([accountId, lastMessageAt], map: "Conversation_accountId_lastMessageAt_idx")
+    @@index([assigneeId, status], map: "Conversation_assigneeId_status_idx")
+    @@index([status], map: "Conversation_status_idx")
+  @@map("Conversation")
+}
+
+  model ConversationMessage {
+    id                String             @id(map: "ConversationMessage_pkey")
+    conversationId    String
+    providerMessageId String?
+    direction         String
+    senderType        String
+    senderId          String?
+    senderAddress     String?
+    bodyText          String?
+    bodyRich          Jsonb?
+    attachments       Jsonb?
+    deliveryStatus    String?            @default("PENDING")
+    sentAt            TimestampString(3)?
+    receivedAt        TimestampString(3)?
+    metadata          Jsonb?
+    createdAt         TimestampString(3) @default(now())
+    conversation      Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "ConversationMessage_conversationId_fkey")
+
+    @@index([conversationId, createdAt], map: "ConversationMessage_conversationId_createdAt_idx")
+    @@index([providerMessageId], map: "ConversationMessage_providerMessageId_idx")
+  @@map("ConversationMessage")
+}
+
+  model FinanceAccount {
+    id           String             @id(map: "FinanceAccount_pkey")
+    connectionId String
+    provider     String
+    accountType  String
+    name         String
+    externalId   String?
+    currency     String             @default("KES")
+    status       String             @default("ACTIVE")
+    capabilities Jsonb?
+    config       Jsonb?
+    balance      Decimal?
+    createdById  String?
+    createdAt    TimestampString(3) @default(now())
+    updatedAt    TimestampString(3)
+    connection   ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "FinanceAccount_connectionId_fkey")
+    createdBy    Employee?          @relation(name: "FinanceAccount_createdByIdToEmployee", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "FinanceAccount_createdById_fkey")
+    ledgerEntries LedgerEntry[]
+
+    @@index([connectionId], map: "FinanceAccount_connectionId_idx")
+    @@index([provider, status], map: "FinanceAccount_provider_status_idx")
+  @@map("FinanceAccount")
+}
+
+  model LedgerEntry {
+    id               String             @id(map: "LedgerEntry_pkey")
+    financeAccountId String?
+    provider         String
+    externalRef      String?
+    entryType        String
+    direction        String
+    amount           Decimal
+    fee              Decimal      @default(0)
+    net              Decimal      @default(0)
+    currency         String             @default("KES")
+    status           String             @default("PENDING")
+    sourceType       String?
+    sourceId         String?
+    providerEventId  String?
+    metadata         Jsonb?
+    occurredAt       TimestampString(3) @default(now())
+    createdAt        TimestampString(3) @default(now())
+    financeAccount   FinanceAccount?    @relation(fields: [financeAccountId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "LedgerEntry_financeAccountId_fkey")
+
+    @@index([financeAccountId, occurredAt], map: "LedgerEntry_financeAccountId_occurredAt_idx")
+    @@index([provider, externalRef], map: "LedgerEntry_provider_externalRef_idx")
+    @@index([sourceType, sourceId], map: "LedgerEntry_sourceType_sourceId_idx")
+    @@index([status], map: "LedgerEntry_status_idx")
+    @@index([providerEventId], map: "LedgerEntry_providerEventId_idx")
+  @@map("LedgerEntry")
+}
+
+  model ReconciliationRun {
+    id               String             @id(map: "ReconciliationRun_pkey")
+    provider         String
+    financeAccountId String?
+    status           String             @default("PENDING")
+    periodStart      TimestampString(3)?
+    periodEnd        TimestampString(3)?
+    summary          Jsonb?
+    error            String?
+    createdById      String?
+    createdAt        TimestampString(3) @default(now())
+    completedAt      TimestampString(3)?
+    financeAccount   FinanceAccount?    @relation(fields: [financeAccountId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ReconciliationRun_financeAccountId_fkey")
+    createdBy        Employee?          @relation("ReconciliationRunCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "ReconciliationRun_createdById_fkey")
+
+    @@index([provider, createdAt], map: "ReconciliationRun_provider_createdAt_idx")
+    @@index([status], map: "ReconciliationRun_status_idx")
+  @@map("ReconciliationRun")
+}
+
+  model CommunicationTemplate {
+    id          String             @id(map: "CommunicationTemplate_pkey")
+    channel     String
+    provider    String?
+    name        String
+    language    String?            @default("en")
+    status      String             @default("DRAFT")
+    externalId  String?
+    body        String?
+    variables   Jsonb?
+    metadata    Jsonb?
+    createdById String?
+    createdAt   TimestampString(3) @default(now())
+    updatedAt   TimestampString(3)
+    createdBy   Employee?          @relation("CommunicationTemplateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "CommunicationTemplate_createdById_fkey")
+
+    @@index([channel, status], map: "CommunicationTemplate_channel_status_idx")
+    @@index([provider, externalId], map: "CommunicationTemplate_provider_externalId_idx")
+  @@map("CommunicationTemplate")
+}
 }

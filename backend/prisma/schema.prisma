@@ -20,6 +20,7 @@ model Employee {
   firstName           String
   lastName            String
   email               String   @unique
+  additionalEmails    String[] @default([]) // legacy transitional; use EmployeeEmail
   phone               String?
   role                Role     @default(DEVELOPER)
   username            String?  @unique
@@ -92,6 +93,14 @@ model Employee {
   employeePermissions EmployeePermission[]
   productTeamMembers  ProductTeamMember[]
   assignedEnquiries   ContactEnquiry[] @relation("ContactEnquiryAssignee")
+  providerConnectionsCreated ProviderConnection[] @relation("ProviderConnectionCreatedBy")
+  communicationAccountsCreated CommunicationAccount[] @relation("CommunicationAccountCreatedBy")
+  communicationGrants CommunicationGrant[] @relation("CommunicationGrantEmployee")
+  conversationsAssigned Conversation[] @relation("ConversationAssignee")
+  financeAccountsCreated FinanceAccount[] @relation("FinanceAccountCreatedBy")
+  reconciliationRunsCreated ReconciliationRun[] @relation("ReconciliationRunCreatedBy")
+  communicationTemplatesCreated CommunicationTemplate[] @relation("CommunicationTemplateCreatedBy")
+  employeeEmails      EmployeeEmail[]
 
   @@index([departmentId])
   @@index([positionId])
@@ -275,7 +284,7 @@ model Booking {
   projectType     ProjectType
   details         Json?
   status          BookingStatus @default(SUBMITTED)
-  priceEstimate   Float?
+  priceEstimate   Decimal? @db.Decimal(18, 2)
   assignedToId    String?
   assignedTo      Employee?    @relation("assignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   termsAcceptedAt DateTime?
@@ -314,10 +323,10 @@ model Booking {
   desiredOutcome   String?
   preferredTimeline String?
   preferredDate    DateTime?
-  budgetAmount     Float?
+  budgetAmount     Decimal? @db.Decimal(18, 2)
   currency         String   @default("KES")
 
-  quotedAmount     Float?
+  quotedAmount     Decimal? @db.Decimal(18, 2)
   quotedCurrency   String?
   pricingType      String?  // fixed|hourly|quote
 
@@ -380,7 +389,7 @@ model Payment {
   bookingId       String?
   booking         Booking?    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   clientId        String?
-  amount          Float
+  amount          Decimal     @db.Decimal(18, 2)
   currency        String      @default("KES")
   provider        PaymentProvider
   providerId      String      @unique
@@ -450,7 +459,7 @@ model PaymentWallet {
   id          String   @id @default(uuid())
   provider    String   @default("PAYHERO")
   walletType  String // service_wallet | payment_wallet
-  balance     Float    @default(0)
+  balance     Decimal  @default(0) @db.Decimal(18, 2)
   name        String?
   meta        Json?
   syncedAt    DateTime?
@@ -466,7 +475,7 @@ model Payout {
   provider          String    @default("PAYHERO")
   reference         String    @unique
   providerReference String?
-  amount            Float
+  amount            Decimal   @db.Decimal(18, 2)
   currency          String    @default("KES")
   channel           String // mobile | bank
   phoneNumber       String?
@@ -493,7 +502,7 @@ model Service {
   category         String   @default("General")  // Legacy label; prefer categoryId when available
   categoryId       String?
   categoryRef      ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  priceFrom        Float?
+  priceFrom        Decimal? @db.Decimal(18, 2)
   currency         String   @default("KES")
   pricing          Json?     // Pricing tiers/packages (object or array). Phase 5 admin pricing endpoint.
   targetAudience   String?  // Comma-separated or JSON; e.g., "Startups, Businesses, Enterprises"
@@ -1654,4 +1663,310 @@ model Solution {
 
   @@index([active])
   @@index([sortOrder])
+}
+
+model EmployeeEmail {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  email       String    @unique
+  isPrimary   Boolean   @default(false)
+  verifiedAt  DateTime?
+  source      String    @default("manual") // manual | zoho | migration | invite
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([employeeId, isPrimary])
+}
+
+// ─── Phase 7: Provider Connections / Communications / Finance ───────────────
+
+model ProviderConnection {
+  id                String   @id @default(uuid())
+  domain            String   // COMMUNICATIONS | FINANCE
+  provider          String   // ZOHO_MAIL, WHATSAPP_META, TELEGRAM, META_FACEBOOK, META_INSTAGRAM, TIKTOK, PAYHERO, MPESA, PAYSTACK, PAYPAL, PESAFLOW
+  name              String
+  status            String   @default("DRAFT") // DRAFT | CONNECTED | DEGRADED | DISCONNECTED | ERROR
+  environment       String   @default("LIVE") // LIVE | SANDBOX
+  externalAccountId String?
+  capabilities      Json?
+  config            Json?
+  webhookSecretRef  String?
+  lastSyncAt        DateTime?
+  lastError         String?
+  createdById       String?
+  createdBy         Employee? @relation("ProviderConnectionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  secrets             ProviderSecret[]
+  events              ProviderEvent[]
+  syncCursors         ExternalSyncCursor[]
+  communicationAccounts CommunicationAccount[]
+  financeAccounts     FinanceAccount[]
+
+  @@index([domain, provider])
+  @@index([status])
+  @@index([createdById])
+}
+
+model ProviderSecret {
+  id           String   @id @default(uuid())
+  connectionId String
+  connection   ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  kind         String   // OAUTH_REFRESH | API_KEY | API_SECRET | WEBHOOK_SECRET | ACCESS_TOKEN | OTHER
+  ciphertext   String
+  iv           String
+  authTag      String
+  keyVersion   Int      @default(1)
+  rotatedAt    DateTime?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([connectionId, kind])
+}
+
+model ProviderEvent {
+  id             String   @id @default(uuid())
+  connectionId   String?
+  connection     ProviderConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  provider       String
+  domain         String   // COMMUNICATIONS | FINANCE
+  externalEventId String?
+  eventType      String
+  signatureValid Boolean  @default(false)
+  dedupeKey      String   @unique
+  payload        Json?
+  headers        Json?
+  status         String   @default("RECEIVED") // RECEIVED | PROCESSED | FAILED | IGNORED
+  error          String?
+  processedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([connectionId, createdAt])
+  @@index([provider, eventType])
+  @@index([status])
+}
+
+model ExternalSyncCursor {
+  id            String   @id @default(uuid())
+  connectionId  String
+  connection    ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  resourceType  String
+  cursor        String?
+  lastSuccessAt DateTime?
+  lastError     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([connectionId, resourceType])
+  @@index([connectionId])
+}
+
+model CommunicationAccount {
+  id           String   @id @default(uuid())
+  connectionId String
+  connection   ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  channel      String   // EMAIL | WHATSAPP | TELEGRAM | FACEBOOK | INSTAGRAM | TIKTOK | SMS
+  provider     String
+  name         String
+  address      String?  // email, phone, page id, bot username
+  externalId   String?
+  status       String   @default("ACTIVE")
+  capabilities Json?
+  config       Json?
+  createdById  String?
+  createdBy    Employee? @relation("CommunicationAccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  grants        CommunicationGrant[]
+  conversations Conversation[]
+
+  @@index([connectionId])
+  @@index([channel, status])
+  @@index([address])
+}
+
+model CommunicationGrant {
+  id        String   @id @default(uuid())
+  accountId String
+  account   CommunicationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee  Employee @relation("CommunicationGrantEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  scopes    String[] @default([])
+  createdById String?
+  createdAt DateTime @default(now())
+
+  @@unique([accountId, employeeId])
+  @@index([employeeId])
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  name        String?
+  company     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  identities    ContactIdentity[]
+  conversations Conversation[]
+}
+
+model ContactIdentity {
+  id         String   @id @default(uuid())
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  channel    String
+  value      String
+  externalId String?
+  verifiedAt DateTime?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@unique([channel, value])
+  @@index([contactId])
+}
+
+model Conversation {
+  id             String   @id @default(uuid())
+  accountId      String
+  account        CommunicationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId      String?
+  contact        Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  channel        String
+  externalThreadId String?
+  subject        String?
+  status         String   @default("OPEN") // OPEN | PENDING | CLOSED | SPAM
+  priority       String   @default("NORMAL")
+  assigneeId     String?
+  assignee       Employee? @relation("ConversationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  lastMessageAt  DateTime?
+  lastMessagePreview String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages ConversationMessage[]
+
+  @@unique([accountId, externalThreadId])
+  @@index([accountId, lastMessageAt])
+  @@index([assigneeId, status])
+  @@index([status])
+}
+
+model ConversationMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  providerMessageId String?
+  direction      String   // INBOUND | OUTBOUND | INTERNAL
+  senderType     String   // CONTACT | EMPLOYEE | SYSTEM | BOT
+  senderId       String?
+  senderAddress  String?
+  bodyText       String?
+  bodyRich       Json?
+  attachments    Json?
+  deliveryStatus String?  @default("PENDING")
+  sentAt         DateTime?
+  receivedAt     DateTime?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([providerMessageId])
+}
+
+model FinanceAccount {
+  id           String   @id @default(uuid())
+  connectionId String
+  connection   ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  provider     String
+  accountType  String   // COLLECTION | WALLET | BANK | PAYOUT | GATEWAY
+  name         String
+  externalId   String?
+  currency     String   @default("KES")
+  status       String   @default("ACTIVE")
+  capabilities Json?
+  config       Json?
+  balance      Decimal? @db.Decimal(18, 2)
+  createdById  String?
+  createdBy    Employee? @relation("FinanceAccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ledgerEntries LedgerEntry[]
+
+  @@index([connectionId])
+  @@index([provider, status])
+}
+
+model LedgerEntry {
+  id              String   @id @default(uuid())
+  financeAccountId String?
+  financeAccount  FinanceAccount? @relation(fields: [financeAccountId], references: [id], onDelete: SetNull)
+  provider        String
+  externalRef     String?
+  entryType       String   // COLLECTION | PAYOUT | REFUND | FEE | ADJUSTMENT | SETTLEMENT
+  direction       String   // CREDIT | DEBIT
+  amount          Decimal  @db.Decimal(18, 2)
+  fee             Decimal  @default(0) @db.Decimal(18, 2)
+  net             Decimal  @default(0) @db.Decimal(18, 2)
+  currency        String   @default("KES")
+  status          String   @default("PENDING")
+  sourceType      String?
+  sourceId        String?
+  providerEventId String?
+  metadata        Json?
+  occurredAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([financeAccountId, occurredAt])
+  @@index([provider, externalRef])
+  @@index([sourceType, sourceId])
+  @@index([status])
+  @@index([providerEventId])
+}
+
+model ReconciliationRun {
+  id            String   @id @default(uuid())
+  provider      String
+  financeAccountId String?
+  financeAccount FinanceAccount? @relation(fields: [financeAccountId], references: [id], onDelete: SetNull)
+  status        String   @default("PENDING") // PENDING | RUNNING | COMPLETED | FAILED
+  periodStart   DateTime?
+  periodEnd     DateTime?
+  summary       Json?
+  error         String?
+  createdById   String?
+  createdBy     Employee? @relation("ReconciliationRunCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  @@index([provider, createdAt])
+  @@index([status])
+}
+
+model CommunicationTemplate {
+  id          String   @id @default(uuid())
+  channel     String   // WHATSAPP | EMAIL | TELEGRAM | SMS | SOCIAL
+  provider    String?
+  name        String
+  language    String?  @default("en")
+  status      String   @default("DRAFT") // DRAFT | APPROVED | REJECTED | ARCHIVED
+  externalId  String?
+  body        String?
+  variables   Json?
+  metadata    Json?
+  createdById String?
+  createdBy   Employee? @relation("CommunicationTemplateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([channel, status])
+  @@index([provider, externalId])
 }

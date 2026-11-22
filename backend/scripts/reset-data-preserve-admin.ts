@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const prisma = new PrismaClient();
-const ADMIN_EMAIL = 'admin@angisoft.co.ke';
+const ADMIN_EMAIL = process.env.OWNER_ADMIN_EMAIL || 'sangera@angisoft.co.ke';
 
 async function deleteMany(label: string, action: () => Promise<{ count: number }>) {
     const result = await action();

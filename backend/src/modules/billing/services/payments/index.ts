@@ -9,6 +9,7 @@ import * as payhero from './payheroService';
 import { toMoney, type MoneyInput } from '../../utils/money';
 import { recordInvoicePayment } from '../../../crm/services/invoices';
 import { createNotification } from '../../../notifications/services/notifications';
+import { recordProviderEvent } from '../../../../shared/services/providerEvents';
 
 /**
  * Payment gateway — one internal API, interchangeable providers, all feeding
@@ -177,6 +178,7 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
     let payment: any;
     let depositActivated = false;
     let invoiceApplied = false;
+    let transitioned = false;
 
     try {
         const outcome = await prisma.transaction(async (tx) => {
@@ -202,7 +204,6 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                         clientId: input.clientId ?? null,
                     });
                 } catch {
-                    // Unique race: another delivery created the row first — take it.
                     row = await tx.orm.public.Payment
                         .where({ providerId: input.providerId })
                         .first();
@@ -214,41 +215,74 @@ export async function applyPaymentOutcome(prisma: Db, input: PaymentOutcomeInput
                 row = await tx.orm.public.Payment.where({ id: before.id }).update(patch);
             }
 
-            // Phase 4.1 — payment→invoice trigger: a succeeded payment carrying
-            // `invoiceId` (in outcome metadata or the explicit field) settles
-            // the invoice inside the same transaction. Idempotent because this
-            // block only runs on a real PENDING→SUCCEEDED transition.
             const invoiceId = input.invoiceId ?? meta?.invoiceId ?? meta?.metadata?.invoiceId ?? null;
-            const transitioned = !before || before.status !== 'SUCCEEDED';
+            const transitioned = !before || before.status !== status;
             let invoiceApplied = false;
             if (status === 'SUCCEEDED' && transitioned && invoiceId && row) {
                 try {
                     await recordInvoicePayment(tx as any, String(invoiceId), row.amount);
                     invoiceApplied = true;
                 } catch (err: any) {
-                    // Invoice may be draft/void/paid or deleted — the payment
-                    // ledger still stands; staff can reconcile manually.
                     console.warn('Invoice settlement skipped', invoiceId, err?.message);
                 }
             }
 
-            const activate = status === 'SUCCEEDED' && row?.bookingId && (!before || before.status !== 'SUCCEEDED');
+            const activate = status === 'SUCCEEDED' && row?.bookingId && transitioned;
             if (activate) {
                 try {
                     await tx.orm.public.Booking.where({ id: row.bookingId })
                         .update({ depositPaidAt: ts(), status: 'DEPOSIT_PAID' as any });
-                } catch {
-                    // Booking may have been deleted; payment ledger still stands.
-                }
+                } catch {}
             }
-            return { row, activate, invoiceApplied };
+            return { row, activate, invoiceApplied, transitioned };
         });
         payment = outcome.row;
         depositActivated = outcome.activate;
         invoiceApplied = outcome.invoiceApplied;
+        transitioned = outcome.transitioned;
     } catch (err: any) {
         console.error('applyPaymentOutcome failed', err?.message);
         return null;
+    }
+
+    // Phase 7: idempotent provider event + ledger posting for finance observability.
+    if (payment && transitioned) {
+        try {
+            const externalEventId = `${String(input.provider)}:${String(input.providerId)}:${status}`;
+            const { event, deduped } = await recordProviderEvent(prisma, {
+                provider: String(input.provider),
+                domain: 'FINANCE',
+                externalEventId,
+                eventType: `payment.${status.toLowerCase()}`,
+                signatureValid: true,
+                payload: { input, paymentId: payment.id },
+                status: 'PROCESSED',
+            });
+            if (!deduped) {
+                const amount = toMoney(input.amount ?? payment.amount ?? 0);
+                await prisma.orm.public.LedgerEntry.create({
+                    id: newId(),
+                    financeAccountId: null,
+                    provider: String(input.provider),
+                    externalRef: String(input.providerId),
+                    entryType: 'PAYMENT',
+                    direction: 'IN',
+                    amount,
+                    fee: toMoney(0),
+                    net: amount,
+                    currency: String(input.currency || payment.currency || 'KES'),
+                    status,
+                    sourceType: payment.bookingId ? 'BOOKING' : (input.invoiceId ? 'INVOICE' : 'PAYMENT'),
+                    sourceId: payment.bookingId || input.invoiceId || payment.id,
+                    providerEventId: event.id,
+                    metadata: { paymentId: payment.id, reference: payment.reference, bookingId: payment.bookingId, clientId: payment.clientId } as any,
+                    occurredAt: ts(),
+                    createdAt: ts(),
+                } as any).catch(() => {});
+            }
+        } catch (err: any) {
+            console.warn('Finance ledger posting skipped', err?.message);
+        }
     }
 
     if (status === 'SUCCEEDED' && payment?.bookingId) {

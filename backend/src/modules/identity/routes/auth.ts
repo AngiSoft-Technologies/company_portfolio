@@ -16,11 +16,9 @@ import zxcvbn from 'zxcvbn';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
 import { availableFactors, createLoginTicket, createSetupTicket, enrolledFactors, verifyBackupCode } from '../services/mfa';
 import { issueSession } from '../services/session';
+import { ensureEmployeeEmail, findEmployeeByEmail, normalizeEmail } from '../services/employeeEmail';
 
 const router = Router();
-
-const normalizeEmail = (value: unknown): string =>
-    typeof value === 'string' ? value.trim().toLowerCase() : '';
 
 // Per-account limiter. Normalize the key so case/whitespace variants cannot
 // be used to get fresh attempts.
@@ -64,7 +62,7 @@ router.post('/login', accountLimiter, async (req, res) => {
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
     const { password, totp, remember } = parsed.data;
     const email = normalizeEmail(parsed.data.email);
-    const emp = await prisma.orm.public.Employee.where({ email }).first();
+    const emp = await findEmployeeByEmail(prisma, email);
     if (!emp || !emp.passwordHash) return res.status(401).json({ error: 'Invalid credentials' });
     const ok = await bcrypt.compare(password, emp.passwordHash);
     if (!ok) {
@@ -118,6 +116,7 @@ router.post('/login', accountLimiter, async (req, res) => {
         fingerprint: (req.body as any)?.fingerprint,
     });
 
+    await ensureEmployeeEmail(prisma, emp.id, email, { isPrimary: emp.email === email, verified: true, source: 'login' }).catch(() => {});
     await logAudit({ action: 'login', entity: 'Employee', entityId: emp.id, actorId: emp.id, actorRole: emp.role });
     res.json({ accessToken: access });
 });
@@ -184,7 +183,7 @@ router.post('/forgot', passwordResetRequestLimiter, async (req, res) => {
     const parsed = forgotSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
     const email = normalizeEmail(parsed.data.email);
-    const emp = await prisma.orm.public.Employee.where({ email }).first();
+    const emp = await findEmployeeByEmail(prisma, email);
     if (!emp) return res.json({ ok: true }); // don't reveal account existence
     const token = createRefreshToken();
     const tokenHash = hashToken(token);

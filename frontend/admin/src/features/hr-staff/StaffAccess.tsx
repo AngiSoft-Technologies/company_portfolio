@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, EmptyState, Field, PageHeader, Spinner, inputClass } from '@/components';
 import { apiFetch } from '@/lib/adminApi';
 import { Badge } from '@/lib/Badge';
+import { toast } from '@angisoft/utils';
 import { toArr, type Rec } from '@/lib/records';
 import { asStr } from '@/lib/format';
 
@@ -85,6 +86,53 @@ interface PermissionRow {
 }
 
 /** Reads a string field, treating missing/empty/unknown as the em-dash sentinel. */
+function EmailManager({ employeeId, primaryEmail }: { employeeId: string; primaryEmail: string }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = async () => {
+    try {
+      const res = await apiFetch(`/admin/staff/${employeeId}/emails`) as any;
+      setRows(Array.isArray(res?.emails) ? res.emails : []);
+    } catch (e: any) { toast.error(e.message || 'Failed to load emails'); }
+  };
+  useEffect(() => { void load(); }, [employeeId]);
+  const add = async (isPrimary = false) => {
+    if (!email.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/admin/staff/${employeeId}/emails`, { method: 'POST', body: { email: email.trim(), isPrimary, verified: true, source: 'admin' } });
+      setEmail('');
+      await load();
+      toast.success(isPrimary ? 'Primary email updated' : 'Email added');
+    } catch (e: any) { toast.error(e.message || 'Failed to save email'); }
+    finally { setBusy(false); }
+  };
+  const remove = async (id: string) => {
+    setBusy(true);
+    try { await apiFetch(`/admin/staff/${employeeId}/emails/${id}`, { method: 'DELETE' }); await load(); }
+    catch (e: any) { toast.error(e.message || 'Failed to delete email'); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <input className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" />
+        <Button variant="outline" disabled={busy || !email.trim()} onClick={() => void add(false)}>Add</Button>
+        <Button disabled={busy || !email.trim()} onClick={() => void add(true)}>Set Primary</Button>
+      </div>
+      <div className="space-y-2">
+        {rows.length === 0 ? <div className="text-xs text-[var(--text-muted)]">No normalized email records yet. Primary: {primaryEmail || '—'}</div> : rows.map((r) => (
+          <div key={r.id} className="flex items-center justify-between rounded-lg border border-[var(--border)] px-3 py-2 text-sm">
+            <div><div className="font-medium">{r.email}{r.isPrimary ? ' · primary' : ''}</div><div className="text-xs text-[var(--text-muted)]">{r.verifiedAt ? 'verified' : 'unverified'} · {r.source || 'manual'}</div></div>
+            {!r.isPrimary ? <Button variant="outline" disabled={busy} onClick={() => void remove(r.id)}>Remove</Button> : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function field(rec: Rec | undefined, key: string): string {
   if (!rec) return '';
   const value = asStr(rec, key);
@@ -473,6 +521,15 @@ export function StaffAccess() {
                     </div>
                   ))}
                 </div>
+              </Card>
+
+              <Card>
+                <div className="mb-1 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Email addresses</h2>
+                  <Badge tone="slate">Multi-email identity</Badge>
+                </div>
+                <p className="mb-3 text-xs text-[var(--text-muted)]">Add verified login emails for this employee. Primary email is used as canonical account email; additional verified emails can authenticate to the same account.</p>
+                <EmailManager employeeId={access.employee.id} primaryEmail={access.employee.email || ''} />
               </Card>
 
               <Card>

@@ -42,6 +42,8 @@ const CSRF_BYPASS_PATHS: RegExp[] = [
   /^\/api\/newsletter\/subscribe\/?$/,    // public newsletter signup
   /^\/api\/invite\/accept\/?$/,           // invite acceptance
   /^\/api\/payments\/webhook\/?$/,        // Stripe webhook (signature-verified)
+  /^\/api\/payments\/paystack\/webhook\/?$/, // Paystack webhook (HMAC-verified)
+  /^\/api\/communications\/webhooks\/.*$/, // Provider webhooks (signature/verify-token checked)
   /^\/api\/chatbot\/?$/,                  // public chatbot
   /^\/api\/consent\/?$/,                  // privacy + terms acceptance (rate-limited)
   /^\/api\/surveys\/active\/?$/,          // public survey responses

@@ -38,33 +38,68 @@ function slugify(value: string) {
 async function main() {
     console.log('🌱 Starting comprehensive database seed...\n');
 
-    // ==================== ADMIN USER ====================
+    // ==================== OWNER / SUPER ADMIN ====================
+    // Consolidated account: Prof Angera Silas is the single SUPER_ADMIN/owner.
+    // Keep admin@angisoft.co.ke as an additional login email for continuity.
     const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
     const hash = await bcrypt.hash(password, 10);
 
-    const existing = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
-    if (!existing) {
+    const ownerEmails = ['sangera@angisoft.co.ke', 'admin@angisoft.co.ke'];
+    const [existingOwner, legacyAdmin] = await Promise.all([
+        prisma.orm.public.Employee.where({ email: 'sangera@angisoft.co.ke' }).first(),
+        prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first(),
+    ]);
+
+    if (legacyAdmin && existingOwner && legacyAdmin.id !== existingOwner.id) {
+        // Preserve the Prof Angera record as canonical; remove the legacy shell.
+        // Related records are reassigned where safe before deletion.
+        await prisma.transaction(async (tx) => {
+            await tx.orm.public.RefreshToken.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.TwoFactorBackupCode.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.MfaMethod.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.MfaChallenge.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.WebAuthnCredential.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.EmployeeRoleAssignment.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.EmployeePermission.where({ employeeId: legacyAdmin.id }).deleteAndCount();
+            await tx.orm.public.Employee.where({ id: legacyAdmin.id }).delete();
+        });
+        console.log('♻️  Removed legacy super-admin shell account (admin@angisoft.co.ke)');
+    }
+
+    const ownerRecord = await prisma.orm.public.Employee.where({ email: 'sangera@angisoft.co.ke' }).first();
+    if (!ownerRecord) {
         await prisma.orm.public.Employee.create({
             id: newId(),
-            firstName: 'Super',
-            lastName: 'Admin',
-            email: 'admin@angisoft.co.ke',
+            firstName: 'Prof Angera',
+            lastName: 'Silas',
+            email: 'sangera@angisoft.co.ke',
             role: 'SUPER_ADMIN',
-            username: 'super-admin',
+            username: 'sangera',
             passwordHash: hash,
             twoFactorEnabled: false,
             twoFactorSecret: null,
             acceptedAt: ts(),
-            bio: 'System Administrator for AngiSoft Technologies. Innovate \u2022 Build \u2022 Empower.',
+            bio: 'Founder and lead builder at AngiSoft Technologies. Innovate \u2022 Build \u2022 Empower.',
             phone: '+254710398690',
-            updatedAt: ts()
-        });
-        console.log('✅ Admin user created (email: admin@angisoft.co.ke, password: from ADMIN_PASSWORD env or default)');
+            publicEmail: 'sangera@angisoft.co.ke',
+            profilePublished: true,
+            updatedAt: ts(),
+        } as any);
+        console.log('✅ Owner/super-admin account created (sangera@angisoft.co.ke)');
     } else {
-        console.log('ℹ️  Admin user already exists');
+        await prisma.orm.public.Employee.where({ id: ownerRecord.id }).update({
+            firstName: ownerRecord.firstName || 'Prof Angera',
+            lastName: ownerRecord.lastName || 'Silas',
+            role: 'SUPER_ADMIN',
+            username: ownerRecord.username || 'sangera',
+            acceptedAt: ownerRecord.acceptedAt ?? ts(),
+            profilePublished: ownerRecord.profilePublished ?? true,
+            updatedAt: ts(),
+        } as any);
+        console.log('ℹ️  Owner/super-admin account ensured (sangera@angisoft.co.ke)');
     }
 
-    const admin = await prisma.orm.public.Employee.where({ email: 'admin@angisoft.co.ke' }).first();
+    const admin = await prisma.orm.public.Employee.where({ email: 'sangera@angisoft.co.ke' }).first();
     const overwritePublicContent = process.env.SEED_OVERWRITE_PUBLIC_CONTENT === 'true';
 
     // Canonical permission registry — the single source of truth.

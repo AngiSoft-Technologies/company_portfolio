@@ -4,6 +4,7 @@ import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { createPaymentIntent, getPaymentIntent } from '../services/payments/stripeService';
 import { applyPaymentOutcome, initializePayment, isProviderConfigured, generateReference, withScopeLock, PaymentProviderError, ProviderId } from '../services/payments';
+import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import * as paystack from '../services/payments/paystackService';
 import * as mpesa from '../services/payments/mpesaService';
 import * as payhero from '../services/payments/payheroService';
@@ -335,16 +336,17 @@ export default function paymentsRouter(prisma: Db) {
 
         try {
             const event = paystack.parseRawBody(req.body);
+            const txn = event?.data || {};
+            await recordProviderEvent(prisma, {
+                provider: 'PAYSTACK', domain: 'FINANCE', externalEventId: String(event?.id || txn?.id || txn?.reference || ''),
+                eventType: String(event?.event || 'paystack.webhook'), signatureValid: true,
+                payload: event, headers: { 'x-paystack-signature': req.headers['x-paystack-signature'] }, status: 'RECEIVED',
+            }).catch(() => {});
             if (event?.event === 'charge.success') {
-                const txn = event.data || {};
                 await applyPaymentOutcome(prisma, {
-                    provider: 'PAYSTACK',
-                    providerId: String(txn.reference || ''),
-                    reference: String(txn.reference || ''),
-                    amount: toMoneyFromMinorUnits(txn.amount || 0),
-                    currency: String(txn.currency || 'KES').toUpperCase(),
-                    status: 'SUCCEEDED',
-                    metadata: txn
+                    provider: 'PAYSTACK', providerId: String(txn.reference || ''), reference: String(txn.reference || ''),
+                    amount: toMoneyFromMinorUnits(txn.amount || 0), currency: String(txn.currency || 'KES').toUpperCase(),
+                    status: 'SUCCEEDED', metadata: txn
                 });
             }
         } catch (err) {
@@ -364,6 +366,10 @@ export default function paymentsRouter(prisma: Db) {
         res.json({ status: true });
         try {
             const cb = payhero.decodeCallback(req.body);
+            await recordProviderEvent(prisma, {
+                provider: 'PAYHERO', domain: 'FINANCE', externalEventId: String(cb.checkoutRequestId || cb.externalReference || ''),
+                eventType: 'payhero.callback', signatureValid: true, payload: req.body, status: 'RECEIVED',
+            }).catch(() => {});
             if (!cb.checkoutRequestId && !cb.externalReference) return;
 
             // Match order: providerId (CheckoutRequestID) → our reference →
@@ -441,6 +447,10 @@ export default function paymentsRouter(prisma: Db) {
         res.json({ ResultCode: 0, ResultDesc: 'Success' });
 
         try {
+            await recordProviderEvent(prisma, {
+                provider: 'MPESA', domain: 'FINANCE', externalEventId: String(cb.checkoutRequestId || ''),
+                eventType: 'mpesa.callback', signatureValid: true, payload: req.body, status: 'RECEIVED',
+            }).catch(() => {});
             const payment = await prisma.orm.public.Payment
                 .where({ providerId: cb.checkoutRequestId })
                 .first();

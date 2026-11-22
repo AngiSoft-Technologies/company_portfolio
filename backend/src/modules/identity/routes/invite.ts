@@ -11,6 +11,7 @@ import { requireAccess } from '../../../shared/middleware/roles';
 import { checkPasswordStrength } from '../../../modules/identity/utils/passwordPolicy';
 import { availableFactors, createSetupTicket, enrolledFactors } from '../services/mfa';
 import { issueSession } from '../services/session';
+import { ensureEmployeeEmail, findEmployeeByEmail, normalizeEmail } from '../services/employeeEmail';
 
 // Mirrors the P7 `Role` enum (Employee.role values).
 const ROLES = [
@@ -34,8 +35,9 @@ export default function inviteRouter(prisma: Db) {
     router.post('/', requireAuth, requireAccess('staff.invite', ['ADMIN']), async (req: AuthRequest, res) => {
         const parsed = inviteSchema.safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
-        const { firstName, lastName, email, role, phone } = parsed.data;
-        const existing = await prisma.orm.public.Employee.where({ email }).first();
+        const { firstName, lastName, role, phone } = parsed.data;
+        const email = normalizeEmail(parsed.data.email);
+        const existing = await findEmployeeByEmail(prisma, email);
         if (existing) return res.status(409).json({ error: 'Email already exists' });
         const token = crypto.randomBytes(32).toString('base64url');
         const expiry = ts(Date.now() + 7 * 24 * 60 * 60 * 1000);

@@ -40,6 +40,9 @@ const AnnouncementsAdmin = lazy(() => import('@/features/cms/AnnouncementsAdmin'
 const CompanyStatsAdmin = lazy(() => import('@/features/cms/CompanyStatsAdmin').then((m) => ({ default: m.CompanyStatsAdmin })));
 const PaymentsAdmin = lazy(() => import('@/features/finance/PaymentsAdmin'));
 const ExpensesAdmin = lazy(() => import('@/features/finance/ExpensesAdmin'));
+const FinanceHub = lazy(() => import('@/features/finance/FinanceHub'));
+const CommunicationsHub = lazy(() => import('@/features/communications/CommunicationsHub'));
+const CommunicationsInbox = lazy(() => import('@/features/communications/CommunicationsInbox'));
 const OpportunitiesAdmin = lazy(() => import('@/features/sales/OpportunitiesAdmin'));
 const QuotesAdmin = lazy(() => import('@/features/sales/QuotesAdmin'));
 const InvoicesAdmin = lazy(() => import('@/features/sales/InvoicesAdmin'));
@@ -124,6 +127,9 @@ export default function App() {
         <Route path="announcements" element={<AnnouncementsAdmin />} />
         <Route path="company-stats" element={<CompanyStatsAdmin />} />
         <Route path="payments" element={<PaymentsAdmin />} />
+        <Route path="finance-hub" element={<FinanceHub />} />
+        <Route path="communications" element={<CommunicationsHub />} />
+        <Route path="communications/inbox" element={<CommunicationsInbox />} />
         <Route path="expenses" element={<ExpensesAdmin />} />
         <Route path="leave-requests" element={<LeaveRequestsAdmin />} />
         <Route path="attendance" element={<AttendanceAdmin />} />

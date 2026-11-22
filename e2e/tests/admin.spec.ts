@@ -32,12 +32,12 @@ test('login authenticates and lands on the admin dashboard', async ({ page }) =>
   });
 
   await page.goto('/login');
-  await page.locator('input[type="email"]').fill('admin@angisoft.co.ke');
+  await page.locator('input[type="email"]').fill('sangera@angisoft.co.ke');
   await page.locator('input[type="password"]').fill('correct-horse');
   await page.getByRole('button', { name: 'Sign in' }).click();
 
   await expect(page).toHaveURL(/\/(dashboard)?$/, { timeout: 20_000 });
-  expect(loginBody).toMatchObject({ email: 'admin@angisoft.co.ke', password: 'correct-horse' });
+  expect(loginBody).toMatchObject({ email: 'sangera@angisoft.co.ke', password: 'correct-horse' });
 });
 
 test('unauthenticated visit to a guarded route redirects to /login', async ({ page }) => {
