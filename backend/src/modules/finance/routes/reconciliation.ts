@@ -24,14 +24,14 @@ export default function financeReconciliationRouter(prisma: Db) {
 
   router.post('/runs', requireAccess('finance.reconciliation.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
     const body = runSchema.parse(req.body);
-    const run = await Promise.resolve(prisma.orm.public.ReconciliationRun.create({
+    const run = await prisma.orm.public.ReconciliationRun.create({
       id: newId(), provider: body.provider, financeAccountId: body.financeAccountId ?? null,
       status: 'RUNNING', periodStart: body.periodStart ?? null, periodEnd: body.periodEnd ?? null,
       createdById: req.user?.sub ?? null, createdAt: ts(),
     } as any);
     try {
-      const payments = await prisma.orm.public.Payment.where({ provider: (body.provider as any } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
-      const ledger = await Promise.resolve(prisma.orm.public.LedgerEntry.where({ provider: (body.provider } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
+      const payments = await (prisma.orm.public.Payment.where({ provider: body.provider as any } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
+      const ledger = await (prisma.orm.public.LedgerEntry.where({ provider: body.provider } as any).all() as unknown as Promise<any[]>).catch(() => [] as any);
       const succeeded = payments.filter((p: any) => p.status === 'SUCCEEDED');
       const ledgerSucceeded = ledger.filter((l: any) => l.status === 'SUCCEEDED');
       const summary = {

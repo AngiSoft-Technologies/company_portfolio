@@ -24,12 +24,12 @@ export default function financeConnectionsRouter(prisma: Db) {
   router.use(requireAuth);
 
   router.get('/', requireAccess('finance.connections.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
-    const connections = await Promise.resolve(prisma.orm.public.ProviderConnection
+    const connections = await (prisma.orm.public.ProviderConnection
       .where({ domain: 'FINANCE' } as any)
       .orderBy((c: any) => c.createdAt.desc())
       .include('secrets', (s: any) => s.select('id', 'kind', 'keyVersion', 'rotatedAt', 'createdAt'))
       .include('financeAccounts')
-      .all();
+      .all() as unknown as Promise<any[]>).catch(() => [] as any);
     res.json({ connections: connections.map((c: any) => ({ ...c, secrets: (c.secrets || []).map((s: any) => ({ ...s, masked: '••••' })) })) });
   });
 
@@ -88,18 +88,18 @@ export default function financeConnectionsRouter(prisma: Db) {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const [ledgerEntries, payments, payouts] = await Promise.all([
       (prisma.orm.public.LedgerEntry.orderBy((e: any) => e.occurredAt.desc()).limit(limit).all() as unknown as Promise<any[]>).catch(() => [] as any),
-      prisma.orm.public.Payment.orderBy((p: any) => p.createdAt.desc()).limit(limit).include('booking', (b: any) => b.select('id', 'publicReference')).all().catch(() => []),
-      prisma.orm.public.Payout.orderBy((p: any) => p.createdAt.desc()).limit(limit).all().catch(() => []),
+      (prisma.orm.public.Payment.orderBy((p: any) => p.createdAt.desc()).limit(limit).include('booking', (b: any) => b.select('id', 'publicReference')).all() as unknown as Promise<any[]>).catch(() => [] as any),
+      (prisma.orm.public.Payout.orderBy((p: any) => p.createdAt.desc()).limit(limit).all() as unknown as Promise<any[]>).catch(() => [] as any),
     ]);
     res.json({ ledgerEntries, payments, payouts });
   });
 
   router.get('/overview', requireAccess('finance.overview.view', ['ADMIN', 'MANAGER', 'SUPER_ADMIN']), async (_req, res) => {
-    const [connections, payments, payouts, events] = await Promise.resolve(Promise.all([
-      prisma.orm.public.(ProviderConnection.where({ domain: 'FINANCE' } as any).all() as unknown as Promise<any[]>).catch(() => [] as any),
-      prisma.orm.public.Payment.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
-      prisma.orm.public.Payout.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
-      prisma.orm.public.ProviderEvent.where({ domain: 'FINANCE' } as any).orderBy((e: any) => e.createdAt.desc()).limit(10).all() as unknown as Promise<any[]>).catch(() => [] as any),
+    const [connections, payments, payouts, events] = await Promise.all([
+      (prisma.orm.public.ProviderConnection.where({ domain: 'FINANCE' } as any).all() as unknown as Promise<any[]>).catch(() => [] as any),
+      (prisma.orm.public.Payment.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
+      (prisma.orm.public.Payout.select('status', 'amount', 'currency').all() as unknown as Promise<any[]>).catch(() => [] as any),
+      (prisma.orm.public.ProviderEvent.where({ domain: 'FINANCE' } as any).orderBy((e: any) => e.createdAt.desc()).limit(10).all() as unknown as Promise<any[]>).catch(() => [] as any),
     ]);
     const byStatus = (rows: any[]) => rows.reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>);
     res.json({
