@@ -20,9 +20,10 @@ client portal only offers the three gateways below.
 - **East African money movement defaults to PayHero and Safaricom M-Pesa/Daraja**:
   M-Pesa, Airtel, other telcos, banks and wallets. PayHero channel IDs and
   network codes come from the runtime vault. The Daraja adapter implements STK,
-  B2C, B2B, status, reversal, callbacks and balance/C2B/QR helpers, but the
-  Finance Hub catalogue only exposes STK, B2C, B2B, reversal and status — the
-  other helpers are adapter-level, not Finance Hub capabilities.
+  B2C, B2B, status, reversal, callbacks and balance/C2B/QR helpers; the Finance
+  Hub catalogue exposes STK, B2C, B2B, reversal, status and the preflight-only
+  `MPESA_BALANCE` action. C2B registration/simulation and QR remain authenticated
+  adapter/admin operations, not client payment methods.
 - **Stripe and Paystack are legacy-only.** They are never offered by
   `GET /v1/payments/methods`, never selected by `selectPaymentRail`, and have no
   Finance Hub routes.
@@ -133,8 +134,12 @@ server-side.
   `PAYPAL_WEBHOOK_ID`; the id is also required for capability readiness. Missing
   id = 503, invalid signature = 400. Only masked headers are stored on the
   event — `paypal-transmission-sig` is never persisted.
-- Daraja callbacks: constant-time `MPESA_CALLBACK_TOKEN` check (same contract
-  as the STK callback); results are deduped via `ProviderEvent`.
+- Daraja callbacks: constant-time `MPESA_CALLBACK_TOKEN` check (503 when
+  unconfigured, 403 when wrong) for result, STK and C2B callbacks. Registered
+  C2B URLs carry the token, every callback is acknowledged before persistence,
+  and all records are deduped via `ProviderEvent` with shared-token
+  authentication recorded as `signatureValid: false`. C2B dedupe ids are body
+  hashes or `TransID`, never phone numbers, names or raw JSON.
 - Payouts are admin-only (`payments.reconcile`), mirrored into `Payout` with a
   unique reference, audited via `AuditLog`, and serialized with an advisory
   lock. Replays return the existing row.
@@ -208,7 +213,12 @@ MPESA_CALLBACK_TOKEN=…
 ```
 
 Register the result URLs in the Daraja portal and keep the callback token in
-the query string or `x-callback-token` header. Prefer the header in production.
+the query string or `x-callback-token` header. Prefer the header for manual
+tests in production; C2B registration necessarily appends the token to the
+validation/confirmation URLs and fails closed before OAuth when it is missing.
+Every Daraja callback acknowledges immediately, then records a deduplicated
+`ProviderEvent` with shared-token authentication recorded as
+`signatureValid: false`.
 
 Extended products are configured with these additional vault settings:
 

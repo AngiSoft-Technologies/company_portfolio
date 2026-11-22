@@ -70,11 +70,16 @@ vi.mock('../src/modules/communications/services/metaSocial', () => ({
 
 import {
   assertReadOnlyMcpTool,
+  isReadOnlyMcpToolName,
   MCP_OPERATIONS,
   resolveMcpEndpoint,
   sanitizeMcpArgs,
 } from '../src/modules/communications/services/metaMcp';
-import { capiConfigured, sendMetaConversion } from '../src/modules/communications/services/metaConversions';
+import {
+  capiConfigured,
+  firstPartySourceUrl,
+  sendMetaConversion,
+} from '../src/modules/communications/services/metaConversions';
 import {
   META_OPERATIONS,
   assertMetaOperation,
@@ -137,11 +142,20 @@ describe('Meta resource pack', () => {
 
   describe('assertReadOnlyMcpTool', () => {
     it.each(['list_ads', 'get_campaign', 'query_insights'])('allows read-only tool %s', (tool) => {
+      expect(isReadOnlyMcpToolName(tool)).toBe(true);
       expect(() => assertReadOnlyMcpTool(tool)).not.toThrow();
     });
 
     it.each(['create_campaign', 'send_message', 'publish_post', 'delete_item'])('rejects write tool %s', (tool) => {
+      expect(isReadOnlyMcpToolName(tool)).toBe(false);
       expect(() => assertReadOnlyMcpTool(tool)).toThrowError(ProviderCapabilityError);
+    });
+
+    it('rejects lookalike names that a catalogue would otherwise show as available', () => {
+      for (const tool of ['list_campaigns_and_send', 'get_publish_status', 'read/ads']) {
+        expect(isReadOnlyMcpToolName(tool)).toBe(false);
+        expect(() => assertReadOnlyMcpTool(tool)).toThrowError(ProviderCapabilityError);
+      }
     });
   });
 
@@ -197,6 +211,33 @@ describe('Meta resource pack', () => {
       config.set('META_CAPI_ACCESS_TOKEN', 'placeholder');
       expect(capiConfigured()).toBe(true);
     });
+  });
+
+  describe('getMetaFeatureFlags', () => {
+    it('reports CAPI status so the admin UI never shows an unconfigured integration', () => {
+      expect(getMetaFeatureFlags().capiConfigured).toBe(false);
+      config.set('META_CAPI_ENABLED', 'true');
+      config.set('META_CAPI_DATASET_ID', 'dataset-1');
+      expect(getMetaFeatureFlags().capiConfigured).toBe(false);
+      config.set('META_CAPI_ACCESS_TOKEN', 'placeholder');
+      expect(getMetaFeatureFlags().capiConfigured).toBe(true);
+    });
+  });
+
+  describe('firstPartySourceUrl', () => {
+    it('builds an HTTPS first-party URL from a relative public path', () => {
+      config.set('PUBLIC_SITE_URL', 'https://angisoft.co.ke/');
+      expect(firstPartySourceUrl('/contact')).toBe('https://angisoft.co.ke/contact');
+      expect(firstPartySourceUrl('/contact/')).toBe('https://angisoft.co.ke/contact/');
+    });
+
+    it.each(['https://evil.example/contact', '//evil.example/contact', '/contact?q=1', '/contact#lead', '/contact\nlead'])(
+      'rejects unsafe or non-first-party source path %s',
+      (path) => {
+        config.set('PUBLIC_SITE_URL', 'https://angisoft.co.ke');
+        expect(firstPartySourceUrl(path)).toBeUndefined();
+      },
+    );
   });
 
   describe('sendMetaConversion', () => {
@@ -276,7 +317,12 @@ describe('Meta resource pack', () => {
       expect(logAuditMock).toHaveBeenCalledWith(expect.objectContaining({
         actorId: 'actor-1',
         action: 'communications.meta.capi.sent',
-        meta: expect.objectContaining({ eventName: 'Lead', eventId: 'lead-1', serviceEvent: false }),
+        meta: expect.objectContaining({
+          eventName: 'Lead',
+          eventId: 'lead-1',
+          serviceEvent: false,
+          marketingConsent: true,
+        }),
       }));
       const auditText = JSON.stringify(logAuditMock.mock.calls);
       expect(auditText).not.toContain('placeholder-token');
@@ -387,14 +433,18 @@ describe('Meta resource pack', () => {
   });
 
   describe('additional Threads capabilities', () => {
-    it('gates insights on the Threads token/user and carousel on those plus app review', () => {
+    it('gates insights on the Threads token/user and writes on those plus app review', () => {
       config.set('THREADS_ACCESS_TOKEN', 'placeholder');
       config.set('THREADS_USER_ID', '12345');
       expect(getMetaOperationStatus('threads.insights.read').available).toBe(true);
-      expect(getMetaOperationStatus('threads.carousel.publish').available).toBe(false);
+      for (const operation of ['threads.publish', 'threads.carousel.publish', 'threads.reply'] as const) {
+        expect(getMetaOperationStatus(operation).available).toBe(false);
+      }
       config.set('META_APP_REVIEW_GRANTED', 'true');
-      expect(getMetaOperationStatus('threads.carousel.publish').available).toBe(true);
-      expect(getMetaOperationStatus('threads.carousel.publish').approvalRequired).toBe(true);
+      for (const operation of ['threads.publish', 'threads.carousel.publish', 'threads.reply'] as const) {
+        expect(getMetaOperationStatus(operation).available).toBe(true);
+        expect(getMetaOperationStatus(operation).approvalRequired).toBe(true);
+      }
     });
 
     it('fails closed before any network call without Threads credentials', async () => {

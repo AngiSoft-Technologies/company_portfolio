@@ -37,10 +37,11 @@ Shipped **code paths** today cover: WhatsApp Cloud API text/template send, webho
 verification + inbound storage and WhatsApp OTP in MFA; Facebook/Instagram webhook
 ingest, comment/message replies and Page post publishing; Messenger read/send; a
 provider-neutral outbound dispatcher; three strict read-only Meta MCP clients; consent-
-and config-gated Conversions API server events; a public CMS catalog feed; build-time
+and config-gated Conversions API server events dispatched only from explicit opt-in on
+both public contact forms; a public CMS catalog feed; build-time
 OG/Twitter meta tags; Threads read/insights/publish/carousel/reply adapters; bounded
 Instagram mentions reads; and actor-audited Page/Instagram comment hiding. That is code only —
-**no live provider credential, App Review grant, consent decision or spend cap is
+**no live provider credential, App Review grant, approved consent notice or spend cap is
 verified in this checkout**. Most
 shipped paths still fail closed until tokens/flags are configured; the rest remain
 consciously staged. The point of the plan is that each resource has a decision, not
@@ -113,7 +114,7 @@ that all 59 get built.
 | 6.3 | Pages API | Publish portfolio/news content to client Pages; read engagement | `metaCapabilities.ts` (`listMetaPages`, `publishMetaPagePost`) | PARTIAL | Read + write code paths ship; writes still require a live Page token, `pages_manage_posts` from App Review and our `ApprovalRequest` gate — no live Page is connected |
 | 6.4 | Instagram Platform — Unified Login | Connect client professional accounts without a Facebook Page | `modules/meta/` (OAuth flow) | PLANNED | Adapters use a configured `META_INSTAGRAM_ACCOUNT_ID` + system-user token; the Unified Login/OAuth consent flow is not implemented |
 | 6.5 | Instagram publishing, comment moderation, mentions, insights | Social publishing and inbox moderation from one admin screen | `publishInstagramMedia()`, `listMetaInstagramInsights()`, `listInstagramMentions()`, `hideMetaComment()`, `replyToMetaItem()`, `MetaCommandCenter.tsx` | SHIPPED | Code paths cover single image/video publish, insights, bounded mentions reads, comment/DM replies and actor-audited comment hiding; automated moderation *rules* still do not exist. Live use needs §2.5 permissions, §3.4 subscription, `META_INSTAGRAM_ACCOUNT_ID`, Page token, App Review and the existing system-user token — none are verified in this checkout |
-| 6.6 | Threads API (single/carousel posts, media, profiles, replies, insights) | Extend social publishing to Threads | `metaCapabilities.ts` (`readThreadsProfile`, `listMetaThreads`, `listThreadsInsights`, `publishThreadsPost`, `publishThreadsCarousel`, `replyThreadsPost`) | SHIPPED | Profile/threads read, clamped profile/media insights, text/image/video publish, 2–10 item carousels and replies are implemented. Insights need only the Threads token/user; carousel publishing also needs `META_APP_REVIEW_GRANTED=true`. All calls fail closed without `THREADS_ACCESS_TOKEN` + `THREADS_USER_ID` |
+| 6.6 | Threads API (single/carousel posts, media, profiles, replies, insights) | Extend social publishing to Threads | `metaCapabilities.ts` (`readThreadsProfile`, `listMetaThreads`, `listThreadsInsights`, `publishThreadsPost`, `publishThreadsCarousel`, `replyThreadsPost`) | SHIPPED | Profile/threads read, clamped profile/media insights, text/image/video publish, 2–10 item carousels and replies are implemented. Insights need only the Threads token/user; all writes (single post, carousel, reply) also need `META_APP_REVIEW_GRANTED=true`. All calls fail closed without `THREADS_ACCESS_TOKEN` + `THREADS_USER_ID` |
 | 6.7 | Live Video API | Livestream launches/workshops | — | DEFERRED | Needs 60-day-old account + 100 followers; revisit for marketing events only |
 | 6.8 | Stories API | Page Stories from CMS media | `modules/cms` | DEFERRED | Requires upload→publish flow and `CREATE_CONTENT` Page permission; lower priority than feed posts |
 | 6.9 | Creator Discovery API | Find Facebook/Instagram creators for partnership ads | marketing workflows | DEFERRED | Needs brand IG business account + discovery permissions; not core delivery |
@@ -137,7 +138,7 @@ that all 59 get built.
 | 8.1 | Marketing API | Ad creation/management and reporting for the marketing agent | `modules/marketing` (write path); `listMetaAdInsights()` (read-only) | DEFERRED | High-risk (spends money, rate-limited); require spend caps, human approval and audit before any write access. Read-only account insights via the `META_AD_ACCOUNT_ID` setting ship separately and do not enable campaign mutation |
 | 8.2 | Catalog feed from CMS | Power collection/catalog ads, WhatsApp commerce and Instagram Shopping | `catalog-feed.ts` mounted at `/v1/catalog` → `GET /v1/catalog/feed.xml` (+ `/feed`) | SHIPPED | **Code path only**: rendered from published Services/PricingPackages as RSS 2.0 with `g:` product namespaces, XML escaping, absolute image links and a `PUBLIC_SITE_URL` fallback. Polling needs no credentials, but live Meta Catalog setup still needs `META_CATALOG_ID`, the feed URL and consent-gated CAPI; our catalogue stays the source of truth — never let Meta overwrite our data |
 | 8.3 | Commerce Platform / Shops | Distribute products across Shops/Marketplace/Instagram | — | DEFERRED | Shops ads use offsite checkout, which fits us — but only if we actually sell catalogue products online |
-| 8.4 | Conversions API (server events) | Send leads/registrations/purchases from our server or CRM to Meta | `metaConversions.ts`, wired into Lead Ads ingest + successful finance events | SHIPPED | **Code path only**: `META_CAPI_ENABLED`, dataset ID and token required; SHA-256 hashed PII, `event_id`/`ProviderEvent` dedupe, non-blocking fail-open. Per-event marketing consent required — service events only when `META_CAPI_ALLOW_SERVICE_EVENTS=true`; test code available via `META_CAPI_TEST_EVENT_CODE` |
+| 8.4 | Conversions API (server events) | Send leads/registrations/purchases from our server or CRM to Meta | `metaConversions.ts`, wired into explicit opt-in public contact enquiries, Lead Ads ingest + successful finance events | SHIPPED | **Code path only**: `META_CAPI_ENABLED`, dataset ID and token required; SHA-256 hashed PII, `event_id`/`ProviderEvent` dedupe, non-blocking fail-open. Per-event marketing consent required; public forms send `marketingConsent: true` only from an opt-in checkbox that defaults to off, with a sanitized first-party `event_source_url` and audited consent flag. Service events only when `META_CAPI_ALLOW_SERVICE_EVENTS=true`; test code available via `META_CAPI_TEST_EVENT_CODE` |
 | 8.5 | Conversions API Gateway | Lowest-effort Pixel+CAPI redundancy | Events Manager config | PLANNED | Only relevant if we want Pixel+CAPI redundancy without our own server events; the hand-rolled CAPI (§8.4) already ships with custom Lead/Purchase events |
 | 8.6 | Signals Gateway | Own-infrastructure event receive/send | — | DEFERRED | Only if data-residency/control requirements justify operating it |
 | 8.7 | Audience Network | Ad monetisation | — | N/A | No free app/large audience product; no relevant inventory |
@@ -221,9 +222,11 @@ that all 59 get built.
 8. **Treat webhook, document and web content as prompt-injection vectors** before
    feeding it to any LLM.
 9. **Consent before tracking.** CAPI is hard-gated on `META_CAPI_ENABLED`, a dataset ID
-   and token, plus per-event marketing consent; service events require
-   `META_CAPI_ALLOW_SERVICE_EVENTS=true`. Pixel/Advanced Matching still need an explicit
-   privacy notice and legal review of the wording.
+   and token, plus per-event marketing consent. Public contact forms submit a Lead event
+   only after an explicit opt-in checkbox that defaults to off, and the server rejects
+   absolute/protocol-relative source paths with query strings or fragments. Service events
+   additionally require `META_CAPI_ALLOW_SERVICE_EVENTS=true`. Pixel/Advanced Matching
+   still need an explicit privacy notice and legal review of the wording.
 10. **Keep money server-held.** Flows/Payment-method selection routes to our `/v1`
     checkout; Meta never receives a client-chosen amount.
 11. **Bound and audit the new social operations.** Threads insights request only fixed
@@ -240,7 +243,7 @@ that all 59 get built.
 | Business Login for Business + system user tokens | Owner | Blocks unattended publishing/messaging and Marketing API |
 | App Review for advanced permissions | Owner + legal privacy policy | Unreviewed permissions only deliver test data in production |
 | Confirmation of which social channels clients actually use | Sales/CS | Prioritises Pages vs Instagram vs Threads work |
-| Consent/privacy policy approval | Legal | CAPI code ships but stays disabled/no-consent until the notice is approved; also blocks Pixel and Advanced Matching |
+| Consent/privacy policy approval | Legal | CAPI ships with explicit per-form opt-in but stays disabled by config until the notice is approved; also blocks Pixel and Advanced Matching |
 | `META_CAPI_ENABLED`, dataset ID, access token (+ optional test event code) | Owner | Readiness of live CAPI delivery; no dataset is verified in this checkout |
 | Spend caps + approval policy for Meta Ads | Finance lead | Blocks any Marketing API/Ads MCP write access (the MCP client itself is read-only) |
 | Meta Business Agent phone-number eligibility | Owner | Determines whether the deferred agent could ever run on our number |
@@ -272,26 +275,32 @@ below describe code paths, not verified live integrations.**
   never registered as tool arguments, logged or returned. Both `tools/list` and
   `tools/call` write actor-audited entries. No local MCP path can spend, publish or send.
 - **CAPI.** `sendMetaConversion()` requires `META_CAPI_ENABLED=true`, a dataset id and an
-  access token, plus per-event marketing consent; service-generated events additionally
-  require `META_CAPI_ALLOW_SERVICE_EVENTS=true`. Email/phone are SHA-256 hashed (phone
-  digits only), the payload carries only booleans/value/currency, `event_id` plus
+  access token, plus per-event marketing consent. The only user-action call site is the
+  public contact enquiry route: both public forms submit `marketingConsent: true` only from
+  a checkbox that defaults to off, and `firstPartySourceUrl()` accepts only a relative
+  first-party path; the audit row records the consent flag. Lead Ads/finance service events
+  additionally require `META_CAPI_ALLOW_SERVICE_EVENTS=true`. Email/phone are SHA-256 hashed
+  (phone digits only), the payload carries only booleans/value/currency, `event_id` plus
   `ProviderEvent` dedupe key make retries idempotent, and HTTP/network failures are
-  recorded as `FAILED` but never break the business transaction. The admin UI does not
-  advertise live measurement; readiness remains a deployment/consent decision.
+  recorded as `FAILED` but never break the business transaction. The admin UI reports
+  `capiConfigured` from the same helper; readiness remains a deployment/consent decision.
 - **App Review.** `META_APP_REVIEW_GRANTED` gates Page/Instagram publishing, comment
-  moderation, Ads insights, Lead Ads ingest and Threads carousel publishing. Missing
-  grants are reported `available: false` with an `appReview` reason, and the service
-  guards throw `ProviderCapabilityError` before any network call.
+  moderation, Ads insights, Lead Ads ingest and all Threads writes (single/carousel
+  publish and reply). Missing grants are reported `available: false` with an `appReview`
+  reason, and the service guards throw `ProviderCapabilityError` before any network call.
 - **Verification run.** `backend`: `TEST_DATABASE_URL=<dummy> vitest run
-  test/metaResourcePack.spec.ts test/phase7Foundation.spec.ts` — 50 tests passed;
-  `tsc --noEmit` result is reported separately in the closeout message.
+  test/metaResourcePack.spec.ts test/contactEnquiryConsent.spec.ts
+  test/darajaResourcePack.spec.ts test/darajaPayouts.spec.ts
+  test/mpesaStkRecovery.spec.ts test/money-movement.spec.ts
+  test/bookingDeposit.spec.ts` — 7 files / 125 tests passed; backend `tsc --noEmit`,
+  workspace typechecks and both production builds are reported in the canonical plan.
 
 **Gaps that remain (not blockers, and not claims of live readiness):** no live Meta
-credential, dataset, App Review grant or consent notice exists in this checkout, so none
-of these paths can be exercised upstream here; both existing CAPI call sites are service
-events (Lead Ads ingest and finance processing), so no `marketingConsent: true` user-action
-call site ships yet; Graph version keys are still split between `WHATSAPP_API_VERSION`
-and `META_GRAPH_VERSION`; single Threads publish/reply are gated on the Threads token/user
-but not on `META_APP_REVIEW_GRANTED` (deliberate per §6.6 — revisit if Review denies
-unreviewed publishing); MCP tool descriptions from upstream are length-capped, but descriptions and
-input schemas are still rendered in the admin UI and must be treated as untrusted content.
+credential, dataset, App Review grant or legally approved consent notice exists in this
+checkout, so none of these paths can be exercised upstream here. Both public contact forms
+now carry the opt-in checkbox and server-side dispatch, but CAPI still fails closed until
+config is supplied. Lead Ads/finance service events remain behind
+`META_CAPI_ALLOW_SERVICE_EVENTS=true`. Graph version keys are still split between
+`WHATSAPP_API_VERSION` and `META_GRAPH_VERSION`. Upstream MCP tool descriptions and input
+schemas are length-capped but still rendered in the admin UI and must be treated as
+untrusted content; the shared read-only predicate filters the catalogue before it is shown.

@@ -1,7 +1,10 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
+import crypto from 'crypto';
 import type { Db } from '../../../db';
 import { requireAuth } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
+import { getConfig } from '../../../shared/services/runtimeConfig';
+import { logAudit } from '../../../shared/services/audit';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import { c2bConfirmationExternalId, extractC2bConfirmation } from './mpesa-callbacks';
 import {
@@ -18,6 +21,30 @@ function errorStatus(err: unknown): number {
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Daraja request failed';
+}
+
+/** Same shared-secret pattern as the STK callback; never logged or persisted. */
+function callbackTokenValid(req: Request): boolean {
+  const expected = String(getConfig('MPESA_CALLBACK_TOKEN') || '');
+  if (!expected) return false;
+  const provided = String(req.query?.token ?? req.headers['x-callback-token'] ?? '');
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(provided);
+  return expectedBuffer.length === providedBuffer.length
+    && crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+function requireCallbackToken(req: Request, res: Response): boolean {
+  if (!getConfig('MPESA_CALLBACK_TOKEN')) {
+    console.error('Daraja C2B callback rejected: MPESA_CALLBACK_TOKEN not configured.');
+    res.status(503).json({ ResultCode: 1, ResultDesc: 'Callback not configured' });
+    return false;
+  }
+  if (!callbackTokenValid(req)) {
+    res.status(403).json({ ResultCode: 1, ResultDesc: 'Forbidden' });
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -72,49 +99,81 @@ export default function mpesaRouter(prisma: Db) {
     }
   });
 
-  // C2B callbacks are unauthenticated by Daraja; keep them as immutable events
-  // and let the finance reconciliation worker match BillRefNumber → invoice.
-  const recordC2b = async (eventType: string, body: unknown) => {
-    await recordProviderEvent(prisma, {
+  // Daraja does not sign C2B callbacks, so the registered URL carries the same
+  // constant-time shared token used by the STK callback. Records are immutable
+  // review events only; finance staff match BillRefNumber → invoice manually.
+  const c2bAck = { ResultCode: 0, ResultDesc: 'Accepted' } as const;
+  const c2bFingerprint = (body: unknown) => crypto.createHash('sha256')
+    .update(JSON.stringify(body ?? null))
+    .digest('hex')
+    .slice(0, 32);
+
+  interface C2bRecord {
+    eventType: string;
+    externalEventId: string;
+    payload: unknown;
+    status?: 'RECEIVED' | 'PROCESSED';
+  }
+  const recordC2b = async ({ eventType, externalEventId, payload, status }: C2bRecord) => {
+    const { event, deduped } = await recordProviderEvent(prisma, {
       provider: 'MPESA',
       domain: 'FINANCE',
       eventType,
-      externalEventId: `C2B:${eventType}:${JSON.stringify(body)}`,
+      externalEventId,
       signatureValid: false,
-      payload: body,
-      status: 'RECEIVED',
+      payload,
+      status: status ?? 'RECEIVED',
     });
-    return { ResultCode: 0, ResultDesc: 'Accepted' };
+    await logAudit({
+      action: 'DARAJA_C2B_CALLBACK_RECEIVED',
+      entity: 'ProviderEvent',
+      entityId: event.id,
+      meta: { eventType, deduped, authMethod: 'SHARED_CALLBACK_TOKEN' },
+    });
+  };
+  const retainC2b = (input: C2bRecord) => {
+    // Acknowledge before any database work: Daraja retries non-2xx responses.
+    void recordC2b(input).catch((err) => console.error('Daraja C2B event recording failed', errorMessage(err)));
   };
 
-  router.post('/c2b/validation', async (req, res) => {
-    res.json(await recordC2b('DARAJA_C2B_VALIDATION', req.body));
+  router.post('/c2b/validation', (req, res) => {
+    if (!requireCallbackToken(req, res)) return;
+    res.json(c2bAck);
+    retainC2b({
+      eventType: 'DARAJA_C2B_VALIDATION',
+      externalEventId: `C2B:DARAJA_C2B_VALIDATION:${c2bFingerprint(req.body)}`,
+      payload: req.body,
+    });
   });
 
-  router.post('/c2b/confirmation', async (req, res) => {
+  router.post('/c2b/confirmation', (req, res) => {
+    if (!requireCallbackToken(req, res)) return;
+    res.json(c2bAck);
     const confirmation = extractC2bConfirmation(req.body);
     if (confirmation) {
       // Read-only reconciliation review. Persist a structured outcome keyed on
       // TransID with BillRefNumber as the match key (never MSISDN). Record it
       // as already reviewed so the finance processor is not enqueued — this
       // callback must never auto-post a ledger entry.
-      await recordProviderEvent(prisma, {
-        provider: 'MPESA',
-        domain: 'FINANCE',
-        externalEventId: c2bConfirmationExternalId(confirmation.transId),
+      retainC2b({
         eventType: 'DARAJA_C2B_CONFIRMATION',
-        signatureValid: false,
+        externalEventId: c2bConfirmationExternalId(confirmation.transId),
         payload: {
           ...confirmation,
+          authMethod: 'SHARED_CALLBACK_TOKEN',
           matchKey: 'BillRefNumber',
           matchValue: confirmation.billRefNumber,
         },
         status: 'PROCESSED',
       });
-      return res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+      return;
     }
     // Malformed/unrecognised payloads stay immutable raw events for triage.
-    res.json(await recordC2b('DARAJA_C2B_CONFIRMATION', req.body));
+    retainC2b({
+      eventType: 'DARAJA_C2B_CONFIRMATION',
+      externalEventId: `C2B:DARAJA_C2B_CONFIRMATION:${c2bFingerprint(req.body)}`,
+      payload: req.body,
+    });
   });
 
   return router;

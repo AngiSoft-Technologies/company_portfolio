@@ -41,7 +41,9 @@ const WRITE_ACTIONS = [
   'threads.publish',
   'threads.carousel.publish',
   'threads.reply',
+  'comments.reply',
   'comments.moderate',
+  'messenger.send',
 ] as const;
 type WriteAction = (typeof WRITE_ACTIONS)[number];
 
@@ -54,7 +56,7 @@ type MetaOperationStatus = {
   reason?: string;
 };
 type CapabilityRow = MetaOperationStatus & { id: string };
-type MetaTool = { name: string; description?: string };
+type MetaTool = { name: string; description?: string; inputSchema?: unknown };
 type WriteFields = {
   pageId: string;
   accountId: string;
@@ -62,6 +64,8 @@ type WriteFields = {
   videoUrl: string;
   threadId: string;
   commentId: string;
+  objectId: string;
+  recipientId: string;
   mediaUrls: string;
 };
 
@@ -72,6 +76,8 @@ const EMPTY_WRITE_FIELDS: WriteFields = {
   videoUrl: '',
   threadId: '',
   commentId: '',
+  objectId: '',
+  recipientId: '',
   mediaUrls: '',
 };
 
@@ -120,6 +126,7 @@ function normalizeTools(value: unknown): MetaTool[] {
     return [{
       name: item.name,
       ...(typeof item.description === 'string' ? { description: item.description } : {}),
+      ...(item.inputSchema ? { inputSchema: item.inputSchema } : {}),
     }];
   });
 }
@@ -234,7 +241,8 @@ export default function MetaCommandCenter() {
 
   const writeAllowed = can('communications.social.respond');
   const activeTool = tools.find((tool) => tool.name === selectedTool)?.name ?? tools[0]?.name ?? '';
-  const activeToolDescription = tools.find((tool) => tool.name === activeTool)?.description;
+  const activeToolRecord = tools.find((tool) => tool.name === activeTool);
+  const activeToolDescription = activeToolRecord?.description;
   const readStatus = statusByOperation.get(readOperation);
   const mcpStatus = statusByOperation.get(mcpOperation);
   const writeStatus = statusByOperation.get(writeAction);
@@ -327,6 +335,19 @@ export default function MetaCommandCenter() {
       }
       body.commentId = writeFields.commentId.trim();
       body.network = 'META_FACEBOOK';
+    } else if (writeAction === 'comments.reply') {
+      if (!writeFields.objectId.trim()) {
+        setWriteError('objectId is required for comments.reply.');
+        return;
+      }
+      body.objectId = writeFields.objectId.trim();
+      body.network = 'META_FACEBOOK';
+    } else if (writeAction === 'messenger.send') {
+      if (!writeFields.recipientId.trim()) {
+        setWriteError('recipientId is required for messenger.send.');
+        return;
+      }
+      body.recipientId = writeFields.recipientId.trim();
     } else {
       if (!text && writeAction !== 'threads.carousel.publish') {
         setWriteError('Enter the message text.');
@@ -502,6 +523,9 @@ export default function MetaCommandCenter() {
         {activeToolDescription ? (
           <p className="mt-2 text-xs text-[var(--text-muted)]">{maskString(activeToolDescription)}</p>
         ) : null}
+        {activeToolRecord?.inputSchema ? (
+          <JsonPreview label="Tool input schema" value={activeToolRecord.inputSchema} />
+        ) : null}
         {mcpStatus && !mcpStatus.available ? (
           <p className="mt-2 text-xs text-[var(--text-muted)]">
             This MCP server is unavailable: {mcpStatus.reason ?? 'endpoint not configured'}.
@@ -617,6 +641,16 @@ export default function MetaCommandCenter() {
               {writeAction === 'threads.reply' ? (
                 <Field label="Thread ID (required)">
                   <input className={inputClass} value={writeFields.threadId} onChange={(event) => updateWriteField('threadId', event.target.value)} />
+                </Field>
+              ) : null}
+              {writeAction === 'comments.reply' ? (
+                <Field label="Comment ID (required)">
+                  <input className={inputClass} value={writeFields.objectId} onChange={(event) => updateWriteField('objectId', event.target.value)} placeholder="Existing Page or Instagram comment ID" />
+                </Field>
+              ) : null}
+              {writeAction === 'messenger.send' ? (
+                <Field label="Recipient PSID (required)">
+                  <input className={inputClass} value={writeFields.recipientId} onChange={(event) => updateWriteField('recipientId', event.target.value)} placeholder="Messenger page-scoped ID" />
                 </Field>
               ) : null}
             </div>

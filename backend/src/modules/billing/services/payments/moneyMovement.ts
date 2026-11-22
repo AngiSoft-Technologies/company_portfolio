@@ -129,6 +129,12 @@ export function listMoneyTypes(): MoneyType[] {
       requires: ['transactionId'],
     },
     {
+      id: 'MPESA_BALANCE', flow: 'STATUS', label: 'M-Pesa account balance', provider: 'MPESA',
+      region: 'Kenya', available: darajaReady(),
+      reason: darajaReady() ? undefined : 'Daraja is not configured',
+      description: 'Read the business shortcode account balance for payout preflight checks.',
+    },
+    {
       id: 'PAYHERO_BALANCE', flow: 'STATUS', label: 'PayHero wallet balance', provider: 'PAYHERO',
       region: 'Kenya', available: payheroReady(),
       reason: payheroReady() ? undefined : 'PayHero is not configured',

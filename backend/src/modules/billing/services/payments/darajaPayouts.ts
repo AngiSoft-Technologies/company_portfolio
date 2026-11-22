@@ -71,8 +71,24 @@ export class DarajaError extends Error {
  */
 const RESULT_HINTS: Record<string, string> = {
   '1': 'Insufficient funds or generic rejection — check payer balance and initiator permissions.',
+  '1001': 'System lock or another active transaction on the MSISDN; operator review only.',
+  '1032': 'Customer cancelled the prompt; require a new user action before retrying.',
   '1037': 'Timeout — payer out of coverage or too slow entering PIN; do not auto-retry settlement.',
+  '2001': 'Invalid M-Pesa PIN entered by the customer; require a new user action.',
+  '400.002.02': 'Invalid callback URL — use a public HTTPS URL.',
+  '400.002.05': 'Invalid shortcode — check BusinessShortCode and PartyB against the credentials.',
+  '403.002.01': 'Forbidden — access token is missing, invalid or expired.',
 };
+
+/** Shared-secret callback registration: the gate lives in the route layer. */
+function tokenizedUrl(override: unknown, envName: string): string {
+  const url = resolveUrl(override, envName);
+  const token = env('MPESA_CALLBACK_TOKEN');
+  if (!token) throw new DarajaError('MPESA_CALLBACK_TOKEN is not configured', 503);
+  const parsed = new URL(url);
+  parsed.searchParams.set('token', token);
+  return parsed.toString();
+}
 
 export function darajaResultHint(code: unknown): string | null {
   return RESULT_HINTS[String(code ?? '').trim()] ?? null;
@@ -671,13 +687,17 @@ export async function registerC2bUrls(input: {
   confirmationUrl?: unknown;
   responseType?: string;
 } = {}) {
-  const token = await getAccessToken();
+  // Validate every local input before requesting an OAuth token. A missing
+  // callback token must not trigger any Safaricom API call.
+  const confirmationUrl = tokenizedUrl(input.confirmationUrl, 'MPESA_C2B_CONFIRMATION_URL');
+  const validationUrl = tokenizedUrl(input.validationUrl, 'MPESA_C2B_VALIDATION_URL');
   const body = {
     ShortCode: shortcode(input.shortCode ?? (env('MPESA_C2B_SHORTCODE') || env('MPESA_SHORTCODE')), 'MPESA_C2B_SHORTCODE'),
     ResponseType: String(input.responseType || env('MPESA_C2B_RESPONSE_TYPE') || 'Completed'),
-    ConfirmationURL: resolveUrl(input.confirmationUrl, 'MPESA_C2B_CONFIRMATION_URL'),
-    ValidationURL: resolveUrl(input.validationUrl, 'MPESA_C2B_VALIDATION_URL'),
+    ConfirmationURL: confirmationUrl,
+    ValidationURL: validationUrl,
   };
+  const token = await getAccessToken();
   const res = await fetch(`${API_BASE[environment()]}/mpesa/c2b/v2/registerurl`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -721,11 +741,15 @@ export async function generateMpesaQr(input: {
   cpi?: unknown;
   size?: string | number;
 }) {
+  const trxCode = String(input.transactionType || env('MPESA_QR_TRANSACTION_TYPE') || 'BG').trim().toUpperCase();
+  if (!['BG', 'PB', 'WA', 'SM'].includes(trxCode)) {
+    throw new DarajaError('QR TrxCode must be one of BG, PB, WA or SM', 400);
+  }
   const payload: Record<string, unknown> = {
     MerchantName: String(input.merchantName || env('MPESA_QR_MERCHANT_NAME') || 'AngiSoft').slice(0, 50),
     RefNo: requiredId(input.reference, 'RefNo').slice(0, 50),
     Amount: positiveAmount(input.amount),
-    TrxCode: String(input.transactionType || env('MPESA_QR_TRANSACTION_TYPE') || 'BG'),
+    TrxCode: trxCode,
     CPI: shortcode(input.cpi ?? env('MPESA_SHORTCODE'), 'MPESA_SHORTCODE'),
     Size: String(input.size || '300'),
   };

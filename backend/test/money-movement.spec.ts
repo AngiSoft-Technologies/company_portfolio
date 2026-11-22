@@ -59,8 +59,10 @@ describe('money movement catalogue', () => {
     expect(getMoneyType('PAYPAL_PAYOUT', true)?.reason).toMatch(/not configured/i);
   });
 
-  it('exposes the PayHero wallet balance and top-up operations', () => {
+  it('exposes the PayHero and M-Pesa balance and top-up operations', () => {
     expect(getMoneyType('PAYHERO_BALANCE')?.flow).toBe('STATUS');
     expect(getMoneyType('PAYHERO_TOPUP')?.flow).toBe('B2B');
+    expect(getMoneyType('MPESA_BALANCE')?.flow).toBe('STATUS');
+    expect(getMoneyType('MPESA_BALANCE')?.description).toMatch(/preflight/i);
   });
 });

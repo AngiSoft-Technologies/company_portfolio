@@ -1,5 +1,6 @@
 import { getConfig } from '../../../../shared/services/runtimeConfig';
 import { getQueue } from '../../../../queue';
+import { darajaResolveUrl } from './darajaPayouts';
 /**
  * Safaricom M-Pesa Daraja API — Lipa Na M-Pesa Online (STK Push).
  *
@@ -137,7 +138,9 @@ async function post(path: string, payload: JsonRecord): Promise<JsonRecord> {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
     });
-    return jsonRecord(await res.json().catch(() => ({})));
+    const json = jsonRecord(await res.json().catch(() => ({})));
+    if (!res.ok) throw new Error(`M-Pesa request failed (${res.status})`);
+    return json;
 }
 
 export async function initStkPush(opts: {
@@ -147,6 +150,9 @@ export async function initStkPush(opts: {
     description?: string;
 }) {
     if (!isConfigured()) throw new Error('M-Pesa not configured');
+    // Shared with the outbound adapter: live callbacks must be absolute HTTPS.
+    // Validate before requesting an OAuth token so invalid config makes no call.
+    const callbackUrl = darajaResolveUrl(getConfig('MPESA_CALLBACK_URL'), 'MPESA_CALLBACK_URL');
     const token = await getAccessToken();
     const shortcode = getConfig('MPESA_SHORTCODE', '174379').trim();
     const passkey = getConfig('MPESA_PASSKEY');
@@ -164,7 +170,7 @@ export async function initStkPush(opts: {
             PartyA: normalizePhone(opts.phone),
             PartyB: shortcode,
             PhoneNumber: normalizePhone(opts.phone),
-            CallBackURL: getConfig('MPESA_CALLBACK_URL'),
+            CallBackURL: callbackUrl,
             AccountReference: String(opts.reference || 'ANGISOFT').slice(0, 12),
             TransactionDesc: String(opts.description || 'Payment').slice(0, 13)
         })

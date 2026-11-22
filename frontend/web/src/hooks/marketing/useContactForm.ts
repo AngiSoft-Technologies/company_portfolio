@@ -17,6 +17,7 @@ const INITIAL = {
     preferredContactTime: '',
     organisation: '',
     company: '', // honeypot
+    marketingConsent: false,
 };
 
 /**

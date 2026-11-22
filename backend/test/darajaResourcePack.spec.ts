@@ -5,6 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { logAuditMock } = vi.hoisted(() => ({ logAuditMock: vi.fn(async () => null) }));
 vi.mock('../src/shared/services/audit', () => ({ logAudit: logAuditMock }));
+vi.mock('../src/shared/middleware/auth', () => ({
+  requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+vi.mock('../src/shared/middleware/roles', () => ({
+  requireAccess: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
 
 import {
   B2B_COMMAND_IDS,
@@ -27,6 +33,7 @@ import mpesaCallbacksRouter, {
   callbackDedupeId,
   extractC2bConfirmation,
 } from '../src/modules/billing/routes/mpesa-callbacks';
+import mpesaRouter from '../src/modules/billing/routes/mpesa';
 import type { Db } from '../src/db';
 
 const fetchMock = vi.fn();
@@ -63,6 +70,7 @@ describe('Daraja resource pack adapters', () => {
     vi.stubEnv('MPESA_CONSUMER_SECRET', 'consumer-secret');
     vi.stubEnv('MPESA_SHORTCODE', '600000');
     vi.stubEnv('MPESA_PASSKEY', 'passkey');
+    vi.stubEnv('MPESA_CALLBACK_TOKEN', 'shared-token');
     vi.stubEnv('MPESA_INITIATOR_NAME', 'apiuser');
     vi.stubEnv('MPESA_INITIATOR_PASSWORD', 'initiator-password');
     vi.stubEnv('MPESA_INITIATOR_PUBLIC_KEY', publicKey);
@@ -133,8 +141,8 @@ describe('Daraja resource pack adapters', () => {
     expect(payloadFor('/mpesa/c2b/v2/registerurl')).toEqual({
       ShortCode: '600111',
       ResponseType: 'Completed',
-      ConfirmationURL: 'https://example.com/c2b/confirmation',
-      ValidationURL: 'https://example.com/c2b/validation',
+      ConfirmationURL: 'https://example.com/c2b/confirmation?token=shared-token',
+      ValidationURL: 'https://example.com/c2b/validation?token=shared-token',
     });
   });
 
@@ -239,6 +247,30 @@ describe('Daraja resource pack adapters', () => {
     expect(payloadFor('/mpesa/stkpushquery/v1/query')).toMatchObject({
       CheckoutRequestID: 'CRID-7',
     });
+    expect(payloadFor('/mpesa/stkpush/v1/processrequest').CallBackURL)
+      .toBe('https://example.com/stk/callback');
+  });
+
+  it('fails closed on a plain HTTP STK callback URL in production before any upstream call', async () => {
+    vi.stubEnv('MPESA_ENV', 'production');
+    vi.stubEnv('MPESA_CALLBACK_URL', 'http://example.com/stk/callback');
+    await expect(initStkPush({ phone: '0712345678', amount: 100, reference: 'INV-8' }))
+      .rejects.toThrow(/must use HTTPS in production/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-2xx M-Pesa responses without echoing upstream errors', async () => {
+    const leaked = 'upstream-consumer-secret';
+    fetchMock.mockImplementation((url: unknown) => {
+      if (String(url).includes('/oauth/v1/generate')) {
+        return Promise.resolve(json({ access_token: 'token', expires_in: 3600 }));
+      }
+      return Promise.resolve(json({ errorMessage: leaked }, 503));
+    });
+    const error = await queryStkStatus('CRID-FAIL').catch((err) => err);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('M-Pesa request failed (503)');
+    expect(error.message).not.toContain(leaked);
   });
 });
 
@@ -452,5 +484,100 @@ describe('Daraja result callback audit', () => {
     expect(mismatch).toMatchObject({ signatureValid: false, status: 'FAILED' });
     // No settlement was driven by the callback.
     expect(payout.status).toBe('PENDING');
+  });
+});
+
+describe('Daraja C2B callback gate', () => {
+  const appFor = (prisma: unknown) => {
+    const app = express();
+    app.use(express.json());
+    app.use('/v1/payments/mpesa', mpesaRouter(prisma as any));
+    return app;
+  };
+
+  beforeEach(() => {
+    vi.stubEnv('MPESA_CALLBACK_TOKEN', 'shared-token');
+    logAuditMock.mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('fails closed when the C2B callback token is missing or wrong', async () => {
+    const app = appFor(fakePrisma());
+    vi.stubEnv('MPESA_CALLBACK_TOKEN', '');
+    expect((await request(app).post('/v1/payments/mpesa/c2b/validation').send({})).status).toBe(503);
+    vi.stubEnv('MPESA_CALLBACK_TOKEN', 'shared-token');
+    expect((await request(app).post('/v1/payments/mpesa/c2b/validation?token=wrong').send({})).status).toBe(403);
+    expect((await request(app).post('/v1/payments/mpesa/c2b/confirmation').send({})).status).toBe(403);
+  });
+
+  it('records token-gated C2B events with a hashed dedupe id, never raw PII', async () => {
+    const prisma = fakePrisma();
+    const app = appFor(prisma);
+    const body = {
+      TransID: 'NLJ-C2B-1',
+      BillRefNumber: 'INV-2026-42',
+      Amount: 1250,
+      MSISDN: 254712345678,
+      FirstName: 'Jane',
+    };
+    const response = await request(app)
+      .post('/v1/payments/mpesa/c2b/validation?token=shared-token')
+      .send(body);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ ResultCode: 0, ResultDesc: 'Accepted' });
+    await vi.waitFor(() => expect(prisma.events).toHaveLength(1));
+    const event = prisma.events[0];
+    expect(event.eventType).toBe('DARAJA_C2B_VALIDATION');
+    expect(event.signatureValid).toBe(false);
+    expect(event.status).toBe('RECEIVED');
+    expect(event.externalEventId).toMatch(/^C2B:DARAJA_C2B_VALIDATION:[a-f0-9]{32}$/);
+    expect(event.externalEventId).not.toContain('254712345678');
+    expect(event.externalEventId).not.toContain(JSON.stringify(body));
+    await vi.waitFor(() => expect(logAuditMock).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'DARAJA_C2B_CALLBACK_RECEIVED',
+      meta: expect.objectContaining({ authMethod: 'SHARED_CALLBACK_TOKEN' }),
+    })));
+  });
+
+  it('acknowledges C2B callbacks before event persistence completes', async () => {
+    const prisma = fakePrisma();
+    (prisma as any).orm.public.ProviderEvent.create = vi.fn(() => new Promise(() => undefined));
+    const response = await request(appFor(prisma))
+      .post('/v1/payments/mpesa/c2b/validation?token=shared-token')
+      .send({ TransID: 'NLJ-C2B-SLOW-1' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ ResultCode: 0, ResultDesc: 'Accepted' });
+  });
+
+  it('records C2B confirmations as read-only reviewed events with no ledger update', async () => {
+    const prisma = fakePrisma();
+    const response = await request(appFor(prisma))
+      .post('/v1/payments/mpesa/c2b/confirmation?token=shared-token')
+      .send({
+        TransID: 'NLJ-C2B-2',
+        BillRefNumber: 'INV-2026-43',
+        Amount: 2500,
+        MSISDN: 254712345678,
+      });
+
+    expect(response.status).toBe(200);
+    await vi.waitFor(() => expect(prisma.events).toHaveLength(1));
+    expect(prisma.events[0]).toMatchObject({
+      externalEventId: 'C2B_CONFIRMATION:TransID:NLJ-C2B-2',
+      eventType: 'DARAJA_C2B_CONFIRMATION',
+      signatureValid: false,
+      status: 'PROCESSED',
+    });
+    expect(prisma.events[0].payload).toMatchObject({
+      matchKey: 'BillRefNumber',
+      matchValue: 'INV-2026-43',
+    });
+    expect(JSON.stringify(prisma.events[0].payload)).not.toContain('254712345678');
+    expect(prisma.updates).toHaveLength(0);
   });
 });

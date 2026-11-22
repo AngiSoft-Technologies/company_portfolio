@@ -30,6 +30,7 @@ const ContactSection = () => {
     message: '',
     preferredCommunication: 'email',
     ndaRequested: false,
+    marketingConsent: false,
   });
   const [formStartedAt, setFormStartedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -99,6 +100,7 @@ const ContactSection = () => {
         source: 'home-contact-section',
         sourcePath: window.location.pathname,
         formStartedAt,
+        marketingConsent: form.marketingConsent === true,
       });
       setStatus('success');
       setFormStartedAt(Date.now());
@@ -109,6 +111,7 @@ const ContactSection = () => {
         message: '',
         preferredCommunication: 'email',
         ndaRequested: false,
+        marketingConsent: false,
       });
     } catch {
       setStatus('error');
@@ -246,6 +249,16 @@ const ContactSection = () => {
                     onChange={(event) => update('ndaRequested', event.target.checked)}
                   />
                   <span>I'd like to discuss an NDA before sharing details</span>
+                </label>
+
+                <label className="angi-contact-consent">
+                  <input
+                    type="checkbox"
+                    name="marketingConsent"
+                    checked={form.marketingConsent === true}
+                    onChange={(event) => update('marketingConsent', event.target.checked)}
+                  />
+                  <span>I consent to AngiSoft using Meta conversion measurement for this enquiry.</span>
                 </label>
 
                 {status === 'error' ? (

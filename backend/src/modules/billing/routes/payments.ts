@@ -608,7 +608,8 @@ export default function paymentsRouter(prisma: Db) {
         try {
             await recordProviderEvent(prisma, {
                 provider: 'MPESA', domain: 'FINANCE', externalEventId: String(cb.checkoutRequestId || ''),
-                eventType: 'mpesa.callback', signatureValid: true, payload: req.body, status: 'RECEIVED',
+                eventType: 'mpesa.callback', signatureValid: false,
+                payload: { body: req.body, authMethod: 'SHARED_CALLBACK_TOKEN' }, status: 'RECEIVED',
             }).catch(() => {});
             const payment = await prisma.orm.public.Payment
                 .where({ providerId: cb.checkoutRequestId })

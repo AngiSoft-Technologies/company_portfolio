@@ -73,6 +73,9 @@ function stubEnvDefaults() {
   vi.stubEnv('MPESA_STATUS_RESULT_URL', 'https://example.com/daraja/status/result');
   vi.stubEnv('MPESA_REVERSAL_QUEUE_URL', 'https://example.com/daraja/reversal/timeout');
   vi.stubEnv('MPESA_REVERSAL_RESULT_URL', 'https://example.com/daraja/reversal/result');
+  vi.stubEnv('MPESA_C2B_VALIDATION_URL', 'https://example.com/daraja/c2b/validation');
+  vi.stubEnv('MPESA_C2B_CONFIRMATION_URL', 'https://example.com/daraja/c2b/confirmation');
+  vi.stubEnv('MPESA_CALLBACK_TOKEN', 'shared-token');
 }
 
 describe('Daraja outbound adapter', () => {
@@ -332,6 +335,10 @@ describe('Daraja outbound adapter', () => {
     expect(darajaHttpHint(400)).toMatch(/Bad request/);
     expect(darajaHttpHint(503)).toBeNull();
     expect(darajaResultHint('1')).toMatch(/Insufficient funds/);
+    expect(darajaResultHint(1032)).toMatch(/cancelled/i);
+    expect(darajaResultHint(2001)).toMatch(/PIN/i);
+    expect(darajaResultHint('400.002.02')).toMatch(/HTTPS/i);
+    expect(darajaResultHint('403.002.01')).toMatch(/token/i);
     expect(darajaResultHint(1037)).toMatch(/Timeout/);
     expect(darajaResultHint('9999')).toBeNull();
 
@@ -362,6 +369,39 @@ describe('Daraja outbound adapter', () => {
       queueTimeoutUrl: 'http://example.com/timeout',
     })).rejects.toThrow(/must use HTTPS in production/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('registers C2B URLs with the constant-time callback token and fails closed without it', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes('/oauth/')) return json({ access_token: 'tok', expires_in: 3600 });
+      return json(accepted());
+    });
+    await daraja.registerC2bUrls();
+    const body = payloadOf('/mpesa/c2b/v2/registerurl');
+    for (const key of ['ConfirmationURL', 'ValidationURL']) {
+      const url = new URL(String(body[key]));
+      expect(url.protocol).toBe('https:');
+      expect(url.searchParams.get('token')).toBe('shared-token');
+    }
+
+    vi.stubEnv('MPESA_CALLBACK_TOKEN', '');
+    daraja.resetTokenCacheForTests();
+    fetchMock.mockClear();
+    await expect(daraja.registerC2bUrls()).rejects.toThrow(/MPESA_CALLBACK_TOKEN is not configured/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('validates dynamic QR transaction codes before contacting Safaricom', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes('/oauth/')) return json({ access_token: 'tok', expires_in: 3600 });
+      return json({ ResponseCode: '0', QRData: 'placeholder' });
+    });
+    await expect(daraja.generateMpesaQr({ reference: 'INV-1', amount: 10, transactionType: 'XX' }))
+      .rejects.toThrow(/TrxCode must be one of BG, PB, WA or SM/);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await daraja.generateMpesaQr({ reference: 'INV-1', amount: 10, transactionType: 'pb' });
+    expect(payloadOf('/mpesa/qrcode/v1/generate').TrxCode).toBe('PB');
   });
 
   it('does not attach raw upstream bodies to C2B registration errors', async () => {

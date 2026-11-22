@@ -272,6 +272,19 @@ const ContactForm = forwardRef(function ContactForm(
                 </ContactField>
             </fieldset>
 
+            <label className="contact-form__consent">
+                <input
+                    type="checkbox"
+                    name="marketingConsent"
+                    checked={values.marketingConsent === true}
+                    onChange={(e) => setField('marketingConsent', e.target.checked)}
+                />
+                <span>
+                    I consent to AngiSoft using Meta conversion measurement for this enquiry.
+                    Optional; your enquiry is saved either way.
+                </span>
+            </label>
+
             <button
                 type="submit"
                 className="btn btn--primary contact-form__submit"

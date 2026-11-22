@@ -138,10 +138,20 @@
     color: var(--text-secondary);
     cursor: pointer;
 }
-.angi-contact-nda input {
+.angi-contact-nda input,
+.angi-contact-consent input {
     width: 1.05rem;
     height: 1.05rem;
     accent-color: var(--primary, var(--color-primary));
+}
+
+.angi-contact-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    cursor: pointer;
 }
 
 .angi-contact-submit {

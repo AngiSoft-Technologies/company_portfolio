@@ -135,12 +135,24 @@ async function sessionFor(operation: McpOperation): Promise<{ url: string; sessi
   return { url, sessionId: id };
 }
 
+/** One predicate for catalogue filtering and tool-call enforcement. */
+export function isReadOnlyMcpToolName(tool: string): boolean {
+  const name = String(tool ?? '').trim();
+  return Boolean(
+    name
+    && name.length <= 120
+    && /^[A-Za-z0-9_.-]+$/.test(name)
+    && READ_TOOL.test(name)
+    && !WRITE_TOOL.test(name),
+  );
+}
+
 function filterTools(tools: unknown): Array<{ name: string; description?: string; inputSchema?: unknown }> {
   if (!Array.isArray(tools)) return [];
   return tools.slice(0, 100).flatMap((item) => {
     if (!item || typeof item !== 'object') return [];
     const tool = item as { name?: unknown; description?: unknown; inputSchema?: unknown };
-    if (typeof tool.name !== 'string' || !tool.name) return [];
+    if (typeof tool.name !== 'string' || !isReadOnlyMcpToolName(tool.name)) return [];
     return [{
       name: tool.name,
       ...(typeof tool.description === 'string' ? { description: tool.description.slice(0, 1000) } : {}),
@@ -185,7 +197,7 @@ export function assertReadOnlyMcpTool(tool: string): void {
   if (!name || name.length > 120 || !/^[A-Za-z0-9_.-]+$/.test(name)) {
     throw new ProviderCapabilityError('META', 'read', 'Invalid MCP tool name');
   }
-  if (!READ_TOOL.test(name) || WRITE_TOOL.test(name)) {
+  if (!isReadOnlyMcpToolName(name)) {
     throw new ProviderCapabilityError('META', 'read', `MCP tool '${name}' is not a read-only tool`);
   }
 }

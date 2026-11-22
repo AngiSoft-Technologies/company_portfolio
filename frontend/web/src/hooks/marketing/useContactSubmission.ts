@@ -67,6 +67,7 @@ export function useContactSubmission(entryContext = {}) {
             organisation: formValues.organisation?.trim() || undefined,
             company: formValues.company || '', // honeypot
             formStartedAt: startedAt,
+            marketingConsent: formValues.marketingConsent === true ? true : undefined,
             source: entryContext?.source || 'contact-page',
             sourcePath: typeof window !== 'undefined' ? window.location.pathname : undefined,
         };

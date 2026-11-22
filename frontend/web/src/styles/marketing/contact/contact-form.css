@@ -81,6 +81,21 @@
     color: var(--contact-primary);
     font-weight: 600;
 }
+.contact-form__consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: var(--contact-muted);
+    cursor: pointer;
+}
+.contact-form__consent input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-top: 0.1rem;
+    accent-color: var(--contact-primary);
+}
 .contact-form__submit { width: 100%; justify-content: center; margin-top: 0.25rem; }
 .contact-form__submit:disabled { opacity: 0.7; cursor: progress; }
 

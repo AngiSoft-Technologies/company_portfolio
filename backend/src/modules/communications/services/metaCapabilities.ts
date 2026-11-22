@@ -19,7 +19,7 @@ import { logAudit } from '../../../shared/services/audit';
 import { ProviderCapabilityError } from './capabilities';
 import { ProviderConfigurationError } from './providerSecrets';
 import { generateAiDraft, ingestInboundMessage, upsertContact } from './conversations';
-import { sendMetaConversion } from './metaConversions';
+import { capiConfigured, sendMetaConversion } from './metaConversions';
 import { resolveMetaAccount, sendMetaComment, sendMetaMessage } from './metaSocial';
 import type { MetaNetwork } from './metaSocial';
 
@@ -84,10 +84,10 @@ const OPERATION_REQUIREMENTS: Record<MetaOperation, Requirement[]> = {
   'lead_ads.ingest': ['systemUserToken', 'appReview'],
   'threads.read': ['threadsToken', 'threadsUser'],
   'threads.insights.read': ['threadsToken', 'threadsUser'],
-  'threads.publish': ['threadsToken', 'threadsUser'],
+  'threads.publish': ['threadsToken', 'threadsUser', 'appReview'],
   // Write-like Meta operations require the explicit deployment-level grant.
   'threads.carousel.publish': ['threadsToken', 'threadsUser', 'appReview'],
-  'threads.reply': ['threadsToken', 'threadsUser'],
+  'threads.reply': ['threadsToken', 'threadsUser', 'appReview'],
   'mcp.ads': ['mcpAds', 'systemUserToken'],
   'mcp.social': ['mcpSocial', 'systemUserToken'],
   'mcp.whatsapp': ['mcpWhatsapp', 'systemUserToken'],
@@ -118,6 +118,7 @@ export function getMetaFeatureFlags() {
     threadsTokenConfigured: Boolean(getConfig('THREADS_ACCESS_TOKEN')),
     threadsUserConfigured: Boolean(getConfig('THREADS_USER_ID')),
     appReviewGranted: getConfig('META_APP_REVIEW_GRANTED') === 'true',
+    capiConfigured: capiConfigured(),
     graphVersion: String(getConfig('META_GRAPH_VERSION') || 'v23.0'),
     mcpEndpoints: {
       ads: allowlistedMcpEndpoint(META_MCP_ENDPOINTS['mcp.ads'].configKey, META_MCP_ENDPOINTS['mcp.ads'].url),

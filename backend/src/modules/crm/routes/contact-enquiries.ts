@@ -7,6 +7,7 @@ import { gContactLimiter } from '../../../shared/middleware/rateLimiter';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { or } from '@prisma/orm-postgres/orm-client';
+import { firstPartySourceUrl, sendMetaConversion } from '../../communications/services/metaConversions';
 
 /**
  * Public contact-enquiry submission.
@@ -57,6 +58,8 @@ const createSchema = z.object({
 
     source: z.string().optional().or(z.literal('')),
     sourcePath: z.string().optional().or(z.literal('')),
+    /** Explicit user opt-in for Meta conversion measurement. Never inferred. */
+    marketingConsent: z.literal(true).optional(),
 
     // Honeypot + timing (not stored)
     company: z.string().optional().or(z.literal('')), // honeypot, must stay empty
@@ -168,6 +171,20 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
                 status: 'new',
                 priority: data.enquiryType === 'support' ? 'high' : 'normal',
             });
+
+            // Explicit user opt-in only. The adapter is disabled by default,
+            // hashes PII, dedupes by ProviderEvent and fails open on upstream
+            // errors so measurement can never block a saved enquiry.
+            if (data.marketingConsent === true) {
+                void sendMetaConversion(prisma, {
+                    eventName: 'Lead',
+                    eventId: `lead:${enquiry.id}`,
+                    email: data.email,
+                    phone: data.phone || null,
+                    sourceUrl: firstPartySourceUrl(data.sourcePath),
+                    marketingConsent: true,
+                }).catch(() => undefined);
+            }
 
             return res.status(201).json({
                 enquiry: {

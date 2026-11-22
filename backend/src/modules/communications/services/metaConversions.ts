@@ -61,6 +61,26 @@ export function capiConfigured(): boolean {
 }
 
 /**
+ * Build a first-party event_source_url from a relative site path. Absolute URLs,
+ * protocol-relative paths, query strings and fragments are rejected so a public
+ * form cannot inject arbitrary destinations or leak PII into Meta.
+ */
+export function firstPartySourceUrl(sourcePath?: unknown): string | undefined {
+  if (typeof sourcePath !== 'string') return undefined;
+  const path = sourcePath.trim();
+  if (path.includes('?') || path.includes('#')) return undefined;
+  if (!path.startsWith('/') || path.startsWith('//') || /[\u0000-\u001f]/.test(path)) return undefined;
+  const base = String(getConfig('PUBLIC_SITE_URL') || 'https://angisoft.co.ke').trim().replace(/\/+$/, '');
+  try {
+    const url = new URL(`${base}${path.slice(0, 512)}`);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return undefined;
+    return url.toString().slice(0, 2000);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Send one conversion event. Safe to call on every business event: the
  * ProviderEvent dedupe key makes repeated calls a no-op.
  */
@@ -137,7 +157,12 @@ export async function sendMetaConversion(prisma: Db, input: MetaConversionInput)
       action: 'communications.meta.capi.sent',
       entity: 'ProviderEvent',
       entityId: recorded.event.id,
-      meta: { eventName: input.eventName, eventId: input.eventId, serviceEvent: Boolean(input.serviceEvent) },
+      meta: {
+        eventName: input.eventName,
+        eventId: input.eventId,
+        serviceEvent: Boolean(input.serviceEvent),
+        marketingConsent: Boolean(input.marketingConsent),
+      },
     });
     return { sent: true };
   } catch {
