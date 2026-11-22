@@ -8,10 +8,12 @@ import { Modal } from '@/lib/Modal';
 import { formatDateTime, formatKsh } from '@/lib/format';
 import { ErrorNotice, inputClass, listFrom, useResource, type ApiRow } from './shared';
 
-/** Reconciliation runs and exception resolution. */
+/** Reconciliation runs, read-only provider review aids and exception resolution. */
 export default function FinanceReconciliation() {
   const { can } = useEffectiveAccess();
   const runs = useResource<ApiRow>('/admin/finance/reconciliation/runs');
+  const payheroReview = useResource<ApiRow>('/admin/finance/reconciliation/payhero/review');
+  const c2bReview = useResource<ApiRow>('/admin/finance/reconciliation/c2b/review');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const items = useResource<ApiRow>(selectedId ? `/admin/finance/reconciliation/runs/${selectedId}/items` : null);
   const [form, setForm] = useState({ provider: 'PAYHERO', financeAccountId: '', periodStart: '', periodEnd: '' });
@@ -22,6 +24,8 @@ export default function FinanceReconciliation() {
 
   const runRows = listFrom(runs.data, 'runs');
   const itemRows = listFrom(items.data, 'items', 'exceptions');
+  const payheroRows = listFrom(payheroReview.data, 'suggestions');
+  const c2bRows = listFrom(c2bReview.data, 'suggestions');
   const selectedRun = runRows.find((row) => String(row.id) === selectedId) ?? null;
 
   const iso = (value: string) => (value ? new Date(value).toISOString() : undefined);
@@ -74,7 +78,7 @@ export default function FinanceReconciliation() {
       <PageHeader
         title="Reconciliation"
         subtitle="Compare provider payments with the internal ledger and resolve unmatched or mismatched entries."
-        actions={<Button variant="outline" onClick={() => void runs.reload()} disabled={runs.loading}>Refresh</Button>}
+        actions={<Button variant="outline" onClick={() => void Promise.all([runs.reload(), payheroReview.reload(), c2bReview.reload()])} disabled={runs.loading}>Refresh</Button>}
       />
 
       <Card>
@@ -156,6 +160,54 @@ export default function FinanceReconciliation() {
             ) : null}
           </Card>
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <h2 className="font-semibold">PayHero callback review</h2>
+          <p className="mt-1 mb-3 text-xs text-[var(--text-muted)]">
+            Read-only cross-check of PayHero callbacks against recorded payments. Suggestions only — nothing is settled or written.
+          </p>
+          <ErrorNotice error={payheroReview.error} onRetry={() => void payheroReview.reload()} />
+          {payheroReview.loading ? <p className="text-sm text-[var(--text-muted)]">Loading…</p> : null}
+          {!payheroReview.loading && payheroRows.length === 0 ? <p className="py-6 text-center text-sm text-[var(--text-muted)]">No PayHero events in the reviewed window.</p> : null}
+          {payheroRows.length > 0 ? (
+            <Table<ApiRow>
+              columns={[
+                { key: 'status', header: 'Finding', render: (row) => <Badge>{String(row.status ?? '—')}</Badge> },
+                { key: 'reference', header: 'Reference', render: (row) => String(row.checkoutRequestId ?? row.externalReference ?? row.payment?.providerId ?? '—') },
+                { key: 'amount', header: 'Amount', render: (row) => (row.amount === null || row.amount === undefined ? '—' : formatKsh(row.amount)) },
+                { key: 'matchedOn', header: 'Matched by', render: (row) => String(row.matchedOn ?? '—') },
+                { key: 'reasons', header: 'Note', render: (row) => <span className="text-xs text-[var(--text-muted)]">{Array.isArray(row.reasons) ? String(row.reasons[0] ?? '') : ''}</span> },
+              ]}
+              rows={payheroRows}
+            />
+          ) : null}
+          <p className="mt-3 text-xs text-[var(--text-muted)]">PayHero settles in KES. Original currency and amount are preserved for reconciliation.</p>
+        </Card>
+
+        <Card>
+          <h2 className="font-semibold">Daraja C2B review</h2>
+          <p className="mt-1 mb-3 text-xs text-[var(--text-muted)]">
+            Read-only candidate invoice matches for C2B confirmations (BillRefNumber). Amount mismatches are signals for review, never automatic settlement.
+          </p>
+          <ErrorNotice error={c2bReview.error} onRetry={() => void c2bReview.reload()} />
+          {c2bReview.loading ? <p className="text-sm text-[var(--text-muted)]">Loading…</p> : null}
+          {!c2bReview.loading && c2bRows.length === 0 ? <p className="py-6 text-center text-sm text-[var(--text-muted)]">No C2B confirmations in the reviewed window.</p> : null}
+          {c2bRows.length > 0 ? (
+            <Table<ApiRow>
+              columns={[
+                { key: 'status', header: 'Finding', render: (row) => <Badge>{String(row.status ?? '—')}</Badge> },
+                { key: 'transId', header: 'Trans ID', render: (row) => String(row.transId ?? '—') },
+                { key: 'ref', header: 'BillRefNumber', render: (row) => String(row.billRefNumber ?? '—') },
+                { key: 'invoice', header: 'Invoice', render: (row) => String(row.invoice?.number ?? '—') },
+                { key: 'reasons', header: 'Note', render: (row) => <span className="text-xs text-[var(--text-muted)]">{Array.isArray(row.reasons) ? String(row.reasons[0] ?? '') : ''}</span> },
+              ]}
+              rows={c2bRows}
+            />
+          ) : null}
+          <p className="mt-3 text-xs text-[var(--text-muted)]">Reference matching is advisory only. A human reviewer decides any action.</p>
+        </Card>
       </div>
 
       {resolving ? (

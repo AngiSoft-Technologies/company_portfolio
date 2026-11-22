@@ -6,6 +6,7 @@ import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 import { generateReconciliationReport, resolveReconciliationItem } from '../services/reconciliation';
 import { matchC2bConfirmations } from '../services/c2bMatching';
+import { reviewPayHeroEvents, summarizePayHeroReview } from '../services/payheroReconciliation';
 import { actor, allRows, objectOf, route } from './helpers';
 
 const VIEW_ROLES = ['ADMIN', 'SUPER_ADMIN', 'MANAGER'];
@@ -25,6 +26,14 @@ const resolveSchema = z.object({
 
 const c2bReviewSchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
+});
+
+const payheroReviewSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  // `z.coerce.boolean()` treats "false" as true, so parse explicitly.
+  includeOrphans: z.union([z.boolean(), z.string()])
+    .transform((value) => value === true || value === 'true' || value === '1')
+    .default(true),
 });
 
 export default function financeReconciliationRouter(prisma: Db) {
@@ -90,6 +99,41 @@ export default function financeReconciliationRouter(prisma: Db) {
       ...actor(req), action: 'finance.reconciliation.c2b_review', entity: 'ProviderEvent',
       entityId: null,
       meta: { eventsReviewed: events.length, summary },
+    });
+    return res.json({ suggestions, summary, readOnly: true });
+  }));
+
+  /**
+   * READ-ONLY PayHero review. Cross-checks PayHero ProviderEvents against the
+   * normalized Payment rows produced by applyPaymentOutcome. It never calls
+   * PayHero, writes nothing, posts nothing and never settles a payment —
+   * suggestions only, for a human finance reviewer.
+   */
+  router.get(['/reconciliation/payhero/review', '/payhero/review'], requireAccess('finance.reconciliation.view', VIEW_ROLES), route(async (req, res) => {
+    const { limit, includeOrphans } = payheroReviewSchema.parse(req.query);
+    const [events, payments] = await Promise.all([
+      allRows(
+        prisma.orm.public.ProviderEvent
+          .where({ provider: 'PAYHERO' } as any)
+          .orderBy((e: any) => e.createdAt.desc())
+          .limit(limit)
+          .all(),
+      ),
+      allRows(
+        prisma.orm.public.Payment
+          .where({ provider: 'PAYHERO' } as any)
+          .orderBy((p: any) => p.createdAt.desc())
+          .limit(limit)
+          .all(),
+      ),
+    ]);
+
+    const suggestions = reviewPayHeroEvents(events, payments, includeOrphans);
+    const summary = summarizePayHeroReview(suggestions);
+    await logAudit({
+      ...actor(req), action: 'finance.reconciliation.payhero_review', entity: 'ProviderEvent',
+      entityId: null,
+      meta: { eventsReviewed: events.length, paymentsReviewed: payments.length, summary },
     });
     return res.json({ suggestions, summary, readOnly: true });
   }));
