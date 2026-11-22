@@ -163,6 +163,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/system', label: 'System Panel', permission: 'administration.audit' },
       { to: '/security', label: 'Security & MFA', permission: 'administration.audit' },
       { to: '/audit-log', label: 'Audit Log', permission: 'administration.audit' },
+      { to: '/webhook-inbox', label: 'Webhook Inbox', permission: 'administration.audit', superAdminOnly: true },
     ],
   },
 ];

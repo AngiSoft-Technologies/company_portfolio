@@ -63,6 +63,7 @@ const TemplatesAdmin = lazy(() => import('@/features/communications/TemplatesAdm
 const RulesAdmin = lazy(() => import('@/features/communications/RulesAdmin'));
 const CommunicationContactsAdmin = lazy(() => import('@/features/communications/ContactsAdmin'));
 const CommunicationsSettings = lazy(() => import('@/features/communications/SettingsAdmin'));
+const WebhookInbox = lazy(() => import('@/features/communications/WebhookInbox'));
 const OpportunitiesAdmin = lazy(() => import('@/features/sales/OpportunitiesAdmin'));
 const QuotesAdmin = lazy(() => import('@/features/sales/QuotesAdmin'));
 const InvoicesAdmin = lazy(() => import('@/features/sales/InvoicesAdmin'));
@@ -172,6 +173,7 @@ export default function App() {
         <Route path="communications/rules" element={<RulesAdmin />} />
         <Route path="communications/contacts" element={<CommunicationContactsAdmin />} />
         <Route path="communications/settings" element={<CommunicationsSettings />} />
+        <Route path="webhook-inbox" element={<WebhookInbox />} />
         <Route path="expenses" element={<ExpensesAdmin />} />
         <Route path="leave-requests" element={<LeaveRequestsAdmin />} />
         <Route path="attendance" element={<AttendanceAdmin />} />
