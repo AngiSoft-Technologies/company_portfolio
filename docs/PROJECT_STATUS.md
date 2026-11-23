@@ -1,9 +1,10 @@
 # 🎉 ANGISOFT ADMIN CMS - PROJECT STATUS SUMMARY
 
-> **✅ COMPLETE** — Status summary frozen; "85% complete" claim **obsolete and inaccurate** (see `SYSTEM_REVIEW_AND_ROADMAP.md`, `ANGISOFT_DIGITAL_HQ_PLAN.md` §2).<br>
-> Current reality: ~45% admin, ~55% backend, ~50% public site. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §2, §14.
+> **✅ COMPLETE (frozen historical record — NOT current status)** — Status summary frozen; "85% complete" claim **obsolete and inaccurate** (see `SYSTEM_REVIEW_AND_ROADMAP.md`, `ANGISOFT_DIGITAL_HQ_PLAN.md` §2).<br>
+> All status fields, percentages, paths and URLs below are period artifacts; do not treat them as current.<br>
+> Everything below describes the Feb 2026 CMS session. Current status: `docs/PRODUCTION_READINESS.md`; canonical plan: `docs/ANGISOFT_DIGITAL_HQ_PLAN.md` §2, §14, §17.
 
-## 📊 Current Status: **85% COMPLETE & READY FOR TESTING**
+## 📊 Historical Status (2026-02-01 CMS session, superseded): **85% COMPLETE & READY FOR TESTING** — current gates: `docs/PRODUCTION_READINESS.md`
 
 ---
 
@@ -82,7 +83,7 @@
 
 ### Admin Creates Content Flow
 ```
-Admin Login → /admin/login
+Admin Login → /login (current path; /admin/login was historical)
   ↓
 Choose Content Type (Services/Projects/Blog/Testimonials)
   ↓
@@ -244,7 +245,7 @@ Before running tests, verify:
 - [ ] Frontend running: `npm run dev` in frontend folder
 - [ ] Database migrated: `npx prisma migrate dev`
 - [ ] No compilation errors in console
-- [ ] Admin login page loads: http://localhost:5174/admin/login
+- [ ] Admin login page loads: http://localhost:5174/login (current path; /admin/login was historical)
 - [ ] Admin dashboard loads: http://localhost:5174/admin (after login)
 - [ ] Blog menu visible in sidebar
 
@@ -327,7 +328,7 @@ Admin Panel (React)    Staff Portal (React)    Frontend (React)
 - ✅ Book a service with file uploads
 - ✅ Make payment (Stripe/PayPal/M-Pesa)
 - ✅ Track booking status
-- ✅ Submit contact form (to be implemented)
+- ✅ Submit contact form (historical note: "to be implemented"; now `POST /v1/contact-enquiries`) — see `docs/ANGISOFT_DIGITAL_HQ_PLAN.md` §6
 
 ---
 
@@ -377,8 +378,8 @@ Before moving to Contact integration:
 - Backend API handles all data persistence
 - Authentication and authorization working
 
-**Everything is ready for testing and deployment!** 🚀
+**Historical: everything was ready for testing after that CMS session; production readiness is NOT claimed — see `docs/PRODUCTION_READINESS.md`.** 🚀
 
 ---
 
-**Status:** ✅ DEVELOPMENT COMPLETE | 🧪 TESTING READY | 📋 DOCUMENTED
+**Historical status (2026-02-01):** ✅ SESSION DELIVERABLES COMPLETE | 🧪 TESTING READY | 📋 DOCUMENTED — current status: `docs/PRODUCTION_READINESS.md`

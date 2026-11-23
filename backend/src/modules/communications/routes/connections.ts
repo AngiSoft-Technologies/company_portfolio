@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireRecentMfaForSecretRotation } from '../../../shared/middleware/mfaStepUp';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { encryptSecret, maskSecret, hasEncryptionKey } from '../../../shared/services/secrets';
 import { logAudit } from '../../../shared/services/audit';
@@ -14,7 +15,7 @@ const upsertSchema = z.object({
   environment: z.enum(['LIVE','SANDBOX']).optional(),
   externalAccountId: z.string().optional().nullable(),
   capabilities: z.any().optional(),
-  config: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
   secret: z.string().optional(),
   secretKind: z.enum(['OAUTH_REFRESH','API_KEY','API_SECRET','WEBHOOK_SECRET','ACCESS_TOKEN','OTHER']).optional(),
   account: z.object({
@@ -40,7 +41,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     res.json({ connections: connections.map((c: any) => ({ ...c, secrets: (c.secrets || []).map((s: any) => ({ ...s, masked: '••••' })) })) });
   });
 
-  router.post('/', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfaForSecretRotation, async (req: AuthRequest, res) => {
     const body = upsertSchema.parse(req.body);
     const now = ts();
     const connection = await prisma.orm.public.ProviderConnection.create({
@@ -79,7 +80,7 @@ export default function communicationsConnectionsRouter(prisma: Db) {
     res.status(201).json({ connection: full ?? connection });
   });
 
-  router.patch('/:id', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.patch('/:id', requireAccess('communications.accounts.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfaForSecretRotation, async (req: AuthRequest, res) => {
     const body = upsertSchema.partial().parse(req.body);
     const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'COMMUNICATIONS' } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });

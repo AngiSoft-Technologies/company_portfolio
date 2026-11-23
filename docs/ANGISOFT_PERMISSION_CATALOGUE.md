@@ -43,6 +43,7 @@
 | `services.create` | Create Services | Create services | MEDIUM | global |
 | `services.manage_pricing` | Manage Service Pricing | Edit service pricing packages | MEDIUM | global |
 | `services.update` | Edit Services | Edit services | MEDIUM | global |
+| `services.update_assigned` | Edit Assigned Services | Edit services the employee is assigned to via ServiceTeamMember | MEDIUM | assigned |
 | `services.view` | View Services | View the service catalogue | LOW | global |
 
 ## Service Categories
@@ -294,6 +295,7 @@
 | Key | Display | Description | Risk | Scope |
 |---|---|---|---|---|
 | `reviews.moderate` | Moderate Reviews | Approve, reject, reply to testimonials | MEDIUM | global |
+| `reviews.moderate_assigned` | Moderate Assigned Reviews | Moderate only testimonials assigned to the employee in the review queue | MEDIUM | assigned |
 
 ## Pages
 
@@ -344,4 +346,4 @@
 
 ---
 
-Total: 163 permissions across 35 groups.
+Total: 213 permissions across 37 groups (verified against the registry on 2026-11-23; re-count before release signoff).

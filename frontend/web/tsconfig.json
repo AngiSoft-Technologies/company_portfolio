@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "allowJs": false,
     "checkJs": false,
     "strict": false,
@@ -9,6 +10,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    // Modern UI guidance uses ES2023 array methods such as `toSorted()`.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
       "@/*": [

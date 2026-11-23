@@ -7,8 +7,41 @@ import { FaCreditCard, FaMobileAlt, FaInfoCircle, FaExclamationTriangle } from '
 
 const DEPOSIT_KEY = 'phase7Deposit';
 
+type DepositBooking = {
+    details?: unknown;
+    currency?: string;
+    client?: { phone?: string; email?: string };
+    publicReference?: string;
+    depositPaidAt?: string | null;
+    status?: string;
+};
+type PaymentMethod = {
+    id: string;
+    label: string;
+    available?: boolean;
+    reason?: string;
+    note?: string;
+    requiresPhone?: boolean;
+    requiresEmail?: boolean;
+};
+type PaymentMethodsResponse = { data?: { methods?: PaymentMethod[] } };
+type DepositResponse = {
+    error?: string;
+    checkoutUrl?: string;
+    reference?: string;
+    orderId?: string;
+    provider?: string;
+    message?: string;
+};
+type DepositProps = {
+    booking: DepositBooking;
+    token: string;
+    onPaid: () => void;
+    depositOverride?: { amount: number; currency: string } | null;
+};
+
 /** Read the server-persisted deposit. Never trust a deposit amount from the URL. */
-export function readBookingDeposit(booking: any) {
+export function readBookingDeposit(booking: DepositBooking) {
     let raw = booking?.details;
     if (typeof raw === 'string') {
         try { raw = JSON.parse(raw); } catch { return null; }
@@ -47,13 +80,13 @@ export function clearDepositCheckout(reference: string) {
  * client portal. Only PayPal and the East Africa mobile-money rails can be
  * selected; the amount always comes from the booking's persisted details.
  */
-const BookingDepositPanel = ({ booking, token, onPaid, depositOverride }: any) => {
+const BookingDepositPanel = ({ booking, token, onPaid, depositOverride }: DepositProps) => {
     const { colors } = useTheme();
     const deposit = useMemo(
         () => depositOverride || readBookingDeposit(booking),
         [booking, depositOverride],
     );
-    const [methods, setMethods] = useState<any[]>([]);
+    const [methods, setMethods] = useState<PaymentMethod[]>([]);
     const [method, setMethod] = useState('');
     const [phone, setPhone] = useState(String(booking?.client?.phone || ''));
     const [email, setEmail] = useState(String(booking?.client?.email || ''));
@@ -65,18 +98,18 @@ const BookingDepositPanel = ({ booking, token, onPaid, depositOverride }: any) =
     useEffect(() => {
         let active = true;
         safeGet('/payments/methods')
-            .then((res: any) => {
+            .then((res: PaymentMethodsResponse) => {
                 if (!active) return;
                 const list = Array.isArray(res?.data?.methods) ? res.data.methods : [];
                 setMethods(list);
-                const first = list.find((m: any) => m.available);
+                const first = list.find((m) => m.available);
                 if (first) setMethod(first.id);
             })
             .finally(() => { if (active) setLoadingMethods(false); });
         return () => { active = false; };
     }, []);
 
-    const selected = methods.find((m: any) => m.id === method);
+    const selected = methods.find((m) => m.id === method);
     const needsPhone = Boolean(selected?.requiresPhone);
     const needsEmail = Boolean(selected?.requiresEmail);
     const canPay = Boolean(selected?.available && !paying
@@ -90,7 +123,7 @@ const BookingDepositPanel = ({ booking, token, onPaid, depositOverride }: any) =
         setStatus('');
         try {
             const query = `?token=${encodeURIComponent(token)}`;
-            const data: any = await apiPost(
+            const data: DepositResponse = await apiPost(
                 `/bookings/reference/${encodeURIComponent(booking.publicReference)}/deposit${query}`,
                 {
                     method: selected.id,
@@ -147,7 +180,7 @@ const BookingDepositPanel = ({ booking, token, onPaid, depositOverride }: any) =
                         onChange={(e) => setMethod(e.target.value)}
                         className="booking-deposit-select"
                     >
-                        {methods.map((m: any) => (
+                        {methods.map((m) => (
                             <option key={m.id} value={m.id} disabled={!m.available}>
                                 {m.label}{m.available ? '' : ` — ${m.reason || 'unavailable'}`}
                             </option>

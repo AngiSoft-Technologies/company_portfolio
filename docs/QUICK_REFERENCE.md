@@ -10,14 +10,14 @@
 Web (public site + client portal):  http://localhost:5173
 Admin (staff/ERP app):              http://localhost:5174
 Admin login:                        http://localhost:5174/login
-Backend API:                        http://localhost:5000/api
+Backend API:                        http://localhost:5000/v1   (no /api alias; see docs/NETLIFY.md §Versioned API base)
 ```
 
 ### Production
 ```
 Web:        https://angisoft.co.ke
 Admin:      https://admin.angisoft.co.ke
-API:        https://api.angisoft.co.ke/api   (Netlify proxies /v1/* same-origin)
+API:        https://api.angisoft.co.ke/v1   (browser apps call same-origin /v1/* via the Netlify proxy; see docs/NETLIFY.md §Routing)
 CDN uploads: https://cdn.angisoft.co.ke       (Tigris bucket)
 ```
 

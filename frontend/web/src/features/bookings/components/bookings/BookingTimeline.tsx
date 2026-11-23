@@ -35,8 +35,15 @@ const BookingTimeline = ({ events = [] }) => {
     if (!events.length) {
         return <p className="booking-timeline-empty">No activity recorded yet.</p>;
     }
-    const ordered = [...events].sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    // Date.parse normalizes ISO timestamps; the NaN fallback keeps unparsable
+    // rows in their original API order instead of collapsing to 0 and jumbling
+    // the timeline.
+    const ordered = events.toSorted(
+        (a, b) => {
+            const timeA = Date.parse(a.createdAt);
+            const timeB = Date.parse(b.createdAt);
+            return (Number.isNaN(timeA) ? 0 : timeA) - (Number.isNaN(timeB) ? 0 : timeB);
+        }
     );
     return (
         <ul className="booking-timeline">

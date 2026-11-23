@@ -41,7 +41,7 @@ export default function companyStatsRouter(prisma: Db = db) {
 
     const createHandler = asyncHandler(async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const stat = await prisma.orm.public.CompanyStat.create({
             id: newId(),
             updatedAt: ts(),
@@ -61,7 +61,7 @@ export default function companyStatsRouter(prisma: Db = db) {
 
     const updateHandler = asyncHandler(async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const stat = await prisma.orm.public.CompanyStat.where({ id: req.params.id }).update(payload);

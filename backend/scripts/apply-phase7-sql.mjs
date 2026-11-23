@@ -9,6 +9,7 @@ const files = [
   'prisma/migrations/20261122180000_backfill_employee_emails/migration.sql',
   'prisma/migrations/20261122190000_phase7_reconciliation_templates/migration.sql',
   'prisma/migrations/20261122200000_money_decimal_normalization/migration.sql',
+  'prisma/migrations/20261122210000_phase7_completion/migration.sql',
 ];
 
 const url = process.env.DATABASE_URL;

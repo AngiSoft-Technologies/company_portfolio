@@ -194,7 +194,7 @@ Client → /book → Select Service & Pay
 
 ### Test 1: Admin Creates Blog Post
 ```bash
-1. Go to http://localhost:5174/admin/login
+1. Go to http://localhost:5174/login (current path; /admin/login was historical)
 2. Login with admin credentials
 3. Click "Blog Posts" in sidebar
 4. Click "+ New Blog Post"

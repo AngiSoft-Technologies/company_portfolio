@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../../../db';
 import { AuthRequest, requireAuth } from '../../../shared/middleware/auth';
+import { issueMfaStepUpClaim } from '../../../shared/middleware/mfaStepUp';
 import { logAudit } from '../../../shared/services/audit';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
@@ -39,6 +40,16 @@ const mfaLimiter = rateLimit({
   validate: false,
 });
 
+// Step-up attempts are authenticated; key by subject so one user cannot be
+// throttled (or throttle others) purely because of a shared NAT address.
+const stepUpLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => (req as AuthRequest).user?.sub || req.ip || 'anonymous',
+  message: { error: 'Too many MFA step-up attempts' },
+  validate: false,
+});
+
 const startSchema = z.object({
   loginTicket: z.string().min(10),
   method: z.enum(['TOTP', 'EMAIL', 'SMS', 'WHATSAPP', 'PASSKEY', 'BACKUP']),
@@ -61,7 +72,7 @@ const setupTicketSchema = z.object({
 /** Start a second-factor challenge after a successful password check. */
 router.post('/start', mfaLimiter, async (req, res) => {
   const parsed = startSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { loginTicket, method } = parsed.data;
   const employee = await resolveLoginTicket(loginTicket);
   if (!employee) return res.status(401).json({ error: 'Login session expired. Sign in again.' });
@@ -99,7 +110,7 @@ router.post('/start', mfaLimiter, async (req, res) => {
 /** Complete login after any enrolled second factor succeeds. */
 router.post('/verify', mfaLimiter, async (req, res) => {
   const parsed = verifySchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { loginTicket, method, challengeId, code, assertion, remember } = parsed.data;
   const employee = await resolveLoginTicket(loginTicket);
   if (!employee) return res.status(401).json({ error: 'Login session expired. Sign in again.' });
@@ -136,11 +147,93 @@ router.post('/verify', mfaLimiter, async (req, res) => {
   res.json({ accessToken: access, mfaVerified: true });
 });
 
+// ─── Fresh-MFA claim for high-risk actions ───────────────────────────────
+// A normal login MFA is not enough for payouts/refunds/secret rotation. These
+// endpoints re-verify an enrolled factor on an existing session and issue a
+// 5-minute, subject-bound claim that `requireRecentMfa` accepts.
+
+const stepUpMethodSchema = z.enum(['TOTP', 'EMAIL', 'SMS', 'WHATSAPP', 'PASSKEY', 'BACKUP']);
+const stepUpStartSchema = z.object({ method: stepUpMethodSchema });
+const stepUpVerifySchema = z.object({
+  method: stepUpMethodSchema,
+  challengeId: z.string().optional(),
+  code: z.string().optional(),
+  assertion: z.any().optional(),
+});
+
+router.post('/step-up/start', requireAuth, stepUpLimiter, async (req: AuthRequest, res) => {
+  const parsed = stepUpStartSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+  const { method } = parsed.data;
+  const employee = await prisma.orm.public.Employee.where({ id: req.user!.sub }).first();
+  if (!employee) return res.status(404).json({ error: 'Unknown user' });
+
+  const factors = await enrolledFactors(employee as any);
+  if (!factors.includes(method) && method !== 'BACKUP') {
+    return res.status(400).json({ error: `${method} is not enrolled for this account` });
+  }
+
+  if (method === 'TOTP' || method === 'BACKUP') {
+    return res.json({ method, challengeId: null, message: method === 'TOTP' ? 'Enter your authenticator code' : 'Enter an unused backup code' });
+  }
+  if (method === 'PASSKEY') {
+    const options = await authenticationOptions(employee as any);
+    if (!options) return res.status(400).json({ error: 'No passkey is enrolled for this account' });
+    return res.json({ method, ...options });
+  }
+
+  try {
+    // No destination override: step-up codes only go to the factor already
+    // enrolled on this account, never to an address supplied in the request.
+    const challenge = await createOtpChallenge(employee as any, method);
+    return res.json({ method, challengeId: challenge.challengeId, destination: challenge.destination, expiresAt: challenge.expiresAt });
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+router.post('/step-up/verify', requireAuth, stepUpLimiter, async (req: AuthRequest, res) => {
+  const parsed = stepUpVerifySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+  const { method, challengeId, code, assertion } = parsed.data;
+  const employee = await prisma.orm.public.Employee.where({ id: req.user!.sub }).first();
+  if (!employee) return res.status(404).json({ error: 'Unknown user' });
+
+  let verified = false;
+  if (method === 'TOTP') {
+    verified = !!code && !!employee.twoFactorSecret && employee.twoFactorEnabled && verifyToken(employee.twoFactorSecret, code);
+  } else if (method === 'BACKUP') {
+    verified = !!code && (await verifyBackupCode(employee as any, code));
+  } else if (method === 'EMAIL' || method === 'SMS' || method === 'WHATSAPP') {
+    verified = !!challengeId && !!code && (await verifyOtpChallenge(challengeId, code, { employeeId: employee.id, method }));
+  } else if (method === 'PASSKEY') {
+    // verifyAuthentication checks that the challenge belongs to this employee.
+    verified = !!challengeId && !!assertion && Boolean(await verifyAuthentication(employee as any, challengeId, assertion));
+  }
+
+  if (!verified) {
+    if (challengeId && method !== 'PASSKEY') await invalidateChallenge(challengeId).catch(() => undefined);
+    await logAudit({
+      action: 'mfa.step_up_failed', entity: 'Employee', entityId: employee.id,
+      actorId: employee.id, actorRole: employee.role as any, meta: { method },
+    });
+    return res.status(401).json({ error: 'Invalid or expired verification code' });
+  }
+
+  const issued = issueMfaStepUpClaim({ sub: employee.id, method });
+  // Never audit the claim itself — only its non-secret identifier.
+  await logAudit({
+    action: 'mfa.step_up_issued', entity: 'Employee', entityId: employee.id,
+    actorId: employee.id, actorRole: employee.role as any, meta: { method, jti: issued.jti },
+  });
+  res.json({ claim: issued.claim, expiresAt: issued.expiresAt, method, mfaVerified: true });
+});
+
 // ─── First-time setup (password ticket only — no dashboard access yet) ───
 
 router.post('/setup/totp/start', mfaLimiter, async (req, res) => {
   const parsed = setupTicketSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await resolveSetupTicket(parsed.data.setupTicket);
   if (!employee) return res.status(401).json({ error: 'Setup session expired. Sign in again.' });
   const secret = generateSecret();
@@ -150,7 +243,7 @@ router.post('/setup/totp/start', mfaLimiter, async (req, res) => {
 
 router.post('/setup/totp/confirm', mfaLimiter, async (req, res) => {
   const parsed = setupTicketSchema.extend({ code: z.string().min(1) }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await resolveSetupTicket(parsed.data.setupTicket);
   if (!employee) return res.status(401).json({ error: 'Setup session expired. Sign in again.' });
   const row = await prisma.orm.public.Employee.where({ id: employee.id }).first();
@@ -170,7 +263,7 @@ router.post('/setup/totp/confirm', mfaLimiter, async (req, res) => {
 
 router.post('/setup/passkey/options', mfaLimiter, async (req, res) => {
   const parsed = setupTicketSchema.extend({ linkPhone: z.boolean().optional() }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await resolveSetupTicket(parsed.data.setupTicket);
   if (!employee) return res.status(401).json({ error: 'Setup session expired. Sign in again.' });
   res.json(await registrationOptions(employee as any, !!parsed.data.linkPhone));
@@ -181,7 +274,7 @@ router.post('/setup/passkey/verify', mfaLimiter, async (req, res) => {
     challengeId: z.string().min(1),
     response: z.any(),
   }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await resolveSetupTicket(parsed.data.setupTicket);
   if (!employee) return res.status(401).json({ error: 'Setup session expired. Sign in again.' });
   const registered = await verifyRegistration(employee as any, parsed.data.challengeId, parsed.data.response);
@@ -252,7 +345,7 @@ router.post('/totp/confirm', requireAuth, async (req: AuthRequest, res) => {
 
 router.post('/otp/start', requireAuth, async (req: AuthRequest, res) => {
   const parsed = z.object({ method: z.enum(['EMAIL', 'SMS', 'WHATSAPP']), destination: z.string().optional() }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await prisma.orm.public.Employee.where({ id: req.user!.sub }).first();
   if (!employee) return res.status(404).json({ error: 'Unknown user' });
   try {
@@ -265,7 +358,7 @@ router.post('/otp/start', requireAuth, async (req: AuthRequest, res) => {
 
 router.post('/otp/confirm', requireAuth, async (req: AuthRequest, res) => {
   const parsed = z.object({ method: z.enum(['EMAIL', 'SMS', 'WHATSAPP']), challengeId: z.string(), code: z.string() }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const employee = await prisma.orm.public.Employee.where({ id: req.user!.sub }).first();
   if (!employee) return res.status(404).json({ error: 'Unknown user' });
   const otpChallenge = await prisma.orm.public.MfaChallenge.where({ id: parsed.data.challengeId }).first();

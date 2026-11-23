@@ -10,8 +10,20 @@ type MoneyType = {
   available: boolean; reason?: string; description: string; requires?: string[];
 };
 type Catalogue = { flows: string[]; byFlow: Record<string, number>; available: number; total: number; types: MoneyType[] };
+type ApiError = { message?: string };
+type PayoutRow = {
+  id?: string;
+  reference?: string;
+  provider?: string;
+  channel?: string;
+  amount?: number | string;
+  status?: string;
+  createdAt?: string;
+};
 
 const inputClass = 'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm';
+const messageOf = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : (error as ApiError | null)?.message || fallback;
 
 /**
  * Each read-only status lookup expects a different identifier. Mapping the
@@ -38,7 +50,7 @@ export default function MoneyMovementAdmin() {
   const canInitiate = can('payments.reconcile');
   const isDarajaAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(String(access?.systemRole ?? ''));
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null);
-  const [payouts, setPayouts] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -50,7 +62,7 @@ export default function MoneyMovementAdmin() {
   const [statusType, setStatusType] = useState('PAYHERO_STATUS');
   const [statusId, setStatusId] = useState('');
   const [statusWalletType, setStatusWalletType] = useState('payment_wallet');
-  const [statusResult, setStatusResult] = useState<any>(null);
+  const [statusResult, setStatusResult] = useState<unknown>(null);
   const statusIdField = STATUS_ID_FIELDS[statusType] ?? { key: '', label: 'Identifier' };
 
   const load = async () => {
@@ -58,13 +70,13 @@ export default function MoneyMovementAdmin() {
     try {
       const [c, p] = await Promise.all([
         apiFetch('/admin/money/types') as Promise<Catalogue>,
-        apiFetch('/admin/money/payouts?limit=25').catch(() => ({ payouts: [] })) as Promise<{ payouts: any[] }>,
+        apiFetch('/admin/money/payouts?limit=25').catch(() => ({ payouts: [] })) as Promise<{ payouts: PayoutRow[] }>,
       ]);
       setCatalogue(c);
       setPayouts(Array.isArray(p?.payouts) ? p.payouts : []);
       setPayout((v) => ({ ...v, type: v.type || (c.types || []).find((t) => ['B2C', 'B2B'].includes(t.flow) && t.available)?.id || '' }));
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load money movement catalogue');
+    } catch (error: unknown) {
+      toast.error(messageOf(error, 'Failed to load money movement catalogue'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +84,7 @@ export default function MoneyMovementAdmin() {
 
   useEffect(() => { void load(); }, []);
 
-  const submit = async (path: string, body: unknown, success: string, onDone?: (r: any) => void) => {
+  const submit = async (path: string, body: unknown, success: string, onDone?: (r: unknown) => void) => {
     if (!canInitiate) {
       toast.error('You do not have permission to move money.');
       return null;
@@ -84,8 +96,8 @@ export default function MoneyMovementAdmin() {
       onDone?.(res);
       await load();
       return res;
-    } catch (e: any) {
-      toast.error(e?.message || 'Request failed');
+    } catch (error: unknown) {
+      toast.error(messageOf(error, 'Request failed'));
       return null;
     } finally {
       setBusy(false);
@@ -105,8 +117,8 @@ export default function MoneyMovementAdmin() {
       if (statusType === 'PAYHERO_BALANCE') params.set('walletType', statusWalletType);
       const res = await apiFetch(`/admin/money/status/${statusType}?${params.toString()}`);
       setStatusResult(res);
-    } catch (e: any) {
-      setStatusResult({ error: e?.message || 'Status lookup failed' });
+    } catch (error: unknown) {
+      setStatusResult({ error: messageOf(error, 'Status lookup failed') });
     } finally {
       setBusy(false);
     }

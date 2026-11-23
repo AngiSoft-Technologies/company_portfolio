@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { clientApiGet, clientApiPost } from '@/lib/httpClient';
+import { portalGet, portalPost } from '@/features/client-portal/lib/portalSession';
 import { useTheme } from '@/lib/theme';
 import GlassmorphismCard from '@/features/marketing/components/modern/GlassmorphismCard';
 import ScrollReveal from '@/features/marketing/components/modern/ScrollReveal';
@@ -14,7 +14,7 @@ const ClientProjectTracking = () => {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const loadProject = useCallback(() => clientApiGet(`/client-portal/projects/${id}`).then((response) => setProject(response.project)), [id]);
+  const loadProject = useCallback(() => portalGet(`/client-portal/projects/${id}`).then((response) => setProject(response.project)), [id]);
 
   useEffect(() => {
     loadProject().finally(() => setLoading(false));
@@ -23,7 +23,7 @@ const ClientProjectTracking = () => {
   const submitComment = async (event) => {
     event.preventDefault();
     if (!comment.trim()) return;
-    await clientApiPost(`/client-portal/projects/${id}/comments`, { body: comment.trim() });
+    await portalPost(`/client-portal/projects/${id}/comments`, { body: comment.trim() });
     setComment('');
     await loadProject();
   };
@@ -63,7 +63,7 @@ const ClientProjectTracking = () => {
               <div className="space-y-4">
                 {project.milestones?.map((milestone, index) => (
                   <div key={milestone.id} className="flex gap-4 rounded-2xl p-4" style={{ backgroundColor: `${colors.primary}08`, border: `1px solid ${colors.border}` }}>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-black text-white" style={{ background: milestone.status === 'COMPLETED' ? colors.success : colors.primary }}>{index + 1}</div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-black text-[var(--color-white)]" style={{ background: milestone.status === 'COMPLETED' ? colors.success : colors.primary }}>{index + 1}</div>
                     <div>
                       <h3 className="font-bold" style={{ color: colors.text }}>{milestone.title}</h3>
                       <p className="text-sm font-semibold" style={{ color: colors.textSecondary }}>{milestone.status.replaceAll('_', ' ')}</p>
@@ -92,7 +92,7 @@ const ClientProjectTracking = () => {
               <h2 className="mb-5 text-2xl font-black" style={{ color: colors.text }}>Comments</h2>
               <form onSubmit={submitComment} className="mb-5 space-y-3">
                 <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={4} placeholder="Send a message to the AngiSoft team..." className="w-full rounded-2xl border p-4 outline-none" style={{ borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }} />
-                <button className="rounded-full px-5 py-3 font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>Send comment</button>
+                <button className="rounded-full px-5 py-3 font-bold text-[var(--color-white)]" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>Send comment</button>
               </form>
               <div className="space-y-3">
                 {project.comments?.map((item) => (

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaPhoneAlt, FaEnvelope, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
 import { apiGet, apiPost } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import '@/styles/marketing/ContactSection.css';
 
 type ContactSettings = {
@@ -40,7 +41,7 @@ const ContactSection = () => {
   useEffect(() => {
     let active = true;
     Promise.all([
-      apiGet<ContactSettings>('/site/contact'),
+      cachedGet<ContactSettings>('/site/contact'),
       apiGet<{ contact?: HomeContact }>('/site/home-content'),
     ])
       .then(([contactSettings, homeContent]) => {

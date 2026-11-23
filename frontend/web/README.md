@@ -8,8 +8,8 @@ React + Vite single-page application for the AngiSoft Technologies public websit
 ## Tech Stack
 
 - **React 19** with React Router v7
-- **Vite 7** for build and dev server
-- **Tailwind CSS 4** via `@tailwindcss/postcss` (CSS-first; `@import "tailwindcss"`)
+- **Vite 8.3.8** (`@vitejs/plugin-react` 6.3.0) for build and dev server
+- **Tailwind CSS 4** via the first-party `@tailwindcss/vite` plugin (`tailwindcss()`); `@tailwindcss/postcss` and `autoprefixer` are removed
 - **MUI 7** available for complex forms
 - **@angisoft/api-client** for API calls (in-memory tokens, refresh cookie flow, CSRF)
 - **@angisoft/ui** for design tokens, themes, components
@@ -36,7 +36,7 @@ frontend/web/
 │   ├── main.tsx         Entry point
 │   └── index.css        Tailwind import + CSS variables
 ├── index.html           Entry point
-├── vite.config.ts       Vite + proxy (/api, /uploads, /socket.io → :5000)
+├── vite.config.ts       Vite + proxy (/v1 canonical, /uploads, /socket.io → :5000; /api is legacy compatibility)
 ├── netlify.toml         Netlify config (redirects: /uploads/* → API, SPA fallback)
 └── package.json         angisoft-web
 ```
@@ -45,7 +45,7 @@ frontend/web/
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173 (proxies /api → localhost:5000)
+npm run dev          # http://localhost:5173 (proxies /v1 → localhost:5000; /api is legacy-only)
 ```
 
 ### Available Scripts
@@ -61,7 +61,8 @@ npm run dev          # http://localhost:5173 (proxies /api → localhost:5000)
 ### Environment Variables
 
 Optional — create a `.env` file in this directory to point the Vite dev proxy at
-a non-default backend:
+a non-default backend. Application requests use `/v1/*`; `/api` remains a legacy
+compatibility proxy only:
 
 ```
 VITE_API_BASE_URL=http://localhost:5000

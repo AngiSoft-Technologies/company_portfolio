@@ -169,7 +169,15 @@ export default function RuntimeConfigAdmin() {
                               value={draft}
                               autoComplete="off"
                               onChange={(e) => setDraft(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter' && !saving) void save(item); }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  // IME-safe: Enter can confirm a composition candidate.
+                                  // React's synthetic KeyboardEvent type omits isComposing; the DOM event has it.
+                                  const composing = ((e.nativeEvent as KeyboardEvent).isComposing) || e.keyCode === 229;
+                                  if (composing) return;
+                                  if (!saving) void save(item);
+                                }
+                              }}
                               placeholder={item.kind === 'secret' ? 'Paste new value' : 'Value'}
                               aria-label={`New value for ${item.key}`}
                               className={inputClass}

@@ -19,7 +19,7 @@ const beneficiarySchema = z.object({
   networkCode: z.string().optional().nullable(),
   currency: z.string().min(3).default('KES'),
   isActive: z.boolean().default(true),
-  metadata: z.record(z.any()).optional().nullable(),
+  metadata: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 export default function financeBeneficiariesRouter(prisma: Db) {

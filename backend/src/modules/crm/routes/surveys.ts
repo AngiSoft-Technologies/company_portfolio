@@ -62,7 +62,7 @@ export default function surveysRouter(prisma: Db = db) {
 
     router.post('/', requireAuth, requireAccess('surveys.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const survey = await prisma.orm.public.Survey.create({
             id: newId(),
             title: parsed.data.title,
@@ -76,7 +76,7 @@ export default function surveysRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requireAccess('surveys.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) {
             if (v === undefined) continue;

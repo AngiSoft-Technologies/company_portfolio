@@ -34,7 +34,7 @@ export default function inviteRouter(prisma: Db) {
 
     router.post('/', requireAuth, requireAccess('staff.invite', ['ADMIN']), async (req: AuthRequest, res) => {
         const parsed = inviteSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { firstName, lastName, role, phone } = parsed.data;
         const email = normalizeEmail(parsed.data.email);
         const existing = await findEmployeeByEmail(prisma, email);
@@ -70,7 +70,7 @@ export default function inviteRouter(prisma: Db) {
 
     router.post('/accept', async (req, res) => {
         const parsed = acceptSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { token, password, firstName, lastName } = parsed.data;
         const emp = await prisma.orm.public.Employee.where({ inviteToken: token }).first();
         if (!emp || emp.passwordHash || emp.acceptedAt) return res.status(400).json({ error: 'Invalid token' });

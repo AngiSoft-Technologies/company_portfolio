@@ -1,7 +1,6 @@
 import { defineConfig, type UserConfigFn, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcssPostcss from '@tailwindcss/postcss';
-import autoprefixer from 'autoprefixer';
+import tailwindcss from '@tailwindcss/vite';
 import * as path from 'node:path';
 
 function normalizeOrigin(origin?: string): string {
@@ -14,7 +13,7 @@ function normalizeOrigin(origin?: string): string {
  * - proxies /v1, /uploads, /socket.io to the backend (VITE_API_BASE_URL or
  *   http://localhost:5000 in dev)
  * - alias `@` → <context root>/src
- * - Tailwind 4 via @tailwindcss/postcss
+ * - Tailwind 4 via the first-party @tailwindcss/vite plugin
  */
 export function createAngiAppConfig(options: { appDir: string; port?: number }): UserConfigFn {
   const appDir = options.appDir;
@@ -25,7 +24,7 @@ export function createAngiAppConfig(options: { appDir: string; port?: number }):
     const target = normalizeOrigin(rawTarget);
 
     return {
-      plugins: [react()],
+      plugins: [react(), tailwindcss()],
       base: '/',
       root: appDir,
       server: {
@@ -36,11 +35,6 @@ export function createAngiAppConfig(options: { appDir: string; port?: number }):
           '/v1': { target, changeOrigin: true, secure: false },
           '/uploads': { target, changeOrigin: true, secure: false },
           '/socket.io': { target, changeOrigin: true, secure: false, ws: true },
-        },
-      },
-      css: {
-        postcss: {
-          plugins: [tailwindcssPostcss(), autoprefixer()],
         },
       },
       resolve: {

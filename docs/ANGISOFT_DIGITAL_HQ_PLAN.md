@@ -3,12 +3,12 @@
 > **🟢 CANONICAL** — Single source of truth for product delivery, permission model, department workspaces, portfolio studio, and document reconciliation.  
 > Supersedes: all prior roadmaps, status summaries, implementation plans.  
 > Derived from: Live code, Prisma contract, `AGENTS.md` (§Platform Restructure Plan), `REVAMP_PLAN.md`, 2026-08-14 system review.  
-> Last verified: 2026-11-16 (commit `e9af194`)
+> Last verified: 2026-11-23 (current status in `docs/PRODUCTION_READINESS.md`)
 
 **Status:** **Canonical Plan — Single Source of Truth**  
 **Authority:** This document supersedes all prior roadmaps, status summaries, and implementation plans.  
 **Derived from:** Live code, Prisma contract, `AGENTS.md` (§Platform Restructure Plan), `REVAMP_PLAN.md`, and the 2026-08-14 system review.  
-**Last verified:** 2026-11-16 (commit `e9af194`) — **Phase 0 implemented** (§2.2).
+**Last verified:** 2026-11-23 (current status in `docs/PRODUCTION_READINESS.md`) — **Phase 0 implemented** (§2.2).
 
 ---
 
@@ -25,28 +25,30 @@ All backed by a single PostgreSQL database, a single API, shared TypeScript pack
 
 ---
 
-## 2. Current Reality (Verified 2026-11-16)
+## 2. Current Reality (2026-11-23 code-level verification; live gates in `PRODUCTION_READINESS.md`)
 
-> Phase 0 shipped on 2026-11-16. The statuses below describe the platform **as
-> found**; see §2.2 for what has since been closed and what remains.
+> The table below summarizes current code-level delivery. Earlier 2026-11-16
+> as-found claims are superseded; the historical P0 list in §2 is retained for
+> rationale only. §2.1/§2.2–§2.4 and `docs/PRODUCTION_READINESS.md` carry
+> delivery status and external blockers.
 
 | Layer | Status | Evidence |
 |-------|--------|----------|
-| **Monorepo structure** | ✅ Complete (Phases 0–4) | `AGENTS.md` — pnpm + Turborepo, 9 shared packages, 2 frontend apps, 10 backend modules |
-| **Public website** | 🟡 ~50% | 37 routes, 373 TSX files; content DB-driven; About-page work in progress (uncommitted) |
-| **Admin application** | 🟡 ~45% | 26 screens, 9 feature areas; API integration broken in production (no Bearer tokens, no `/v1/*` proxy) |
-| **Backend API** | 🟡 ~55% | 279 endpoints, 10 domain modules, 6 shared areas; effective-permission resolver exists but not wired to middleware |
-| **Database schema** | ✅ Rich (69 models) | Prisma 8 contract at `backend/src/prisma/contract.prisma`; Departments, Positions, Assignments, EmployeePermission, PermissionPreset all present |
-| **Authentication** | 🟡 ~35% | JWT + refresh cookies exist; in-memory token store in `@angisoft/api-client`; **2FA endpoints without UI; CSRF middleware exists but not mounted**; AdminLogin discards access token |
-| **RBAC** | 🟡 ~25% | Three incompatible permission vocabularies (seed, hardcoded catalogue, route guards); canonical `getEffectivePermissions` resolver built but not authoritative |
-| **Client portal** | 🟡 ~20% | Magic-link JWT only; no real login, no refresh, no testimonial submission |
-| **CMS coverage** | 🟡 ~60% | Most content editable; **Pricing packages, Industries admin, Solutions admin now exist** but pricing still JSON-based; CompanyStats, Announcements missing from current admin |
-| **CRM / Sales** | 🟡 ~15% | Leads, enquiries, tickets, chat exist; **no pipeline, opportunities, quotes, 360 view** |
-| **E-commerce / ERP / HR** | ❌ 0% | No models, routes, or UI for orders, invoices, expenses, contracts, candidates, leave |
-| **Staff portfolios** | 🟡 ~35% | Frontend supports section ordering/visibility/themes; **backend does not persist most customization** |
-| **Operations / CI** | 🟡 ~20% | GitHub Actions builds/deploys **without lint, typecheck, or tests**; backend tests hit production DB |
+| **Monorepo structure** | ✅ Complete (Phases 0–4, 6; Phase 7 code complete) | pnpm + Turborepo, 10 shared packages, 2 frontend apps, 15 backend modules (100 API mounts) |
+| **Public website** | ✅ Implemented | 41 web route entries; content DB-driven; build-time prerender + generated sitemap (15 URLs) |
+| **Admin application** | ✅ Implemented | 86 admin route entries (legal-pages + notifications added in the final gap pass); same-origin `/v1/*` proxy configured in both Netlify apps; deployment re-verification remains open |
+| **Backend API** | ✅ Implemented (code) | 100 API mounts, 15 backend modules; effective-permission resolver wired through `requireAccess`/`requirePermission` |
+| **Database schema** | ✅ Rich (148 models) | Prisma 8 contract at `backend/src/prisma/contract.prisma`; Phase 7 schema applied live; HR additive migration still unapplied live |
+| **Authentication** | ✅ Implemented (code) | JWT + refresh cookies; MFA UI/endpoints; CSRF mounted; silent refresh relies on same-origin `/v1/*` proxy |
+| **RBAC** | ✅ Implemented (code) | Canonical 213-key / 37-group registry; DENY-first `requireAccess` resolver; production seed still unapplied |
+| **Client portal** | ✅ Implemented (code) | Magic links plus password login, dedicated refresh cookie, logout and testimonial form |
+| **CMS coverage** | ✅ Implemented (code) | HomeSections, CompanyStats, Pricing, Industries, Solutions and other content admin surfaces present |
+| **CRM / Sales** | ✅ Implemented (code) | Leads/enquiries/tickets/chat plus opportunities, quotes, invoices and sales pipeline UI |
+| **ERP / HR** | 🟡 Implemented v1 (code) | Expenses, leave, attendance, payroll, approvals, recruiting/contracts/orders; HR additive migration not applied live |
+| **Staff portfolios** | ✅ Implemented (code) | Portfolio studio persists customization, publish/version flow and public rendering |
+| **Operations / CI** | ✅ Code gates green | CI runs lint → typecheck → test before deploy; mocked suite 66 files / 606 tests; disposable DB integration suite still blocked externally |
 
-### 2.1 Delivery status ledger (updated 2026-11-16)
+### 2.1 Delivery status ledger (updated 2026-11-23)
 
 Track what the canonical phases have actually delivered, so this document always
 answers "where are we?" without reading code.
@@ -58,11 +60,13 @@ answers "where are we?" without reading code.
 | Phase 2 — Department Workspaces | ✅ Implemented | All department workspaces + permission registry live; CRM/invoicing/expenses/leave/attendance/payroll-v1 shipped |
 | Phase 3 — Portfolio Studio | ✅ Implemented | `EmployeePortfolioConfig` + publish/version flow + studio editor (drag-order, themes, testimonials/featuredWork/caseStudies/certifications/CV editors) + public rendering + moderation |
 | Phase 4 — Automation & Intelligence | ✅ Implemented | Workflow triggers (booking→project, payment→invoice, SLA→alert), approval rules + multi-step approval chains (`ApprovalRequest`), cross-dept reports, AI assist, renewals + automation worker |
-| Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets, security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 11 specs); Lighthouse + admin route×theme sweep remain |
+| Phase 5 — Production Hardening | 🔄 Mostly done | Prerender, code splitting, bundle budgets (green), security hardening, observability, backup schedule + drill, backend lifecycle tests, browser-level E2E (`e2e/` Playwright, 30/30 passing incl. the 82-route × 3-theme mocked admin matrix), CMS/bookings decomposition. **Security toolchain:** `pnpm audit --prod` now **0 advisories** after Zod 4 + scoped overrides (`/tmp/opencode/audit-prod-moderate-overrides.json`); a **blocking tracked-tree gitleaks CI gate** exists with 12 verified placeholder/prose fingerprints, and local `scripts/scan-secrets.sh` exits 0 with no leaks (`/tmp/opencode/gitleaks-main-verify.out`). The source/tool audit is still **PARTIAL** — no exploit-validated live audit. **Lighthouse budgets still fail** (final safe-fixes run score **0.59** / LCP **1621.6ms** pass / CLS **0.0028** pass / TBT **24670.7ms** fail on a saturated 2-CPU host; a blank control already fails TBT at 477ms — `/tmp/opencode/lighthouse-final-safe-fixes.json`); no pass claimed. Deployed stale release remains far worse. Mocked authenticated admin route×theme matrix is now green (82 guarded routes × 3 themes = 246 checks across 18 chunks + 1 persistence test); the **live authenticated** matrix still needs redeploy/credentials. Static HTML/island hydration is still needed for the 300ms TBT budget. |
 | **Phase 6 — AI Workforce** | ✅ Implemented | 12-agent roster (coordinator, marketing×2, sales, customer-care, monitoring, finance, HR, analytics, security, PA, relationships/contracts) with 24/7 scheduled runs, structured reports, owner notifications, SUPER_ADMIN AI Boardroom at `/admin/boardroom`, admin UI at `/agents`, `agents.*` permissions |
-| **Phase 7 — Communications & Finance Command Center** | ✅ Implemented (code complete) | 7A–7F landed in code: encrypted config vault, provider connections/events, finance ledger + reconciliation, PayPal-first international rail, PayHero/Daraja East-Africa rails, Zoho/email, WhatsApp/Telegram, Meta/TikTok/social + routing/AI/SLA, admin command screens and hardened webhooks. Additive schema is committed but not applied to the live Neon branch; live credentials, provider dashboard URLs, Meta App Review/consent and a disposable integration database remain provisioning blockers. See §18. |
+| **Phase 7 — Communications & Finance Command Center** | ✅ Implemented (code complete) | 7A–7F landed in code: encrypted config vault, provider connections/events, finance ledger + reconciliation, PayPal-first international rail, PayHero/Daraja East-Africa rails, Zoho/email, WhatsApp/Telegram, Meta/TikTok/social + routing/AI/SLA, admin command screens and hardened webhooks. **Correction (2026-11-23):** the additive schema **is applied** to the live Neon branch (19 tables + 10 columns verified read-only); the permission/config seed is still unapplied. Live credentials, provider dashboard URLs, Meta App Review/consent and a disposable integration database remain provisioning blockers. See §18 and `PRODUCTION_READINESS.md` §4. |
 
-### Critical Production Blockers (P0 — must fix before any feature work)
+### Historical P0 blockers (closed in §2.2 — do not treat as active)
+
+The list below is the 2026-11-16 as-found inventory, retained for rationale only. Every item is closed in code per §2.2; current release gates live in `docs/PRODUCTION_READINESS.md`.
 
 1. **Admin API/auth integration broken** — admin app uses relative URLs, no Bearer token, no `/v1/*` proxy in `netlify.toml`
 2. **Chatbot admin endpoints unguarded** — `GET /chatbot/conversations`, `GET /chatbot/conversations/:id`, `PUT /chatbot/conversations/:id` lack authentication
@@ -100,7 +104,7 @@ makes access decisions visible in the admin app instead of hardcoded in routes.
 
 | # | Task | Implementation | Proof |
 |---|------|----------------|-------|
-| 1.1 | One canonical permission registry | `modules/identity/services/permissionRegistry.ts` holds **123** typed definitions (group / risk / scope / order), `PERMISSION_GROUPS`, `groupedPermissions()`, `validateRegistryIntegrity()`. `prisma/seed.ts` seeds `Permission` rows and role grants from it, and aborts if the registry is inconsistent. | `test/permission-registry.spec.ts` (14 specs) |
+| 1.1 | One canonical permission registry | `modules/identity/services/permissionRegistry.ts` holds **213** typed definitions across 37 groups (group / risk / scope / order), `PERMISSION_GROUPS`, `groupedPermissions()`, `validateRegistryIntegrity()`. `prisma/seed.ts` seeds `Permission` rows and role grants from it, and aborts if the registry is inconsistent. | `test/permission-registry.spec.ts` (14 specs) |
 | 1.2 | All route guards migrated | Every `requireRoles(...)` call removed from route files; guards now use `requireAccess(permission, fallbackRoles)`. Includes bespoke gates in `ai-config.ts` (local `requireAdmin`), `payment-console.ts` (local `allow(roles)`) and `site.ts` (per-section permissions). `/v1/roles/catalogue` exposes the grouped registry to the UI. | `test/route-guards.spec.ts` (5 specs: no `requireRoles`, every guard key canonical, no retired key reused) |
 | 1.3 | Role & Permissions admin UI | `frontend/admin/src/features/settings/RolesAdmin.tsx` at `/settings/roles`: create/rename roles, grant permissions from the registry (grouped, filterable, risk-badged), see assignment counts. Writes `RolePermission` rows and clears both permission caches. | Plan §14 Phase 1 metric |
 | 1.4 | Staff Access screen complete | `StaffAccess.tsx` now renders the **full registry catalogue** with tri-state `Inherit / Grant / Deny` per permission, plus identity (department, position, seniority, public title) and assignment scopes. | Plan §14 Phase 1 metric |
@@ -127,7 +131,7 @@ relationships/contracts — all reporting to the owner.
 | Run engine | `modules/agents/services/agentRunner.ts` — deterministic DB collectors per agent → structured `{summary, metrics, highlights, actions, recommendations}`; optional LLM narrative via `aiProvider` when configured; every run writes `AgentRun`, updates `lastRunAt`/`nextRunAt`, and notifies SUPER_ADMIN/ADMIN employees through `createNotification` | `test/agents.spec.ts` run specs |
 | Scheduler | `workers/agentScheduler.ts` — 60s sweep (`AGENT_SCHEDULER_INTERVAL_MS`), runs due agents sequentially with per-agent failure isolation; registered in `index.ts` and `worker.ts` | `startAgentScheduler()` |
 | Admin API | `/v1/admin/agents` — list roster+latest run, run history (`?agentKey=`), agent detail, `POST /:key/run` (manual, `force` overrides pause), `PATCH /:key` (status/schedule/config). Guards: `agents.view`/`agents.run`/`agents.manage` with ADMIN fallback | `test/agents.spec.ts` HTTP specs |
-| Permissions | `agents.view` (LOW), `agents.run` (MEDIUM), `agents.manage` (HIGH) added to the canonical registry under group **AI Workforce**; ADMIN gets all, MARKETING + HR get `agents.view`; catalogue regenerated (163 keys / 35 groups) | `test/permission-registry.spec.ts` |
+| Permissions | `agents.view` (LOW), `agents.run` (MEDIUM), `agents.manage` (HIGH) added to the canonical registry under group **AI Workforce**; ADMIN gets all, MARKETING + HR get `agents.view`; catalogue regenerated (213 keys / 37 groups) | `test/permission-registry.spec.ts` |
 | Admin UI | `features/agents/AgentsAdmin.tsx` at `/agents` — roster cards (status, schedule, last-run summary), Run now / Pause / Resume actions, recent-runs feed; nav item gated by `agents.view` | `AgentsAdmin.tsx`, `AdminLayout.tsx` |
 | Proactive layer | `modules/agents/services/proactive.ts` + `agentOutreach.ts` — after each successful report, agents act within hard bounds (below) | `test/agent-proactive.spec.ts` (7 specs) |
 
@@ -312,23 +316,23 @@ A staff member can:
 | 5.5 | Performance: Lighthouse budgets, self-hosted fonts, image dimensions, reduced-motion, no sourcemaps in prod |
 | 5.6 | Prerender execution at build time; per-page `<title>`/OG/JSON-LD from `router/prerender.ts` |
 | 5.7 | Vite-imagetools/AVIF pipeline; scoped per-feature CSS polish; admin MUI DataGrid adoption |
-| 5.8 | ~~Documentation consolidation: single canonical reference per domain~~ ✅ Done — permission catalogue regenerated from live registry (160 keys), content matrix + quick reference refreshed, index reclassified |
+| 5.8 | ~~Documentation consolidation: single canonical reference per domain~~ ✅ Done — permission catalogue regenerated from live registry (213 keys / 37 groups), content matrix + quick reference refreshed, index reclassified |
 
 ---
 
 ## 5. Data Model & Permission Registry (Canonical)
 
-### 5.1 Core Entities (from Prisma contract — 69 models)
+### 5.1 Core Entities (from Prisma contract — 148 models)
 Key models for the Digital HQ:
 - **Identity**: `Employee`, `Department`, `Position`, `EmployeeRoleAssignment`, `AppRole`, `Permission`, `RolePermission`, `EmployeePermission` (GRANT/DENY), `PermissionPreset`
 - **Assignments**: `ProductTeamMember`, `ProjectEmployee`, `Booking.assignedToId`, `ContactEnquiry.assigneeId`, `BlogPost.authorId` / `StaffBlog.employeeId`
 - **Content**: `Service`, `Product`, `BlogPost`, `StaffBlog`, `Project`, `ClientProject`, `Industry`, `Solution`, `AboutSection`, `HomeSection`, `CompanyStat`, `Faq`, `Testimonial`, `ServiceCategory`, `ProductFaq`
 - **Operations**: `Booking`, `BookingEvent`, `Lead`, `ContactEnquiry`, `SupportTicket`, `Survey`, `ChatConversation`, `ChatMessage`
-- **Finance**: `Payment`, `PaymentChannel`, `PaymentWallet`, `Payout`, `Invoice` (planned), `Quote` (planned), `Expense` (planned)
+- **Finance**: `Payment`, `PaymentChannel`, `PaymentWallet`, `Payout`, `Invoice`, `Quote`, `Expense` (models shipped; live provisioning status per `PRODUCTION_READINESS.md`)
 - **Files/Realtime/AI**: `File`, `Notification`, `AnalyticsEvent`, `AiConfig`
 
 ### 5.2 Canonical Permission Registry
-Single source of truth: `backend/src/modules/identity/services/permissionRegistry.ts` — **123 typed definitions across 28 groups**.
+Single source of truth: `backend/src/modules/identity/services/permissionRegistry.ts` — **213 typed definitions across 37 groups** (includes assignment-scoped `services.update_assigned` and `reviews.moderate_assigned`).
 
 Metadata (`display`, `description`, `group`, `risk`, `scopeRequiresAssignment`, `order`) lives **in code**, because the `Permission` table currently has only `id`, `key` and `description`. `prisma/seed.ts` writes `Permission` rows and role grants from the registry and aborts if `validateRegistryIntegrity()` reports a problem, so the DB stays a projection of the code rather than a second source of truth. Adding metadata columns is a Phase 2 migration and changes nothing downstream.
 
@@ -348,7 +352,7 @@ All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrat
 | `own` | Only records they authored/own (e.g., `profile.update_own`) |
 
 ### 5.3 Effective-Permission Precedence (Final, Tested)
-**Higher number = higher precedence. DENY always wins regardless of source.**
+**Explicit DENY is checked first and is final; for other sources, higher number means higher precedence.**
 
 | Precedence | Source | Description |
 |------------|--------|-------------|
@@ -366,7 +370,7 @@ All three legacy vocabularies (seed, hardcoded catalogue, route guards) **migrat
 - **PermissionPreset** = reusable grant template applied by admin (writes `EmployeePermission` GRANT rows)
 - Both are **additive**; neither overrides explicit DENY/GRANT.
 
-### 5.5 Phase 2 data-model delta (2026-11-17) — **DESIGNED, NOT YET MIGRATED**
+### 5.5 Phase 2 data-model delta (2026-11-17) — **DESIGNED; additive schema applied live; money column types verified live, literal pre/post total comparison unverifiable (PARTIAL)**
 
 Phase 2 builds the Sales/CRM department workspace: **lead → opportunity → quotation → booking → project → invoice → support**.
 The pipeline already exists in pieces (`Lead`, `Booking` with a 9-stage machine, `Payment`, `ClientProject`,
@@ -398,19 +402,21 @@ so a lead can be qualified before it becomes an opportunity. The `Lead → Oppor
 - `Quote.status` — `draft → sent → accepted | declined | expired | superseded`
 - `Invoice.status` — `draft → issued → partially_paid → paid | overdue | void`
 
-#### 5.5.2 Money: `Float` → `Numeric(18,2)`
+#### 5.5.2 Money: `Numeric(18,2)` contract (migration record: `Float` → `Numeric`)
 
-Seven money columns are `Float` today. They become `numeric(18,2)`.
+The seven Phase 2 money columns are `Numeric(18,2)` in the committed contract. **Live Neon verification (2026-11-23, project `holy-band-32113416`, branch `br-raspy-morning-ahpup9i8`, read-only `information_schema` query): all 44 public numeric columns are `numeric(18,2)`, including the seven Phase 2 money fields; zero `double precision`, `real` or `money` columns remain.** Current row/total snapshots below are informational; the literal pre/post migration total comparison remains **unverifiable** (only the `production` branch exists, no stored pre-migration totals, and no money/float migration entry in `_prisma_migrations`). Do not mark money verification fully DONE.
 
-| Table | Column | Current | New |
-|-------|--------|---------|-----|
-| `Booking` | `priceEstimate` | `Float?` | `Numeric(18,2)?` |
-| `Booking` | `budgetAmount` | `Float?` | `Numeric(18,2)?` |
-| `Booking` | `quotedAmount` | `Float?` | `Numeric(18,2)?` |
-| `Payment` | `amount` | `Float` | `Numeric(18,2)` |
-| `PaymentWallet` | `balance` | `Float` | `Numeric(18,2)` |
-| `Payout` | `amount` | `Float` | `Numeric(18,2)` |
-| `Service` | `priceFrom` | `Float?` | `Numeric(18,2)?` |
+| Table | Column | Contract now | Live verification (2026-11-23) |
+|-------|--------|--------------|-------------------|
+| `Booking` | `priceEstimate` | `Numeric(18,2)` | `numeric(18,2)`; 1 non-null row, total `0.00` |
+| `Booking` | `budgetAmount` | `Numeric(18,2)` | `numeric(18,2)`; 1 non-null row, total `0.00` |
+| `Booking` | `quotedAmount` | `Numeric(18,2)` | `numeric(18,2)`; 1 non-null row, total `0.00` |
+| `Payment` | `amount` | `Numeric(18,2)` | `numeric(18,2)`; 0 rows |
+| `PaymentWallet` | `balance` | `Numeric(18,2)` | `numeric(18,2)`; 0 rows |
+| `Payout` | `amount` | `Numeric(18,2)` | `numeric(18,2)`; 0 rows |
+| `Service` | `priceFrom` | `Numeric(18,2)` | `numeric(18,2)`; 11 rows, total `156500.00` |
+
+**Scope of this evidence:** column types and current values are verified; the §5.5.3/§17 pre/post equality gate is not (no baseline snapshot exists), so that gate stays **PARTIAL**.
 
 **The runtime type changes from `number` to a branded string.** The Prisma 8 `pg/numeric@1` codec
 decodes a numeric column to canonical decimal **text** (`"1234.50"`), not a JS number — the type is
@@ -467,7 +473,10 @@ Consequences, all of them deliberate:
 - `numeric` widening never loses precision beyond the 2-decimal rounding, and the rounding is
   explicit and auditable — but the pre- and post-migration column totals are compared before the
   migration is accepted. A mismatch of more than one cent on any table is a **rollback**, not a
-  rounding to be accepted silently.
+  rounding to be accepted silently. **2026-11-23 caveat:** this literal comparison is **unverifiable**
+  — only the `production` branch exists, no pre-migration totals were stored, and `_prisma_migrations`
+  has no money/float conversion entry. Live column types and current totals are verified (§5.5.2),
+  but the equality gate remains **PARTIAL** rather than DONE.
 - The migration is **additive in effect**: the previous `float8` values remain recoverable from a
   pre-migration dump, and the whole change is a single reversible `ALTER` per table.
 - `PaymentWallet.balance` is the one column where a mismatch is expected and meaningful — it is a
@@ -495,7 +504,7 @@ guards.
 
 | Public Page | Model(s) | Public API | Admin API | Admin UI | Gate Permission | UI Status | Schema Status |
 |-------------|----------|------------|-----------|----------|-----------------|-----------|---------------|
-| Home | `HomeSection`, `CompanyStat` | `/v1/site/home`, `/v1/company-stats` | `/v1/home-sections`, `/v1/company-stats` | `HomeSectionsAdmin`, `CompanyStatsAdmin` | `pages.update_home` | ❌ Missing | ✅ Exists |
+| Home | `HomeSection`, `CompanyStat` | `/v1/site/home`, `/v1/company-stats` | `/v1/home-sections`, `/v1/company-stats` | `HomeSectionsAdmin`, `CompanyStatsAdmin` | `pages.update_home` | ✅ Exists | ✅ Exists |
 | About | `AboutSection` | `/v1/site/about` | `/v1/about-sections` | `AboutAdmin` | `pages.update_about` | ✅ Exists | ✅ Exists |
 | Services List | `Service`, `ServiceCategory` | `/v1/services`, `/v1/service-categories` | `/v1/services/admin`, `/v1/service-categories` | `ServicesAdmin`, `ServiceCategoriesAdmin` | `services.update` | ✅ Exists | ✅ Exists |
 | Service Detail | `Service`, `ServiceFaq` | `/v1/services/:slug` | `/v1/services/:id`, `/v1/service-faqs` | `ServicesAdmin`, `FaqsAdmin` | `services.update` | ✅ Exists | ✅ Exists |
@@ -636,30 +645,28 @@ Every document in the repository must carry one of these status badges at the to
 | Conflict | Resolution (Canonical) |
 |----------|------------------------|
 | Three permission vocabularies | Single DB-backed `Permission` registry with metadata; all guards/UI/seeds migrated |
-| `SUPER_ADMIN` bypasses DENY | DENY always wins (precedence 50 > SYSTEM 60 in conflict); tested |
+| `SUPER_ADMIN` bypasses DENY | DENY checked first overrides the SUPER_ADMIN wildcard regardless of numeric source map; tested |
 | `Position.defaultPermissionKeys` vs `PermissionPreset` | Position = starter bundle; Preset = reusable admin template; both additive |
 | `assigneeId` vs `assignedStaffId` (ContactEnquiry) | `assigneeId` canonical; `assignedStaffId` deprecated; migration script |
 | `BlogPost` vs `StaffBlog` | `BlogPost` = marketing blog; `StaffBlog` = staff publications; separate admin surfaces |
-| Service assignment | Not currently modeled; `services.update_assigned` requires `ServiceTeamMember` (Phase 2 gate) |
+| Service assignment | **Code complete**: `ServiceTeamMember` + canonical `services.update_assigned` with `checkAssigned()` in `services.ts`; additive migration `20261123050000_add_assignment_scope_models` is on disk but unapplied live |
 | Dashboard endpoint mismatch | `/v1/staff-dashboard` (backend) vs `/v1/admin/staff-dashboard` (frontend) → standardize on `/v1/staff-dashboard` |
 | Admin API base URL | Admin app **must** use `@angisoft/api-client`; API calls are **same-origin** through the Netlify `/v1/*` proxy — do **not** set `VITE_API_BASE_URL` (it would make the `SameSite=Strict` refresh cookie cross-site and break silent refresh) |
-| Money as `Float` | **Blocker for Finance/ERP** — migration to `Decimal` required before Phase 2 Finance |
+| Money as `Float` | Contract and all 44 live public numeric columns are `numeric(18,2)` (0 float/real/money columns, 2026-11-23 read-only Neon check); literal pre/post total comparison unverifiable (no baseline branch/snapshot), so that gate stays PARTIAL |
 | CI runs without checks | GitHub Actions must run `pnpm lint`, `pnpm typecheck`, `pnpm test` before deploy |
 
 ---
 
-## 13. Immediate Next Actions — **Phase 2 (in progress)**
+## 13. Immediate Next Actions — **Phase 2 verification closeout**
 
-Phase 0 (§2.2) and Phase 1 (§2.3) are complete. Phase 2's data-model delta is designed (§5.5);
-the implementation follows the four-commit order in §5.5.3 so the money type change is never
-mixed into the additive schema change.
+Phase 0 (§2.2), Phase 1 (§2.3), and Phase 2 code/schema delivery are complete. The four-commit list below is retained as an implementation record; the additive schema is applied, the committed contract uses `Numeric(18,2)`, and the 2026-11-23 live Neon check confirmed all 44 public numeric columns are `numeric(18,2)` with no float/real/money columns. The literal pre/post total comparison remains unverifiable (no baseline snapshot/branch or migration entry), so it stays PARTIAL; external provisioning is tracked in `docs/PRODUCTION_READINESS.md`.
 
 | Priority | Action | Owner | Gate |
 |----------|--------|-------|------|
-| **P1 (2.1)** | Commit A — additive schema: `Opportunity`, `Quote`, `QuoteLineItem`, `Invoice`, `InvoiceLineItem`, `Lead` extension | Backend | Migration is additive only; existing routes unaffected |
-| **P1 (2.2)** | Commit B — money helper + contract `Numeric(18,2)` + convert the §5.5.2 blast radius | Backend | `tsc` clean; contract emits offline; DB still `float8` |
-| **P1 (2.3)** | Commit C — the `float8 → numeric(18,2)` migration on Neon | Backend + Ops | Pre/post column totals match within one cent |
-| **P1 (2.4)** | Commit D — verification: totals check, payment round-trip, re-seed | Backend | §17 checklist green |
+| **P1 (2.1, record)** | Commit A — additive schema: `Opportunity`, `Quote`, `QuoteLineItem`, `Invoice`, `InvoiceLineItem`, `Lead` extension | Backend | ✅ Applied live (tracker §4); migration was additive only |
+| **P1 (2.2, record)** | Commit B — money helper + contract `Numeric(18,2)` + convert the §5.5.2 blast radius | Backend | ✅ Contract uses `Numeric(18,2)` |
+| **P1 (2.3, partial)** | Commit C — verify the live `float8 → numeric(18,2)` migration on Neon | Backend + Ops | ✅ Live column types verified (`numeric(18,2)` everywhere); ⚠️ pre/post column-total equality **unverifiable** — no baseline snapshot, single `production` branch, no migration entry |
+| **P1 (2.4, open)** | Commit D — verification: totals check, payment round-trip, re-seed | Backend | Current totals snapshotted (§5.5.2); payment round-trip + §17 checklist still open |
 | P2 (2.5) | Sales pipeline routes + permissions (`opportunities.*`, `quotes.*`, `invoices.*`, `sales.pipeline.view`) | Backend | Each route has a 401/403 spec |
 | P2 (2.6) | Sales workspace UI on the `/workspace` shell (pipeline board, quote editor, invoice list) | Frontend (admin) | Widgets driven by `effective-access` only |
 | ~~P1 (1.7)~~ | ✅ Done — `Employee.preferences` JSONB column live; theme/layout persist via `effective-access` + `PUT /profile` | Backend + Frontend (admin) | Preference survives reload |
@@ -681,6 +688,15 @@ mixed into the additive schema change.
 | **Phase 4** | Automated workflow triggers fire correctly; dashboard widgets reflect real assignments |
 | **Phase 5** | Lighthouse ≥ 90 on all Core Web Vitals; zero critical security findings; CI gate blocks broken builds; documentation audit passes |
 
+### 14.1 Toolchain modernization evidence (2026-11-23)
+
+- **Vite 8.3.8 / React plugin 6.3.0** in `frontend/web`, `frontend/admin`, and `packages/config`; **Tailwind 4.3.5 via first-party `@tailwindcss/vite`** in all three. `@tailwindcss/postcss` and `autoprefixer` are removed from manifests, Vite configs, and lockfile. `pnpm typecheck` 12/12, `pnpm lint` 12/12 with 0 errors, `pnpm build` 3/3.
+- **Modern Web Guidance**: installed and applied; `legacy-scan` now reports 0 findings in both frontend source trees (standard scrollbar properties with gated WebKit fallback, native `sibling-index()` with fallback, IME-safe Enter key handling, `toSorted()`/`toReversed()`, Vite 8 `.ts` config import handling).
+- **Production advisories**: `pnpm audit --prod` is now **0 advisories** after Zod 4 migration + scoped overrides (evidence `/tmp/opencode/audit-prod-moderate-overrides.json`); the earlier 110 → 4 snapshot is historical. See `docs/security/OWASP_AUDIT.md` §2.2.1 and `docs/PRODUCTION_READINESS.md` §9 for context.
+- **Secret scanning**: a **blocking tracked-tree gitleaks CI gate** is in place with 12 verified placeholder/prose fingerprints; local rerun via `scripts/scan-secrets.sh` exits 0 with no leaks (`/tmp/opencode/gitleaks-main-verify.out`). This is a tool gate, not an exploit-validated audit.
+- **Final local gates**: backend mocked suite 66 files / 606 tests at the last full run after all worker closeouts; web 6 files / 50 tests; E2E 30/30 with bounded Playwright web-server shutdown; bundle budget exit 0 (**web entry 65.1 kB** / 156 kB, latest admin build entry **92.6 kB** / 117 kB — `/tmp/opencode/final-gate/perf_budget.log`); sitemap 15 URLs.
+- **Not claimed**: Lighthouse ≥90 still fails — final run after safe fixes scored **0.59** with LCP 1621.6ms (pass), CLS 0.0028 (pass) and TBT **24670.7ms (fail)** on a saturated 2-CPU host; a blank control already fails TBT at 477ms (`/tmp/opencode/lighthouse-final-safe-fixes.json`). The stale deployment is worse. Production probes remain 2/7 pending redeploy; permission/config seeds and provider enablement still require explicit approval/provisioning; the literal money pre/post total comparison is unverifiable (§5.5.2/§5.5.3).
+
 ---
 
 ## 15. Appendix: Document Migration Checklist
@@ -692,7 +708,7 @@ mixed into the additive schema change.
 | `ANGISOFT_ASSIGNMENT_SCOPE_MATRIX.md` | Update to current fields/models; add `🎯 TARGET` badge | 🎯 TARGET |
 | `ANGISOFT_DASHBOARD_WIDGET_MATRIX.md` | Align keys to canonical registry; add `🎯 TARGET` badge | 🎯 TARGET |
 | `ANGISOFT_CAPABILITY_MAP.md` | Maintained as the live capability ledger (kept current per shipped feature) | 🔄 REGENERATE |
-| `ANGISOFT_PERMISSION_CATALOGUE.md` | ✅ Done — regenerated as a mirror of `permissionRegistry.ts` (160 keys, 35 groups); `🛠 OPERATIONAL` | 🛠 OPERATIONAL |
+| `ANGISOFT_PERMISSION_CATALOGUE.md` | ✅ Regenerated / DONE — generated mirror of `permissionRegistry.ts` (213 keys, 37 groups); `🛠 OPERATIONAL`. Re-run the generator only when the registry changes. | 🛠 OPERATIONAL |
 | `PUBLIC_CONTENT_ADMIN_MATRIX.md` | ✅ Regenerated 2026-11-20 against live routes; refreshed for shipped admin UIs | ✅ Regenerated |
 | `ANGISOFT_CURRENT_DEPARTMENTS.md` | Callouts updated; seeded departments are the live registry (rationale doc retained) | 🔄 REGENERATE |
 | `ANGISOFT_POSITION_REQUIREMENTS.md` | Align to seeded positions + canonical permissions; add `🔄 REGENERATE` badge | 🔄 REGENERATE |
@@ -732,7 +748,7 @@ All implementation work proceeds from this document. Document updates follow the
 
 ## 18. Phase 7 — Communications & Finance Command Center (Implemented, 2026-11-22)
 
-> **Status:** Code complete (2026-11-22). Slices 7A–7F are implemented across the backend, admin UI, config vault, permissions, workers and focused tests. This is a code-completion claim only: production readiness still depends on applying the additive migration, provisioning live provider credentials/callback URLs, completing Meta App Review/consent, and running the integration suite against a disposable database. Those external/provisioning blockers are listed in §18.10.
+> **Status:** Code complete (2026-11-22), production evidence refreshed 2026-11-23. Slices 7A–7F are implemented across the backend, admin UI, config vault, permissions, workers and focused tests. The additive migration is already applied on the live Neon branch; production readiness still depends on applying the validated permission/config seed (explicit approval required), provisioning live provider credentials/callback URLs, completing Meta App Review/consent, and running the integration suite against a disposable database. Those external/provisioning blockers are listed in §18.10.
 
 ### 18.1 Why Phase 7
 
@@ -847,17 +863,17 @@ Add canonical keys in `permissionRegistry.ts` (grouped, HIGH for money/config/ex
 
 All six delivery slices are implemented in code. The remaining work is provisioning, migration and external verification — not feature implementation:
 
-1. **Apply the additive schema safely.** Validate `backend/prisma/migrations/20261122210000_phase7_completion/migration.sql` on a temporary Neon branch, then apply to the live branch only with explicit approval. Run the permission/config seed after deploy.
+1. **Apply the additive schema safely — DONE for Phase 7 schema; seed still pending.** `backend/prisma/migrations/20261122210000_phase7_completion/migration.sql` is present on the live Neon branch: 19 completion tables and 10 new columns were verified read-only on 2026-11-23 (`PRODUCTION_READINESS.md` §4). This supersedes the older "not applied" note. The permission/config seed remains unapplied: the generated 213-permission / 8-role / 616-grant SQL has passed `EXPLAIN ... analyze: false` but needs explicit approval before any live write.
 2. **Provision runtime secrets.** Populate the vault through `SUPER_ADMIN` → `/settings/vault` or `npm run config:seed`, using `backend/.env`/Fly secrets only for bootstrapping keys. Never commit or print secret values.
 3. **Rotate exposed webhook credentials.** Rotate `MPESA_CALLBACK_TOKEN`, `PAYHERO_CALLBACK_TOKEN`, the removed Neon credential, and any token previously committed or echoed into logs.
 4. **Configure provider dashboards.** Register the canonical `/v1` callback/return URLs for PayPal, PayHero, Safaricom Daraja and Zoho; add PayHero channel IDs/network codes for Airtel and other telcos/banks/wallets; configure Apple Pay/Google Pay domain and device prerequisites.
 5. **Verify webhooks and live money movement.** Complete live PayPal buyer/capture/refund/payout and East-Africa M-Pesa/Airtel E2E flows after credentials are available; verify signature failures, dedupe and amount cross-checks.
 6. **Complete Meta enablement.** Production app, Business Manager assets, system-user tokens, MCP OAuth sign-in, App Review, consent/privacy approval, catalog dataset and page/Instagram/Threads assets are external prerequisites. The public contact forms now ship an explicit CAPI opt-in checkbox that defaults off and a sanitized first-party source URL; no Lead event is inferred from Lead creation, webhooks or config. Advanced Graph and all Threads writes remain gated by `META_APP_REVIEW_GRANTED`; reads never substitute unavailable writes.
-7. **Run the integration suite.** A disposable `TEST_DATABASE_URL` is required for `test/integration.spec.ts`; a dummy URL fails authentication and is not a valid integration run. The focused/mocked suites and typechecks use the dummy only to satisfy the guard that refuses to point tests at the development database.
+7. **Run the integration suite.** A disposable `TEST_DATABASE_URL` is required for `test/integration.spec.ts`; `backend/.env` currently leaves it empty, and a dummy URL fails authentication, so it is not a valid integration run. The mocked suites use a syntactically valid dummy only to satisfy the guard that refuses to point tests at the development database; with that guard satisfied, **66 mocked files / 606 tests pass** with `integration.spec.ts` excluded (re-verified 2026-11-23 after the MFA/portal, HR, chatbot, security and decomposition closeouts).
 
-**Closeout verification (2026-11-22):** focused Phase 7 suites pass 7 files / 125 tests, including explicit-consent CAPI dispatch, Meta read-only MCP/tool gating, tokenized C2B registration, fail-closed C2B callback auth, immediate acknowledgement, hashed dedupe ids, read-only confirmations, live STK HTTPS validation, redacted upstream errors, QR `TrxCode` validation, result hints, `MPESA_BALANCE`, STK recovery and booking deposits. The full run passes 38 mocked files / 369 tests (4 skipped); only `test/integration.spec.ts` fails with the intentionally invalid dummy database URL. Backend `tsc`, workspace `pnpm typecheck`, web and admin production builds, and the 137-key `config:seed --dry-run` are green. No secret values are printed or written by the dry-run. Full-repo lint still reports pre-existing `no-explicit-any` debt and is not used as a Phase 7 gate.
+**Closeout verification (2026-11-22, re-verified 2026-11-23):** focused Phase 7 suites pass, including explicit-consent CAPI dispatch, Meta read-only MCP/tool gating, tokenized C2B registration, fail-closed C2B callback auth, immediate acknowledgement, hashed dedupe ids, read-only confirmations, live STK HTTPS validation, redacted upstream errors, QR `TrxCode` validation, result hints, `MPESA_BALANCE`, STK recovery and booking deposits. `npm run test:mocked` supplies a syntactically valid dummy `TEST_DATABASE_URL` (the guard rejects an empty value) and excludes `test/integration.spec.ts`; it passes **66 files / 606 tests**. That integration suite still requires a disposable Neon branch. Backend `tsc`, workspace `pnpm typecheck`, web and admin production builds, the i18n contract suite (**8 tests**, 21 locales × 115 keys), and the 137-key `config:seed --dry-run` are green. No secret values are printed or written by the dry-run. `pnpm lint` is now green (0 errors, 10 warnings) after explicit typing in finance/HR/web files; `security.spec.ts` loads the Express app once in `beforeAll` instead of once per test, eliminating the 60s hook timeout.
 
-**Documentation closeout (2026-11-22):** the Daraja plan now inventories all 27 locally available Markdown files; Daraja config keys, read-only/adapter-only capabilities and PayPal currency allowlist gaps were reconciled with code in `DARAJA_RESOURCE_UTILIZATION_PLAN.md`, `PAYMENTS.md` and the PayPal docs. Documentation only — status remains **Implemented (code complete)**; the additive migration is not applied and no production readiness is claimed.
+**Documentation closeout (2026-11-22, corrected 2026-11-23):** the Daraja plan now inventories all 27 locally available Markdown files; Daraja config keys, read-only/adapter-only capabilities and PayPal currency allowlist gaps were reconciled with code in `DARAJA_RESOURCE_UTILIZATION_PLAN.md`, `PAYMENTS.md` and the PayPal docs. Documentation only — status remains **Implemented (code complete)**; the additive migration **is applied** on live Neon, but the seed/provider provisioning is not, so no production readiness is claimed.
 
 ## 17. Production verification checklist (after next deploy)
 
@@ -876,6 +892,16 @@ curl -sI -H 'Authorization: Bearer x' https://api.angisoft.co.ke/v1/faqs | grep 
 # 4. Run the suite against a disposable database
 TEST_DATABASE_URL='postgresql://…/angisoft_test' pnpm test
 ```
+
+**Latest pre-deploy result (2026-11-23): 2 passed / 5 failed.** `npm run verify:prod`
+captured the failures in `/tmp/opencode/prod-check-final.out`: admin/web `/v1/health`
+return SPA HTML instead of API JSON, admin `/v1/chatbot/conversations` returns
+HTML 200 instead of 401 JSON, `api.angisoft.co.ke/v1/health` is 404 while
+`api.angisoft.co.ke/health` is 200, and `/v1/faqs` has no cache headers. The
+deployed API header reports `server: Fly/a0014a77a (2026-11-20)`, older than
+local HEAD. Both apps now ship a `public/_redirects` same-origin `/v1/*` proxy
+in addition to `netlify.toml`, so a redeploy is required before re-running
+this checklist. Do not claim §17 green until all 7 checks pass after redeploy.
 
 After deploying, re-run the seed so `Permission` rows and role grants match the
 canonical registry (`prisma/seed.ts` is idempotent and aborts on an inconsistent

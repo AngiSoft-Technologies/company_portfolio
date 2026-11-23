@@ -16,7 +16,7 @@ const accountSchema = z.object({
   address: z.string().optional().nullable(),
   externalId: z.string().optional().nullable(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'ERROR', 'SUSPENDED']).optional(),
-  config: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
 });
 
 const patchSchema = z.object({
@@ -24,8 +24,8 @@ const patchSchema = z.object({
   address: z.string().optional().nullable(),
   externalId: z.string().optional().nullable(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'ERROR', 'SUSPENDED']).optional(),
-  config: z.record(z.any()).optional(),
-  capabilities: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
+  capabilities: z.record(z.string(), z.any()).optional(),
 }).refine((value) => Object.keys(value).length > 0, { message: 'No fields to update' });
 
 export default function communicationsAccountsRouter(prisma: Db) {

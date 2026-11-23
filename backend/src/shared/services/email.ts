@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { getQueue } from '../../queue';
 import { getConfig } from './runtimeConfig';
 import { renderBrandedEmail, type EmailCta } from './emailTemplate';
@@ -37,9 +37,9 @@ function smtpConfig() {
     return { host, port, user, pass, secure };
 }
 
-let transporterCache: { key: string; value: nodemailer.Transporter } | null = null;
+let transporterCache: { key: string; value: Transporter } | null = null;
 
-function getTransporter(): nodemailer.Transporter {
+function getTransporter(): Transporter {
     const config = smtpConfig();
     const key = JSON.stringify(config);
     if (transporterCache?.key === key) return transporterCache.value;

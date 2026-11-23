@@ -1,0 +1,4 @@
+/* Tailwind utilities for the deferred Care widget, loaded with ChatBot. */
+@import 'tailwindcss/utilities.css' source(none);
+@source '../features/ai-assistant/components/ChatBot.tsx';
+@source '../../../packages/ui/src';

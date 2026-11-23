@@ -5,7 +5,7 @@ import { or } from '@prisma/orm-postgres/orm-client';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { has as hasPermission } from '../../identity/services/effectivePermissions';
-import { serviceCategoriesController } from '../controllers/serviceCategoriesController';
+import { serviceCategoriesService } from '../services/serviceCategoriesService';
 
 const createSchema = z.object({
     name: z.string().min(1),
@@ -38,7 +38,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
         try {
             const ctx = permCtx(req);
             const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
-            const list = await serviceCategoriesController.list({
+            const list = await serviceCategoriesService.list({
                 where: includeAll ? {} : { published: true }
             });
             res.json(list);
@@ -51,7 +51,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
         try {
             const ctx = permCtx(req);
             const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
-            const category = await serviceCategoriesController.get(req.params.id, {
+            const category = await serviceCategoriesService.get(req.params.id, {
                 where: includeAll ? { id: req.params.id } : { id: req.params.id, published: true }
             });
             if (!category) return res.status(404).json({ error: 'Not found' });
@@ -64,11 +64,11 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
     // Protected writes
     router.post('/', requireAuth, requireAccess('service_categories.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             const slug = data.slug && data.slug.trim() ? data.slug : slugify(data.name);
-            const created = await serviceCategoriesController.create({
+            const created = await serviceCategoriesService.create({
                 ...data,
                 slug,
                 order: data.order ?? 0
@@ -81,13 +81,13 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requireAccess('service_categories.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.ServiceCategory.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
             const data = parsed.data;
             const slug = data.slug && data.slug.trim() ? data.slug : (data.name ? slugify(data.name) : undefined);
-            const updated = await serviceCategoriesController.update(req.params.id, {
+            const updated = await serviceCategoriesService.update(req.params.id, {
                 ...data,
                 ...(slug ? { slug } : {})
             }, req.user);
@@ -110,7 +110,7 @@ export default function serviceCategoriesRouter(prisma: Db = db) {
             await prisma.orm.public.Service
                 .where({ categoryId: req.params.id })
                 .updateAndCount({ categoryId: null });
-            await serviceCategoriesController.delete(req.params.id, req.user);
+            await serviceCategoriesService.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
             res.status(500).json({ error: 'Server error' });

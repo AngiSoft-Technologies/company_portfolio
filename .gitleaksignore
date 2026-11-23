@@ -1,0 +1,24 @@
+# Gitleaks fingerprint allowlist. Format: <file>:<rule-id>:<start-line>
+# Verified 2026-11-23 against the current tracked tree. Every entry below is a
+# documented Daraja sandbox placeholder/example or a prose false positive; no
+# live credential is suppressed. Do not add entries for unknown findings.
+# Historical git-history hits (including the deleted Firebase web config,
+# OBS-03) are NOT covered here — see docs/security/OWASP_AUDIT.md.
+
+# docs/daraja-guide: public sandbox shortcode 174379, placeholder passkeys
+# ("...yourpasskey") and Basic auth for "your_consumer_key:your_consumer_secret".
+docs/daraja-guide/docs/apis/stk-push/examples.md:curl-auth-header:7
+docs/daraja-guide/docs/apis/stk-push/examples.md:generic-api-key:12
+docs/daraja-guide/docs/apis/stk-push/examples.md:generic-api-key:31
+docs/daraja-guide/docs/apis/stk-push/examples.md:generic-api-key:72
+docs/daraja-guide/docs/getting-started/auth.md:curl-auth-header:26
+docs/daraja-guide/examples/curl.md:curl-auth-header:11
+docs/daraja-guide/examples/curl.md:generic-api-key:16
+docs/daraja-guide/examples/nodejs.md:generic-api-key:5
+docs/daraja-guide/examples/python.md:generic-api-key:9
+docs/daraja-guide/UPSTREAM-README.md:curl-auth-header:92
+docs/daraja-guide/UPSTREAM-README.md:generic-api-key:97
+
+# Confirmed false positive: the phrase "private-key scaffolding" in a task log;
+# no key value is present on this line.
+backend/IMPLEMENTATION_PLAN.txt:generic-api-key:279

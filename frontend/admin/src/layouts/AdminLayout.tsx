@@ -57,6 +57,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/workspace', label: 'My Workspace' },
       { to: '/workspace/portfolio-studio', label: 'Portfolio Studio' },
       { to: '/staff-dashboard', label: 'Staff Dashboard' },
+      { to: '/notifications', label: 'Notifications' },
       { to: '/reports', label: 'Reports', permission: 'administration.audit' },
     ],
   },
@@ -140,6 +141,7 @@ const NAV_GROUPS: { title: string; links: NavLinkSpec[] }[] = [
       { to: '/pricing-packages', label: 'Pricing Packages', permission: 'services.manage_pricing' },
       { to: '/about', label: 'About Sections', permission: 'pages.update_about' },
       { to: '/offices', label: 'Offices', permission: 'pages.update_contact' },
+      { to: '/legal-pages', label: 'Legal Pages', permission: 'pages.update_site_chrome' },
     ],
   },
   {

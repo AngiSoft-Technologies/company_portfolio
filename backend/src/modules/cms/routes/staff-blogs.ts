@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requirePermission } from '../../../shared/middleware/roles';
-import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { has as hasPermission, isAssigned } from '../../identity/services/effectivePermissions';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 
@@ -44,7 +44,7 @@ export default function staffBlogsRouter(prisma: Db = db) {
     router.post('/', requireAuth, requirePermission('publications.create'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const blog = await prisma.orm.public.StaffBlog.create({
             id: newId(),
             updatedAt: ts(),
@@ -63,11 +63,15 @@ export default function staffBlogsRouter(prisma: Db = db) {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.orm.public.StaffBlog.where({ id: req.params.id }).first();
         if (!blog) return res.status(404).json({ error: 'Not found' });
-        if (blog.employeeId !== req.user.sub && !(await hasPermission({ employeeId: req.user.sub, systemRole: req.user.role }, 'publications.review'))) {
+        const ctx = { employeeId: req.user.sub, systemRole: req.user.role };
+        const assigned = await isAssigned(ctx, 'publications.update_own', {
+            type: 'publication', id: req.params.id, ownerIds: [blog.employeeId],
+        });
+        if (!assigned && !(await hasPermission(ctx, 'publications.review'))) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         if (parsed.data.title) payload.slug = slugify(parsed.data.title);
@@ -79,7 +83,11 @@ export default function staffBlogsRouter(prisma: Db = db) {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const blog = await prisma.orm.public.StaffBlog.where({ id: req.params.id }).first();
         if (!blog) return res.status(404).json({ error: 'Not found' });
-        if (blog.employeeId !== req.user.sub && !(await hasPermission({ employeeId: req.user.sub, systemRole: req.user.role }, 'publications.review'))) {
+        const ctx = { employeeId: req.user.sub, systemRole: req.user.role };
+        const assigned = await isAssigned(ctx, 'publications.update_own', {
+            type: 'publication', id: req.params.id, ownerIds: [blog.employeeId],
+        });
+        if (!assigned && !(await hasPermission(ctx, 'publications.review'))) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         await prisma.orm.public.StaffBlog.where({ id: req.params.id }).delete();

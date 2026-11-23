@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../../db';
 import { newId, ts, tsMs } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireRecentMfa } from '../../../shared/middleware/mfaStepUp';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 import { GRANT_SCOPES, grantExpired } from '../services/access';
@@ -36,7 +37,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
     res.json({ grants: grants.map((grant) => ({ ...grant, expired: grantExpired(grant) })) });
   });
 
-  router.post('/', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.post('/', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfa, async (req: AuthRequest, res) => {
     const body = grantSchema.parse(req.body);
     if (body.expiresAt && tsMs(body.expiresAt) <= Date.now()) {
       return res.status(400).json({ error: 'expiresAt must be in the future' });
@@ -60,7 +61,7 @@ export default function communicationsGrantsRouter(prisma: Db) {
     res.status(existing ? 200 : 201).json({ grant });
   });
 
-  router.patch('/:id', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.patch('/:id', requireAccess('communications.grants.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfa, async (req: AuthRequest, res) => {
     const body = patchSchema.parse(req.body);
     const existing = await prisma.orm.public.CommunicationGrant.where({ id: req.params.id } as any).first().catch(() => null) as any;
     if (!existing) return res.status(404).json({ error: 'Not found' });

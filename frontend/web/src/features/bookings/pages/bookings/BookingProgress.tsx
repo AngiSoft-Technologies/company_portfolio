@@ -25,6 +25,12 @@ import BookingAccessError from '@/features/bookings/components/bookings/BookingA
 
 import '@/styles/marketing/bookings/bookings.css';
 
+type CapturedPayment = { status?: unknown; payerEmail?: string; error?: string };
+type ActionResult = { id?: string; publicReference?: string; message?: string; error?: string; ok?: boolean };
+type ApiError = { message?: string };
+const messageOf = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : (error as ApiError | null)?.message || fallback;
+
 /**
  * Customer-facing progress page for a single booking, keyed by publicReference.
  * Access requires the secure tracking token returned after submission or sent
@@ -109,7 +115,7 @@ const BookingProgress = () => {
 
         void (async () => {
             try {
-                const result: any = await apiPost(
+                const result: CapturedPayment = await apiPost(
                     '/payments/paypal/capture',
                     { orderId, reference: pending.reference },
                     token,
@@ -135,7 +141,7 @@ const BookingProgress = () => {
     const runAction = async (action, payload) => {
         setBusy(true);
         try {
-            const data: any = await apiPost(
+            const data: ActionResult = await apiPost(
                 `/bookings/reference/${reference}/actions${authQuery}`,
                 { action, ...payload },
                 token || null,
@@ -147,7 +153,7 @@ const BookingProgress = () => {
                 toast.error(data?.error || 'Action failed');
             }
         } catch (err) {
-            toast.error((err as any)?.message || 'Action failed');
+            toast.error(messageOf(err, 'Action failed'));
         } finally {
             setBusy(false);
         }
@@ -200,7 +206,7 @@ const BookingProgress = () => {
     const handleSend = async (text) => {
         setSending(true);
         try {
-            const data: any = await apiPost(
+            const data: ActionResult = await apiPost(
                 `/bookings/reference/${reference}/messages${authQuery}`,
                 { message: text },
                 token || null,
@@ -208,7 +214,7 @@ const BookingProgress = () => {
             if (data?.ok) refetch();
             else toast.error(data?.error || 'Message failed');
         } catch (err) {
-            toast.error((err as any)?.message || 'Message failed');
+            toast.error(messageOf(err, 'Message failed'));
         } finally {
             setSending(false);
         }

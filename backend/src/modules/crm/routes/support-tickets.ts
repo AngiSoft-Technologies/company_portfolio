@@ -58,7 +58,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
 
     router.post('/', requirePermission('support_tickets.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const ticket = await prisma.orm.public.SupportTicket
             .include('ticketMessages')
             .create({
@@ -75,7 +75,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
 
     router.put('/:id', requirePermission('support_tickets.update'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         // Reopened tickets get a fresh SLA window: clear the breach marker so
@@ -95,7 +95,7 @@ export default function supportTicketsRouter(prisma: Db = db) {
 
     router.post('/:id/messages', requirePermission('support_tickets.respond'), async (req: AuthRequest, res) => {
         const parsed = messageSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const message = await prisma.orm.public.TicketMessage.create({
             id: newId(),
             ticketId: req.params.id,

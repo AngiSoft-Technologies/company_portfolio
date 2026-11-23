@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
-import { apiGet } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import '@/styles/marketing/ServicesSection.css';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
@@ -33,7 +33,7 @@ const ServicesSection = () => {
 
   useEffect(() => {
     let active = true;
-    apiGet<ServiceRecord[]>('/services')
+    cachedGet<ServiceRecord[]>('/services')
       .then((response) => {
         if (!active) return;
         const records = Array.isArray(response) ? response : [];

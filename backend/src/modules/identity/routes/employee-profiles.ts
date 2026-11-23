@@ -82,7 +82,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
 
     router.post('/portfolio', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const parsed = portfolioSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const employeeId = parsed.data.employeeId || req.user?.sub;
         if (!employeeId || !canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
         const item = await prisma.orm.public.EmployeePortfolioItem.create({
@@ -111,7 +111,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
         if (!item) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, item.employeeId)) return res.status(403).json({ error: 'Not authorized' });
         const parsed = portfolioSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const updated = await prisma.orm.public.EmployeePortfolioItem.where({ id: item.id }).update(payload);
@@ -138,7 +138,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
 
     router.post('/stats', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         const parsed = statSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const employeeId = parsed.data.employeeId || req.user?.sub;
         if (!employeeId || !canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
         const stat = await prisma.orm.public.EmployeeProfileStat.create({
@@ -160,7 +160,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
         if (!stat) return res.status(404).json({ error: 'Not found' });
         if (!canManageEmployee(req, stat.employeeId)) return res.status(403).json({ error: 'Not authorized' });
         const parsed = statSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const updated = await prisma.orm.public.EmployeeProfileStat.where({ id: stat.id }).update(payload);
@@ -216,7 +216,7 @@ export default function employeeProfilesRouter(prisma: Db = db) {
         const employeeId = req.params.employeeId;
         if (!canManageEmployee(req, employeeId)) return res.status(403).json({ error: 'Not authorized' });
         const parsed = portfolioConfigSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
         const existing = await prisma.orm.public.EmployeePortfolioConfig
             .where({ employeeId })

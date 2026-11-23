@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaHeadset, FaPaperPlane as SendIcon } from 'react-icons/fa';
 import { apiPost } from '@/lib/httpClient';
+import '@/styles/tailwind-chatbot.css';
 
 const SUGGESTIONS = [
   'What services do you offer?',
@@ -62,7 +63,9 @@ const CareBot = () => {
       : `fp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Instant scrolling keeps the closed widget from doing animated layout
+    // work on mount; the chat still follows new messages when open.
+    messagesEndRef.current?.scrollIntoView({ block: 'nearest' });
   }, [messages, isLoading]);
 
   useEffect(() => {
@@ -410,6 +413,9 @@ const CareBot = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
+                  // IME-safe: Enter also confirms a composition candidate in
+                  // Japanese/Chinese/Korean input, so never submit then.
+                  if (e.isComposing || e.keyCode === 229) return;
                   handleSubmit(e);
                 }
               }}

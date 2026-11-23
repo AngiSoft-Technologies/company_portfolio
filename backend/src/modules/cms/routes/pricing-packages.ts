@@ -56,7 +56,7 @@ export default function pricingPackagesRouter(prisma: Db = db) {
 
     router.post('/admin', requireAuth, requirePermission('services.manage_pricing'), async (req: AuthRequest, res) => {
         const parsed = packageSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             const payload: any = {
@@ -91,7 +91,7 @@ export default function pricingPackagesRouter(prisma: Db = db) {
 
     router.put('/admin/:id', requireAuth, requirePermission('services.manage_pricing'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.PricingPackage.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Pricing package not found' });

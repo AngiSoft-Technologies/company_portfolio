@@ -319,7 +319,15 @@ export function AgentsAdmin() {
                       placeholder="Assign a task (e.g. follow up on the Acme lead)"
                       value={taskText}
                       onChange={(e) => setTaskText(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') void runNow(agent); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          // IME-safe: Enter can confirm a composition candidate.
+                          // React's synthetic KeyboardEvent type omits isComposing; the DOM event has it.
+                          const composing = ((e.nativeEvent as KeyboardEvent).isComposing) || e.keyCode === 229;
+                          if (composing) return;
+                          void runNow(agent);
+                        }
+                      }}
                     />
                   </div>
                 ) : null}

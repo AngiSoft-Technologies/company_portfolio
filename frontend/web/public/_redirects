@@ -1,2 +1,7 @@
+# Keep these rules in sync with frontend/web/netlify.toml. `_redirects` is
+# copied into dist on every build and is the deployment-time safety net for
+# same-origin API calls; without the /v1 rule the SPA fallback answers API
+# requests with index.html and the browser silently fails to parse JSON.
 /uploads/*  https://api.angisoft.co.ke/uploads/:splat  200
+/v1/*       https://api.angisoft.co.ke/v1/:splat       200
 /*          /index.html                              200

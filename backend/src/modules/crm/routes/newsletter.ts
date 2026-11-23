@@ -26,7 +26,7 @@ export default function newsletterRouter(prisma: Db) {
     // ─── Public: Subscribe ──────────────────────────────────────────
     router.post('/subscribe', publicFormLimiter, async (req, res) => {
         const parsed = subscribeSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
         const { email, name } = parsed.data;
         const existing = await prisma.orm.public.Subscriber.where({ email }).first();
@@ -121,7 +121,7 @@ export default function newsletterRouter(prisma: Db) {
     // ─── Admin: Broadcast to all confirmed subscribers ──────────────
     router.post('/broadcast', requireAuth, requireAccess('newsletters.send', ['ADMIN', 'MARKETING']), async (req: any, res) => {
         const parsed = broadcastSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
         const { subject, html, text } = parsed.data;
         const frontendUrl = process.env.FRONTEND_URL || 'https://angisoft.co.ke';

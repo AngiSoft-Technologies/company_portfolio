@@ -39,13 +39,19 @@ const AngiSoftLogo = ({
   const isSymbol = variant === 'symbol';
   const asset = src || LOGO_ASSETS[variant] || LOGO_ASSETS.full;
   const imgSize = SIZE_STYLES[size] || SIZE_STYLES[isSymbol ? 'symbolMd' : 'md'];
+  // The default brand SVG is 790x316. Reserving its ratio before the remote
+  // asset arrives keeps header/footer geometry stable and clears the
+  // unsized-image audit without constraining CMS-supplied replacement logos.
+  const imgStyle = isSymbol
+    ? imgSize
+    : { ...imgSize, height: 'auto', aspectRatio: src ? undefined : '790 / 316' };
 
   const img = (
     <img
       src={asset}
       alt={alt}
       className="block object-contain"
-      style={imgSize}
+      style={imgStyle}
       loading="eager"
       decoding="async"
     />

@@ -1,0 +1,5 @@
+/* Tailwind utilities for lazy-loaded routes. Loaded by lazyRoute() only when
+   a non-landing route is requested, so these rules never block first paint. */
+@import 'tailwindcss/utilities.css' source(none);
+@source '../';
+@source '../../../packages/ui/src';

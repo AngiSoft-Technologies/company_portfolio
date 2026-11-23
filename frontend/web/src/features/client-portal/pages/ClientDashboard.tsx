@@ -1,17 +1,29 @@
 // @ts-nocheck
 import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { clientApiGet, clientApiPost } from '@/lib/httpClient';
+import { portalGet, portalPost } from '@/features/client-portal/lib/portalSession';
 import { useTheme } from '@/lib/theme';
 import GlassmorphismCard from '@/features/marketing/components/modern/GlassmorphismCard';
 import ScrollReveal from '@/features/marketing/components/modern/ScrollReveal';
 import PaymentMethodPicker, { type PaymentMethodOption } from '@/features/client-portal/components/PaymentMethodPicker';
+import { PasswordSetupForm } from '@/features/client-portal/components/PasswordSetupForm';
+import { TestimonialForm } from '@/features/client-portal/components/TestimonialForm';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 
 // Short-lived hand-off between the PayPal approval redirect and the capture
 // call. sessionStorage survives the same-tab round trip without leaking the
 // reference into a URL, history entry or third-party analytics.
 const PAYPAL_ORDER_KEY = 'angisoft.paypal.pending';
+
+type PendingPaypalOrder = {
+  orderId?: string;
+  reference?: string;
+  invoiceId?: string;
+  method?: string;
+};
+type ApiError = { message?: string };
+const messageOf = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : (error as ApiError | null)?.message || fallback;
 
 const ClientDashboard = () => {
   const { colors } = useTheme();
@@ -21,8 +33,6 @@ const ClientDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [feedback, setFeedback] = useState({ text: '', rating: 5 });
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
   const [payState, setPayState] = useState<Record<string, 'sending' | 'stk' | 'redirect' | 'error' | 'unavailable'>>({});
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
   const [paypalResult, setPaypalResult] = useState<{ status: 'success' | 'error' | 'cancelled'; text: string } | null>(null);
@@ -48,7 +58,7 @@ const ClientDashboard = () => {
     if (flag !== 'success') return;
 
     const orderId = params.get('token') || '';
-    let pending: any = null;
+    let pending: PendingPaypalOrder | null = null;
     try { pending = JSON.parse(sessionStorage.getItem(PAYPAL_ORDER_KEY) || 'null'); } catch { /* ignore */ }
     const reference = String(pending?.reference || '');
     if (!orderId || !reference || (pending?.orderId && pending.orderId !== orderId)) {
@@ -59,7 +69,7 @@ const ClientDashboard = () => {
 
     void (async () => {
       try {
-        const result = await clientApiPost('/payments/paypal/capture', { orderId, reference });
+        const result = await portalPost('/payments/paypal/capture', { orderId, reference });
         const confirmed = ['COMPLETED', 'SUCCEEDED'].includes(String(result?.status));
         setPaypalResult({
           status: confirmed ? 'success' : 'error',
@@ -68,12 +78,12 @@ const ClientDashboard = () => {
             : (result?.error || 'PayPal has not confirmed the payment yet. It will update automatically once confirmed.'),
         });
       } catch (e) {
-        setPaypalResult({ status: 'error', text: (e as any)?.message || 'Could not confirm your PayPal payment.' });
+        setPaypalResult({ status: 'error', text: messageOf(e, 'Could not confirm your PayPal payment.') });
       } finally {
         sessionStorage.removeItem(PAYPAL_ORDER_KEY);
         clearUrl();
         try {
-          const i = await clientApiGet('/client-portal/invoices');
+          const i = await portalGet('/client-portal/invoices');
           setInvoices(i?.invoices || []);
         } catch { /* keep the previously loaded list */ }
       }
@@ -84,44 +94,29 @@ const ClientDashboard = () => {
     const load = async () => {
       const safe = (p) => p.catch(() => ({ }));
       const [b, i, q, pjs, n] = await Promise.all([
-        safe(clientApiGet('/client-portal/bookings')),
-        safe(clientApiGet('/client-portal/invoices')),
-        safe(clientApiGet('/client-portal/quotes')),
-        safe(clientApiGet('/client-portal/projects')),
-        safe(clientApiGet('/client-portal/notifications')),
+        safe(portalGet('/client-portal/bookings')),
+        safe(portalGet('/client-portal/invoices')),
+        safe(portalGet('/client-portal/quotes')),
+        safe(portalGet('/client-portal/projects')),
+        safe(portalGet('/client-portal/notifications')),
       ]);
       setBookings(b?.bookings || []);
       setInvoices(i?.invoices || []);
       setQuotes(q?.quotes || []);
       setProjects(pjs?.projects || []);
       setNotifications(n?.notifications || []);
-      const cfg = await clientApiGet('/payments/methods').catch(() => ({}));
+      const cfg = await portalGet('/payments/methods').catch(() => ({}));
       setPaymentMethods(Array.isArray(cfg?.methods) ? cfg.methods : []);
       setLoading(false);
     };
     void load();
   }, []);
 
-  const submitFeedback = async () => {
-    if (feedback.text.trim().length < 10) return;
-    setFeedbackState('saving');
-    try {
-      await clientApiPost('/client-portal/testimonials', {
-        text: feedback.text.trim(),
-        rating: Number(feedback.rating) || undefined,
-      });
-      setFeedbackState('done');
-      setFeedback({ text: '', rating: 5 });
-    } catch {
-      setFeedbackState('error');
-    }
-  };
-
   const payInvoice = async (inv, method: PaymentMethodOption, phone: string) => {
     if (!method?.available) return;
     setPayState((s) => ({ ...s, [inv.id]: 'sending' }));
     try {
-      const res = await clientApiPost(`/client-portal/invoices/${inv.id}/pay`, {
+      const res = await portalPost(`/client-portal/invoices/${inv.id}/pay`, {
         method: method.id,
         provider: method.provider,
         phone: phone || undefined,
@@ -151,7 +146,7 @@ const ClientDashboard = () => {
         setPayState((s) => ({ ...s, [inv.id]: 'stk' }));
       }
     } catch (e) {
-      const msg = String((e as any)?.message || '');
+      const msg = String(messageOf(e, ''));
       setPayState((s) => ({ ...s, [inv.id]: /not configured|unavailable|disabled/i.test(msg) ? 'unavailable' : 'error' }));
     }
   };
@@ -171,7 +166,7 @@ const ClientDashboard = () => {
               <h1 className="mt-5 text-4xl font-black md:text-6xl" style={{ color: colors.text }}>Client dashboard</h1>
               <p className="mt-3 text-lg" style={{ color: colors.textSecondary }}>Track AngiSoft bookings, project progress, milestones, and deliverables in one premium portal.</p>
             </div>
-            <Link to="/book" className="rounded-full px-6 py-3 font-bold text-white" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>New booking</Link>
+            <Link to="/book" className="rounded-full px-6 py-3 font-bold text-[var(--color-white)]" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>New booking</Link>
           </div>
         </ScrollReveal>
 
@@ -231,7 +226,7 @@ const ClientDashboard = () => {
                       <div className="h-3 overflow-hidden rounded-full" style={{ backgroundColor: colors.borderLight }}>
                         <div className="h-full rounded-full" style={{ width: `${booking.clientProject.progress}%`, background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.secondaryLight})` }} />
                       </div>
-                      <Link to={`/portal/projects/${booking.clientProject.id}`} className="mt-4 inline-flex rounded-full px-5 py-2 text-sm font-bold text-white" style={{ background: colors.primary }}>Open tracker</Link>
+                      <Link to={`/portal/projects/${booking.clientProject.id}`} className="mt-4 inline-flex rounded-full px-5 py-2 text-sm font-bold text-[var(--color-white)]" style={{ background: colors.primary }}>Open tracker</Link>
                     </div>
                   ) : (
                     <p className="font-semibold" style={{ color: colors.textMuted }}>Tracker appears after approval.</p>
@@ -250,7 +245,7 @@ const ClientDashboard = () => {
                 <button
                   type="button"
                   onClick={async () => {
-                    await clientApiPost('/client-portal/notifications/mark-read', {});
+                    await portalPost('/client-portal/notifications/mark-read', {});
                     setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
                   }}
                   className="text-sm font-semibold"
@@ -303,7 +298,7 @@ const ClientDashboard = () => {
                   <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.borderLight }}>
                     <div className="h-full rounded-full" style={{ width: `${project.progress}%`, background: colors.primary }} />
                   </div>
-                  <Link to={`/portal/projects/${project.id}`} className="mt-4 inline-flex rounded-full px-4 py-2 text-sm font-bold text-white" style={{ background: colors.primary }}>
+                  <Link to={`/portal/projects/${project.id}`} className="mt-4 inline-flex rounded-full px-4 py-2 text-sm font-bold text-[var(--color-white)]" style={{ background: colors.primary }}>
                     Open tracker
                   </Link>
                 </GlassmorphismCard>
@@ -383,50 +378,20 @@ const ClientDashboard = () => {
           </div>
         )}
 
+        <div className="mt-12">
+          <GlassmorphismCard className="p-6">
+            <h2 className="mb-2 text-xl font-black" style={{ color: colors.text }}>Account security</h2>
+            <PasswordSetupForm />
+          </GlassmorphismCard>
+        </div>
+
         <div id="feedback" className="mt-12">
           <GlassmorphismCard className="p-6">
             <h2 className="mb-2 text-xl font-black" style={{ color: colors.text }}>Share feedback</h2>
             <p className="mb-4 text-sm" style={{ color: colors.textSecondary }}>
               Tell us how we did — testimonials are reviewed before publishing.
             </p>
-            {feedbackState === 'done' ? (
-              <p className="font-semibold" style={{ color: colors.secondary }}>Thanks — your testimonial was submitted for review.</p>
-            ) : (
-              <div className="space-y-3">
-                <textarea
-                  value={feedback.text}
-                  onChange={(e) => setFeedback((f) => ({ ...f, text: e.target.value }))}
-                  rows={4}
-                  placeholder="Your experience working with AngiSoft…"
-                  className="w-full rounded-xl border px-4 py-3 text-sm outline-none"
-                  style={{ borderColor: colors.border, backgroundColor: colors.cardBg || 'transparent', color: colors.text }}
-                />
-                <div className="flex items-center justify-between gap-4">
-                  <select
-                    value={feedback.rating}
-                    onChange={(e) => setFeedback((f) => ({ ...f, rating: Number(e.target.value) }))}
-                    className="rounded-lg border px-3 py-2 text-sm"
-                    style={{ borderColor: colors.border, backgroundColor: colors.cardBg || 'transparent', color: colors.text }}
-                  >
-                    {[5, 4, 3, 2, 1].map((r) => (
-                      <option key={r} value={r}>{r} star{r > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => void submitFeedback()}
-                    disabled={feedbackState === 'saving' || feedback.text.trim().length < 10}
-                    className="rounded-full px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-                    style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
-                  >
-                    {feedbackState === 'saving' ? 'Submitting…' : 'Submit testimonial'}
-                  </button>
-                </div>
-                {feedbackState === 'error' ? (
-                  <p className="text-sm" style={{ color: 'var(--color-error)' }}>Submission failed — please try again.</p>
-                ) : null}
-              </div>
-            )}
+            <TestimonialForm />
           </GlassmorphismCard>
         </div>
       </div>

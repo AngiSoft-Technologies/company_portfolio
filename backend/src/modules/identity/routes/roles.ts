@@ -90,7 +90,7 @@ export default function rolesRouter() {
 
     router.post('/', ...requireRoleManage, async (req: AuthRequest, res) => {
         const parsed = roleSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { permissionKeys, ...data } = parsed.data;
         const role = await prisma.orm.public.AppRole.create({
             id: newId(),
@@ -117,7 +117,7 @@ export default function rolesRouter() {
 
     router.put('/:id', ...requireRoleManage, async (req: AuthRequest, res) => {
         const parsed = roleSchema.partial({ key: true }).safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { permissionKeys, ...data } = parsed.data;
         const role = await prisma.orm.public.AppRole.where({ id: req.params.id }).update({
             ...(data.key !== undefined ? { key: data.key } : {}),
@@ -145,7 +145,7 @@ export default function rolesRouter() {
 
     router.post('/assignments', ...requireStaffAssign, async (req: AuthRequest, res) => {
         const parsed = assignmentSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const assignment = await prisma.transaction(async (tx) => {
             const existing = await tx.orm.public.EmployeeRoleAssignment
                 .where({ employeeId: parsed.data.employeeId, roleId: parsed.data.roleId })

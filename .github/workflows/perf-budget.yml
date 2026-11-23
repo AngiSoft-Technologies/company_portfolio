@@ -1,0 +1,54 @@
+name: Performance Budget
+
+# Phase 5.5/5.7: Lighthouse field budgets against a *deployed* URL.
+# Weekly smoke test plus manual runs for preview URLs (workflow_dispatch input).
+# Non-blocking until real-user baselines are established; remove the job-level
+# `continue-on-error` to make regressions block merges/deploys.
+on:
+    workflow_dispatch:
+        inputs:
+            url:
+                description: Deployed preview/production URL to audit
+                required: false
+                default: https://angisoft.co.ke
+    schedule:
+        - cron: "17 6 * * 1" # Mondays 06:17 UTC
+
+jobs:
+    lighthouse:
+        runs-on: ubuntu-latest
+        continue-on-error: true
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Enable pnpm
+              run: corepack enable
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Set up Chrome
+              id: setup-chrome
+              uses: browser-actions/setup-chrome@v2
+              with:
+                  chrome-version: stable
+
+            - name: Audit URL against Phase 5 budgets
+              env:
+                  CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+                  LIGHTHOUSE_URL: ${{ github.event.inputs.url || 'https://angisoft.co.ke' }}
+              run: pnpm perf:lighthouse "$LIGHTHOUSE_URL" --output=lighthouse-report.json
+
+            - name: Upload full Lighthouse report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: lighthouse-report
+                  path: lighthouse-report.json
+                  if-no-files-found: ignore

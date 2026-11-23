@@ -19,8 +19,8 @@ const accountSchema = z.object({
   externalId: z.string().nullable().optional(),
   currency: z.string().min(3).default('KES'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).default('ACTIVE'),
-  capabilities: z.record(z.any()).nullable().optional(),
-  config: z.record(z.any()).nullable().optional(),
+  capabilities: z.record(z.string(), z.any()).nullable().optional(),
+  config: z.record(z.string(), z.any()).nullable().optional(),
   balance: z.number().nullable().optional(),
 });
 

@@ -27,6 +27,7 @@ const ServicesAdmin = lazy(() => import('@/features/cms/ServicesAdmin'));
 const ServiceCategoriesAdmin = lazy(() => import('@/features/cms/ServiceCategoriesAdmin'));
 const HomeSectionsAdmin = lazy(() => import('@/features/cms/HomeSectionsAdmin'));
 const SiteSettingsAdmin = lazy(() => import('@/features/cms/SiteSettingsAdmin'));
+const LegalContentAdmin = lazy(() => import('@/features/cms/LegalContentAdmin').then((m) => ({ default: m.LegalContentAdmin })));
 const FaqsAdmin = lazy(() => import('@/features/cms/FaqsAdmin'));
 const CareersAdmin = lazy(() => import('@/features/cms/CareersAdmin'));
 const TestimonialsAdmin = lazy(() => import('@/features/cms/TestimonialsAdmin'));
@@ -77,6 +78,8 @@ const PortfolioStudio = lazy(() => import('@/features/portfolio-studio/Portfolio
 const PortfolioApprovals = lazy(() => import('@/features/portfolio-studio/PortfolioApprovals'));
 const AIConfigAdmin = lazy(() => import('@/features/ai-tools/AIConfigAdmin'));
 const AiAssist = lazy(() => import('@/features/ai-tools/AiAssist'));
+const ChatbotConversationsAdmin = lazy(() => import('@/features/ai-tools/ChatbotConversationsAdmin'));
+const NotificationsAdmin = lazy(() => import('@/features/notifications/NotificationsAdmin').then((m) => ({ default: m.NotificationsAdmin })));
 const AgentsAdmin = lazy(() => import('@/features/agents/AgentsAdmin').then((m) => ({ default: m.AgentsAdmin })));
 const BoardroomAdmin = lazy(() => import('@/features/boardroom/BoardroomAdmin'));
 const RuntimeConfigAdmin = lazy(() => import('@/features/settings/RuntimeConfigAdmin'));
@@ -124,6 +127,7 @@ export default function App() {
         <Route path="surveys" element={<SurveysAdmin />} />
         <Route path="product-inquiries" element={<ProductInquiriesAdmin />} />
         <Route path="chat" element={<ChatConversationsAdmin />} />
+        <Route path="chat-conversations" element={<ChatbotConversationsAdmin />} />
         <Route path="opportunities" element={<OpportunitiesAdmin />} />
         <Route path="quotes" element={<QuotesAdmin />} />
         <Route path="invoices" element={<InvoicesAdmin />} />
@@ -136,6 +140,7 @@ export default function App() {
         <Route path="service-categories" element={<ServiceCategoriesAdmin />} />
         <Route path="sections" element={<HomeSectionsAdmin />} />
         <Route path="settings" element={<SiteSettingsAdmin />} />
+        <Route path="legal-pages" element={<LegalContentAdmin />} />
         <Route path="settings/roles" element={<RolesAdmin />} />
         <Route path="settings/vault" element={<RuntimeConfigAdmin />} />
         <Route path="faqs" element={<FaqsAdmin />} />
@@ -185,6 +190,7 @@ export default function App() {
         <Route path="ai-assist" element={<AiAssist />} />
         <Route path="agents" element={<AgentsAdmin />} />
         <Route path="boardroom" element={<BoardroomAdmin />} />
+        <Route path="notifications" element={<NotificationsAdmin />} />
         <Route path="system" element={<SystemPanel />} />
         <Route path="security" element={<SecurityPanel />} />
         <Route path="audit-log" element={<AuditLogViewer />} />

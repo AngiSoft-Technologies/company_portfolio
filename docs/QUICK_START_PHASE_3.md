@@ -171,7 +171,7 @@ After completing Phase 3, you'll have:
 - [ ] Homepage displays all services
 - [ ] All CRUD operations tested
 - [ ] No console errors
-- [ ] Ready for production deployment
+- [ ] Content population complete; production gates remain in `docs/PRODUCTION_READINESS.md`
 
 ---
 

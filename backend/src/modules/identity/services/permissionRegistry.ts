@@ -117,6 +117,7 @@ export const PERMISSIONS: PermissionDefinition[] = [
     { key: 'services.view', display: 'View Services', description: 'View the service catalogue', group: 'Services', risk: 'LOW', order: 40 },
     { key: 'services.create', display: 'Create Services', description: 'Create services', group: 'Services', risk: 'MEDIUM', order: 41 },
     { key: 'services.update', display: 'Edit Services', description: 'Edit services', group: 'Services', risk: 'MEDIUM', order: 42 },
+    { key: 'services.update_assigned', display: 'Edit Assigned Services', description: 'Edit services the employee is assigned to via ServiceTeamMember', group: 'Services', risk: 'MEDIUM', order: 42.5, scopeRequiresAssignment: true },
     { key: 'services.archive', display: 'Archive Services', description: 'Archive services', group: 'Services', risk: 'MEDIUM', order: 43 },
     { key: 'services.manage_pricing', display: 'Manage Service Pricing', description: 'Edit service pricing packages', group: 'Services', risk: 'MEDIUM', order: 44 },
 
@@ -291,6 +292,7 @@ export const PERMISSIONS: PermissionDefinition[] = [
 
     // ── Reviews ──────────────────────────────────────────────────────────
     { key: 'reviews.moderate', display: 'Moderate Reviews', description: 'Approve, reject, reply to testimonials', group: 'Reviews', risk: 'MEDIUM', order: 10 },
+    { key: 'reviews.moderate_assigned', display: 'Moderate Assigned Reviews', description: 'Moderate only testimonials assigned to the employee in the review queue', group: 'Reviews', risk: 'MEDIUM', order: 11, scopeRequiresAssignment: true },
 
     // ── Pages ────────────────────────────────────────────────────────────
     { key: 'pages.update_home', display: 'Edit Home Page', description: 'Edit homepage sections', group: 'Pages', risk: 'MEDIUM', order: 10 },

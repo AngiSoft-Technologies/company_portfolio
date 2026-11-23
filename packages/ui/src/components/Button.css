@@ -1,0 +1,151 @@
+/* Token-only Button styles. Variant colours resolve through theme CSS custom
+   properties, so named palettes and light/dark modes need no new class names. */
+
+.angisoft-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg, 0.5rem);
+  box-shadow: var(--elevation-sm, none);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease),
+    transform 200ms var(--ease-standard, ease);
+}
+
+.angisoft-button--sm {
+  height: 2.25rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.angisoft-button--md {
+  height: 2.75rem;
+  padding-inline: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.angisoft-button--lg {
+  height: 3rem;
+  padding-inline: 1.75rem;
+  font-size: 1rem;
+}
+
+/* Primary — electric blue brand ramp. */
+.angisoft-button--primary {
+  color: var(--color-white);
+  background: var(--color-primary);
+}
+
+.angisoft-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+/* Secondary — cyan brand ramp. */
+.angisoft-button--secondary {
+  color: var(--color-white);
+  background: var(--color-secondary);
+}
+
+.angisoft-button--secondary:hover:not(:disabled) {
+  background: var(--color-secondary-light);
+}
+
+/* Outline — neutral surface, brand accent on hover. */
+.angisoft-button--outline {
+  color: var(--text-primary);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.angisoft-button--outline:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-color: var(--color-primary);
+}
+
+/* Ghost — no fill until interaction. */
+.angisoft-button--ghost {
+  color: var(--text-secondary);
+  background: transparent;
+  box-shadow: none;
+}
+
+.angisoft-button--ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+/* Danger — single semantic error token; brightness keeps the hover lift
+   without introducing a second hardcoded red. */
+.angisoft-button--danger {
+  color: var(--color-white);
+  background: var(--color-error);
+}
+
+.angisoft-button--danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.angisoft-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.angisoft-button--secondary:focus-visible {
+  outline-color: var(--color-secondary);
+}
+
+.angisoft-button--danger:focus-visible {
+  outline-color: var(--color-error);
+}
+
+.angisoft-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.angisoft-button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.angisoft-button__spinner {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: angisoft-button-spin 0.7s linear infinite;
+}
+
+@keyframes angisoft-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .angisoft-button {
+    transition: none;
+  }
+
+  .angisoft-button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .angisoft-button__spinner {
+    animation-duration: 1.8s;
+  }
+}

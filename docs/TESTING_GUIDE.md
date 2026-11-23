@@ -33,20 +33,17 @@
 
 ### Prerequisites
 ```bash
-# Terminal 1: Backend
-cd backend
-npm install
-npx prisma generate
-npx prisma migrate dev
-npm run dev
-# Should see: Server running on http://localhost:5000
+# From the repository root (pnpm workspace)
+pnpm install
+pnpm dev:backend    # API at http://localhost:5000
+pnpm dev:web        # public site + client portal at http://localhost:5173
+pnpm dev:admin      # staff ERP app at http://localhost:5174
 
-# Terminal 2: Frontend
-cd frontend
-npm install
-npm run dev
-# Should see: http://localhost:5174
+# First backend setup only
+cd backend && npx prisma generate && npm run prisma:migrate:dev
 ```
+
+Both Vite apps proxy `/v1`, `/uploads` and `/socket.io` to the backend; leave `VITE_API_BASE_URL` unset in development and production. Access tokens are held in memory by `@angisoft/api-client` and the refresh cookie is `SameSite=Strict`, so browser calls stay same-origin.
 
 ---
 
@@ -56,7 +53,7 @@ npm run dev
 
 **Steps:**
 ```
-1. Open http://localhost:5174/admin/login
+1. Open http://localhost:5174/login
 2. Enter admin credentials (check backend for seed data)
 3. Click "Blog Posts" in sidebar (under "Content" section)
 4. Click "+ New Blog Post"
@@ -78,7 +75,7 @@ npm run dev
 **Verify in Browser Console:**
 ```javascript
 // In Developer Tools Console, copy-paste:
-fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(console.log)
+fetch('/v1/blogs').then(r => r.json()).then(console.log)
 // Should show your new blog post
 ```
 
@@ -103,7 +100,7 @@ fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(console.log)
 **Verify in Browser Console:**
 ```javascript
 // Check what the Blog section fetched
-fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(d => {
+fetch('/v1/blogs').then(r => r.json()).then(d => {
   console.log('Total blogs:', d.length);
   console.log('Published:', d.filter(b => b.published));
 })
@@ -144,7 +141,7 @@ fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(d => {
 - ✅ Success message
 - ✅ Post disappears from table
 - ✅ Homepage blog section no longer shows the post
-- ✅ Verify with: `fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(console.log)`
+- ✅ Verify with: `fetch('/v1/blogs').then(r => r.json()).then(console.log)`
 
 ---
 
@@ -217,23 +214,23 @@ fetch('http://localhost:5000/v1/blogs').then(r => r.json()).then(d => {
 
 **Steps:**
 ```
-1. Open http://localhost:5174/admin/login
+1. Open http://localhost:5174/login
 2. Enter admin email and password
 3. Click "Login"
-4. Wait for redirect to /admin dashboard
-5. Open DevTools → Application → Local Storage
-6. Check: `adminToken` is set
-7. Go back to /admin/services
-8. Logout and try accessing /admin
-9. Should redirect to /admin/login
+4. Wait for redirect to the admin dashboard
+5. In DevTools → Application → Cookies, confirm the refresh cookie is present
+6. Confirm no access token is stored in localStorage/sessionStorage
+7. Reload the page: the in-memory access token is rehydrated from the refresh cookie
+8. Logout and try accessing a guarded route
+9. Should redirect to /login
 ```
 
 **Expected Result:**
-- ✅ Login works, redirects to dashboard
-- ✅ `adminToken` appears in localStorage
-- ✅ httpClient automatically adds it to API requests
-- ✅ Logout clears token
-- ✅ Protected routes inaccessible without token
+- ✅ Login works and redirects to the dashboard
+- ✅ Access token stays in memory; only the `SameSite=Strict` refresh cookie persists
+- ✅ `@angisoft/api-client` attaches the access token and CSRF double-submit header
+- ✅ Logout clears the cookie and in-memory session
+- ✅ Protected routes are inaccessible without a valid session
 
 ---
 
@@ -255,27 +252,28 @@ grep -n "blogsRouter" src/app.ts
 ### If frontend doesn't display data
 
 ```javascript
-// In browser console, manually test the API:
-const token = localStorage.getItem('adminToken');
-fetch('http://localhost:5000/v1/blogs', {
-  headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-})
-.then(r => r.json())
-.then(data => console.log('Blogs:', data))
-.catch(e => console.error('Error:', e))
+// Public/same-origin smoke check (no token required):
+fetch('/v1/blogs', { credentials: 'include' })
+  .then(r => r.json())
+  .then(data => console.log('Blogs:', data))
+  .catch(e => console.error('Error:', e))
 
-// If CORS error, check backend CORS config in src/app.ts
+// Authenticated requests are made by @angisoft/api-client from the app.
+// Do not move access tokens into localStorage when reproducing a bug.
 ```
 
 ### If admin can't create items
 
 ```javascript
-// Check what error the API returns:
-fetch('http://localhost:5000/v1/blogs', {
+// Prefer reproducing through the admin UI so @angisoft/api-client supplies
+// the in-memory access token and CSRF double-submit header. For a raw fetch:
+const csrf = document.cookie.match(/(?:^|; )csrfToken=([^;]+)/)?.[1];
+fetch('/v1/blogs', {
   method: 'POST',
+  credentials: 'include',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+    ...(csrf ? { 'x-csrf-token': decodeURIComponent(csrf) } : {})
   },
   body: JSON.stringify({
     title: 'Test',
@@ -340,13 +338,13 @@ Copy and fill this in as you test:
 ### Test Unauthorized Access
 ```javascript
 // Try to call admin endpoint without token:
-fetch('http://localhost:5000/v1/admin/dashboard/stats')
+fetch('/v1/admin/dashboard/stats')
 .then(r => r.json())
 .then(console.log)
 // Should return 401 Unauthorized
 
 // Try with invalid token:
-fetch('http://localhost:5000/v1/admin/dashboard/stats', {
+fetch('/v1/admin/dashboard/stats', {
   headers: { 'Authorization': 'Bearer invalid-token' }
 })
 .then(r => r.json())
@@ -358,10 +356,10 @@ fetch('http://localhost:5000/v1/admin/dashboard/stats', {
 ```javascript
 // CORS should only allow certain origins:
 // From different domain in console:
-fetch('http://localhost:5000/v1/services')
+fetch('/v1/services')
 // Should work (public endpoint)
 
-fetch('http://localhost:5000/v1/admin/dashboard/stats')
+fetch('/v1/admin/dashboard/stats')
 // Should fail (requires auth)
 ```
 
@@ -412,4 +410,11 @@ rendering, the 3-step booking submit → redirect, client-portal magic-link →
 dashboard, admin login → dashboard, auth-guard redirect, payroll screen data,
 and the admin theme toggle + profile persistence. Stub handlers live in
 `e2e/fixtures/mockApi.ts` (`'METHOD /v1/path'` → JSON body, `*` suffix for
-prefixes, `{status, body}` envelope for non-200s).
+prefixes, `{status, body}` envelope for non-200s). The fixture intercepts both
+`/v1/**` (what the apps actually call) and legacy `/api/**`; `grantClientConsent()`
+seeds the consent record required by gated booking/portal routes.
+
+**Verified 2026-11-23:** `pnpm test:e2e` → **30 passed in 15.5m**, exit 0 (`/tmp/opencode/e2e-final2.out`). The suite now includes `admin-route-theme-matrix.spec.ts`: all 82 guarded routes in `frontend/admin/src/app.tsx` are parsed at test time and swept under 3 theme scenarios (explicit light, explicit dark over a light OS, and no stored choice with alternating OS preference) = 246 route×theme checks in 18 chunk tests, plus 1 theme-persistence test. Each check asserts the admin shell mounts, the lazy route finishes, content renders, the route is unchanged, refresh-auth fired, critical CSS tokens resolve, the body paints from tokens, persisted theme is correct, no compiler/React overlay appears and no uncaught page errors occur. A previous failure
+was caused by stubbing only `/api/**`, letting real requests through to empty
+states; tests and fixtures were corrected rather than weakening assertions. The
+per-test timeout is 120s (matrix chunks set 8m) and assertion timeout 30s to absorb Vite dev first-compile cost under two workers. The `/uploads` guarded route is served by Vite's HTML transform: both Vite dev proxies are scoped to `/uploads/public`, and the matrix no longer stubs raw `index.html` (which omitted the React-refresh preamble and broke the shell). Two consecutive full runs after those changes passed 30/30.

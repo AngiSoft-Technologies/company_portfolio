@@ -12,7 +12,7 @@ Express + TypeScript API powering the AngiSoft Technologies platform, with Postg
 - **Language**: TypeScript
 - **Database**: PostgreSQL (Neon) with Prisma 8 ORM (contract at `src/prisma/contract.prisma`)
 - **Auth**: JWT + bcrypt + 2FA (otplib) — access tokens in memory, refresh in httpOnly+SameSite=Strict cookies
-- **Payments**: Stripe + Paystack
+- **Payments**: Stripe, PayPal, PayHero/Daraja and Paystack integrations (live credentials/provisioning pending)
 - **Storage**: Tigris (S3-compatible) via `@aws-sdk/client-s3`
 - **Queue**: BullMQ + Upstash Redis (ioredis)
 - **Email**: Nodemailer (Zoho SMTP)
@@ -32,7 +32,7 @@ backend/
 ├── src/
 │   ├── index.ts              Server entry (bootstrap, realtime, workers)
 │   ├── app.ts                Express app + middleware stack + router mounting
-│   ├── modules/              10 domain modules (identity, crm, projects, bookings, cms, billing, files, notifications, ai, analytics)
+│   ├── modules/              15 domain modules (identity, crm, projects, bookings, cms, billing, files, notifications, ai, analytics, agents, boardroom, communications, finance, hr)
 │   │   └── <domain>/
 │   │       ├── routes/       Route factories (receive shared Prisma client)
 │   │       ├── services/     Business logic

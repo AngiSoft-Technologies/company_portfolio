@@ -1,0 +1,51 @@
+/* Tailwind utilities for below-fold landing sections. Loaded with
+   DeferredHomeSections when the user scrolls toward them. */
+@import 'tailwindcss/utilities.css' source(none);
+@source '../features/marketing/components/sections/IndustryExpertise.tsx';
+@source '../features/marketing/components/sections/SolutionsWeDeliver.tsx';
+@source '../features/marketing/components/sections/TechTrendsSection.tsx';
+@source '../features/marketing/components/sections/ProductShowcase.tsx';
+@source '../features/marketing/components/sections/FeaturedInsights.tsx';
+@source '../features/marketing/components/sections/TechPlatforms.tsx';
+@source '../features/marketing/components/sections/FaqSection.tsx';
+@source '../features/marketing/components/sections/ContactSection.tsx';
+@source '../features/marketing/components/landing/EngagementCta.tsx';
+@source '../features/marketing/components/landing/TestimonialSlider.tsx';
+@source '../../../packages/ui/src';
+
+/* These sections mount with loading skeletons, then settle into data-driven
+   layouts. Reserving their resolved heights keeps later sections and the
+   footer from jumping when API responses arrive. */
+.angi-industry { min-height: 503px; }
+.angi-solutions { min-height: 490px; }
+.angi-trends-section { min-height: 566px; }
+.product-showcase { min-height: 344px; }
+.engagement-cta { min-height: 372px; }
+.featured-insights { min-height: 340px; }
+.testimonial-slider { min-height: 408px; }
+.angi-tech { min-height: 619px; }
+.angi-contact-section { min-height: 1220px; }
+
+@media (min-width: 768px) {
+  .angi-industry { min-height: 514px; }
+  .angi-solutions { min-height: 469px; }
+  .angi-trends-section { min-height: 533px; }
+  .product-showcase { min-height: 408px; }
+  .engagement-cta { min-height: 648px; }
+  .featured-insights { min-height: 404px; }
+  .testimonial-slider { min-height: 472px; }
+  .angi-tech { min-height: 596px; }
+  .angi-contact-section { min-height: 1032px; }
+}
+
+@media (min-width: 1024px) {
+  .angi-industry { min-height: 567px; }
+  .angi-solutions { min-height: 531px; }
+  .angi-trends-section { min-height: 563px; }
+  .product-showcase { min-height: 408px; }
+  .engagement-cta { min-height: 588px; }
+  .featured-insights { min-height: 404px; }
+  .testimonial-slider { min-height: 472px; }
+  .angi-tech { min-height: 575px; }
+  .angi-contact-section { min-height: 1061px; }
+}

@@ -73,7 +73,7 @@ export default function leaveRequestsRouter(prisma: Db = db) {
                 return res.status(403).json({ error: 'Missing leave.request permission' });
             }
             const parsed = createSchema.safeParse(req.body);
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const days = leaveDays(parsed.data.startDate, parsed.data.endDate);
             if (days <= 0) return res.status(400).json({ error: 'endDate must be on or after startDate' });
             const leave = await prisma.orm.public.LeaveRequest.create({
@@ -112,7 +112,7 @@ export default function leaveRequestsRouter(prisma: Db = db) {
     router.post('/:id/review', async (req: AuthRequest, res) => {
         try {
             const parsed = reviewSchema.safeParse(req.body);
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const existing = await prisma.orm.public.LeaveRequest.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Leave request not found' });
             if (String((existing as any).status) !== 'pending') {

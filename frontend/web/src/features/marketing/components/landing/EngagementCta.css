@@ -69,18 +69,16 @@
   font-size: .9375rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background .18s var(--ease-standard), transform .18s var(--ease-standard), border-color .18s var(--ease-standard);
 }
 
 .engagement-cta__action--primary {
-  color: #fff;
+  color: var(--color-white);
   background: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
 
 .engagement-cta__action--primary:hover {
   background: var(--color-primary-dark);
-  transform: translateY(-1px);
 }
 
 .engagement-cta__action--secondary {
@@ -91,7 +89,6 @@
 
 .engagement-cta__action--secondary:hover {
   background: var(--surface-hover);
-  transform: translateY(-1px);
 }
 
 .engagement-cta__media {
@@ -126,10 +123,10 @@
 
 .engagement-cta__media-caption span {
   padding: .3125rem .625rem;
-  border: 1px solid rgba(255, 255, 255, .24);
+  border: 1px solid color-mix(in srgb, var(--color-white) 24%, transparent);
   border-radius: 999px;
-  background: rgba(7, 20, 43, .62);
-  color: #fff;
+  background: color-mix(in srgb, var(--color-navy) 62%, transparent);
+  color: var(--color-white);
   font-size: .6875rem;
   font-weight: 600;
 }
@@ -150,12 +147,16 @@
   .engagement-cta__video {
     display: none;
   }
+}
 
+/* Motion is opt-in: the static state is the default, and transition/transform
+   are enabled only when the visitor has not requested reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
   .engagement-cta__action {
-    transition: none;
+    transition: background .18s var(--ease-standard), transform .18s var(--ease-standard), border-color .18s var(--ease-standard);
   }
 
   .engagement-cta__action:hover {
-    transform: none;
+    transform: translateY(-1px);
   }
 }

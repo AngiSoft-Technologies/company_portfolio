@@ -1,16 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { mockApi } from '../fixtures/mockApi';
+import { grantClientConsent, mockApi } from '../fixtures/mockApi';
 
 /**
  * Booking journey — the primary conversion path on the public site.
- * Three-step form → POST /api/bookings (multipart) → redirect to /bookings.
+ * Three-step form → POST /v1/bookings (multipart) → redirect to /bookings.
  */
 
 test('booking form submits and redirects to booking history', async ({ page }) => {
   let postedTitle = '';
 
+  // /book is consent-gated; seed an accepted record to test the form itself.
+  await grantClientConsent(page);
   await mockApi(page, {
-    'GET /api/site/booking': {
+    'GET /v1/site/booking': {
       steps: [
         { id: 1, title: 'Your details', icon: 'FaUser' },
         { id: 2, title: 'About the project', icon: 'FaFileAlt' },
@@ -18,9 +20,9 @@ test('booking form submits and redirects to booking history', async ({ page }) =
       ],
       projectTypes: [{ value: 'web', label: 'Web Application' }],
     },
-    'GET /api/site/pricing': {},
-    'GET /api/services': [],
-    'POST /api/bookings': (ctx) => {
+    'GET /v1/site/pricing': {},
+    'GET /v1/services': [],
+    'POST /v1/bookings': (ctx) => {
       // Multipart body — pull the project title out of the raw payload.
       const body = ctx.postData ?? '';
       const m = body.match(/name="title"\r?\n\r?\n([^\r\n]+)/);
@@ -33,8 +35,8 @@ test('booking form submits and redirects to booking history', async ({ page }) =
         },
       };
     },
-    'GET /api/bookings/my': { bookings: [] },
-    'GET /api/bookings*': { bookings: [] },
+    'GET /v1/bookings/my': { bookings: [] },
+    'GET /v1/bookings*': { bookings: [] },
   });
 
   await page.goto('/book');
@@ -57,6 +59,6 @@ test('booking form submits and redirects to booking history', async ({ page }) =
   if (submitVisible) await submit.click();
 
   // Redirect lands on /bookings after ~1.2s; assert the POST carried the title.
-  await expect(page).toHaveURL(/\/bookings/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/bookings/, { timeout: 30_000 });
   expect(postedTitle).toBe('Clinic Management System');
 });

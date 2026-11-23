@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AngiSoftLogo from '../brand/AngiSoftLogo';
 import AngiSoftFooterWave from '../brand/AngiSoftFooterWave';
-import { apiGet, apiPost } from '@/lib/httpClient';
+import { apiPost } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import {
   FaLinkedinIn, FaXTwitter, FaFacebookF, FaInstagram, FaGithub,
@@ -55,9 +56,9 @@ const Footer = () => {
   useEffect(() => {
     let active = true;
     Promise.all([
-      apiGet<FooterSettings>('/site/footer'),
-      apiGet<ContactSettings>('/site/contact'),
-      apiGet<{ logo?: string; siteName?: string }>('/site/branding'),
+      cachedGet<FooterSettings>('/site/footer'),
+      cachedGet<ContactSettings>('/site/contact'),
+      cachedGet<{ logo?: string; siteName?: string }>('/site/branding'),
     ])
       .then(([footerSettings, contactSettings, brandingSettings]) => {
         if (!active) return;

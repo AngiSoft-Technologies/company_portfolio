@@ -58,7 +58,11 @@ const ContactForm = forwardRef(function ContactForm(
 
     return (
         <form className="contact-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}>
-            <ContactErrorAlert message={submitError} fieldErrors={fieldErrors} onFocusField={onFocusField} />
+            <ContactErrorAlert
+                message={submitError}
+                fieldErrors={fieldErrors}
+                onFocusField={onFocusField ?? focusField}
+            />
 
             <input
                 type="text"

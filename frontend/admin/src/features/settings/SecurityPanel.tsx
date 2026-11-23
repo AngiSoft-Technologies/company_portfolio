@@ -180,8 +180,32 @@ export function SecurityPanel() {
     <div>
       <PageHeader title="Security & MFA" subtitle="Add and manage verification factors for your account." />
 
-      {error && <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      {notice && <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border p-3 text-sm"
+          style={{
+            borderColor: 'color-mix(in srgb, var(--color-error) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--color-error) 8%, transparent)',
+            color: 'var(--color-error)',
+          }}
+        >
+          {error}
+        </div>
+      )}
+      {notice && (
+        <div
+          role="status"
+          className="mb-4 rounded-lg border p-3 text-sm"
+          style={{
+            borderColor: 'color-mix(in srgb, var(--color-success) 35%, transparent)',
+            background: 'color-mix(in srgb, var(--color-success) 8%, transparent)',
+            color: 'var(--color-success)',
+          }}
+        >
+          {notice}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
@@ -260,7 +284,7 @@ export function SecurityPanel() {
                         setNotice(null);
                         void startPasskey(true);
                       }}
-                      className="rounded bg-[var(--color-primary)] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                      className="rounded bg-[var(--color-primary)] px-3 py-1.5 text-xs font-medium text-[var(--color-white)] disabled:opacity-50"
                     >
                       {busy === 'passkey' ? 'Waiting…' : 'Phone / fingerprint'}
                     </button>
@@ -292,7 +316,7 @@ export function SecurityPanel() {
               <h2 className="mb-3 text-base font-semibold">Verify to finish setup</h2>
               {totpSetup && (
                 <div className="mb-4 flex flex-col items-center gap-2 text-sm sm:flex-row sm:items-start">
-                  <div className="rounded-lg bg-white p-2">
+                  <div className="rounded-lg bg-[var(--color-white)] p-2">
                     <QRCodeSVG value={totpSetup.otpauthUrl} size={148} marginSize={2} title="Authenticator QR code" />
                   </div>
                   <div className="space-y-2">
@@ -305,9 +329,11 @@ export function SecurityPanel() {
               {otpChallenge && <p className="mb-3 text-sm">Code sent to {otpChallenge.destination}</p>}
               <div className="flex gap-2">
                 <input
+                  aria-label={activeMethod === 'TOTP' ? 'Authenticator code' : 'Verification code'}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   placeholder="000000"
                   className="w-40 rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
                 />
@@ -315,7 +341,7 @@ export function SecurityPanel() {
                   type="button"
                   onClick={confirmCode}
                   disabled={busy === 'confirm' || !code}
-                  className="rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="rounded bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-[var(--color-white)] disabled:opacity-50"
                 >
                   {busy === 'confirm' ? 'Verifying…' : 'Verify'}
                 </button>

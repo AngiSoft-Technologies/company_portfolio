@@ -85,16 +85,28 @@ interface PermissionRow {
   group?: string;
 }
 
+interface EmployeeEmailRow {
+  id: string;
+  email: string;
+  isPrimary?: boolean;
+  verifiedAt?: string | null;
+  source?: string | null;
+}
+
+type ApiError = { message?: string };
+const messageOf = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : (error as ApiError | null)?.message || fallback;
+
 /** Reads a string field, treating missing/empty/unknown as the em-dash sentinel. */
 function EmailManager({ employeeId, primaryEmail }: { employeeId: string; primaryEmail: string }) {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<EmployeeEmailRow[]>([]);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const load = async () => {
     try {
-      const res = await apiFetch(`/admin/staff/${employeeId}/emails`) as any;
+      const res = await apiFetch(`/admin/staff/${employeeId}/emails`) as { emails?: EmployeeEmailRow[] };
       setRows(Array.isArray(res?.emails) ? res.emails : []);
-    } catch (e: any) { toast.error(e.message || 'Failed to load emails'); }
+    } catch (error: unknown) { toast.error(messageOf(error, 'Failed to load emails')); }
   };
   useEffect(() => { void load(); }, [employeeId]);
   const add = async (isPrimary = false) => {
@@ -105,13 +117,13 @@ function EmailManager({ employeeId, primaryEmail }: { employeeId: string; primar
       setEmail('');
       await load();
       toast.success(isPrimary ? 'Primary email updated' : 'Email added');
-    } catch (e: any) { toast.error(e.message || 'Failed to save email'); }
+    } catch (error: unknown) { toast.error(messageOf(error, 'Failed to save email')); }
     finally { setBusy(false); }
   };
   const remove = async (id: string) => {
     setBusy(true);
     try { await apiFetch(`/admin/staff/${employeeId}/emails/${id}`, { method: 'DELETE' }); await load(); }
-    catch (e: any) { toast.error(e.message || 'Failed to delete email'); }
+    catch (error: unknown) { toast.error(messageOf(error, 'Failed to delete email')); }
     finally { setBusy(false); }
   };
   return (

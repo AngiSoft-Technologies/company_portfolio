@@ -128,7 +128,7 @@ export default function communicationsCapabilitiesRouter(prisma: Db) {
     const body = z.object({
       operation: z.enum(['mcp.ads', 'mcp.social', 'mcp.whatsapp']),
       tool: z.string().min(1),
-      arguments: z.record(z.unknown()).optional(),
+      arguments: z.record(z.string(), z.unknown()).optional(),
     }).parse(req.body);
     try {
       res.json(await callMetaMcpTool(body.operation, body.tool, body.arguments ?? {}, req.user?.sub));

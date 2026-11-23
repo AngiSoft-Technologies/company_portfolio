@@ -4,6 +4,35 @@ packages:
   - "backend"
   - "packages/*"
 
+# sharp/vite-imagetools pull @types/node@26, while the frontend apps pin 24.
+# One identity avoids duplicate Vite plugin types in `pnpm typecheck`.
+overrides:
+  "@types/node": 24.13.6
+  # body-parser DoS advisories: keep Express 4 and Express 5 trees on patched
+  # versions without forcing Express 4 onto body-parser v2.
+  "express@^4>body-parser": "1.20.9"
+  "express@^5>body-parser": "2.4.0"
+  # Targeted production-audit remediation. Scoped where major versions differ
+  # so optional Prisma CLI deps and the MCP SDK do not get cross-major bumps.
+  "source-map-js": 1.2.4
+  "qs": 6.17.1
+  "undici": 7.30.1
+  "fast-uri": 3.1.9
+  "ip-address": 10.7.4
+  "fast-xml-parser": 5.12.0
+  "valibot": 1.4.2
+  "@vitest/mocker": 4.1.12
+  "sharp": 0.35.5
+  "lodash": 4.18.1
+  "hono@4": 4.13.16
+  # Advisory GHSA for serveStatic has no 1.x patch; the MCP SDK and Prisma
+  # toolchain are exercised by the local gate below before keeping this bump.
+  "@hono/node-server@1": 2.1.6
+  "@hono/node-server@2": 2.1.6
+  # Same scoped approach for the @vercel/nft glob/minimatch chain.
+  "glob@13": 14.0.2
+  "minimatch@10": 11.0.1
+
 allowBuilds:
   bcrypt: true
   esbuild: true

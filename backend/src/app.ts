@@ -21,10 +21,13 @@ import pricingPackagesRouter from './modules/cms/routes/pricing-packages';
 import catalogFeedRouter from './modules/cms/routes/catalog-feed';
 import officesRouter from './modules/cms/routes/offices';
 import projectsRouter from './modules/projects/routes/projects';
+import projectDeliveryRouter from './modules/projects/routes/delivery-slices';
 import blogsRouter from './modules/cms/routes/blogs';
 import testimonialsRouter from './modules/cms/routes/testimonials';
 import serviceCategoriesRouter from './modules/cms/routes/service-categories';
 import settingsRouter from './modules/cms/routes/settings';
+import legalRouter from './modules/cms/routes/legal';
+import marketingOperationsRouter from './modules/cms/routes/marketing-slices';
 import staffRouter from './modules/identity/routes/staff';
 import adminRouter from './shared/routes/admin';
 import runtimeConfigRouter from './shared/routes/runtime-config';
@@ -49,11 +52,13 @@ import { trackPageView } from './modules/analytics/services/analytics';
 import { getAllowedOrigins } from './shared/config/origins';
 import { authRateLimiter } from './shared/middleware/rateLimiter';
 import { requireAuth } from './shared/middleware/auth';
+import { requireAccess } from './shared/middleware/roles';
 import { sanitizeMiddleware } from './shared/middleware/validation';
 import { publicJsonCache } from './shared/middleware/cache';
 import { csrfInit, csrfProtect } from './shared/middleware/csrf';
 import { errorHandler, notFoundHandler, asyncHandler } from './shared/middleware/errorHandler';
 import { initSentry } from './shared/services/monitoring/sentry';
+import { recordSlowRequest, redactRequestPath } from './shared/services/monitoring/performanceStore';
 import { loadRuntimeConfig } from './shared/services/runtimeConfig';
 import { toPublicUrl } from './modules/files/services/storage/s3';
 import prisma from './db';
@@ -85,6 +90,8 @@ import aiAssistRouter from './modules/ai/routes/ai-assist';
 import renewalsRouter from './modules/crm/routes/renewals';
 import agentsRouter from './modules/agents/routes/agents';
 import boardroomRouter from './modules/boardroom/routes/boardroom';
+import hrRouter from './modules/hr';
+import hrPerformanceRouter from './modules/hr/routes/performance-slices';
 import communicationsAccountsRouter from './modules/communications/routes/accounts';
 import communicationsAuditRouter from './modules/communications/routes/audit';
 import communicationsCapabilitiesRouter from './modules/communications/routes/capabilities';
@@ -114,6 +121,7 @@ import {
   financeTransactionsRouter,
   financeWebhooksRouter,
 } from './modules/finance';
+import financeAccountingRouter from './modules/finance/routes/accounting-slices';
 import employeeEmailsRouter from './modules/identity/routes/employee-emails';
 
 dotenv.config();
@@ -129,21 +137,31 @@ app.use((_req, _res, next) => {
 app.use(compression());
 // Slow-request observability (Phase 5.4): emit a structured JSON log line for
 // any request exceeding SLOW_REQUEST_MS (default 1000ms) so latency regressions
-// are greppable in Fly logs without a full APM.
+// are greppable in Fly logs without a full APM, and keep a bounded in-memory
+// copy readable by admins at GET /v1/admin/performance/slow-requests.
+// Both sinks use the same path redactor: no query strings, bodies or tokens.
 const SLOW_REQUEST_MS = Math.max(100, Number(process.env.SLOW_REQUEST_MS ?? 1000));
 app.use((req, res, next) => {
     const start = process.hrtime.bigint();
     res.on('finish', () => {
         const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
         if (durationMs >= SLOW_REQUEST_MS) {
+            const safePath = redactRequestPath(req.originalUrl ?? req.url ?? '');
             console.warn(JSON.stringify({
                 level: 'warn',
                 type: 'slow_request',
                 method: req.method,
-                path: req.originalUrl?.split('?')[0],
+                path: safePath,
                 status: res.statusCode,
                 durationMs: Math.round(durationMs),
             }));
+            recordSlowRequest({
+                method: req.method,
+                path: safePath,
+                status: res.statusCode,
+                durationMs,
+                thresholdMs: SLOW_REQUEST_MS,
+            });
         }
     });
     next();
@@ -378,11 +396,17 @@ app.use('/v1/services', servicesRouter());
 app.use('/v1/pricing-packages', pricingPackagesRouter(prisma));
 app.use('/v1/catalog', catalogFeedRouter(prisma));
 app.use('/v1/offices', officesRouter(prisma));
+// Additive Phase 2 delivery slices: templates, capacity, changes, risks,
+// retrospectives and sign-offs. Separate prefix avoids the public projects router.
+app.use('/v1/project-delivery', projectDeliveryRouter(prisma));
 app.use('/v1/projects', projectsRouter());
 app.use('/v1/blogs', blogsRouter());
 app.use('/v1/testimonials', testimonialsRouter());
 app.use('/v1/service-categories', serviceCategoriesRouter());
-app.use('/v1/settings', requireAuth, settingsRouter());
+// The shared CRUD factory is intentional generic, so authorization belongs at
+// the mount: settings values drive public content and must not be writable by
+// any authenticated employee. FIX OBS-02 from docs/security/OWASP_AUDIT.md.
+app.use('/v1/settings', requireAuth, requireAccess('administration.settings', ['ADMIN', 'SUPER_ADMIN']), settingsRouter());
 app.use('/v1/staff', staffRouter(prisma));
 app.use('/v1/admin', adminRouter(prisma));
 app.use('/v1/admin/webhook-inbox', webhookInboxRouter(prisma));
@@ -406,6 +430,8 @@ app.use('/v1/admin/communications/templates', communicationsTemplatesRouter(pris
 app.use('/v1/admin/communications/workflow', communicationsWorkflowRouter(prisma));
 app.use('/v1/communications/webhooks', communicationsWebhooksRouter(prisma));
 
+// Additive accounting slices (credit notes, tax rates, AR/AP, commissions).
+app.use('/v1/finance/accounting', financeAccountingRouter(prisma));
 app.use('/v1/admin/finance', financeOverviewRouter(prisma));
 app.use('/v1/admin/finance', financeAccountsRouter(prisma));
 app.use('/v1/admin/finance', financeAuditRouter(prisma));
@@ -425,8 +451,11 @@ app.use('/v1/staff-dashboard', staffDashboardRouter(prisma));
 app.use('/v1/client-projects', clientProjectsRouter(prisma));
 app.use('/v1/client-portal', clientPortalRouter(prisma));
 app.use('/v1/site', siteRouter(prisma));
+// Team-facing marketing operations (campaigns, calendar, briefs, assets, links).
+app.use('/v1/marketing', marketingOperationsRouter(prisma));
 app.use('/v1/newsletter', newsletterRouter(prisma));
 app.use('/v1/faqs', faqRouter(prisma));
+app.use('/v1/legal', legalRouter(prisma));
 app.use('/v1/chatbot', chatbotRouter(prisma));
 app.use('/v1/notifications', notificationsRouter());
 app.use('/v1/announcements', announcementsRouter());
@@ -452,6 +481,9 @@ app.use('/v1/expenses', expensesRouter(prisma));
 app.use('/v1/leave-requests', leaveRequestsRouter(prisma));
 app.use('/v1/attendance', attendanceRouter(prisma));
 app.use('/v1/payroll', payrollRouter(prisma));
+// HR performance/lifecycle slices; mount before /v1/hr so the specific prefix wins.
+app.use('/v1/hr/performance', hrPerformanceRouter(prisma));
+app.use('/v1/hr', hrRouter(prisma));
 app.use('/v1/approvals', approvalsRouter(prisma));
 app.use('/v1/product-faqs', productFaqsRouter());
 app.use('/v1/contact-enquiries', contactEnquiriesRouter());

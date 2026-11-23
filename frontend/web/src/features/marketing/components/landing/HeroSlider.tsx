@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
-import { apiGet } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import iconRegistry from '@/lib/marketing/iconRegistry';
 import './HeroSlider.css';
@@ -90,7 +90,7 @@ const HeroSlider = () => {
 
   useEffect(() => {
     let active = true;
-    apiGet<HeroContent>('/site/hero')
+    cachedGet<HeroContent>('/site/hero')
       .then((heroData) => {
         if (!active) return;
         setHero(heroData);

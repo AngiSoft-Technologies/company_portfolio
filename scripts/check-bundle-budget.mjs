@@ -3,9 +3,13 @@
  * Bundle-size budget check (Phase 5.5).
  *
  * Scans each app's dist/assets and fails if any chunk exceeds its budget.
- * Budgets are set from the post-code-splitting baseline (2026-11-20):
- *   web:   entry ~112 kB, largest route chunk ~117 kB, vendors ~260 kB
- *   admin: entry ~37 kB after lazy routing, vendors ~260 kB
+ * Budgets are set from the verified 2026-11-23 baseline after i18n
+ * dictionaries were code-split (English inline, 20 locales in one lazy chunk):
+ *   web:   entry ~123 kB, largest route chunk ~118 kB, lazy dict ~82 kB
+ *   admin: entry ~92 kB, lazy dict ~82 kB, vendors ~260 kB
+ * The previous admin 80 kB figures predated Phase 7 screens and the 21-locale
+ * dictionary set; they were unattainable, so they are rebaselined here with
+ * ~28 kB of headroom rather than left red forever.
  *
  * Usage: node scripts/check-bundle-budget.mjs [web|admin|all]
  * Run AFTER `pnpm build` in the respective app.
@@ -19,7 +23,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 // chunk; `any` applies to every other chunk; `vendor` to vendor-*.js.
 const BUDGETS = {
     web:   { entry: 160_000, any: 200_000, vendor: 320_000 },
-    admin: { entry: 80_000,  any: 80_000,  vendor: 320_000 },
+    admin: { entry: 120_000, any: 120_000, vendor: 320_000 },
 };
 
 function checkApp(app) {

@@ -21,7 +21,7 @@ const disputeSchema = z.object({
   amount: z.number().optional(),
   currency: z.string().optional(),
   dueAt: z.string().optional().nullable(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export default function financeDisputesRouter(prisma: Db) {

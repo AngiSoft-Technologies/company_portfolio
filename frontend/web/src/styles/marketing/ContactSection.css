@@ -80,11 +80,11 @@
 .angi-contact-error {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #ff8a8a;
+    color: var(--color-error);
 }
 .angi-contact-form-error {
-    background: rgba(255, 90, 90, 0.12);
-    border: 1px solid rgba(255, 90, 90, 0.3);
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
     border-radius: 0.6rem;
     padding: 0.7rem 0.9rem;
 }
@@ -184,7 +184,7 @@
 }
 .angi-contact-success-icon {
     font-size: 2.75rem;
-    color: #25D366;
+    color: var(--color-success);
 }
 .angi-contact-success-title {
     font-family: 'Sora', 'DM Sans', sans-serif;
@@ -301,12 +301,12 @@
     font-size: 0.9rem;
     color: var(--text-primary);
     text-decoration: none;
-    background: #25D366;
+    background: var(--color-success);
     transition: transform 0.2s ease, box-shadow 0.25s ease;
 }
 .angi-contact-whatsapp:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 26px rgba(37, 211, 102, 0.4);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--color-success) 40%, transparent);
 }
 
 @media (max-width: 639px) {

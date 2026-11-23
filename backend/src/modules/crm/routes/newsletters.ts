@@ -39,7 +39,7 @@ export default function newslettersRouter(prisma: Db = db) {
 
     router.post('/', requireAccess('newsletters.create', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const newsletter = await prisma.orm.public.Newsletter.create({
             id: newId(),
             subject: parsed.data.subject,
@@ -54,7 +54,7 @@ export default function newslettersRouter(prisma: Db = db) {
 
     router.put('/:id', requireAccess('newsletters.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) {
             if (v === undefined) continue;

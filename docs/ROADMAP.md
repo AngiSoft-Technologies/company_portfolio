@@ -3,23 +3,25 @@
 > **📜 HISTORICAL** — Superseded by `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery).<br>
 > Do not execute phases from this document. Keep for reference on environment-gating principle.
 
-Status of this document: **live**. Phases are executed in order; each phase is
-environment-gated (a missing env key must never crash the app or silently
-weaken security). Mark items `[x]` only when verified (build/tests/deployed).
+Status: **HISTORICAL — do not execute; retained only for the environment-gating principle.**
+Phases below are not authoritative; use `ANGISOFT_DIGITAL_HQ_PLAN.md` and
+`docs/PRODUCTION_READINESS.md` for current delivery status. The original
+principle remains: a missing env key must never crash the app or silently
+weaken security.
 
 Legend: `[ ]` pending · `[~]` in progress · `[x]` done.
 
 ---
 
-## Where we are today
+## Current stack reference (document is historical)
 
 | Layer | Current state |
 | --- | --- |
-| Frontend | React 19 + Vite 7 + MUI + Tailwind 4, Redux Toolkit. Deployed on Netlify. |
-| Backend | Express + TypeScript (strict, CommonJS), Node ≥ 24, 40+ route modules. Fly.io (Docker) — `web` + `worker` process groups (`backend/fly.toml`). |
-| Database | Prisma 7 + Neon Postgres (`backend/src/db.ts` singleton, Neon adapter). |
-| Payments | Stripe only — `backend/src/routes/payments.ts` + `services/payments/stripeService.ts`. Signature-verified webhook, idempotent `Payment` rows keyed by `providerId`. |
-| Files | Local disk (`uploads/`, ephemeral on the Fly `web` machines) + S3/Tigris object storage (`services/storage/s3.ts`, `AWS_*` secrets from `fly storage create`) + public CDN `https://<bucket>.t3.tigrisfiles.io` + read-proxy fallback. |
+| Frontend | React 19 + Vite 8.3.8 (`@vitejs/plugin-react` 6.3.0) + Tailwind CSS 4 (via `@tailwindcss/vite`) + MUI 7; no Redux Toolkit. Deployed on Netlify. |
+| Backend | Express + TypeScript (strict), Node ≥ 24, 15 domain modules (96 API mounts). Fly.io (Docker) — single `app` process group with scheduler (`backend/fly.toml`). |
+| Database | Prisma 8 + Neon Postgres (`backend/src/db.ts` singleton, Neon adapter). |
+| Payments | Stripe, PayPal, PayHero/Daraja and Paystack integrations (live credentials/provisioning pending). |
+| Files | Tigris (S3-compatible) public bucket via `@aws-sdk/client-s3`; CDN base `https://cdn.angisoft.co.ke` with legacy `/uploads/*` fallback redirect. |
 | AI | Multi-provider adapter done (`services/aiProvider.ts`), admin-configurable at `/admin/ai-config`. NVIDIA via OpenAI-compatible + status polling; also Anthropic, Google, Moonshot, Groq, etc. |
 | Async | `bullmq` + `ioredis` installed; small `queue/` + `workers/` (email, file processor, reconciliation). Redis keys removed previously. |
 | Observability | Sentry (`services/monitoring/sentry.ts`), structured logs (winston). |

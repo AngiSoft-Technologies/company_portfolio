@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
 import { requireAuth, type AuthRequest } from '../../../shared/middleware/auth';
+import { requireRecentMfa } from '../../../shared/middleware/mfaStepUp';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
@@ -27,7 +28,7 @@ const payoutSchema = z.object({
   reference: z.string().optional(),
   country: z.string().optional(),
   financeAccountId: z.string().optional().nullable(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 function flowFor(channel: string): 'B2C' | 'B2B' {
@@ -125,7 +126,7 @@ export default function financePayoutsRouter(prisma: Db) {
     return res.status(201).json({ payout, approval });
   }));
 
-  router.post(['/payouts/:id/approve', '/:id/approve'], requireAccess('finance.payouts.approve', MANAGE_ROLES), route(async (req: AuthRequest, res) => {
+  router.post(['/payouts/:id/approve', '/:id/approve'], requireAccess('finance.payouts.approve', MANAGE_ROLES), requireRecentMfa, route(async (req: AuthRequest, res) => {
     const payout: any = await prisma.orm.public.Payout.where({ id: req.params.id } as any).first();
     if (!payout) return res.status(404).json({ error: 'Payout not found' });
     if (payout.status !== 'PENDING_APPROVAL') return res.status(400).json({ error: 'Only pending approval payouts can be approved' });

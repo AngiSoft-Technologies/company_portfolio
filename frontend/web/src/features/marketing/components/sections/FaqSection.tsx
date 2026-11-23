@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@/lib/theme';
 import { apiGet } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { FaChevronDown, FaQuestionCircle, FaWhatsapp } from 'react-icons/fa';
 import '@/styles/marketing/FaqSection.css';
 
@@ -17,7 +18,7 @@ const FaqSection = () => {
     useEffect(() => {
         let active = true;
 
-        Promise.all([apiGet('/v1/faqs').catch(() => null), apiGet('/site/contact').catch(() => null)])
+        Promise.all([apiGet('/v1/faqs').catch(() => null), cachedGet('/site/contact').catch(() => null)])
             .then(([response, contactData]) => {
                 if (!active) return;
                 setContact(contactData);

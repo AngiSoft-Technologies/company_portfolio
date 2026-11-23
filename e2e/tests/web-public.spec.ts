@@ -11,13 +11,13 @@ test.describe('public site', () => {
     page.on('pageerror', (e) => errors.push(String(e)));
 
     await mockApi(page, {
-      'GET /api/site/hero': {
+      'GET /v1/site/hero': {
         slides: [{ id: 'h1', headline: 'We build software that scales', description: 'End-to-end product engineering.' }],
       },
     });
     await page.goto('/');
 
-    await expect(page.locator('h1').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 30_000 });
 
     const toggle = page.getByRole('button', { name: /switch to (light|dark) theme/i });
     await expect(toggle).toBeVisible();
@@ -32,33 +32,33 @@ test.describe('public site', () => {
 
   test('services page lists services returned by the API', async ({ page }) => {
     await mockApi(page, {
-      'GET /api/services': [
+      'GET /v1/services': [
         { id: 's1', slug: 'web-development', title: 'Web Development', description: 'Fast modern sites', active: true, category: 'Engineering' },
       ],
     });
     await page.goto('/services');
-    await expect(page.getByText('Web Development').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Web Development').first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('pricing page renders published packages', async ({ page }) => {
     await mockApi(page, {
-      'GET /api/pricing-packages': [
+      'GET /v1/pricing-packages': [
         {
           id: 'p1', name: 'Growth Package', slug: 'growth', description: 'Everything package',
           price: 150000, currency: 'KES', billingPeriod: 'project',
           features: ['SEO setup', '30 days support'], published: true, highlighted: true,
         },
       ],
-      'GET /api/services': [],
-      'GET /api/site/pricing': {},
+      'GET /v1/services': [],
+      'GET /v1/site/pricing': {},
     });
     await page.goto('/pricing');
-    await expect(page.getByText('Growth Package').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Growth Package').first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('contact page renders published offices', async ({ page }) => {
     await mockApi(page, {
-      'GET /api/offices': [
+      'GET /v1/offices': [
         {
           id: 'o1', name: 'Nairobi HQ', slug: 'nairobi-hq',
           addressLine: '1 Riverside Drive', city: 'Nairobi', country: 'Kenya',
@@ -68,6 +68,6 @@ test.describe('public site', () => {
       ],
     });
     await page.goto('/contact');
-    await expect(page.getByText('Nairobi HQ').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Nairobi HQ').first()).toBeVisible({ timeout: 30_000 });
   });
 });

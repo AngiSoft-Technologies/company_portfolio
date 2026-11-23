@@ -11,5 +11,5 @@ export {
 } from './locales';
 export type { LocaleCode, TextDirection } from './locales';
 export { translate, interpolate } from './translate';
-export { dictionaries } from './dictionaries';
+export { dictionaries, loadDictionary } from './dictionaries';
 export type { Dictionary, TranslationKey } from './dictionaries';

@@ -331,7 +331,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/sign', requireAuth, async (req: AuthRequest, res) => {
     const parsed = signSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
     const { filename, contentType, ownerType, ownerId } = parsed.data;
     if (!allowedMimeTypes.includes(contentType)) return res.status(400).json({ error: 'File type not allowed' });
@@ -350,7 +350,7 @@ router.post('/sign', requireAuth, async (req: AuthRequest, res) => {
 
 router.post('/confirm', requireAuth, async (req: AuthRequest, res) => {
     const parsed = confirmSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
     const { key, filename, mime, size, ownerType, ownerId } = parsed.data;
     if (mime && !allowedMimeTypes.includes(mime)) return res.status(400).json({ error: 'File type not allowed' });

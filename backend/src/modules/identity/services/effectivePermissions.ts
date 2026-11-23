@@ -32,8 +32,17 @@ export type EffectiveSource =
   | 'ROLE'
   | 'SYSTEM';
 
+export type AssignmentScopeType =
+  | 'product'
+  | 'project'
+  | 'booking'
+  | 'enquiry'
+  | 'publication'
+  | 'service'
+  | 'review';
+
 export interface EffectiveScope {
-  type: 'product' | 'project' | 'booking' | 'enquiry' | 'publication';
+  type: AssignmentScopeType;
   id: string;
 }
 
@@ -55,6 +64,8 @@ export interface EffectiveContext {
     bookingIds?: { bookingId: string }[];
     enquiryIds?: { enquiryId: string }[];
     publicationIds?: { publicationId: string }[];
+    serviceAssignmentIds?: { serviceId: string }[];
+    reviewAssignmentIds?: { testimonialId: string }[];
   };
 }
 
@@ -193,6 +204,15 @@ export async function getEffectivePermissions(
     setPerm('publications.view_own', 'GRANT', 'ASSIGNMENT');
     setPerm('publications.update_own', 'GRANT', 'ASSIGNMENT');
   }
+  // Services: ServiceTeamMember rows grant the scoped edit key only.
+  for (const row of assignmentRows.serviceAssignmentIds) {
+    setPerm('services.update_assigned', 'GRANT', 'ASSIGNMENT', { type: 'service', id: row.serviceId });
+  }
+  // Review queue: assignment to a testimonial grants scoped moderation only;
+  // global `reviews.moderate` remains the admin/marketing fallback.
+  for (const row of assignmentRows.reviewAssignmentIds) {
+    setPerm('reviews.moderate_assigned', 'GRANT', 'ASSIGNMENT', { type: 'review', id: row.testimonialId });
+  }
 
   // 5. GRANT (direct, active)
   for (const row of employeePermRows as any[]) {
@@ -221,6 +241,8 @@ async function loadAssignmentRows(
   bookingIds: { bookingId: string }[];
   enquiryIds: { enquiryId: string }[];
   publicationIds: { publicationId: string }[];
+  serviceAssignmentIds: { serviceId: string }[];
+  reviewAssignmentIds: { testimonialId: string }[];
 }> {
   if (preloaded) {
     return {
@@ -229,10 +251,12 @@ async function loadAssignmentRows(
       bookingIds: preloaded.bookingIds ?? [],
       enquiryIds: preloaded.enquiryIds ?? [],
       publicationIds: preloaded.publicationIds ?? [],
+      serviceAssignmentIds: preloaded.serviceAssignmentIds ?? [],
+      reviewAssignmentIds: preloaded.reviewAssignmentIds ?? [],
     };
   }
 
-  const [ptm, pe, bookings, enquiries, publications] = await Promise.all([
+  const [ptm, pe, bookings, enquiries, publications, serviceAssignments, reviewAssignments] = await Promise.all([
     prisma.orm.public.ProductTeamMember
       .where({ employeeId })
       .select('productId')
@@ -253,6 +277,14 @@ async function loadAssignmentRows(
       .where({ authorId: employeeId })
       .select('id')
       .all(),
+    prisma.orm.public.ServiceTeamMember
+      .where({ employeeId })
+      .select('serviceId')
+      .all(),
+    prisma.orm.public.TestimonialReviewAssignment
+      .where({ employeeId })
+      .select('testimonialId')
+      .all(),
   ]);
 
   return {
@@ -261,6 +293,8 @@ async function loadAssignmentRows(
     bookingIds: bookings.map((b) => ({ bookingId: b.id })),
     enquiryIds: enquiries.map((e) => ({ enquiryId: e.id })),
     publicationIds: publications.map((p) => ({ publicationId: p.id })),
+    serviceAssignmentIds: serviceAssignments,
+    reviewAssignmentIds: reviewAssignments,
   };
 }
 
@@ -332,4 +366,111 @@ export function clearEffectiveCache(employeeId?: string): void {
     return;
   }
   cache.delete(employeeId);
+}
+
+// ─── Centralized assignment enforcement ────────────────────────────────────
+//
+// A scoped permission is never sufficient on its own: the caller must also be
+// assigned to the specific record. These helpers combine the effective-key
+// check (DENY wins) with the record-level ownership check in one place so a
+// route cannot accidentally enforce only half of the invariant.
+
+export type AssignmentDenialReason = 'NO_EMPLOYEE' | 'NO_PERMISSION' | 'NOT_ASSIGNED';
+
+/** A record to check. `ownerIds` lets a caller reuse an already-loaded FK. */
+export interface AssignmentTarget {
+  type: AssignmentScopeType;
+  id: string;
+  ownerIds?: readonly (string | null | undefined)[];
+}
+
+export interface AssignmentVerdict {
+  allowed: boolean;
+  reason?: AssignmentDenialReason;
+}
+
+export class AssignmentError extends Error {
+  constructor(
+    public readonly reason: AssignmentDenialReason,
+    message = `Assignment check failed: ${reason}`,
+  ) {
+    super(message);
+    this.name = 'AssignmentError';
+  }
+}
+
+async function ownsAssignedRecord(employeeId: string, target: AssignmentTarget): Promise<boolean> {
+  // A preloaded author/assignee FK is authoritative; avoid another round-trip.
+  const preloaded = (target.ownerIds ?? []).filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (preloaded.includes(employeeId)) return true;
+  if (!target.id) return false;
+
+  switch (target.type) {
+    case 'product':
+      return !!(await prisma.orm.public.ProductTeamMember
+        .where({ productId: target.id, employeeId }).first());
+    case 'project':
+      return !!(await prisma.orm.public.ProjectEmployee
+        .where({ projectId: target.id, employeeId }).first());
+    case 'booking':
+      return !!(await prisma.orm.public.Booking
+        .where({ id: target.id, assignedToId: employeeId }).first());
+    case 'enquiry': {
+      // `assigneeId` is canonical; `assignedStaffId` is the deprecated column
+      // still present on older rows. Accept either, never neither.
+      const row: any = await prisma.orm.public.ContactEnquiry
+        .where({ id: target.id }).first();
+      return !!row && (row.assigneeId === employeeId || row.assignedStaffId === employeeId);
+    }
+    case 'publication':
+      return !!(await prisma.orm.public.BlogPost
+        .where({ id: target.id, authorId: employeeId }).first());
+    case 'service':
+      return !!(await prisma.orm.public.ServiceTeamMember
+        .where({ serviceId: target.id, employeeId }).first());
+    case 'review':
+      return !!(await prisma.orm.public.TestimonialReviewAssignment
+        .where({ testimonialId: target.id, employeeId }).first());
+    default:
+      return false;
+  }
+}
+
+/**
+ * Boolean/verdict form of `assertAssigned()` for Express handlers that need to
+ * return their own 403 payload. Both the effective permission and the record
+ * assignment must pass; an explicit DENY on the key always wins.
+ */
+export async function checkAssigned(
+  ctx: EffectiveContext,
+  permissionKey: string,
+  target: AssignmentTarget,
+): Promise<AssignmentVerdict> {
+  if (!ctx.employeeId) return { allowed: false, reason: 'NO_EMPLOYEE' };
+  if (!(await has(ctx, permissionKey))) return { allowed: false, reason: 'NO_PERMISSION' };
+  if (!(await ownsAssignedRecord(ctx.employeeId, target))) {
+    return { allowed: false, reason: 'NOT_ASSIGNED' };
+  }
+  return { allowed: true };
+}
+
+/** Convenience boolean form for list/filter code paths. */
+export async function isAssigned(
+  ctx: EffectiveContext,
+  permissionKey: string,
+  target: AssignmentTarget,
+): Promise<boolean> {
+  return (await checkAssigned(ctx, permissionKey, target)).allowed;
+}
+
+/** Throwing form for services; fails closed with a typed reason. */
+export async function assertAssigned(
+  ctx: EffectiveContext,
+  permissionKey: string,
+  target: AssignmentTarget,
+): Promise<void> {
+  const verdict = await checkAssigned(ctx, permissionKey, target);
+  if (!verdict.allowed) throw new AssignmentError(verdict.reason!);
 }

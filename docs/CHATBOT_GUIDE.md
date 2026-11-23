@@ -2,7 +2,7 @@
 
 > **💡 HYPOTHESIS** — Implementation guide for chatbot feature; **admin endpoints were unguarded (now fixed in Phase 0)**.<br>
 > **Security note (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` §4, Phase 0.3):** `GET /chatbot/conversations`, `GET /chatbot/conversations/:id`, `PUT /chatbot/conversations/:id` now require `requireAuth` + `requirePermission('chatbot.view_all')`.<br>
-> **Missing:** Rate/spend limits on AI calls; admin UI for conversation review (marked missing in Content Coverage Ledger).<br>
+> **Implemented:** `aiChatLimiter` / `aiSpendLimiter` with daily token + USD caps and an admin conversation-review UI; live enforcement depends on Redis/provider config.<br>
 > Current frontend: `frontend/web/src/features/ai-assistant/components/ChatBot.tsx` uses relative `/v1/chatbot/*` requests.
 
 ## Overview
@@ -16,7 +16,7 @@ The AngiSoft chatbot is an advanced AI-powered assistant that:
 ## Architecture
 
 ### Frontend (React Component)
-**File:** `frontend/src/components/ChatBot/ChatBot.jsx`
+**File:** `frontend/web/src/features/ai-assistant/components/ChatBot.tsx`
 
 #### Features:
 1. **Two-Stage Conversation**

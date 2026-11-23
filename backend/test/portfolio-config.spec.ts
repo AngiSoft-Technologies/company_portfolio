@@ -21,6 +21,8 @@ const store: Record<string, any[]> = {
     Position: [],
     ProductTeamMember: [],
     ProjectEmployee: [],
+    ServiceTeamMember: [],
+    TestimonialReviewAssignment: [],
     Booking: [],
     ContactEnquiry: [],
     BlogPost: [],

@@ -4,19 +4,47 @@ import { useEffect, useRef } from 'react';
 /**
  * Top-of-form error summary. Surfaces a friendly message + links to the first
  * invalid field. Never exposes raw backend errors to the user.
+ *
+ * This is the form's single live region: inline field errors are linked with
+ * `aria-describedby` instead of each being a live region. After a failed
+ * submit (`novalidate` is set on the form) focus is routed here so the heading
+ * and the field links are announced in one place.
  */
 export default function ContactErrorAlert({ message, fieldErrors, onFocusField }) {
     const ref = useRef(null);
-
-    useEffect(() => {
-        if (message && ref.current) {
-            ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, [message]);
-
-    if (!message && (!fieldErrors || Object.keys(fieldErrors).length === 0)) return null;
+    const wasHidden = useRef(true);
 
     const entries = Object.entries(fieldErrors || {}).filter(([, msgs]) => msgs && msgs.length);
+    const visible = Boolean(message || entries.length);
+
+    useEffect(() => {
+        if (!visible) {
+            wasHidden.current = true;
+            return;
+        }
+        // Focus once per error appearance; don't yank focus back while the
+        // visitor is fixing individual fields.
+        if (!wasHidden.current || !ref.current) return;
+        wasHidden.current = false;
+
+        const el = ref.current;
+        const prefersReducedMotion =
+            typeof window !== 'undefined' &&
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (prefersReducedMotion) {
+            // Native focus scrolls instantly — no animated motion.
+            el.focus();
+        } else {
+            el.focus({ preventScroll: true });
+            if (typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [visible, message]);
+
+    if (!visible) return null;
 
     return (
         <div

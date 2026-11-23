@@ -187,7 +187,7 @@ export default function attendanceRouter(prisma: Db = db) {
 
     router.post('/admin', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = adminCreateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             const created = await prisma.orm.public.AttendanceRecord.create({
@@ -217,7 +217,7 @@ export default function attendanceRouter(prisma: Db = db) {
 
     router.put('/admin/:id', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = adminUpdateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.AttendanceRecord.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Record not found' });
@@ -275,7 +275,7 @@ export default function attendanceRouter(prisma: Db = db) {
 
     router.post('/admin/holidays', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = holidaySchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             const dupe = await prisma.orm.public.Holiday.where({ date: dayStart(data.date) }).first();
@@ -303,7 +303,7 @@ export default function attendanceRouter(prisma: Db = db) {
 
     router.put('/admin/holidays/:id', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = holidaySchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.Holiday.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Holiday not found' });
@@ -382,7 +382,7 @@ export default function attendanceRouter(prisma: Db = db) {
     // full week schedule (missing weekdays are removed).
     router.put('/admin/schedules/:employeeId', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = scheduleSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const employeeId = req.params.employeeId;
             const employee = await prisma.orm.public.Employee.where({ id: employeeId }).first();
@@ -494,7 +494,7 @@ export default function attendanceRouter(prisma: Db = db) {
     // source 'import'. Per-row errors are collected, not fatal.
     router.post('/admin/import', requirePermission('attendance.manage'), async (req: AuthRequest, res) => {
         const parsed = importSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             // Resolve employee emails → ids in one pass.
             const emails = [...new Set(

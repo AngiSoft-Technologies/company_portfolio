@@ -67,7 +67,9 @@ const assignmentPayloadSchema = z.object({
             bookings: z.array(z.string()).default([]),
             enquiries: z.array(z.string()).default([])
         })
-        .default({})
+        // Zod 4 infers the object output as a concrete shape; a literal
+        // default no longer satisfies it when nested fields have defaults.
+        .default(() => ({}) as { products: string[]; projects: string[]; bookings: string[]; enquiries: string[] })
 });
 
 const departmentSchema = z.object({
@@ -248,7 +250,7 @@ export default function staffAccessRouter() {
         if (!employee) return res.status(404).json({ error: 'Employee not found' });
 
         const parsed = assignmentPayloadSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const body = parsed.data;
 
         // Validate department/position existence if provided.
@@ -353,7 +355,7 @@ export default function staffAccessRouter() {
 
     router.post('/departments', ...deptWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = departmentSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { description, ...data } = parsed.data;
         const dept = await prisma.orm.public.Department.create({
             id: newId(),
@@ -367,7 +369,7 @@ export default function staffAccessRouter() {
 
     router.put('/departments/:id', ...deptWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = departmentSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const { description, ...data } = parsed.data;
         const dept = await prisma.orm.public.Department.where({ id: req.params.id }).update({
             ...(data.key !== undefined ? { key: data.key } : {}),
@@ -393,7 +395,7 @@ export default function staffAccessRouter() {
 
     router.post('/positions', ...positionWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = positionSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const pos = await prisma.orm.public.Position.create({
             id: newId(),
             updatedAt: ts(),
@@ -408,7 +410,7 @@ export default function staffAccessRouter() {
 
     router.put('/positions/:id', ...positionWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = positionSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const pos = await prisma.orm.public.Position.where({ id: req.params.id }).update({
             ...(parsed.data.departmentId !== undefined ? { departmentId: parsed.data.departmentId } : {}),
             ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
@@ -421,7 +423,7 @@ export default function staffAccessRouter() {
 
     router.patch('/positions/:id', ...positionWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = positionSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const pos = await prisma.orm.public.Position.where({ id: req.params.id }).update({
             ...(parsed.data.departmentId !== undefined ? { departmentId: parsed.data.departmentId } : {}),
             ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
@@ -448,7 +450,7 @@ export default function staffAccessRouter() {
 
     router.post('/permission-presets', ...presetWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = presetSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const preset = await prisma.orm.public.PermissionPreset.create({
             id: newId(),
             updatedAt: ts(),
@@ -462,7 +464,7 @@ export default function staffAccessRouter() {
 
     router.put('/permission-presets/:id', ...presetWriteGuard, asyncHandler(async (req: AuthRequest, res) => {
         const parsed = presetSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const preset = await prisma.orm.public.PermissionPreset.where({ id: req.params.id }).update({
             ...(parsed.data.key !== undefined ? { key: parsed.data.key } : {}),
             ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),

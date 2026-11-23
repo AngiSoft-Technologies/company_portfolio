@@ -11,6 +11,34 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
+            # Blocking secret-scan gate, consistent with lint/typecheck/test/build
+            # and the bundle budget below (unlike the non-blocking Lighthouse job
+            # in perf-budget.yml). Scans the checked-out tree only; historical
+            # git-history hits need a separate manual rotation check (OBS-03 in
+            # docs/security/OWASP_AUDIT.md). No GITLEAKS_LICENSE secret is needed.
+            - name: Set up Go for gitleaks
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25"
+
+            - name: Install gitleaks
+              run: |
+                  go install github.com/gitleaks/gitleaks/v8@v8.30.1
+                  echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+            - name: Secret scan (checked-out tree)
+              env:
+                  GITLEAKS_REPORT_PATH: ${{ runner.temp }}/gitleaks-report.json
+              run: bash scripts/scan-secrets.sh
+
+            - name: Upload secret-scan report on failure
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: gitleaks-report
+                  path: ${{ runner.temp }}/gitleaks-report.json
+                  if-no-files-found: ignore
+
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
@@ -50,6 +78,11 @@ jobs:
               env:
                   VITE_CDN_BASE_URL: https://cdn.angisoft.co.ke
                   VITE_SOCKET_URL: https://api.angisoft.co.ke
+
+            # Phase 5.5: deterministic, blocking bundle-size gate. Runs after
+            # both builds so the vendor/entry budgets cover the shipped files.
+            - name: Bundle size budget
+              run: pnpm perf:budget
 
             - name: Deploy web
               uses: netlify/actions/cli@master

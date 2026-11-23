@@ -87,7 +87,7 @@ export default function careersRouter(prisma: Db = db) {
 
   router.post('/', requireAuth, requireAccess('careers.create', ['ADMIN', 'HR', 'MANAGER']), async (req: AuthRequest, res) => {
     const parsed = createSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const data = parsed.data;
     const job = await prisma.orm.public.JobPosting.create({
       id: newId(),
@@ -124,7 +124,7 @@ export default function careersRouter(prisma: Db = db) {
 
   router.put('/:id', requireAuth, requireAccess('careers.update', ['ADMIN', 'HR', 'MANAGER']), async (req: AuthRequest, res) => {
     const parsed = updateSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const data = parsed.data;
     const payload: any = {};
     for (const [k, v] of Object.entries(data)) {

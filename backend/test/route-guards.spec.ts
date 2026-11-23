@@ -22,6 +22,7 @@ import {
 } from '../src/modules/identity/services/permissionRegistry';
 
 const MODULES_DIR = join(__dirname, '..', 'src', 'modules');
+const APP_SOURCE = readFileSync(join(__dirname, '..', 'src', 'app.ts'), 'utf8');
 
 function walk(dir: string, out: string[] = []): string[] {
     for (const entry of readdirSync(dir)) {
@@ -89,6 +90,14 @@ describe('route guard migration (Phase 1.2)', () => {
             }
         }
         expect(unknown, `declarations reference unknown keys:\n${unknown.join('\n')}`).toEqual([]);
+    });
+
+    it('guards the generic settings CRUD mount with a canonical permission', () => {
+        // The shared CRUD factory has no authorization of its own; the mount
+        // must supply both authentication and a HIGH-risk permission check.
+        expect(APP_SOURCE).toMatch(
+            /app\.use\('\/v1\/settings',\s*requireAuth,\s*requireAccess\('administration\.settings'/,
+        );
     });
 
     it('never reintroduces a retired legacy key as a live guard', () => {

@@ -29,7 +29,7 @@ export default function productInquiriesRouter(prisma: Db = db) {
 
     router.post('/', publicFormLimiter, async (req, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const inquiry = await prisma.orm.public.ProductInquiry.create({
             id: newId(),
             updatedAt: ts(),
@@ -45,7 +45,7 @@ export default function productInquiriesRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requireAccess('product_inquiries.update', ['ADMIN', 'MARKETING']), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const inquiry = await prisma.orm.public.ProductInquiry.where({ id: req.params.id }).update(payload);

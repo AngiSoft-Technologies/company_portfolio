@@ -5,14 +5,16 @@ import type { Page, Route } from '@playwright/test';
  *
  * Usage:
  *   await mockApi(page, {
- *     'GET /api/services': { data: [...] },          // plain body → 200 JSON
- *     'POST /api/auth/login': { status: 200, body: { accessToken: 'x' } },
- *     'GET /api/payroll/admin*': [...],              // trailing * = prefix match
+ *     'GET /v1/services': { data: [...] },           // plain body → 200 JSON
+ *     'POST /v1/auth/login': { status: 200, body: { accessToken: 'x' } },
+ *     'GET /v1/payroll/admin*': [...],               // trailing * = prefix match
  *   });
  *
- * Matching is on `METHOD pathname` (query string excluded). Unmatched requests
- * get a 404 `{ "error": "not mocked" }` so pages exercise their real
- * error/empty-state paths instead of hitting a dead backend.
+ * The apps call `/v1/*`; matching is on `METHOD pathname` (query string
+ * excluded). Unmatched requests get a 404 `{ "error": "not mocked" }` so pages
+ * exercise their real error/empty-state paths instead of hitting a dead
+ * backend. There is intentionally no `/api/*` alias: a wrong base URL should
+ * fail the gate rather than be silently mocked.
  */
 
 type MockContext = {
@@ -32,18 +34,19 @@ const isEnvelope = (v: unknown): v is MockResult =>
 export async function mockApi(page: Page, handlers: Record<string, MockHandler> = {}): Promise<void> {
   const entries = Object.entries(handlers).map(([key, handler]) => {
     const i = key.indexOf(' ');
-    return { method: key.slice(0, i).toUpperCase(), path: key.slice(i + 1), handler };
+    return { method: key.slice(0, i).toUpperCase(), path: stripVersion(key.slice(i + 1)), handler };
   });
 
-  await page.route('**/api/**', async (route: Route) => {
+  const fulfill = async (route: Route) => {
     const req = route.request();
     const { pathname } = new URL(req.url());
     const method = req.method().toUpperCase();
     const ctx: MockContext = { method, url: req.url(), pathname, postData: req.postData() };
+    const apiPath = stripVersion(pathname);
 
     const match =
-      entries.find((e) => e.method === method && pathMatches(e.path, pathname)) ??
-      entries.find((e) => e.method === '*' && pathMatches(e.path, pathname));
+      entries.find((e) => e.method === method && pathMatches(e.path, apiPath)) ??
+      entries.find((e) => e.method === '*' && pathMatches(e.path, apiPath));
 
     if (!match) {
       return route.fulfill({
@@ -60,10 +63,34 @@ export async function mockApi(page: Page, handlers: Record<string, MockHandler> 
       contentType: 'application/json',
       body: JSON.stringify(body ?? {}),
     });
-  });
+  };
+
+  await page.route('**/v1/**', fulfill);
+}
+
+/** Drop the `/v1` prefix so handler keys and requests share one shape. */
+function stripVersion(path: string): string {
+  if (path === '/v1') return '/';
+  if (path.startsWith('/v1/')) return path.slice(3);
+  return path;
 }
 
 function pathMatches(pattern: string, pathname: string): boolean {
   if (pattern.endsWith('*')) return pathname.startsWith(pattern.slice(0, -1));
   return pathname === pattern;
+}
+
+/**
+ * Seed the client consent gate for specs that test a gated page directly.
+ * Mirrors `storeConsent()` in frontend/web/src/lib/consent.ts.
+ */
+export async function grantClientConsent(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem('angisoft.client-consent', JSON.stringify({
+      version: '2026-11-21-privacy-terms',
+      privacy: true,
+      terms: true,
+      acceptedAt: new Date().toISOString(),
+    }));
+  });
 }

@@ -5,7 +5,7 @@ export function createCrudRouter({ modelName, createSchema, updateSchema, listSe
     const router = Router();
     router.post('/', async (req, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const created = await controller.create(parsed.data, req.user);
             res.status(201).json(created);
@@ -19,7 +19,7 @@ export function createCrudRouter({ modelName, createSchema, updateSchema, listSe
     });
     router.put(`/:${idKey}`, async (req, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try { const updated = await controller.update(req.params[idKey], parsed.data, req.user); res.json(updated); } catch (err: any) { res.status(500).json({ error: 'Server error' }); }
     });
     router.delete(`/:${idKey}`, async (req, res) => {

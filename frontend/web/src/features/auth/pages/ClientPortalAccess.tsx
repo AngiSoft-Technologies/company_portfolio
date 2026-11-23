@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Card } from '@angisoft/ui';
-import { apiPost, setClientAccessToken } from '@angisoft/api-client';
-import { LoadingIndicator, VisualState } from '@angisoft/ui';
+import { Button, Card, LoadingIndicator, VisualState } from '@angisoft/ui';
+import { loginWithMagicToken } from '@/features/client-portal/lib/portalSession';
 
 export default function ClientPortalAccess() {
   const [searchParams] = useSearchParams();
@@ -16,19 +15,16 @@ export default function ClientPortalAccess() {
       return;
     }
     let mounted = true;
-    apiPost<{ accessToken?: string; token?: string; clientToken?: string }>('/client-portal/verify', { token })
-      .then((res) => {
+    loginWithMagicToken(token)
+      .then(() => {
         if (!mounted) return;
-        const accessToken = res.accessToken ?? res.token ?? res.clientToken ?? '';
-        setClientAccessToken(accessToken);
         setStatus('success');
         setTimeout(() => {
           if (mounted) navigate('/portal', { replace: true });
         }, 600);
       })
       .catch(() => {
-        if (!mounted) return;
-        setStatus('error');
+        if (mounted) setStatus('error');
       });
     return () => {
       mounted = false;
@@ -38,31 +34,29 @@ export default function ClientPortalAccess() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-4">
       <Card className="w-full max-w-md p-8 text-center">
-        {status === 'verifying' ? (
-          <LoadingIndicator variant="orbit" size="lg" />
-        ) : null}
-        {status === 'success' ? (
+        {status === 'verifying' && <LoadingIndicator variant="orbit" size="lg" />}
+        {status === 'success' && (
           <>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-2xl text-emerald-400">
-              ✓
-            </div>
-            <h1 className="mt-5 text-2xl font-bold text-[var(--text-primary)]">Access granted</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]" role="status">Access granted</h1>
             <p className="mt-3 text-sm text-[var(--text-muted)]">Taking you to your dashboard…</p>
           </>
-        ) : null}
-        {status === 'error' ? (
+        )}
+        {status === 'error' && (
           <>
             <VisualState variant="error" />
-            <div className="mt-8 flex flex-col gap-3">
+            <p className="mt-4 text-sm text-[var(--text-muted)]" role="alert">
+              This link is invalid or has expired.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
               <Link to="/portal/request" className="w-full">
                 <Button className="w-full">Request a new link</Button>
               </Link>
-              <Link to="/" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
-                Back to home
+              <Link to="/portal/login" className="text-sm font-medium text-[var(--color-primary)] hover:underline">
+                Sign in with a password instead
               </Link>
             </div>
           </>
-        ) : null}
+        )}
       </Card>
     </div>
   );

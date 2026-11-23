@@ -1,6 +1,6 @@
 import { createCrudRouter } from '../../../shared/utils/crud';
 import { z } from 'zod';
-import { settingsController } from '../controllers/settingsController';
+import { settingsService } from '../services/settingsService';
 
 const createSchema = z.object({
     key: z.string().min(1),
@@ -14,6 +14,6 @@ export default function settingsRouter() {
         modelName: 'Setting',
         createSchema,
         updateSchema,
-        controller: settingsController,
+        controller: settingsService,
     });
 }

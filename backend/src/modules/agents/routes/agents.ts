@@ -127,7 +127,7 @@ export default function agentsRouter(prisma: Db) {
     router.patch('/:key', requireAccess('agents.manage', ['ADMIN']), async (req: AuthRequest, res) => {
         try {
             const parsed = patchSchema.safeParse(req.body ?? {});
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const agent = await prisma.orm.public.Agent.where({ key: req.params.key }).first();
             if (!agent) return res.status(404).json({ error: 'Agent not found' });
             const patch: Record<string, unknown> = { updatedAt: ts() };

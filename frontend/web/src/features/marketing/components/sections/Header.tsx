@@ -1,13 +1,16 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";import { Link, useLocation } from "react-router-dom";import { apiGet } from '@/lib/httpClient';import AngiSoftLogo from '../brand/AngiSoftLogo';import { FaGlobe, FaBars, FaTimes, FaChevronDown, FaSearch, FaArrowLeft, FaUsers, FaSun, FaMoon } from "react-icons/fa";
 import { useTheme } from '@/lib/theme';import iconRegistry from '@/lib/marketing/iconRegistry';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { LanguageSwitcher } from '@angisoft/i18n';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import './Header.css';
 
-const localIconRegistry = {...iconRegistry,FaArrowLeft,FaUsers,};
-
-const resolveIcon = (iconName, fallback = FaGlobe) => localIconRegistry[iconName] || fallback;
+// Look up the two header-only icons directly instead of copying the full
+// shared registry into a new object at module evaluation time. The rendered
+// icon for every name is unchanged.
+const headerIcons = { FaArrowLeft, FaUsers };
+const resolveIcon = (iconName, fallback = FaGlobe) => headerIcons[iconName] || iconRegistry[iconName] || fallback;
 
 const normalizeLink = (link) => ({label: link.label,to: link.href || link.to || '/',});
 
@@ -17,36 +20,49 @@ const normalizeLink = (link) => ({label: link.label,to: link.href || link.to || 
 
 useEffect(() => {const mq = window.matchMedia('(max-width: 1024px)');const handler = () => setIsMobile(mq.matches);handler();mq.addEventListener('change', handler);return () => mq.removeEventListener('change', handler);}, []);
 
-useEffect(() => {Promise.all([apiGet('/site/navigation').catch(() => null), apiGet('/site/branding').catch(() => null)]).then(([navigationData, brandingData]) => {setNavigation(navigationData);setBranding(brandingData);});}, []);
+useEffect(() => {Promise.all([cachedGet('/site/navigation').catch(() => null), cachedGet('/site/branding').catch(() => null)]).then(([navigationData, brandingData]) => {setNavigation(navigationData);setBranding(brandingData);});}, []);
 
 const megaMenus = navigation?.megaMenus?.length? navigation.megaMenus.map((menu) => {const MenuIcon = resolveIcon(menu.icon, FaGlobe);return {label: menu.label,icon: MenuIcon,items: (menu.items || []).map((item) => ({label: item.label,desc: item.description || item.desc || '',to: item.href || item.to || '/',icon: resolveIcon(item.icon, MenuIcon),})),};}): [];const simpleLinks = (navigation?.simpleLinks || []).map(normalizeLink);const headerCta = navigation?.cta || null;
 
 useEffect(() => {const handle = () => setScrolled(window.scrollY > 20);window.addEventListener("scroll", handle);return () => window.removeEventListener("scroll", handle);}, []);
 
 useEffect(() => {
-  const updateHeaderSurface = () => {
-    const probeY = 84;
-    const section = Array.from(document.querySelectorAll('main section, body > section, section'))
-      .find((candidate) => {
-        const rect = candidate.getBoundingClientRect();
-        return rect.top <= probeY && rect.bottom > probeY;
-      });
-    const className = typeof section?.className === 'string' ? section.className : '';
+  // The old probe called getBoundingClientRect() for every section on mount,
+  // forcing a full style/layout pass inside a React effect. An IO covering a
+  // 1px band at the header bottom supplies the same section without sync
+  // layout reads; entries carry geometry from the observer instead.
+  let sectionObserver;
+  let sectionAtProbe = null;
+  const applySurface = () => {
+    const className = typeof sectionAtProbe?.className === 'string' ? sectionAtProbe.className : '';
     const isHero = className.includes('hero-slider');
     const isImageBand = className.includes('product-showcase') || className.includes('featured-insights');
     const heroTone = document.documentElement.getAttribute('data-hero-media-tone');
     const surface = isImageBand || (isHero && heroTone === 'dark') ? 'dark' : 'light';
     document.documentElement.setAttribute('data-header-surface', surface);
   };
-  updateHeaderSurface();
-  window.addEventListener('scroll', updateHeaderSurface, { passive: true });
-  window.addEventListener('resize', updateHeaderSurface);
-  const observer = new MutationObserver(updateHeaderSurface);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-hero-media-tone'] });
+  const connect = () => {
+    sectionObserver?.disconnect();
+    const band = Math.max(window.innerHeight - 85, 0);
+    sectionObserver = new IntersectionObserver((entries) => {
+      const entering = entries.filter((entry) => entry.isIntersecting);
+      if (entering.length) {
+        sectionAtProbe = entering[entering.length - 1].target;
+      } else if (entries.some((entry) => entry.target === sectionAtProbe && !entry.isIntersecting)) {
+        sectionAtProbe = null;
+      }
+      applySurface();
+    }, { rootMargin: `-84px 0px -${band}px 0px`, threshold: 0 });
+    document.querySelectorAll('main section, body > section, section').forEach((section) => sectionObserver.observe(section));
+  };
+  connect();
+  window.addEventListener('resize', connect);
+  const toneObserver = new MutationObserver(applySurface);
+  toneObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-hero-media-tone'] });
   return () => {
-    window.removeEventListener('scroll', updateHeaderSurface);
-    window.removeEventListener('resize', updateHeaderSurface);
-    observer.disconnect();
+    window.removeEventListener('resize', connect);
+    sectionObserver?.disconnect();
+    toneObserver.disconnect();
   };
 }, []);
 

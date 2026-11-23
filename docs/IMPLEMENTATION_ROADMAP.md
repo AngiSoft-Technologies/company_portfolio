@@ -486,3 +486,5 @@ If you encounter issues:
 ---
 
 **Ready to proceed? Follow the "⚡ QUICK START" section above! 🚀**
+
+> **Current status pointer:** this historical roadmap's phases and "ready to proceed" call are frozen, not executable now; current gates are `docs/PRODUCTION_READINESS.md` and the canonical `ANGISOFT_DIGITAL_HQ_PLAN.md`.

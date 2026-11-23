@@ -113,7 +113,7 @@ export const ar: Partial<Record<TranslationKey, string>> = {
   'finance.settlements': 'التسويات',
   'finance.disputes': 'النزاعات',
   'finance.transactionType': 'نوع المعاملة',
-  'finance.noFallback': 'لا يتم إجراء أي تحويل للعملات. تُسوّى الكينيا شيلينغ عبر M-Pesa/PayHero؛ وتُسوّى مدفوعات البطاقة بعملة الاقتباس.',
+  'finance.noFallback': 'لا يتم إجراء أي تحويل للعملات. تُسوّى الكينيا شيلينغ (KES) عبر M-Pesa/PayHero؛ وتُسوّى مدفوعات البطاقة بعملة الاقتباس.',
   'comms.facebook': 'فيسبوك وإنستغرام',
   'comms.draftsOnly': 'ردود الذكاء الاصطناعي مسودات فقط — لا تُرسل تلقائيًا أبدًا.',
   'comms.consentRequired': 'مطلوب موافقة التسويق قبل إرسال أحداث التتبع.',

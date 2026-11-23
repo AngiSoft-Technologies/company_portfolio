@@ -60,7 +60,7 @@ export default function officesRouter(prisma: Db = db) {
 
     router.post('/admin', requireAuth, requirePermission('pages.update_contact'), async (req: AuthRequest, res) => {
         const parsed = officeSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             const payload: any = {
@@ -96,7 +96,7 @@ export default function officesRouter(prisma: Db = db) {
 
     router.put('/admin/:id', requireAuth, requirePermission('pages.update_contact'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.Office.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Office not found' });

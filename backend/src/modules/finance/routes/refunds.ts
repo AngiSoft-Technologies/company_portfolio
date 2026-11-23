@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
 import { requireAuth, type AuthRequest } from '../../../shared/middleware/auth';
+import { requireRecentMfa } from '../../../shared/middleware/mfaStepUp';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { logAudit } from '../../../shared/services/audit';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
@@ -26,7 +27,7 @@ const refundSchema = z.object({
   reason: z.string().optional(),
   reference: z.string().optional(),
   country: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export default function financeRefundsRouter(prisma: Db) {
@@ -42,7 +43,7 @@ export default function financeRefundsRouter(prisma: Db) {
     return res.json({ refunds });
   }));
 
-  router.post(['/', '/refunds'], requireAccess('finance.payments.refund', MANAGE_ROLES), route(async (req: AuthRequest, res) => {
+  router.post(['/', '/refunds'], requireAccess('finance.payments.refund', MANAGE_ROLES), requireRecentMfa, route(async (req: AuthRequest, res) => {
     const body = refundSchema.parse(req.body);
     const payment = body.paymentId || body.externalRef
       ? await prisma.orm.public.Payment

@@ -2,7 +2,25 @@ export * from './tokens';
 export * from './themes';
 export * from './hooks';
 
-export { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState } from './components';
+export {
+  Button,
+  Card,
+  Section,
+  Hero,
+  Testimonial,
+  LogoCloud,
+  LoadingIndicator,
+  VisualState,
+  Nav,
+  Footer,
+  FormField,
+  DataTable,
+  EmptyState,
+  Gallery,
+  CtaBlock,
+} from './components';
+export { OptimizedImage } from './components/OptimizedImage';
+export type { ImageSource, OptimizedImageProps } from './components/OptimizedImage';
 export type {
   ButtonProps,
   CardProps,
@@ -14,7 +32,55 @@ export type {
   LoadingVariant,
   VisualStateProps,
   VisualStateVariant,
+  NavProps,
+  NavLinkItem,
+  FooterProps,
+  FooterColumn,
+  FooterLinkItem,
+  FormFieldProps,
+  FormFieldControlProps,
+  DataTableProps,
+  DataTableColumn,
+  DataTableSort,
+  EmptyStateProps,
+  GalleryProps,
+  GalleryItem,
+  CtaBlockProps,
 } from './components';
 
-import { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState } from './components';
-export default { Button, Card, Section, Hero, Testimonial, LogoCloud, LoadingIndicator, VisualState };
+import {
+  Button,
+  Card,
+  Section,
+  Hero,
+  Testimonial,
+  LogoCloud,
+  LoadingIndicator,
+  VisualState,
+  Nav,
+  Footer,
+  FormField,
+  DataTable,
+  EmptyState,
+  Gallery,
+  CtaBlock,
+} from './components';
+import { OptimizedImage } from './components/OptimizedImage';
+export default {
+  Button,
+  Card,
+  Section,
+  Hero,
+  Testimonial,
+  LogoCloud,
+  LoadingIndicator,
+  VisualState,
+  Nav,
+  Footer,
+  FormField,
+  DataTable,
+  EmptyState,
+  Gallery,
+  CtaBlock,
+  OptimizedImage,
+};

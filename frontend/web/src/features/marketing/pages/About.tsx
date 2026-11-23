@@ -1,6 +1,8 @@
 // @ts-nocheck
 import React from 'react';
 import { useAboutPage } from '@/hooks/marketing/useAboutPage';
+import '@/styles/about-page.css';
+import '@/styles/marketing/about.css';
 
 /*
 |--------------------------------------------------------------------------

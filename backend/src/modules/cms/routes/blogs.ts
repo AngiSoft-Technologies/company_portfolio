@@ -5,7 +5,7 @@ import { ts } from '../../../prisma/db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import { has as hasPermission } from '../../identity/services/effectivePermissions';
-import { blogController } from '../controllers/blogController';
+import { blogService } from '../services/blogService';
 
 const createSchema = z.object({
   title: z.string().min(1),
@@ -45,14 +45,14 @@ export default function blogsRouter(prisma: Db = db) {
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
             if (await canReview(req)) {
-                const posts = await blogController.list({});
+                const posts = await blogService.list({});
                 return res.json(posts);
             }
             if (await canAuthor(req)) {
-                const posts = await blogController.list({ where: { authorId: req.user?.sub } });
+                const posts = await blogService.list({ where: { authorId: req.user?.sub } });
                 return res.json(posts);
             }
-            const posts = await blogController.list({ where: { published: true } });
+            const posts = await blogService.list({ where: { published: true } });
             res.json(posts);
         } catch (err: any) {
             res.status(500).json({ error: 'Server error' });
@@ -61,7 +61,7 @@ export default function blogsRouter(prisma: Db = db) {
 
     router.get('/:id', optionalAuth, async (req: AuthRequest, res) => {
         try {
-            const post = await blogController.get(req.params.id, {});
+            const post = await blogService.get(req.params.id, {});
             if (!post) return res.status(404).json({ error: 'Not found' });
 
             if (post.published) return res.json(post);
@@ -77,10 +77,10 @@ export default function blogsRouter(prisma: Db = db) {
 
     router.post('/', requireAuth, requireAccess('publications.create', ['ADMIN', 'MARKETING', 'DEVELOPER']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
-            const created = await blogController.create({
+            const created = await blogService.create({
                 ...data,
                 authorId: req.user?.sub,
                 publishedAt: data.published ? ts() : null
@@ -93,7 +93,7 @@ export default function blogsRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requirePermission('publications.update_own'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.BlogPost.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
@@ -105,7 +105,7 @@ export default function blogsRouter(prisma: Db = db) {
 
             const data = parsed.data;
             const publishedAt = data.published && !existing.publishedAt ? ts() : existing.publishedAt;
-            const updated = await blogController.update(req.params.id, {
+            const updated = await blogService.update(req.params.id, {
                 ...data,
                 publishedAt
             }, req.user);
@@ -125,7 +125,7 @@ export default function blogsRouter(prisma: Db = db) {
                 return res.status(403).json({ error: 'Not authorized' });
             }
 
-            await blogController.delete(req.params.id, req.user);
+            await blogService.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
             res.status(500).json({ error: 'Server error' });

@@ -57,7 +57,7 @@ export default function certificationsRouter(prisma: Db = db) {
     router.post('/', requireAuth, requirePermission('profile.update_own'), async (req: AuthRequest, res) => {
         if (!req.user?.sub) return res.status(401).json({ error: 'Not authenticated' });
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const employeeId = parsed.data.employeeId && ['ADMIN', 'HR', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role ?? '')
             ? parsed.data.employeeId
             : req.user.sub;
@@ -82,7 +82,7 @@ export default function certificationsRouter(prisma: Db = db) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const updated = await prisma.orm.public.Certification.where({ id: req.params.id }).update(payload);

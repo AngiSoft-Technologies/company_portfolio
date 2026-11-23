@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaArrowRight, FaCalendarCheck } from 'react-icons/fa';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
 import { apiGet } from '@/lib/httpClient';
+import { cachedGet } from '@/lib/marketing/siteDataCache';
 import { resolveAssetUrl } from '@/lib/marketing/constants';
 import './EngagementCta.css';
 
@@ -30,7 +31,7 @@ const EngagementCta = () => {
     let active = true;
     Promise.all([
       apiGet<{ cta?: CtaContent }>('/site/about'),
-      apiGet<HeroMedia>('/site/hero'),
+      cachedGet<HeroMedia>('/site/hero'),
     ])
       .then(([aboutData, heroData]) => {
         if (!active) return;

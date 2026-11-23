@@ -744,7 +744,7 @@ export function PortfolioStudio() {
             <Card>
               <h2 className="mb-3 text-base font-semibold">Version history</h2>
               <ul className="space-y-1.5 text-xs text-[var(--text-muted)]">
-                {[...config.versionHistory].reverse().map((v) => (
+                {config.versionHistory.toReversed().map((v) => (
                   <li key={v.version} className="flex items-center justify-between gap-2">
                     <span>
                       v{v.version}

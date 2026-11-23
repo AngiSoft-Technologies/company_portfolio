@@ -7,11 +7,12 @@ import { z } from 'zod';
 import { validateRequest } from '../../../shared/middleware/validation';
 import { requireAuth } from '../../../shared/middleware/auth';
 import { requirePermission } from '../../../shared/middleware/roles';
-import { publicFormLimiter } from '../../../shared/middleware/rateLimiter';
+import { aiChatLimiter, aiSpendLimiter, publicFormLimiter } from '../../../shared/middleware/rateLimiter';
 import type { AuthRequest } from '../../../shared/middleware/auth';
 import { sendMail } from '../../../shared/services/email';
 import { loadAIConfig, aiComplete } from '../../../modules/ai/services/aiProvider';
 import { agentCharter } from '../../../modules/agents/services/agentCharters';
+import { chatHistorySchema, conversationAccessFilters } from '../utils/chatAccess';
 
 async function sendChatbotNotification(opts: {
   type: 'escalation' | 'high_intent';
@@ -88,26 +89,9 @@ const ChatMessageSchema = z.object({
 
 type ChatMessageRequest = z.infer<typeof ChatMessageSchema>;
 
-const ChatHistorySchema = z
-  .object({
-    conversationId: z.string().uuid().optional(),
-    visitorName: z.string().min(2).optional(),
-    visitorEmail: z.string().email().optional(),
-    visitorPhone: z.string().optional(),
-    deviceFingerprint: z.string().min(8).max(200).optional(),
-    limit: z.number().int().min(1).max(5).optional(),
-  })
-  .refine(
-    (data) =>
-      Boolean(
-        data.conversationId ||
-          data.deviceFingerprint ||
-          (data.visitorEmail && (data.visitorPhone || data.visitorName))
-      ),
-    {
-      message: 'Provide conversationId, deviceFingerprint, or visitorEmail with visitorName/visitorPhone.',
-    }
-  );
+// A conversation UUID is not a secret. History reads must be anchored to the
+// browser-generated device fingerprint so a leaked/guessed UUID alone cannot
+// disclose a visitor transcript. FIX OBS-01 from docs/security/OWASP_AUDIT.md.
 
 type InternalContext = {
   services: Array<{
@@ -847,7 +831,9 @@ Be proactive like a great consultant: anticipate the visitor's next need, sugges
   router.post(
     '/chat',
     publicFormLimiter,
+    aiChatLimiter,
     validateRequest(ChatMessageSchema),
+    aiSpendLimiter,
     async (req: Request<{}, {}, ChatMessageRequest>, res: Response) => {
       try {
         const {
@@ -866,6 +852,15 @@ Be proactive like a great consultant: anticipate the visitor's next need, sugges
           ? await prisma.orm.public.ChatConversation.where({ id: conversationId }).first()
           : null;
 
+        // Never attach a new device to an existing conversation just because
+        // its UUID is known; the fingerprint is the visitor's possession factor.
+        if (conversationId && !deviceFingerprint) {
+          conversation = null;
+        }
+        if (conversation && deviceFingerprint && conversation.deviceFingerprint &&
+            conversation.deviceFingerprint !== deviceFingerprint) {
+          conversation = null;
+        }
         if (conversation && visitorEmail && conversation.visitorEmail !== visitorEmail) {
           conversation = null;
         }
@@ -1045,37 +1040,17 @@ Be proactive like a great consultant: anticipate the visitor's next need, sugges
   );
 
   // Get conversation history for a visitor (public)
-  router.post('/history', validateRequest(ChatHistorySchema), async (req: Request, res: Response) => {
+  router.post('/history', publicFormLimiter, validateRequest(chatHistorySchema), async (req: Request, res: Response) => {
     try {
-      const {
-        conversationId,
-        visitorName,
-        visitorEmail,
-        visitorPhone,
-        deviceFingerprint,
-        limit = 2,
-      } = req.body as z.infer<typeof ChatHistorySchema>;
+      const historyInput = req.body as z.infer<typeof chatHistorySchema>;
+      const { limit = 2 } = historyInput;
 
-      const orFilters: any[] = [];
-
-      if (conversationId) {
-        orFilters.push((c: any) => c.id.eq(conversationId));
-      }
-
-      if (deviceFingerprint) {
-        orFilters.push((c: any) => c.deviceFingerprint.eq(deviceFingerprint));
-      }
-
-      if (visitorEmail && visitorPhone) {
-        orFilters.push((c: any) => and(c.visitorEmail.eq(visitorEmail), c.visitorPhone.eq(visitorPhone)));
-      }
-
-      if (visitorEmail && visitorName) {
-        orFilters.push((c: any) => and(c.visitorEmail.eq(visitorEmail), c.visitorName.eq(visitorName)));
-      }
+      // Every additional criterion is ANDed with the device fingerprint, so
+      // neither a UUID nor contact details can widen access to another visitor.
+      const filters = conversationAccessFilters(historyInput);
 
       const conversations = await prisma.orm.public.ChatConversation
-        .where((c: any) => or(...orFilters.map((f: any) => f(c))))
+        .where((c: any) => and(...filters.map((f) => f(c))))
         .include('chatMessages', (m: any) => m.orderBy((x: any) => x.createdAt.asc()))
         .orderBy((c: any) => c.updatedAt.desc())
         .limit(Number(limit))
@@ -1200,12 +1175,19 @@ Be proactive like a great consultant: anticipate the visitor's next need, sugges
   router.put('/conversations/:id', requireAuth, requirePermission('chatbot.view_all'), async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { status, notes, quality } = req.body;
+      const { status, notes, quality } = req.body ?? {};
 
       const payload: any = {};
-      if (status) payload.status = status;
-      if (notes) payload.notes = notes;
-      if (quality) payload.quality = quality;
+      if (typeof status === 'string' && status.trim()) payload.status = status.trim();
+      // Reviewers must be able to clear notes, so accept an explicit empty string.
+      if (typeof notes === 'string' && notes.length <= 4000) payload.notes = notes;
+      if (quality !== undefined && quality !== null && quality !== '') {
+        const rating = Number(quality);
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+          return res.status(400).json({ error: 'quality must be an integer from 1 to 5' });
+        }
+        payload.quality = rating;
+      }
 
       const updated = await prisma.orm.public.ChatConversation.where({ id }).update(payload);
 

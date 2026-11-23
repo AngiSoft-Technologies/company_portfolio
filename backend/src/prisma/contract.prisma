@@ -615,6 +615,22 @@ namespace public {
   @@map("Service")
 }
 
+  // Additive scoped-assignment join for services: grants services.update_assigned
+  // only on services the employee is explicitly assigned to. Planned migration
+  // only — do not apply to a live branch without review.
+  model ServiceTeamMember {
+    id            String               @id(map: "ServiceTeamMember_pkey")
+    serviceId     String
+    employeeId    String
+    roleInService String?
+    createdAt     TimestampString(3)   @default(now())
+
+    @@index([employeeId], map: "ServiceTeamMember_employeeId_idx")
+    @@index([serviceId, employeeId], map: "ServiceTeamMember_serviceId_employeeId_key", unique: true)
+    @@index([serviceId], map: "ServiceTeamMember_serviceId_idx")
+  @@map("ServiceTeamMember")
+}
+
   model ContactEnquiry {
     id                      String        @id(map: "ContactEnquiry_pkey")
     publicReference         String
@@ -1413,6 +1429,22 @@ namespace public {
     helpfulCount    Int              @default(0)
     reviewReactions ReviewReaction[]
   @@map("Testimonial")
+}
+
+  // Additive review-queue assignment. Reviewers holding only
+  // reviews.moderate_assigned may moderate the testimonials assigned to them;
+  // reviews.moderate remains the global admin/marketing fallback.
+  model TestimonialReviewAssignment {
+    id            String               @id(map: "TestimonialReviewAssignment_pkey")
+    testimonialId String
+    employeeId    String
+    assignedById  String?
+    createdAt     TimestampString(3)   @default(now())
+
+    @@index([employeeId], map: "TestimonialReviewAssignment_employeeId_idx")
+    @@index([testimonialId, employeeId], map: "TestimonialReviewAssignment_testimonialId_employeeId_key", unique: true)
+    @@index([testimonialId], map: "TestimonialReviewAssignment_testimonialId_idx")
+  @@map("TestimonialReviewAssignment")
 }
 
   model ReviewReaction {
@@ -2528,5 +2560,669 @@ model SalaryStructure {
     @@index([channel, status], map: "CommunicationTemplate_channel_status_idx")
     @@index([provider, externalId], map: "CommunicationTemplate_provider_externalId_idx")
   @@map("CommunicationTemplate")
-}
+  }
+
+  // ── Full ERP/HR: recruiting, contracts and sales orders (additive) ────────
+  // These tables are hand-added to the contract (they are not inferred from
+  // the live Neon branch yet). Stage/status vocabularies stay plain strings,
+  // like Booking.currentStage, so the catalogue can grow without a migration.
+  // All cross-entity references are TEXT ids without ORM relations, matching
+  // the other additive HR models (Expense, LeaveRequest, Payslip, ...).
+  model JobRequisition {
+    id              String              @id(map: "JobRequisition_pkey")
+    publicReference String
+    title           String
+    department      String?
+    location        String?
+    employmentType  String              @default("full-time")
+    openings        Int                 @default(1)
+    status          String              @default("draft")
+    hiringManagerId String?
+    jobPostingId    String?
+    budgetAmount    Numeric(18, 2)?
+    currency        String              @default("KES")
+    description     String?
+    notes           String?
+    createdById     String?
+    approvedById    String?
+    approvedAt      TimestampString(3)?
+    closedAt        TimestampString(3)?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "JobRequisition_publicReference_key", unique: true)
+    @@index([status], map: "JobRequisition_status_idx")
+    @@index([hiringManagerId], map: "JobRequisition_hiringManagerId_idx")
+    @@index([createdAt], map: "JobRequisition_createdAt_idx")
+  @@map("JobRequisition")
+  }
+
+  model Candidate {
+    id              String              @id(map: "Candidate_pkey")
+    publicReference String
+    firstName       String
+    lastName        String
+    email           String
+    phone           String?
+    source          String?
+    requisitionId   String?
+    jobPostingId    String?
+    stage           String              @default("new")
+    rating          Int?
+    assignedToId    String?
+    expectedSalary  Numeric(18, 2)?
+    currency        String              @default("KES")
+    notes           String?
+    rejectionReason String?
+    appliedAt       TimestampString(3)?
+    hiredAt         TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "Candidate_publicReference_key", unique: true)
+    @@index([email], map: "Candidate_email_idx")
+    @@index([stage], map: "Candidate_stage_idx")
+    @@index([requisitionId], map: "Candidate_requisitionId_idx")
+    @@index([assignedToId], map: "Candidate_assignedToId_idx")
+    @@index([createdAt], map: "Candidate_createdAt_idx")
+  @@map("Candidate")
+  }
+
+  model Offer {
+    id              String              @id(map: "Offer_pkey")
+    publicReference String
+    candidateId     String
+    requisitionId   String?
+    contractId      String?
+    title           String
+    status          String              @default("draft")
+    salaryAmount    Numeric(18, 2)?
+    currency        String              @default("KES")
+    startDate       TimestampString(3)?
+    expiresAt       TimestampString(3)?
+    sentAt          TimestampString(3)?
+    acceptedAt      TimestampString(3)?
+    decisionNote    String?
+    approvedById    String?
+    approvedAt      TimestampString(3)?
+    createdById     String?
+    notes           String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "Offer_publicReference_key", unique: true)
+    @@index([candidateId], map: "Offer_candidateId_idx")
+    @@index([requisitionId], map: "Offer_requisitionId_idx")
+    @@index([status], map: "Offer_status_idx")
+    @@index([createdAt], map: "Offer_createdAt_idx")
+  @@map("Offer")
+  }
+
+  model Contract {
+    id              String              @id(map: "Contract_pkey")
+    publicReference String
+    number          String
+    kind            String              @default("employment")
+    title           String
+    status          String              @default("draft")
+    partyName       String?
+    partyEmail      String?
+    employeeId      String?
+    clientId        String?
+    candidateId     String?
+    offerId         String?
+    requisitionId   String?
+    valueAmount     Numeric(18, 2)?
+    currency        String              @default("KES")
+    startDate       TimestampString(3)?
+    endDate         TimestampString(3)?
+    signedAt        TimestampString(3)?
+    approvedById    String?
+    approvedAt      TimestampString(3)?
+    createdById     String?
+    terms           Jsonb?
+    notes           String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "Contract_publicReference_key", unique: true)
+    @@index([number], map: "Contract_number_key", unique: true)
+    @@index([kind], map: "Contract_kind_idx")
+    @@index([status], map: "Contract_status_idx")
+    @@index([employeeId], map: "Contract_employeeId_idx")
+    @@index([clientId], map: "Contract_clientId_idx")
+    @@index([candidateId], map: "Contract_candidateId_idx")
+    @@index([offerId], map: "Contract_offerId_idx")
+    @@index([createdAt], map: "Contract_createdAt_idx")
+  @@map("Contract")
+  }
+
+  model SalesOrder {
+    id              String              @id(map: "SalesOrder_pkey")
+    publicReference String
+    number          String
+    clientId        String?
+    quoteId         String?
+    bookingId       String?
+    contractId      String?
+    title           String
+    status          String              @default("draft")
+    subtotal        Numeric(18, 2)      @default(0)
+    discount        Numeric(18, 2)      @default(0)
+    tax             Numeric(18, 2)      @default(0)
+    total           Numeric(18, 2)      @default(0)
+    currency        String              @default("KES")
+    orderedAt       TimestampString(3)?
+    fulfilledAt     TimestampString(3)?
+    cancelledAt     TimestampString(3)?
+    createdById     String?
+    notes           String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "SalesOrder_publicReference_key", unique: true)
+    @@index([number], map: "SalesOrder_number_key", unique: true)
+    @@index([clientId], map: "SalesOrder_clientId_idx")
+    @@index([quoteId], map: "SalesOrder_quoteId_idx")
+    @@index([bookingId], map: "SalesOrder_bookingId_idx")
+    @@index([contractId], map: "SalesOrder_contractId_idx")
+    @@index([status], map: "SalesOrder_status_idx")
+    @@index([createdAt], map: "SalesOrder_createdAt_idx")
+  @@map("SalesOrder")
+  }
+
+  model SalesOrderLineItem {
+    id          String              @id(map: "SalesOrderLineItem_pkey")
+    orderId     String
+    description String
+    quantity    Int                 @default(1)
+    unitPrice   Numeric(18, 2)      @default(0)
+    lineTotal   Numeric(18, 2)      @default(0)
+    serviceId   String?
+    productId   String?
+    sortOrder   Int                 @default(0)
+    createdAt   TimestampString(3)  @default(now())
+
+    @@index([orderId], map: "SalesOrderLineItem_orderId_idx")
+  @@map("SalesOrderLineItem")
+  }
+
+  // ── Phase 2 product slices: project delivery (additive) ──────────────────
+  // Hand-added contract models (not inferred from the live Neon branch yet).
+  // Stage/status vocabularies are TEXT (like Booking.currentStage) so they can
+  // grow without another migration; cross-entity references are plain TEXT ids
+  // where a relational join is not needed. Money/rate columns use Numeric(18,2)
+  // — never Float/Double/money — matching the rest of the contract.
+  model ProjectTemplate {
+    id              String              @id(map: "ProjectTemplate_pkey")
+    publicReference String
+    key             String
+    name            String
+    description     String?
+    projectType     String?
+    stage           String              @default("draft")
+    milestones      Jsonb?
+    deliverables    Jsonb?
+    checklist       Jsonb?
+    estimateHours   Int                 @default(0)
+    rateAmount      Numeric(18, 2)?
+    currency        String              @default("KES")
+    published       Boolean             @default(false)
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([key], map: "ProjectTemplate_key_key", unique: true)
+    @@index([publicReference], map: "ProjectTemplate_publicReference_key", unique: true)
+    @@index([stage], map: "ProjectTemplate_stage_idx")
+    @@index([createdAt], map: "ProjectTemplate_createdAt_idx")
+  @@map("ProjectTemplate")
+  }
+
+  model EmployeeCapacity {
+    id             String              @id(map: "EmployeeCapacity_pkey")
+    employeeId     String
+    periodStart    TimestampString(3)
+    periodEnd      TimestampString(3)
+    weeklyHours    Int                 @default(40)
+    availableHours Int                 @default(0)
+    allocatedHours Int                 @default(0)
+    status         String              @default("open")
+    notes          String?
+    createdById    String?
+    createdAt      TimestampString(3)  @default(now())
+    updatedAt      TimestampString(3)
+
+    @@index([employeeId, periodStart], map: "EmployeeCapacity_employeeId_periodStart_idx")
+    @@index([status], map: "EmployeeCapacity_status_idx")
+    @@index([periodStart, periodEnd], map: "EmployeeCapacity_period_idx")
+  @@map("EmployeeCapacity")
+  }
+
+  model ProjectChangeRequest {
+    id              String              @id(map: "ProjectChangeRequest_pkey")
+    publicReference String
+    clientProjectId String
+    requestedById   String?
+    title           String
+    reason          String?
+    impact          String?
+    status          String              @default("pending")
+    costImpact      Numeric(18, 2)      @default(0)
+    dayImpact       Int                 @default(0)
+    currency        String              @default("KES")
+    approvedById    String?
+    approvedAt      TimestampString(3)?
+    decisionNote    String?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "ProjectChangeRequest_publicReference_key", unique: true)
+    @@index([clientProjectId, status], map: "ProjectChangeRequest_clientProjectId_status_idx")
+    @@index([status], map: "ProjectChangeRequest_status_idx")
+    @@index([createdAt], map: "ProjectChangeRequest_createdAt_idx")
+  @@map("ProjectChangeRequest")
+  }
+
+  model ProjectRisk {
+    id            String              @id(map: "ProjectRisk_pkey")
+    clientProjectId String
+    title         String
+    description   String?
+    category      String              @default("delivery")
+    likelihood    Int                 @default(1)
+    impact        Int                 @default(1)
+    score         Int                 @default(1)
+    severity      String              @default("low")
+    status        String              @default("open")
+    ownerId       String?
+    mitigation    String?
+    targetDate    TimestampString(3)?
+    resolvedAt    TimestampString(3)?
+    createdById   String?
+    createdAt     TimestampString(3)  @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([clientProjectId, status], map: "ProjectRisk_clientProjectId_status_idx")
+    @@index([severity], map: "ProjectRisk_severity_idx")
+    @@index([status], map: "ProjectRisk_status_idx")
+  @@map("ProjectRisk")
+  }
+
+  model ProjectRetrospective {
+    id               String              @id(map: "ProjectRetrospective_pkey")
+    clientProjectId  String
+    facilitatorId    String?
+    period           String?
+    status           String              @default("draft")
+    whatWentWell     String?
+    whatCouldImprove String?
+    lessons          Jsonb?
+    actionItems      Jsonb?
+    sharedAt         TimestampString(3)?
+    createdById      String?
+    createdAt        TimestampString(3)  @default(now())
+    updatedAt        TimestampString(3)
+
+    @@index([clientProjectId, status], map: "ProjectRetrospective_clientProjectId_status_idx")
+    @@index([status], map: "ProjectRetrospective_status_idx")
+    @@index([createdAt], map: "ProjectRetrospective_createdAt_idx")
+  @@map("ProjectRetrospective")
+  }
+
+  model ProjectSignOff {
+    id              String              @id(map: "ProjectSignOff_pkey")
+    publicReference String
+    clientProjectId String
+    clientId        String?
+    title           String
+    status          String              @default("pending")
+    signedById      String?
+    signedAt        TimestampString(3)?
+    dueAt           TimestampString(3)?
+    notes           String?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "ProjectSignOff_publicReference_key", unique: true)
+    @@index([clientProjectId, status], map: "ProjectSignOff_clientProjectId_status_idx")
+    @@index([status], map: "ProjectSignOff_status_idx")
+  @@map("ProjectSignOff")
+  }
+
+  // ── Phase 2 product slices: finance (additive) ────────────────────────────
+  // Credit notes, tax configuration, AR/AP postings and commission payouts.
+  // Monetary and rate fields are Numeric(18,2) decimal text, never floats.
+  model CreditNote {
+    id              String              @id(map: "CreditNote_pkey")
+    publicReference String
+    number          String
+    invoiceId       String?
+    clientId        String?
+    reason          String
+    amount          Numeric(18, 2)      @default(0)
+    tax             Numeric(18, 2)      @default(0)
+    total           Numeric(18, 2)      @default(0)
+    currency        String              @default("KES")
+    status          String              @default("draft")
+    issuedAt        TimestampString(3)?
+    appliedAt       TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "CreditNote_publicReference_key", unique: true)
+    @@index([number], map: "CreditNote_number_key", unique: true)
+    @@index([invoiceId], map: "CreditNote_invoiceId_idx")
+    @@index([clientId], map: "CreditNote_clientId_idx")
+    @@index([status], map: "CreditNote_status_idx")
+  @@map("CreditNote")
+  }
+
+  model TaxRate {
+    id            String              @id(map: "TaxRate_pkey")
+    key           String
+    name          String
+    description   String?
+    rate          Numeric(18, 2)      @default(0)
+    scope         String              @default("all")
+    jurisdiction  String?
+    effectiveFrom TimestampString(3)?
+    effectiveTo   TimestampString(3)?
+    active        Boolean             @default(true)
+    createdById   String?
+    createdAt     TimestampString(3)  @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([key], map: "TaxRate_key_key", unique: true)
+    @@index([scope, active], map: "TaxRate_scope_active_idx")
+    @@index([createdAt], map: "TaxRate_createdAt_idx")
+  @@map("TaxRate")
+  }
+
+  model ArApEntry {
+    id              String              @id(map: "ArApEntry_pkey")
+    publicReference String
+    direction       String
+    entityType      String?
+    entityId        String?
+    clientId        String?
+    vendor          String?
+    description     String
+    amount          Numeric(18, 2)      @default(0)
+    currency        String              @default("KES")
+    status          String              @default("open")
+    dueAt           TimestampString(3)?
+    postedAt        TimestampString(3)?
+    settledAt       TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "ArApEntry_publicReference_key", unique: true)
+    @@index([direction, status], map: "ArApEntry_direction_status_idx")
+    @@index([entityType, entityId], map: "ArApEntry_entity_idx")
+    @@index([clientId], map: "ArApEntry_clientId_idx")
+    @@index([dueAt], map: "ArApEntry_dueAt_idx")
+  @@map("ArApEntry")
+  }
+
+  model CommissionEntry {
+    id              String              @id(map: "CommissionEntry_pkey")
+    publicReference String
+    employeeId      String
+    sourceType      String?
+    sourceId        String?
+    period          String?
+    basisAmount     Numeric(18, 2)      @default(0)
+    rate            Numeric(18, 2)      @default(0)
+    amount          Numeric(18, 2)      @default(0)
+    currency        String              @default("KES")
+    status          String              @default("pending")
+    approvedById    String?
+    paidAt          TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "CommissionEntry_publicReference_key", unique: true)
+    @@index([employeeId, status], map: "CommissionEntry_employeeId_status_idx")
+    @@index([period], map: "CommissionEntry_period_idx")
+    @@index([status], map: "CommissionEntry_status_idx")
+  @@map("CommissionEntry")
+  }
+
+  // ── Phase 2 product slices: HR performance & lifecycle (additive) ─────────
+  model PerformanceReview {
+    id              String              @id(map: "PerformanceReview_pkey")
+    publicReference String
+    employeeId      String
+    reviewerId      String?
+    period          String
+    status          String              @default("draft")
+    rating          Int?
+    strengths       String?
+    improvements    String?
+    summary         String?
+    goals           Jsonb?
+    submittedAt     TimestampString(3)?
+    acknowledgedAt  TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "PerformanceReview_publicReference_key", unique: true)
+    @@index([employeeId, period], map: "PerformanceReview_employeeId_period_idx")
+    @@index([reviewerId], map: "PerformanceReview_reviewerId_idx")
+    @@index([status], map: "PerformanceReview_status_idx")
+  @@map("PerformanceReview")
+  }
+
+  model Goal {
+    id          String              @id(map: "Goal_pkey")
+    employeeId  String
+    reviewId    String?
+    title       String
+    description String?
+    goalType    String              @default("individual")
+    targetAmount Numeric(18, 2)?
+    currency    String              @default("KES")
+    dueAt       TimestampString(3)?
+    status      String              @default("draft")
+    progress    Int                 @default(0)
+    achievedAt  TimestampString(3)?
+    createdById String?
+    createdAt   TimestampString(3)  @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([employeeId, status], map: "Goal_employeeId_status_idx")
+    @@index([reviewId], map: "Goal_reviewId_idx")
+    @@index([status], map: "Goal_status_idx")
+  @@map("Goal")
+  }
+
+  model TrainingRecord {
+    id            String              @id(map: "TrainingRecord_pkey")
+    employeeId    String
+    title         String
+    provider      String?
+    category      String?
+    completedAt   TimestampString(3)?
+    hours         Int?
+    costAmount    Numeric(18, 2)?
+    currency      String              @default("KES")
+    status        String              @default("completed")
+    certificateUrl String?
+    notes         String?
+    createdById   String?
+    createdAt     TimestampString(3)  @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([employeeId, status], map: "TrainingRecord_employeeId_status_idx")
+    @@index([completedAt], map: "TrainingRecord_completedAt_idx")
+    @@index([status], map: "TrainingRecord_status_idx")
+  @@map("TrainingRecord")
+  }
+
+  model DirectoryPrivacySetting {
+    id              String              @id(map: "DirectoryPrivacySetting_pkey")
+    employeeId      String              @unique(map: "DirectoryPrivacySetting_employeeId_key")
+    phoneVisible    Boolean             @default(false)
+    emailVisible    Boolean             @default(true)
+    locationVisible Boolean             @default(false)
+    profileVisible  Boolean             @default(true)
+    searchable      Boolean             @default(true)
+    updatedById     String?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+  @@map("DirectoryPrivacySetting")
+  }
+
+  model Offboarding {
+    id              String              @id(map: "Offboarding_pkey")
+    publicReference String
+    employeeId      String
+    requestedById   String?
+    reason          String?
+    lastWorkingDay  TimestampString(3)?
+    status          String              @default("draft")
+    checklist       Jsonb?
+    handoverNotes   String?
+    accessRevokedAt TimestampString(3)?
+    exitInterviewAt TimestampString(3)?
+    completedAt     TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "Offboarding_publicReference_key", unique: true)
+    @@index([employeeId, status], map: "Offboarding_employeeId_status_idx")
+    @@index([status], map: "Offboarding_status_idx")
+  @@map("Offboarding")
+  }
+
+  // ── Phase 2 product slices: marketing & content operations (additive) ─────
+  model Campaign {
+    id            String              @id(map: "Campaign_pkey")
+    publicReference String
+    name          String
+    channel       String?
+    objective     String?
+    status        String              @default("draft")
+    budgetAmount  Numeric(18, 2)?
+    spendAmount   Numeric(18, 2)      @default(0)
+    currency      String              @default("KES")
+    startDate     TimestampString(3)?
+    endDate       TimestampString(3)?
+    ownerId       String?
+    goals         Jsonb?
+    createdById   String?
+    createdAt     TimestampString(3)  @default(now())
+    updatedAt     TimestampString(3)
+
+    @@index([publicReference], map: "Campaign_publicReference_key", unique: true)
+    @@index([status], map: "Campaign_status_idx")
+    @@index([ownerId], map: "Campaign_ownerId_idx")
+    @@index([startDate, endDate], map: "Campaign_period_idx")
+  @@map("Campaign")
+  }
+
+  model ContentCalendarEntry {
+    id          String              @id(map: "ContentCalendarEntry_pkey")
+    campaignId  String?
+    briefId     String?
+    title       String
+    channel     String?
+    contentType String              @default("post")
+    status      String              @default("planned")
+    scheduledAt TimestampString(3)?
+    publishedAt TimestampString(3)?
+    ownerId     String?
+    notes       String?
+    createdById String?
+    createdAt   TimestampString(3)  @default(now())
+    updatedAt   TimestampString(3)
+
+    @@index([campaignId, scheduledAt], map: "ContentCalendarEntry_campaignId_scheduledAt_idx")
+    @@index([status, scheduledAt], map: "ContentCalendarEntry_status_scheduledAt_idx")
+    @@index([ownerId], map: "ContentCalendarEntry_ownerId_idx")
+  @@map("ContentCalendarEntry")
+  }
+
+  model ContentBrief {
+    id              String              @id(map: "ContentBrief_pkey")
+    publicReference String
+    campaignId      String?
+    title           String
+    objective       String?
+    audience        String?
+    tone            String?
+    keyMessages     Jsonb?
+    requiredAssets  Jsonb?
+    wordCount       Int?
+    status          String              @default("draft")
+    approvedById    String?
+    approvedAt      TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "ContentBrief_publicReference_key", unique: true)
+    @@index([campaignId, status], map: "ContentBrief_campaignId_status_idx")
+    @@index([status], map: "ContentBrief_status_idx")
+  @@map("ContentBrief")
+  }
+
+  model AssetLibraryItem {
+    id              String              @id(map: "AssetLibraryItem_pkey")
+    publicReference String
+    name            String
+    assetType       String              @default("image")
+    url             String
+    mime            String?
+    sizeBytes       Int?
+    tags            String[]            @default([]) @noCheck(elementNotNull)
+    campaignId      String?
+    ownerId         String?
+    status          String              @default("active")
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "AssetLibraryItem_publicReference_key", unique: true)
+    @@index([assetType, status], map: "AssetLibraryItem_assetType_status_idx")
+    @@index([campaignId], map: "AssetLibraryItem_campaignId_idx")
+    @@index([ownerId], map: "AssetLibraryItem_ownerId_idx")
+  @@map("AssetLibraryItem")
+  }
+
+  model AttributionLink {
+    id              String              @id(map: "AttributionLink_pkey")
+    publicReference String
+    campaignId      String
+    name            String
+    destinationUrl  String
+    token           String
+    utmSource       String?
+    utmMedium       String?
+    utmCampaign     String?
+    clicks          Int                 @default(0)
+    conversions     Int                 @default(0)
+    status          String              @default("active")
+    expiresAt       TimestampString(3)?
+    createdById     String?
+    createdAt       TimestampString(3)  @default(now())
+    updatedAt       TimestampString(3)
+
+    @@index([publicReference], map: "AttributionLink_publicReference_key", unique: true)
+    @@index([token], map: "AttributionLink_token_key", unique: true)
+    @@index([campaignId, status], map: "AttributionLink_campaignId_status_idx")
+    @@index([status], map: "AttributionLink_status_idx")
+  @@map("AttributionLink")
+  }
 }

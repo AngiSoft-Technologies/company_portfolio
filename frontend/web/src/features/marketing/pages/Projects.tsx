@@ -20,9 +20,16 @@ const statusClass = (status: string): string => {
 export default function Projects() {
   const projects = useAsync(fetchProjects, []);
 
+  // Stable sort key (featured + original API index) so equal-featured projects
+  // keep their server order instead of depending on engine-specific behavior.
   const sorted = (projects.data ?? [])
-    .slice()
-    .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
+    .map((project, index) => ({ project, index }))
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.project.featured)) - Number(Boolean(a.project.featured)) ||
+        a.index - b.index,
+    )
+    .map((entry) => entry.project);
 
   return (
     <>

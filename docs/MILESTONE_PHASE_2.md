@@ -34,6 +34,8 @@ Phase 4: Multi-Domain Deployment        ⏳ PENDING
 
 **Overall Completion**: ~60% Complete | Next: Phase 3 (Testing & Population)
 
+> **Current status pointer:** this ~60% figure and the 100% phase labels above are frozen February 2026 milestones, not present-day delivery status; see `docs/PRODUCTION_READINESS.md` and the canonical plan.
+
 ---
 
 ## 🎯 What Was Accomplished This Session
@@ -403,7 +405,7 @@ After Phase 3 completes:
 - ✅ 7+ testimonials from diverse users
 - ✅ All CRUD operations tested
 - ✅ Homepage displays all services
-- ✅ System ready for production
+- ✅ Historical milestone complete; not a production gate (current gates: `docs/PRODUCTION_READINESS.md`)
 
 ---
 
@@ -415,4 +417,4 @@ After Phase 3 completes:
 
 *Last Updated: Phase 2 Completion*
 *Next Phase: Service Population & Testing (Phase 3)*
-*Status: 🟢 Ready to Deploy*
+*Status: 🟢 Historical milestone complete — not a production gate; current gates: `docs/PRODUCTION_READINESS.md`*

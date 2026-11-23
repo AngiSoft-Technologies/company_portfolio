@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcssPostcss from '@tailwindcss/postcss'
-import autoprefixer from 'autoprefixer'
+import { imagetools } from 'vite-imagetools'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -13,7 +13,17 @@ export default defineConfig(({ mode }) => {
   const target = rawTarget.replace(/\/+$/, '').replace(/\/api$/, '')
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      // Phase 5.7: opt-in AVIF/WebP pipeline (sharp-backed). Imports without
+      // directives keep Vite's original-format URL as the fallback:
+      //   import avif from './logo.png?w=240;480;960&format=avif&as=srcset'
+      //   import webp from './logo.png?w=240;480;960&format=webp&as=srcset'
+      // Pass both srcsets to <OptimizedImage src={original} ... /> from
+      // @angisoft/ui; its plain <img src> is the original-format fallback.
+      imagetools(),
+      tailwindcss(),
+    ],
     base: '/',
     server: {
       open: false,
@@ -21,14 +31,15 @@ export default defineConfig(({ mode }) => {
       port: 5174,
       watch: { usePolling: true, interval: 1000 },
       proxy: {
+        // `@angisoft/api-client` and admin screens call `/v1/*`. Keep the
+        // legacy `/api` rule for older tooling, but proxy the real base too.
+        '/v1': { target, changeOrigin: true, secure: false },
         '/api': { target, changeOrigin: true, secure: false },
-        '/uploads': { target, changeOrigin: true, secure: false },
+        // Narrow to the static-asset prefix: the admin SPA has a real
+        // `/uploads` route (File Uploads) that a bare `/uploads` proxy would
+        // shadow on full reloads. The backend only serves `/uploads/public/*`.
+        '/uploads/public': { target, changeOrigin: true, secure: false },
         '/socket.io': { target, changeOrigin: true, secure: false, ws: true },
-      },
-    },
-    css: {
-      postcss: {
-        plugins: [tailwindcssPostcss(), autoprefixer()],
       },
     },
     resolve: {

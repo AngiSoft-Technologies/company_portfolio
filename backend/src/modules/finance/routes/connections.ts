@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
+import { requireRecentMfaForSecretRotation } from '../../../shared/middleware/mfaStepUp';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { encryptSecret, hasEncryptionKey } from '../../../shared/services/secrets';
 import { logAudit } from '../../../shared/services/audit';
@@ -24,8 +25,8 @@ const upsertSchema = z.object({
   status: z.enum(['DRAFT','CONNECTED','DEGRADED','DISCONNECTED','ERROR']).optional(),
   environment: z.enum(['LIVE','SANDBOX']).optional(),
   externalAccountId: z.string().optional().nullable(),
-  capabilities: z.record(z.any()).optional(),
-  config: z.record(z.any()).optional(),
+  capabilities: z.record(z.string(), z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
   secret: z.string().optional(),
   secretKind: z.enum(['OAUTH_REFRESH','API_KEY','API_SECRET','WEBHOOK_SECRET','ACCESS_TOKEN','OTHER']).optional(),
 });
@@ -44,7 +45,7 @@ export default function financeConnectionsRouter(prisma: Db) {
     res.json({ connections: connections.map((c: any) => ({ ...c, secrets: (c.secrets || []).map((s: any) => ({ ...s, masked: '••••' })) })) });
   });
 
-  router.post(['/', '/connections'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.post(['/', '/connections'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfaForSecretRotation, async (req: AuthRequest, res) => {
     const body = upsertSchema.parse(req.body);
     const now = ts();
     const connection = await prisma.orm.public.ProviderConnection.create({
@@ -68,7 +69,7 @@ export default function financeConnectionsRouter(prisma: Db) {
     res.status(201).json({ connection: full ?? connection });
   });
 
-  router.patch(['/connections/:id', '/:id'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), async (req: AuthRequest, res) => {
+  router.patch(['/connections/:id', '/:id'], requireAccess('finance.connections.manage', ['ADMIN', 'SUPER_ADMIN']), requireRecentMfaForSecretRotation, async (req: AuthRequest, res) => {
     const body = upsertSchema.partial().parse(req.body);
     const existing = await prisma.orm.public.ProviderConnection.where({ id: req.params.id, domain: 'FINANCE' } as any).first();
     if (!existing) return res.status(404).json({ error: 'Not found' });

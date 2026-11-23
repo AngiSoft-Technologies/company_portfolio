@@ -351,7 +351,7 @@ export function AdminLogin() {
               <button
                 type="button"
                 onClick={() => navigate('/', { replace: true })}
-                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)]"
                 style={{ background: 'var(--color-primary)' }}
               >
                 I have saved them — continue
@@ -400,7 +400,7 @@ export function AdminLogin() {
                 <div className="mt-4">
                   {totpSetup ? (
                     <>
-                      <div className="flex justify-center rounded-lg bg-white p-3">
+                      <div className="flex justify-center rounded-lg bg-[var(--color-white)] p-3">
                         <QRCodeSVG value={totpSetup.otpauthUrl} size={164} marginSize={2} title="Authenticator QR code" />
                       </div>
                       <p className="mt-2 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -425,7 +425,7 @@ export function AdminLogin() {
                         type="button"
                         onClick={confirmTotpSetup}
                         disabled={loading || !code}
-                        className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                        className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] disabled:opacity-60"
                         style={{ background: 'var(--color-primary)' }}
                       >
                         {loading ? 'Verifying…' : 'Enable authenticator'}
@@ -436,7 +436,7 @@ export function AdminLogin() {
                       type="button"
                       onClick={() => startTotpSetup(setupTicket, remember)}
                       disabled={loading}
-                      className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                      className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] disabled:opacity-60"
                       style={{ background: 'var(--color-primary)' }}
                     >
                       {loading ? 'Preparing…' : 'Show QR code'}
@@ -464,7 +464,7 @@ export function AdminLogin() {
                     type="button"
                     onClick={() => startPasskeySetup(true)}
                     disabled={loading}
-                    className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                    className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] disabled:opacity-60"
                     style={{ background: 'var(--color-primary)' }}
                   >
                     {loading ? 'Waiting for passkey…' : 'Link my phone (fingerprint)'}
@@ -527,7 +527,7 @@ export function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] transition-opacity disabled:opacity-60"
                 style={{ background: 'var(--color-primary)' }}
               >
                 {loading ? 'Checking…' : 'Continue'}
@@ -597,7 +597,7 @@ export function AdminLogin() {
                     type="button"
                     onClick={() => void startMfa('PASSKEY')}
                     disabled={loading}
-                    className="mt-3 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                    className="mt-3 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] disabled:opacity-60"
                     style={{ background: 'var(--color-primary)' }}
                   >
                     {loading ? 'Waiting for passkey…' : 'Use passkey'}
@@ -609,7 +609,7 @@ export function AdminLogin() {
                 type="button"
                 onClick={() => void verifyCode()}
                 disabled={loading || !CODE_METHODS.has(selectedMethod)}
-                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                className="mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-white)] disabled:opacity-60"
                 style={{ background: 'var(--color-primary)' }}
               >
                 {loading ? 'Verifying…' : 'Verify and sign in'}

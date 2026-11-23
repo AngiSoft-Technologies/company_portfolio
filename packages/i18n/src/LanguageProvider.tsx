@@ -18,7 +18,7 @@ import {
   type TextDirection,
 } from './locales';
 import { translate } from './translate';
-import type { TranslationKey } from './dictionaries';
+import { loadDictionary, type TranslationKey } from './dictionaries';
 
 export interface I18nContextValue {
   locale: LocaleCode;
@@ -47,6 +47,22 @@ function readStoredLocale(): LocaleCode {
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<LocaleCode>(readStoredLocale);
+  const [, refreshTranslations] = useState(0);
+
+  // Locale dictionaries are code-split. English is synchronous; every other
+  // locale loads once on selection, then re-renders consumers with the loaded
+  // strings. Failures fall back to English without breaking the app.
+  useEffect(() => {
+    let active = true;
+    loadDictionary(locale)
+      .then(() => {
+        if (active) refreshTranslations((value) => value + 1);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [locale]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {

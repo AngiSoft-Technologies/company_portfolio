@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 /**
  * Security regression specs for the Phase 0 production-safety fixes.
@@ -25,6 +25,8 @@ const store: Record<string, any[]> = {
     Position: [],
     ProductTeamMember: [],
     ProjectEmployee: [],
+    ServiceTeamMember: [],
+    TestimonialReviewAssignment: [],
     Booking: [],
     ContactEnquiry: [],
     BlogPost: [],
@@ -39,6 +41,8 @@ const MODELS = [
     'Position',
     'ProductTeamMember',
     'ProjectEmployee',
+    'ServiceTeamMember',
+    'TestimonialReviewAssignment',
     'Booking',
     'ContactEnquiry',
     'BlogPost',
@@ -163,10 +167,12 @@ function cookieHeader(cookies: Record<string, string>): string {
 describe('HTTP security guards', () => {
     let app: any;
 
-    beforeEach(async () => {
+    // Importing the full Express app is expensive; load it once for the whole
+    // describe block instead of paying the cost in every test's hook.
+    beforeAll(async () => {
         const mod = await import('../src/app');
         app = mod.default;
-    });
+    }, 120_000);
 
     describe('chatbot admin endpoints (P0.3)', () => {
         it('GET /v1/chatbot/conversations rejects anonymous callers', async () => {

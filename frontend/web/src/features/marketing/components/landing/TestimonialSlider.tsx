@@ -121,8 +121,6 @@ const TestimonialSlider = () => {
     );
   }
 
-  if (visible.length === 0) return null;
-
   return (
     <section
       className="testimonial-slider"

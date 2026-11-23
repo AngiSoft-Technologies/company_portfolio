@@ -232,13 +232,15 @@ registered Daraja URLs necessarily carry it as a query parameter and must
   confirmations, HTTPS STK callback validation, redacted upstream errors, QR
   code validation, result hints, `MPESA_BALANCE`, STK recovery, booking deposits
   and explicit-consent Meta CAPI dispatch.
-- The full mocked backend suite passes all 38 mocked files / 369 tests (4
-  skipped); `test/integration.spec.ts` still needs a real disposable
+- The full mocked backend suite passes **66 files / 606 tests** (no skips in the
+  final run); `test/integration.spec.ts` still needs a real disposable
   `TEST_DATABASE_URL` and is not claimed here. Backend `tsc --noEmit`,
-  workspace typechecks, both production builds and the 137-key config dry-run
-  are reported in the canonical plan.
-- The additive migration `20261122210000_phase7_completion` is committed but
-  **not applied**. Status remains **Implemented (code complete)**, not production-ready.
+  workspace typechecks, both production builds, `pnpm lint`, the i18n suite and
+  the 137-key config dry-run are reported in the canonical plan.
+- The additive migration `20261122210000_phase7_completion` **is applied** to
+  the live Neon branch (19 tables + 10 columns verified read-only on
+  2026-11-23). The permission/config seed is still unapplied. Status remains
+  **Implemented (code complete)**, not production-ready.
 
 ## Disclaimer
 

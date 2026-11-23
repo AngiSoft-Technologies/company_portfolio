@@ -120,7 +120,7 @@ export default function approvalsRouter(prisma: Db = db) {
 
     router.post('/', requirePermission('approvals.manage'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const data = parsed.data;
         const unknown = data.steps
             .map((s) => canonicalKey(s.permission))
@@ -241,7 +241,7 @@ export default function approvalsRouter(prisma: Db = db) {
 
     router.post('/:id/decide', requirePermission('approvals.respond'), async (req: AuthRequest, res) => {
         const parsed = decideSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const row = await prisma.orm.public.ApprovalRequest.where({ id: req.params.id }).first();
             if (!row) return res.status(404).json({ error: 'Approval request not found' });

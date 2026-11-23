@@ -50,13 +50,12 @@
   background: var(--surface);
   color: var(--color-primary);
   cursor: pointer;
-  transition: background .18s var(--ease-standard), color .18s var(--ease-standard), border-color .18s var(--ease-standard);
 }
 
 .testimonial-slider__controls button:hover {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
 }
 
 .testimonial-slider__quote {
@@ -163,7 +162,6 @@
   background: var(--color-primary);
   transform-origin: left center;
   transform: scaleX(var(--testimonial-progress, 0));
-  transition: transform .3s var(--ease-standard);
 }
 
 .testimonial-slider__subtitle {
@@ -207,9 +205,13 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .testimonial-slider__controls button,
+/* Static by default; transitions run only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .testimonial-slider__controls button {
+    transition: background .18s var(--ease-standard), color .18s var(--ease-standard), border-color .18s var(--ease-standard);
+  }
+
   .testimonial-slider__step span {
-    transition: none;
+    transition: transform .3s var(--ease-standard);
   }
 }

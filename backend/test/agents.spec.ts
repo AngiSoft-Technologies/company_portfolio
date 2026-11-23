@@ -18,6 +18,8 @@ const MODELS = [
     'Position',
     'ProductTeamMember',
     'ProjectEmployee',
+    'ServiceTeamMember',
+    'TestimonialReviewAssignment',
     'Booking',
     'BookingEvent',
     'ContactEnquiry',

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
-import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { has as hasPermission, isAssigned } from '../../identity/services/effectivePermissions';
 import { gContactLimiter } from '../../../shared/middleware/rateLimiter';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
@@ -44,7 +44,7 @@ const createSchema = z.object({
     preferredResponseMethod: z.enum(RESPONSE_METHODS).default('email'),
 
     enquiryType: z.enum(ENQUIRY_TYPES, {
-        errorMap: () => ({ message: 'Choose an enquiry type' }),
+        error: 'Choose an enquiry type',
     }),
     subject: z.string().trim().min(2, 'Add a short subject').max(160),
     message: z.string().trim().min(MIN_MESSAGE, 'Tell us a bit more (at least 10 characters)').max(MAX_MESSAGE),
@@ -263,15 +263,25 @@ export default function contactEnquiriesRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requirePermission('enquiries.respond'), async (req: AuthRequest, res) => {
         const parsed = adminUpdateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const existing = await prisma.orm.public.ContactEnquiry.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Not found' });
             const ctx = req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
             const isPrivileged = (ctx ? await hasPermission(ctx, 'enquiries.view_all') : false)
                 || ['ADMIN', 'MARKETING', 'SALES', 'SUPER_ADMIN'].includes(req.user?.role ?? '');
-            if (!isPrivileged && existing.assignedStaffId !== req.user?.sub) {
-                return res.status(403).json({ error: 'Not assigned to this enquiry' });
+            if (!isPrivileged) {
+                const assigned = await isAssigned(
+                    ctx ?? { employeeId: '', systemRole: req.user?.role },
+                    'enquiries.respond',
+                    {
+                        type: 'enquiry',
+                        id: req.params.id,
+                        // Canonical `assigneeId` plus the deprecated column on older rows.
+                        ownerIds: [existing.assigneeId, existing.assignedStaffId],
+                    },
+                );
+                if (!assigned) return res.status(403).json({ error: 'Not assigned to this enquiry' });
             }
             const payload: any = {};
             for (const [k, v] of Object.entries(parsed.data)) {

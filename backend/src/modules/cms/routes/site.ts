@@ -3,6 +3,7 @@ import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess } from '../../../shared/middleware/roles';
+import { storedDocumentSchema, LEGAL_SETTING_KEYS } from './legal';
 
 const SITE_SECTIONS = [
     { slug: 'about', key: 'site_about', permission: 'pages.update_about', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
@@ -20,7 +21,11 @@ const SITE_SECTIONS = [
     { slug: 'pricing', key: 'site_pricing', permission: 'services.manage_pricing', roles: ['ADMIN', 'MARKETING'] },
     { slug: 'products-page', key: 'site_products_page', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
     { slug: 'services-page', key: 'site_services_page', permission: 'pages.update_home', roles: ['ADMIN', 'MARKETING', 'CONTENT_CREATOR'] },
-    { slug: 'careers_content', key: 'careers_content', permission: 'careers.update_content', roles: ['ADMIN', 'HR', 'MARKETING'] }
+    { slug: 'careers_content', key: 'careers_content', permission: 'careers.update_content', roles: ['ADMIN', 'HR', 'MARKETING'] },
+    // Structured privacy/terms copy consumed by the public GET /v1/legal/:key
+    // endpoint. Same Setting rows, no HTML, ADMIN-only writes.
+    { slug: 'legal-privacy', key: LEGAL_SETTING_KEYS.privacy, permission: 'pages.update_site_chrome', roles: ['ADMIN'] },
+    { slug: 'legal-terms', key: LEGAL_SETTING_KEYS.terms, permission: 'pages.update_site_chrome', roles: ['ADMIN'] }
 ] as const;
 
 /**
@@ -67,7 +72,19 @@ export default function siteRouter(prisma: Db) {
 
         router.put(`/${section.slug}`, requireAuth, requireAccess(section.permission, [...section.roles]), async (req: AuthRequest, res) => {
             try {
-                const result = await upsertSetting(section.key, req.body, req);
+                // Legal copy is rendered as React text nodes by the public site;
+                // reject anything that is not the documented structured shape.
+                const isLegalSection =
+                    section.key === LEGAL_SETTING_KEYS.privacy || section.key === LEGAL_SETTING_KEYS.terms;
+                let value: unknown = req.body;
+                if (isLegalSection) {
+                    const parsed = storedDocumentSchema.safeParse(req.body ?? {});
+                    if (!parsed.success) {
+                        return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
+                    }
+                    value = parsed.data;
+                }
+                const result = await upsertSetting(section.key, value, req);
                 res.json((result as any).value);
             } catch (err: any) {
                 res.status(500).json({ error: 'Server error' });

@@ -609,6 +609,10 @@ export default function BoardroomAdmin() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
+                        // IME-safe: Enter can confirm a composition candidate.
+                        // React's synthetic KeyboardEvent type omits isComposing; the DOM event has it.
+                        const composing = ((e.nativeEvent as KeyboardEvent).isComposing) || e.keyCode === 229;
+                        if (composing) return;
                         void sendQuestion();
                       }
                     }}

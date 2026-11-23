@@ -5,7 +5,6 @@ import { formatDateTime } from '@/lib/format';
 import {
   CapabilityBadge,
   ErrorNotice,
-  capabilityState,
   inputClass,
   listFrom,
   useResource,

@@ -21,22 +21,29 @@ export function ToastHost() {
 
   useEffect(() => toastManager.subscribe(setToasts), []);
 
-  if (toasts.length === 0) return null;
+  // Render a single, absolutely positioned toast slot. Optional public-content
+  // requests can fail in parallel; a growing flex stack pushed visible toasts
+  // around and produced a large late CLS. Keeping the overlay mounted with a
+  // stable box avoids layout work and shift when those failures arrive.
+  const toast = toasts[toasts.length - 1];
 
   return (
-    <div className="pointer-events-none fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
-      {toasts.map((t) => (
+    <div
+      className="pointer-events-none fixed bottom-6 right-6 z-[100] h-12 w-[min(360px,calc(100vw-32px))]"
+      aria-live="polite"
+    >
+      {toast && (
         <button
-          key={t.id}
-          onClick={() => toastManager.remove(t.id)}
-          className={`pointer-events-auto flex items-center gap-3 rounded-xl border bg-slate-900/95 px-4 py-3 text-left shadow-xl backdrop-blur ${STYLES[t.type]}`}
+          key={toast.id}
+          onClick={() => toastManager.remove(toast.id)}
+          className={`pointer-events-auto absolute bottom-0 right-0 flex w-full items-center gap-3 rounded-xl border bg-slate-900/95 px-4 py-3 text-left shadow-xl backdrop-blur ${STYLES[toast.type]}`}
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/10 text-xs font-bold">
-            {ICONS[t.type]}
+            {ICONS[toast.type]}
           </span>
-          <span className="text-sm text-slate-100">{t.message}</span>
+          <span className="text-sm text-slate-100">{toast.message}</span>
         </button>
-      ))}
+      )}
     </div>
   );
 }

@@ -4,12 +4,27 @@ import type { Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import multer from 'multer';
 import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
-import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { has as hasPermission, isAssigned } from '../../identity/services/effectivePermissions';
 import { requireAccess } from '../../../shared/middleware/roles';
 import { createClientProjectFromBooking } from '../../../modules/projects/services/clientProjects';
 import { logAudit } from '../../../shared/services/audit';
 import { generatePublicReference, generateTrackingToken } from '../../../modules/bookings/services/bookingReference';
 import { logBookingEvent, BOOKING_EVENT_TYPES, EVENT_VISIBILITY } from '../../../modules/bookings/services/bookingEvents';
+import {
+    STAGE_ORDER,
+    STAGE_FLOW,
+    BOOKING_STATUSES,
+    isLegalStageTransition,
+    isKnownStage,
+    stageForStatus,
+    availableActions,
+    canCancel,
+    stageProgress,
+    customerActionStage,
+    type BookingStatus,
+} from '../services/bookingStageMachine';
+// Historical named exports from this route module are preserved for callers.
+export { STAGE_ORDER, STAGE_FLOW };
 import { toMoney } from '../../billing/utils/money';
 import {
     generateReference,
@@ -134,91 +149,8 @@ const adminEventSchema = z.object({
         .default(EVENT_VISIBILITY.STAFF),
 }).strict();
 
-// ─── Stage machine ────────────────────────────────────────────
-// Machine stage values mirror the frontend's canonical workflow order.
-export const STAGE_ORDER = [
-    'request_submitted',
-    'requirements_review',
-    'clarification_needed',
-    'scope_and_quotation',
-    'awaiting_confirmation',
-    'scheduled',
-    'in_progress',
-    'customer_review',
-    'completed',
-] as const;
-
-// Allowed forward/valid transitions. 'cancelled' is reachable from most
-// active stages via the cancel action. Reject anything else with 409.
-export const STAGE_FLOW: Record<string, string[]> = {
-    request_submitted: ['requirements_review', 'cancelled'],
-    requirements_review: ['clarification_needed', 'scope_and_quotation', 'rejected', 'cancelled'],
-    clarification_needed: ['requirements_review', 'scope_and_quotation', 'cancelled'],
-    scope_and_quotation: ['awaiting_confirmation', 'cancelled'],
-    awaiting_confirmation: ['scheduled', 'cancelled'],
-    scheduled: ['in_progress', 'cancelled'],
-    in_progress: ['customer_review', 'cancelled'],
-    customer_review: ['completed', 'changes_requested'],
-    changes_requested: ['in_progress'],
-    completed: [],
-    cancelled: [],
-    rejected: [],
-};
-
-function isLegalStageTransition(from: string, to: string): boolean {
-    if (from === to) return true; // no-op allowed
-    return Boolean(STAGE_FLOW[from]?.includes(to));
-}
-
-// P7's BookingStatus enum, now a local literal union (the contract stores the
-// same values in the live native enum).
-const BOOKING_STATUSES = [
-    'SUBMITTED',
-    'UNDER_REVIEW',
-    'ACCEPTED',
-    'REJECTED',
-    'TERMS_ACCEPTED',
-    'DEPOSIT_PAID',
-    'IN_PROGRESS',
-    'DELIVERED',
-    'COMPLETED',
-    'CANCELLED',
-] as const;
-type BookingStatus = (typeof BOOKING_STATUSES)[number];
-
-// Map a BookingStatus enum to the machine stage when an admin changes status.
-const STATUS_TO_STAGE: Partial<Record<BookingStatus, string>> = {
-    SUBMITTED: 'request_submitted',
-    UNDER_REVIEW: 'requirements_review',
-    ACCEPTED: 'awaiting_confirmation',
-    REJECTED: 'rejected',
-    TERMS_ACCEPTED: 'scheduled',
-    DEPOSIT_PAID: 'scheduled',
-    IN_PROGRESS: 'in_progress',
-    DELIVERED: 'customer_review',
-    COMPLETED: 'completed',
-    CANCELLED: 'cancelled',
-};
-
-// Customer-visible actions derived from current stage (server-authoritative).
-const STAGE_ACTIONS: Record<string, string[]> = {
-    request_submitted: ['UPLOAD_FILES'],
-    requirements_review: ['UPLOAD_FILES', 'RESPOND_TO_CLARIFICATION'],
-    clarification_needed: ['UPLOAD_FILES', 'RESPOND_TO_CLARIFICATION'],
-    scope_and_quotation: ['UPLOAD_FILES'],
-    awaiting_confirmation: ['ACCEPT_QUOTATION', 'DECLINE_QUOTATION', 'UPLOAD_FILES'],
-    scheduled: ['UPLOAD_FILES', 'CANCEL_BOOKING'],
-    in_progress: ['UPLOAD_FILES', 'REQUEST_CHANGES', 'CANCEL_BOOKING'],
-    customer_review: ['CONFIRM_DELIVERY', 'REQUEST_CHANGES'],
-    changes_requested: ['UPLOAD_FILES'],
-    completed: [],
-    cancelled: [],
-    rejected: [],
-};
-
-function availableActions(stage: string): string[] {
-    return STAGE_ACTIONS[stage] ?? [];
-}
+// Stage vocabulary, transition table and derived action/progress metadata now
+// live in `services/bookingStageMachine.ts` (see imports above).
 
 // Fields a customer is allowed to read when serializing a booking.
 interface SerializeOpts {
@@ -248,10 +180,7 @@ function serializeBooking(booking: any, opts: SerializeOpts = {}) {
         ...(opts.includeInternal ? { trackingToken } : {}),
         events,
         availableActions: availableActions(booking.currentStage),
-        stageProgress: {
-            order: STAGE_ORDER,
-            currentIndex: STAGE_ORDER.indexOf(booking.currentStage as (typeof STAGE_ORDER)[number]),
-        },
+        stageProgress: stageProgress(booking.currentStage),
     };
 }
 
@@ -407,7 +336,13 @@ export default function bookingsRouter(prisma: Db) {
             const ctx = { employeeId: req.user.sub, systemRole: role };
             if (await hasPermission(ctx, 'bookings.view_all')) return true;
         }
-        return Boolean(booking.assignedToId && booking.assignedToId === req.user?.sub);
+        // The route guard already checked the capability; the shared helper
+        // re-checks it together with the FK-level assignment (and any DENY).
+        return isAssigned(
+            { employeeId: req.user.sub, systemRole: role },
+            'bookings.update_assigned',
+            { type: 'booking', id: booking?.id ?? '', ownerIds: [booking?.assignedToId] },
+        );
     };
 
     // POST /v1/bookings - create booking (workflow-seeded) with optional files.
@@ -938,7 +873,7 @@ export default function bookingsRouter(prisma: Db) {
             const token = typeof req.query.token === 'string' ? req.query.token : undefined;
             const booking = await fetchBookingForCustomer(prisma, req.params.publicReference, { token });
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            if (!['request_submitted', 'requirements_review', 'clarification_needed', 'scope_and_quotation', 'awaiting_confirmation', 'scheduled', 'in_progress'].includes(booking.currentStage)) {
+            if (!canCancel(booking.currentStage)) {
                 return res.status(409).json({ error: 'Booking cannot be cancelled at this stage' });
             }
             const updated = await prisma.transaction(async (tx) => {
@@ -1069,7 +1004,7 @@ export default function bookingsRouter(prisma: Db) {
             const booking = await prisma.orm.public.Booking.where({ id: req.params.id }).first();
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
             if (!await canMutateBooking(req, booking)) return res.status(403).json({ error: 'Not assigned to this booking' });
-            if (!STAGE_ORDER.includes(stage as (typeof STAGE_ORDER)[number]) && !['rejected', 'cancelled'].includes(stage)) {
+            if (!isKnownStage(stage)) {
                 return res.status(400).json({ error: 'Unknown stage', allowed: STAGE_ORDER });
             }
             if (!isLegalStageTransition(booking.currentStage, stage)) {
@@ -1112,7 +1047,7 @@ export default function bookingsRouter(prisma: Db) {
             if (!await canMutateBooking(req, booking0)) return res.status(403).json({ error: 'Not assigned to this booking' });
             const booking = await prisma.orm.public.Booking.where({ id: req.params.id }).first();
             if (!booking) return res.status(404).json({ error: 'Booking not found' });
-            const mappedStage = STATUS_TO_STAGE[status] ?? booking.currentStage;
+            const mappedStage = stageForStatus(status, booking.currentStage);
             const updated = await prisma.transaction(async (tx) => {
                 const b = await tx.orm.public.Booking.where({ id: booking.id })
                     .update({ status: status as any, currentStage: mappedStage });
@@ -1180,25 +1115,23 @@ async function applyCustomerAction(prisma: Db, booking: any, action: string, bod
         let data: any = {};
         let eventType: string = BOOKING_EVENT_TYPES.PROGRESS_UPDATED;
         let title = action;
-        let stage = booking.currentStage;
+        // Stage selection is owned by the extracted stage machine; the route
+        // only records the matching event and performs the write.
+        const stage = customerActionStage(action, booking.currentStage);
         switch (action) {
             case 'ACCEPT_QUOTATION':
-                stage = 'scheduled';
                 eventType = BOOKING_EVENT_TYPES.QUOTATION_ACCEPTED;
                 title = 'Quotation accepted';
                 break;
             case 'DECLINE_QUOTATION':
-                stage = 'scope_and_quotation';
                 eventType = BOOKING_EVENT_TYPES.QUOTATION_REJECTED;
                 title = 'Quotation declined';
                 break;
             case 'REQUEST_CHANGES':
-                stage = 'changes_requested';
                 eventType = BOOKING_EVENT_TYPES.CHANGES_REQUESTED;
                 title = 'Changes requested';
                 break;
             case 'CONFIRM_DELIVERY':
-                stage = 'completed';
                 eventType = BOOKING_EVENT_TYPES.BOOKING_COMPLETED;
                 title = 'Delivery confirmed';
                 break;

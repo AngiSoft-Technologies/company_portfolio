@@ -1,7 +1,7 @@
 # Netlify Deployment
 
-> **🛠 OPERATIONAL** — Current deployment reference; update admin proxy config per Phase 0.7.<br>
-> **Required change (canonical plan `ANGISOFT_DIGITAL_HQ_PLAN.md` Phase 0.7):** Admin `netlify.toml` must add `[[redirects]]` for `/v1/*` → `https://api.angisoft.co.ke/v1/:splat` before SPA fallback.
+> **🛠 OPERATIONAL** — Current deployment reference; Phase 0.7 `/v1/*` proxy is implemented in both apps.<br>
+> **Status:** `frontend/web/netlify.toml`, `frontend/admin/netlify.toml` (and `infrastructure/netlify/*`) plus `frontend/*/public/_redirects` now proxy `/v1/*` → `https://api.angisoft.co.ke/v1/:splat` before the SPA fallback. Deployment verification remains open: `docs/ANGISOFT_DIGITAL_HQ_PLAN.md` §17 / `docs/PRODUCTION_READINESS.md` (last probe 2/7 passed against a stale release; redeploy + rerun required). Canonical plan: `docs/ANGISOFT_DIGITAL_HQ_PLAN.md`.
 
 The web and admin applications are separate Vite sites built from the pnpm workspace. Dependency installation and build commands run from the repository root.
 

@@ -4,7 +4,7 @@ import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
-import { has as hasPermission } from '../../identity/services/effectivePermissions';
+import { has as hasPermission, isAssigned } from '../../identity/services/effectivePermissions';
 import { projectsController } from '../../cms/controllers/projectsController';
 
 const createSchema = z.object({
@@ -70,10 +70,12 @@ export default function projectsRouter(prisma: Db = db) {
     });
 
     router.get('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProjectEmployee
-            .where({ projectId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
+        const assigned = await isAssigned(
+            { employeeId: req.user!.sub, systemRole: req.user!.role },
+            'projects.update_assigned',
+            { type: 'project', id: req.params.id },
+        );
+        if (!assigned) return res.status(403).json({ error: 'Not assigned to this project' });
         const project = await prisma.orm.public.Project.where({ id: req.params.id }).first();
         if (!project) return res.status(404).json({ error: 'Not found' });
         const { _type, ...rest } = project as any;
@@ -81,12 +83,14 @@ export default function projectsRouter(prisma: Db = db) {
     });
 
     router.put('/staff/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProjectEmployee
-            .where({ projectId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this project' });
+        const assigned = await isAssigned(
+            { employeeId: req.user!.sub, systemRole: req.user!.role },
+            'projects.update_assigned',
+            { type: 'project', id: req.params.id },
+        );
+        if (!assigned) return res.status(403).json({ error: 'Not assigned to this project' });
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const updated = await projectsController.update(req.params.id, parsed.data, req.user);
         res.json(updated);
     });
@@ -110,7 +114,7 @@ export default function projectsRouter(prisma: Db = db) {
 
     router.post('/', requireAuth, requireAccess('projects.manage', ['ADMIN', 'MARKETING', 'DEVELOPER']), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const created = await projectsController.create({
                 ...parsed.data,
@@ -124,7 +128,7 @@ export default function projectsRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requirePermission('projects.update_assigned'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const ctx = permCtx(req);
             const canManageAll = ctx ? await hasPermission(ctx, 'projects.manage') : false;
@@ -169,13 +173,15 @@ export default function projectsRouter(prisma: Db = db) {
     // ── Project activity (progress) ──
     router.post('/:id/activity', requireAuth, requirePermission('projects.add_progress'), async (req: AuthRequest, res) => {
         const parsed = projectActivitySchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
-        const member = await prisma.orm.public.ProjectEmployee
-            .where({ projectId: req.params.id, employeeId: req.user!.sub })
-            .first();
+        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
         const existing = await prisma.orm.public.Project.where({ id: req.params.id }).first();
         if (!existing) return res.status(404).json({ error: 'Not found' });
-        if (!member && existing.authorId !== req.user?.sub) {
+        const assigned = await isAssigned(
+            { employeeId: req.user!.sub, systemRole: req.user!.role },
+            'projects.add_progress',
+            { type: 'project', id: req.params.id, ownerIds: [existing.authorId] },
+        );
+        if (!assigned) {
             return res.status(403).json({ error: 'Not assigned to this project' });
         }
         const activity = await prisma.orm.public.ProjectActivity.create({
@@ -194,7 +200,7 @@ export default function projectsRouter(prisma: Db = db) {
     // ── Team assignment (admin / lead) ──
     router.post('/:id/team', requireAuth, requirePermission('projects.assign_team'), async (req: AuthRequest, res) => {
         const parsed = teamAssignmentSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
         const { employeeId, role } = parsed.data;
         const assignment = await prisma.transaction(async (tx) => {
             const existing = await tx.orm.public.ProjectEmployee

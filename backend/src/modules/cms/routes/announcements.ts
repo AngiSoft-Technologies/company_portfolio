@@ -39,7 +39,7 @@ export default function announcementsRouter(prisma: Db = db) {
 
     const createHandler = async (req: AuthRequest, res: any) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const data = parsed.data;
         const announcement = await prisma.orm.public.Announcement.create({
             id: newId(),
@@ -58,7 +58,7 @@ export default function announcementsRouter(prisma: Db = db) {
 
     const updateHandler = async (req: AuthRequest, res: any) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) {
             if (v === undefined) continue;

@@ -3,8 +3,12 @@ import { z } from 'zod';
 import db, { type Db } from '../../../db';
 import { optionalAuth, requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
-import { has as hasPermission } from '../../identity/services/effectivePermissions';
-import { servicesController } from '../controllers/servicesController';
+import {
+  checkAssigned,
+  has as hasPermission,
+  isDenied,
+} from '../../identity/services/effectivePermissions';
+import { servicesService } from '../services/servicesService';
 
 const createSchema = z.object({
   title: z.string().min(1),
@@ -27,12 +31,27 @@ export default function servicesRouter(prisma: Db = db) {
     const permCtx = (req: AuthRequest) =>
         req.user?.sub ? { employeeId: req.user.sub, systemRole: req.user.role } : null;
 
+    // Global `services.update` still manages every service. Scoped editors hold
+    // `services.update_assigned` and must also have a ServiceTeamMember row (or
+    // be the author); an explicit DENY on either key is final.
+    const canEditService = async (req: AuthRequest, id: string, existing?: any): Promise<boolean> => {
+        const ctx = permCtx(req);
+        if (!ctx) return false;
+        if (await isDenied(ctx, 'services.update')) return false;
+        if (await hasPermission(ctx, 'services.update')) return true;
+        return (await checkAssigned(ctx, 'services.update_assigned', {
+            type: 'service',
+            id,
+            ownerIds: existing ? [existing.authorId] : [],
+        })).allowed;
+    };
+
     router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         try {
             const ctx = permCtx(req);
             const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             const isDeveloper = ctx ? await hasPermission(ctx, 'services.create') : false;
-            const services = await servicesController.list({
+            const services = await servicesService.list({
                 where: includeAll ? {} : (isDeveloper ? { authorId: req.user?.sub } : { published: true })
             });
             res.json(services);
@@ -46,7 +65,7 @@ export default function servicesRouter(prisma: Db = db) {
             const ctx = permCtx(req);
             const includeAll = ctx ? await hasPermission(ctx, 'services.update') : false;
             const isDeveloper = ctx ? await hasPermission(ctx, 'services.create') : false;
-            const service = await servicesController.get(req.params.id, {
+            const service = await servicesService.get(req.params.id, {
                 where: includeAll
                     ? {}
                     : (isDeveloper ? { authorId: req.user?.sub } : { published: true })
@@ -60,7 +79,7 @@ export default function servicesRouter(prisma: Db = db) {
 
     router.post('/', requireAuth, requirePermission('services.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
             const data = parsed.data;
             let categoryLabel = data.category || 'General';
@@ -69,7 +88,7 @@ export default function servicesRouter(prisma: Db = db) {
                 if (category) categoryLabel = category.name;
             }
             const authorId = req.user?.sub || undefined;
-            const created = await servicesController.create({
+            const created = await servicesService.create({
                 ...data,
                 category: categoryLabel,
                 authorId
@@ -80,17 +99,14 @@ export default function servicesRouter(prisma: Db = db) {
         }
     });
 
-    router.put('/:id', requireAuth, requirePermission('services.update'), async (req: AuthRequest, res) => {
+    router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         try {
-            const ctx = permCtx(req);
-            const canManageAll = ctx ? await hasPermission(ctx, 'services.update') : false;
-            if (!canManageAll) {
-                const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
-                if (!existing || existing.authorId !== req.user?.sub) {
-                    return res.status(403).json({ error: 'Not authorized' });
-                }
+            const existing = await prisma.orm.public.Service.where({ id: req.params.id }).first();
+            if (!existing) return res.status(404).json({ error: 'Not found' });
+            if (!(await canEditService(req, req.params.id, existing))) {
+                return res.status(403).json({ error: 'Not authorized' });
             }
             const data = parsed.data;
             let categoryLabel = data.category;
@@ -98,7 +114,7 @@ export default function servicesRouter(prisma: Db = db) {
                 const category = await prisma.orm.public.ServiceCategory.where({ id: data.categoryId }).first();
                 if (category) categoryLabel = category.name;
             }
-            const updated = await servicesController.update(req.params.id, {
+            const updated = await servicesService.update(req.params.id, {
                 ...data,
                 ...(categoryLabel ? { category: categoryLabel } : {})
             }, req.user);
@@ -118,7 +134,7 @@ export default function servicesRouter(prisma: Db = db) {
                     return res.status(403).json({ error: 'Not authorized' });
                 }
             }
-            await servicesController.delete(req.params.id, req.user);
+            await servicesService.delete(req.params.id, req.user);
             res.json({ ok: true });
         } catch (err: any) {
             res.status(500).json({ error: 'Server error' });

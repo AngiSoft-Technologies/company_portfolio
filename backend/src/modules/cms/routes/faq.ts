@@ -44,7 +44,7 @@ export default function faqRouter(prisma: Db) {
     // ─── Admin: Create FAQ ──────────────────────────────────────────
     router.post('/', requireAuth, requireAccess('faqs.create', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'BLOG_MANAGER']), async (req: any, res) => {
         const parsed = faqSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
         try {
             const faq = await prisma.orm.public.Faq.create({
@@ -65,7 +65,7 @@ export default function faqRouter(prisma: Db) {
     // ─── Admin: Update FAQ ──────────────────────────────────────────
     router.put('/:id', requireAuth, requireAccess('faqs.update', ['ADMIN', 'MARKETING', 'CONTENT_CREATOR', 'BLOG_MANAGER']), async (req: any, res) => {
         const parsed = faqSchema.partial().safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
 
         try {
             const payload: any = {};

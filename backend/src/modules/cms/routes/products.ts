@@ -4,6 +4,7 @@ import { requireAuth, AuthRequest } from '../../../shared/middleware/auth';
 import { requireAccess, requirePermission } from '../../../shared/middleware/roles';
 import db, { type Db } from '../../../db';
 import { ts, newId } from '../../../prisma/db';
+import { isAssigned } from '../../identity/services/effectivePermissions';
 
 const createSchema = z.object({
     name: z.string().min(1),
@@ -70,22 +71,26 @@ export default function productsRouter(prisma: Db = db) {
     });
 
     router.get('/staff/:id', requireAuth, requirePermission('products.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProductTeamMember
-            .where({ productId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this product' });
+        const assigned = await isAssigned(
+            { employeeId: req.user!.sub, systemRole: req.user!.role },
+            'products.update_assigned',
+            { type: 'product', id: req.params.id },
+        );
+        if (!assigned) return res.status(403).json({ error: 'Not assigned to this product' });
         const product = await prisma.orm.public.Product.where({ id: req.params.id }).first();
         if (!product) return res.status(404).json({ error: 'Not found' });
         res.json(product);
     });
 
     router.put('/staff/:id', requireAuth, requirePermission('products.update_assigned'), async (req: AuthRequest, res) => {
-        const member = await prisma.orm.public.ProductTeamMember
-            .where({ productId: req.params.id, employeeId: req.user!.sub })
-            .first();
-        if (!member) return res.status(403).json({ error: 'Not assigned to this product' });
+        const assigned = await isAssigned(
+            { employeeId: req.user!.sub, systemRole: req.user!.role },
+            'products.update_assigned',
+            { type: 'product', id: req.params.id },
+        );
+        if (!assigned) return res.status(403).json({ error: 'Not assigned to this product' });
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const product = await prisma.orm.public.Product.where({ id: req.params.id }).update(payload);
@@ -105,7 +110,7 @@ export default function productsRouter(prisma: Db = db) {
 
     router.post('/', requireAuth, requirePermission('products.create'), async (req: AuthRequest, res) => {
         const parsed = createSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const product = await prisma.orm.public.Product.create({
             id: newId(),
             updatedAt: ts(),
@@ -132,7 +137,7 @@ export default function productsRouter(prisma: Db = db) {
 
     router.put('/:id', requireAuth, requirePermission('products.update'), async (req: AuthRequest, res) => {
         const parsed = updateSchema.safeParse(req.body);
-        if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+        if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
         const payload: any = {};
         for (const [k, v] of Object.entries(parsed.data)) if (v !== undefined) payload[k] = v;
         const product = await prisma.orm.public.Product.where({ id: req.params.id }).update(payload);

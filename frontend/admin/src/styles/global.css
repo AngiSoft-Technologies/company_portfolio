@@ -1,24 +1,49 @@
 @import "tailwindcss";
 
+/* Theme tokens are applied to :root by @angisoft/ui applyCssVariables().
+   color-scheme belongs on :root/html so native controls follow the active theme. */
 :root {
-  color-scheme: light dark;
-}
-
-html {
   color-scheme: light;
 }
+
 html.dark {
   color-scheme: dark;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-primary, #f8fafc);
-  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 * {
-  border-color: var(--border, #e2e8f0);
+  border-color: var(--border);
+}
+
+/* Dashboard shared states — colors come only from theme tokens so both
+   light and dark themes stay legible without duplicated palettes. */
+.dashboard-inline-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--color-error);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  padding: 1rem;
+  font-size: 0.875rem;
+}
+
+.dashboard-inline-alert--warning {
+  border-color: var(--color-warning);
+}
+
+.dashboard-empty-widget {
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  text-align: center;
 }

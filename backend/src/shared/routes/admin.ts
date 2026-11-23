@@ -3,7 +3,9 @@ import { z } from 'zod';
 import type { Db } from '../../db';
 import { ts, newId } from '../../prisma/db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAccess } from '../middleware/roles';
 import { logAudit } from '../services/audit';
+import { listSlowRequests } from '../services/monitoring/performanceStore';
 
 const ASSIGNABLE_ROLES = [
     'ADMIN', 'MANAGER', 'MARKETING', 'DEVELOPER', 'HR', 'STAFF',
@@ -69,6 +71,20 @@ export default function adminRouter(prisma: Db) {
             res.status(500).json({ error: 'Failed to load audit logs' });
         }
     });
+
+    // ========== SLOW REQUEST STORE (Phase 5.4 observability) ==========
+    // Read-only view of the bounded in-memory ring buffer fed by the
+    // `slow_request` middleware in app.ts. Reuses the canonical
+    // `administration.audit` key (no new permission registry entry) with the
+    // existing ADMIN/SUPER_ADMIN fallback. No DB reads, no mutations: this is
+    // a live-process diagnostic, not a durable APM/slow-query store.
+    router.get('/performance/slow-requests',
+        requireAuth,
+        requireAccess('administration.audit', ['ADMIN', 'SUPER_ADMIN']),
+        (req, res) => {
+            const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 250);
+            res.json(listSlowRequests(limit));
+        });
 
     // ========== CROSS-DEPARTMENT REPORTING (Phase 4.4) ==========
     // Aggregates pipeline, delivery, finance and satisfaction into one payload.
@@ -263,7 +279,7 @@ export default function adminRouter(prisma: Db) {
     router.put('/employees/:id', requireAdmin, async (req: AuthRequest, res) => {
         const parsed = employeeUpdateSchema.safeParse(req.body);
         if (!parsed.success) {
-            return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+            return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
         }
         try {
             const target = await prisma.orm.public.Employee.where({ id: req.params.id }).first();

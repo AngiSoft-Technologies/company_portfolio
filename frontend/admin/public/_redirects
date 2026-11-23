@@ -1,0 +1,6 @@
+# Keep these rules in sync with frontend/admin/netlify.toml. Same-origin /v1
+# calls carry the SameSite=Strict refresh cookie, so this proxy must run before
+# the SPA fallback on every deployment.
+/uploads/*  https://api.angisoft.co.ke/uploads/:splat  200
+/v1/*       https://api.angisoft.co.ke/v1/:splat       200
+/*          /index.html                              200

@@ -3,7 +3,7 @@
  *
  * English is the fallback/source locale. Every other dictionary is Partial —
  * any missing key resolves to English, so shipping a translation never breaks
- * the UI. Arabic sets `dir: 'rtl'`; the provider mirrors this onto
+ * the UI. Arabic and Persian set `dir: 'rtl'`; the provider mirrors this onto
  * <html lang/dir> so layout, icons and Intl formatting follow the selection.
  */
 
@@ -12,8 +12,23 @@ export const LOCALES = [
   { code: 'sw', label: 'Swahili', native: 'Kiswahili', dir: 'ltr', flag: '🇰🇪' },
   { code: 'fr', label: 'French', native: 'Français', dir: 'ltr', flag: '🇫🇷' },
   { code: 'es', label: 'Spanish', native: 'Español', dir: 'ltr', flag: '🇪🇸' },
-  { code: 'zh', label: 'Chinese', native: '中文', dir: 'ltr', flag: '🇨🇳' },
+  { code: 'de', label: 'German', native: 'Deutsch', dir: 'ltr', flag: '🇩🇪' },
+  { code: 'pt', label: 'Portuguese', native: 'Português', dir: 'ltr', flag: '🇧🇷' },
+  { code: 'it', label: 'Italian', native: 'Italiano', dir: 'ltr', flag: '🇮🇹' },
+  { code: 'nl', label: 'Dutch', native: 'Nederlands', dir: 'ltr', flag: '🇳🇱' },
+  { code: 'ru', label: 'Russian', native: 'Русский', dir: 'ltr', flag: '🇷🇺' },
+  { code: 'uk', label: 'Ukrainian', native: 'Українська', dir: 'ltr', flag: '🇺🇦' },
+  { code: 'pl', label: 'Polish', native: 'Polski', dir: 'ltr', flag: '🇵🇱' },
+  { code: 'tr', label: 'Turkish', native: 'Türkçe', dir: 'ltr', flag: '🇹🇷' },
   { code: 'ar', label: 'Arabic', native: 'العربية', dir: 'rtl', flag: '🇸🇦' },
+  { code: 'fa', label: 'Persian', native: 'فارسی', dir: 'rtl', flag: '🇮🇷' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी', dir: 'ltr', flag: '🇮🇳' },
+  { code: 'ja', label: 'Japanese', native: '日本語', dir: 'ltr', flag: '🇯🇵' },
+  { code: 'ko', label: 'Korean', native: '한국어', dir: 'ltr', flag: '🇰🇷' },
+  { code: 'zh', label: 'Chinese', native: '中文', dir: 'ltr', flag: '🇨🇳' },
+  { code: 'id', label: 'Indonesian', native: 'Bahasa Indonesia', dir: 'ltr', flag: '🇮🇩' },
+  { code: 'vi', label: 'Vietnamese', native: 'Tiếng Việt', dir: 'ltr', flag: '🇻🇳' },
+  { code: 'th', label: 'Thai', native: 'ไทย', dir: 'ltr', flag: '🇹🇭' },
 ] as const;
 
 export type LocaleCode = (typeof LOCALES)[number]['code'];

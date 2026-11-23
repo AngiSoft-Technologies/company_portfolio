@@ -1,7 +1,8 @@
 # 🎯 ANGISOFT ADMIN CMS - SESSION COMPLETION SUMMARY
 
-> **✅ COMPLETE** — Session summary frozen; do not update status fields.<br>
-> Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery) supersedes this phase taxonomy.
+> **✅ COMPLETE (frozen historical record — NOT current production status)** — Session summary documents the Feb 2026 CMS session only; do not update status fields.<br>
+> All status fields, percentages, paths and URLs below are period artifacts; do not treat them as current.<br>
+> Current gates: `docs/PRODUCTION_READINESS.md`. Canonical plan: `ANGISOFT_DIGITAL_HQ_PLAN.md` §4 (Phased Delivery) supersedes this phase taxonomy.
 
 ## What You Now Have
 
@@ -14,6 +15,8 @@
 ║                                                                            ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 ```
+
+> **Current status pointer:** the "85% COMPLETE / ready" figure above is a February 2026 session artifact only; live gates are in `docs/PRODUCTION_READINESS.md`.
 
 ---
 
@@ -159,7 +162,7 @@ cd backend && npm run dev
 cd frontend && npm run dev
 # Wait for: "Local: http://localhost:5174"
 
-# Now open: http://localhost:5174/admin/login
+# Now open: http://localhost:5174/login (current path; /admin/login was historical)
 ```
 
 ### First Test (10 minutes)
@@ -475,7 +478,7 @@ Estimated Time to Production:
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
-║              🎉 SESSION COMPLETE - READY FOR PRODUCTION 🎉                 ║
+║        🎉 HISTORICAL SESSION COMPLETE - READY FOR TESTING ONLY 🎉         ║
 ║                                                                            ║
 ║  Your AngiSoft Admin CMS is complete and waiting to be tested!            ║
 ║  Everything is in place. Time to make sure it works! ✨                   ║

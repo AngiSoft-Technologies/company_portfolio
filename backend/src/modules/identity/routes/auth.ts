@@ -59,7 +59,7 @@ const resetSchema = z.object({ token: z.string(), password: z.string().min(8) })
 
 router.post('/login', accountLimiter, async (req, res) => {
     const parsed = login2FASchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const { password, totp, remember } = parsed.data;
     const email = normalizeEmail(parsed.data.email);
     const emp = await findEmployeeByEmail(prisma, email);
@@ -181,7 +181,7 @@ router.post('/revoke/:employeeId', requireAuth, requireAccess('staff.suspend', [
 
 router.post('/forgot', passwordResetRequestLimiter, async (req, res) => {
     const parsed = forgotSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const email = normalizeEmail(parsed.data.email);
     const emp = await findEmployeeByEmail(prisma, email);
     if (!emp) return res.json({ ok: true }); // don't reveal account existence
@@ -210,7 +210,7 @@ router.post('/forgot', passwordResetRequestLimiter, async (req, res) => {
 
 router.post('/reset', passwordResetConfirmLimiter, async (req, res) => {
     const parsed = resetSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const { password } = parsed.data;
     const tokenHash = hashToken(parsed.data.token);
     const emp = await prisma.orm.public.Employee.where({ resetToken: tokenHash }).first();

@@ -1,109 +1,20 @@
 import { Link } from 'react-router-dom';
 import { Card, EmptyState, PageHeader, Spinner } from '@/components';
 import { Badge } from '@/lib/Badge';
-import { useEffectiveAccess, type AssignmentCounts } from '@/lib/permissions';
+import { useEffectiveAccess } from '@/lib/permissions';
+import { widgetCount, widgetMeta } from './widgetCatalogue';
 
 /**
  * Unified workspace shell (plan Phase 1.6).
  *
  * Everything here is derived from the versioned effective-access payload
- * (plan §8): the widgets come from the server, and each card shows the real
- * assignment count. A granted permission with zero assignments renders an
- * empty state with a "create first …" call to action — it is never silently
- * hidden, because hiding it makes a new starter think the module does not
- * exist.
+ * (plan §8): widget IDs come from the server, counts are the real assignment
+ * aggregates, and the copy/links live in the shared `widgetCatalogue` used by
+ * the staff dashboard too. A granted permission with zero assignments renders
+ * an explicit empty state with a "create first …" call to action — it is never
+ * silently hidden, because hiding it makes a new starter think the module does
+ * not exist. No role comparisons are made here.
  */
-
-type CountKey = keyof AssignmentCounts;
-
-interface WidgetMeta {
-  label: string;
-  help: string;
-  to: string;
-  cta: string;
-  countKey?: CountKey;
-  noun?: string;
-}
-
-const WIDGET_META: Record<string, WidgetMeta> = {
-  'my-products': {
-    label: 'My Products',
-    help: 'Products you are on the team of.',
-    to: '/products',
-    cta: 'Ask an admin to add you to a product',
-    countKey: 'products',
-    noun: 'product',
-  },
-  'my-projects': {
-    label: 'My Projects',
-    help: 'Delivery work assigned to you.',
-    to: '/projects',
-    cta: 'Create first project',
-    countKey: 'projects',
-    noun: 'project',
-  },
-  'assigned-bookings': {
-    label: 'Assigned Bookings',
-    help: 'Consultations and jobs you own.',
-    to: '/bookings',
-    cta: 'View booking queue',
-    countKey: 'bookings',
-    noun: 'booking',
-  },
-  'customer-messages': {
-    label: 'Customer Messages',
-    help: 'Conversations on your bookings.',
-    to: '/bookings',
-    cta: 'Open booking messages',
-  },
-  'assigned-enquiries': {
-    label: 'Assigned Enquiries',
-    help: 'Inbound enquiries routed to you.',
-    to: '/contacts',
-    cta: 'View enquiry queue',
-    countKey: 'enquiries',
-    noun: 'enquiry',
-  },
-  'my-publications': {
-    label: 'My Publications',
-    help: 'Blog posts and staff publications you authored.',
-    to: '/blogs',
-    cta: 'Write first post',
-    countKey: 'publications',
-    noun: 'publication',
-  },
-  'lead-pipeline': {
-    label: 'Lead Pipeline',
-    help: 'Marketing and sales leads.',
-    to: '/contacts',
-    cta: 'Open lead pipeline',
-  },
-  'support-inbox': {
-    label: 'Support Inbox',
-    help: 'Support tickets raised by staff and clients.',
-    to: '/contacts',
-    cta: 'Open support inbox',
-  },
-  'careers-applications': {
-    label: 'Job Applications',
-    help: 'Candidates who applied to your postings.',
-    to: '/careers',
-    cta: 'View applications',
-  },
-  'revenue-overview': {
-    label: 'Revenue Overview',
-    help: 'Payments, wallets and payouts.',
-    to: '/payments',
-    cta: 'Open payments',
-  },
-  analytics: {
-    label: 'Analytics',
-    help: 'Traffic and engagement dashboards.',
-    to: '/',
-    cta: 'View analytics',
-  },
-};
-
 export function Workspace() {
   const { access, loading, error, isSuperAdmin } = useEffectiveAccess();
 
@@ -126,7 +37,9 @@ export function Workspace() {
       />
 
       {error ? (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="dashboard-inline-alert mb-4" role="status">
+          {error}
+        </div>
       ) : null}
 
       {loading ? (
@@ -148,7 +61,7 @@ export function Workspace() {
 
           {widgets.length === 0 ? (
             <Card>
-              <EmptyState title="No modules are enabled for your role yet" />
+              <EmptyState title="No modules are enabled for your access profile" />
               <p className="text-center text-xs text-[var(--text-muted)]">
                 Ask an administrator to grant permissions on the Roles &amp; Permissions screen.
               </p>
@@ -156,14 +69,9 @@ export function Workspace() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {widgets.map((id) => {
-                const meta = WIDGET_META[id] ?? {
-                  label: id,
-                  help: '',
-                  to: '/',
-                  cta: 'Open',
-                };
-                const count = meta.countKey && counts ? counts[meta.countKey] : undefined;
-                const isEmpty = typeof count === 'number' && count === 0;
+                const meta = widgetMeta(id);
+                const count = widgetCount(id, counts);
+                const isEmpty = count === 0;
 
                 return (
                   <Card key={id} className="flex flex-col justify-between">
@@ -179,15 +87,15 @@ export function Workspace() {
 
                     <div className="mt-4">
                       {isEmpty ? (
-                        <div className="rounded-lg border border-dashed border-[var(--border)] p-3 text-center">
+                        <div className="dashboard-empty-widget">
                           <p className="text-xs text-[var(--text-muted)]">
-                            No {meta.noun ?? 'record'} yet
+                            No {meta.noun ?? 'record'} assigned yet
                           </p>
                           <Link
                             to={meta.to}
                             className="mt-1 inline-block text-xs font-medium text-[var(--color-primary)] hover:underline"
                           >
-                            {meta.cta} →
+                            {meta.emptyCta ?? `Create first ${meta.noun ?? 'record'}`} →
                           </Link>
                         </div>
                       ) : (

@@ -69,7 +69,7 @@ export default function expensesRouter(prisma: Db = db) {
     router.post('/', requirePermission('expenses.create'), async (req: AuthRequest, res) => {
         try {
             const parsed = upsertSchema.safeParse(req.body);
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const d = parsed.data;
             const amount = Number(d.amount);
             if (!Number.isFinite(amount) || amount <= 0) {
@@ -108,7 +108,7 @@ export default function expensesRouter(prisma: Db = db) {
             }
 
             const parsed = upsertSchema.partial().safeParse(req.body);
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const payload: any = {};
             for (const [k, v] of Object.entries(parsed.data)) {
                 if (v === undefined) continue;
@@ -141,7 +141,7 @@ export default function expensesRouter(prisma: Db = db) {
     router.post('/:id/review', async (req: AuthRequest, res) => {
         try {
             const parsed = reviewSchema.safeParse(req.body);
-            if (!parsed.success) return res.status(400).json({ error: parsed.error.errors });
+            if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
             const existing = await prisma.orm.public.Expense.where({ id: req.params.id }).first();
             if (!existing) return res.status(404).json({ error: 'Expense not found' });
             if (String((existing as any).status) !== 'submitted') {
