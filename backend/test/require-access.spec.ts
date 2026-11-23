@@ -198,6 +198,26 @@ describe('requireAccess precedence', () => {
         expect(allowed.next).toBe(true);
     });
 
+    it('a SUPER_ADMIN with an explicit DENY on roles.manage is blocked from the roles screen', async () => {
+        // Canonical requirement (ANGISOFT_DIGITAL_HQ_PLAN.md §roles): a legacy
+        // DENY must beat both the SUPER_ADMIN wildcard and the fallback role.
+        store.Employee = [{ id: 'emp_super_roles', role: 'SUPER_ADMIN', positionId: null }];
+        store.EmployeePermission = [
+            { employeeId: 'emp_super_roles', permissionKey: 'roles.manage', effect: 'DENY' },
+        ];
+
+        const { clearEffectiveCache } = await import('../src/modules/identity/services/effectivePermissions');
+        clearEffectiveCache('emp_super_roles');
+
+        const { requireAccess } = await import('../src/shared/middleware/roles');
+        const call = await run(requireAccess('administration.roles', ['ADMIN']), {
+            sub: 'emp_super_roles',
+            role: 'SUPER_ADMIN',
+        });
+        expect(call.status).toBe(403);
+        expect(call.next).toBe(false);
+    });
+
     it('a legacy key denied today still blocks its canonical key', async () => {
         // `roles.manage` is aliased to `administration.roles`; a DENY stored under
         // the old vocabulary must block the new guard key.

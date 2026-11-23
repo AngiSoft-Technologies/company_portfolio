@@ -53,7 +53,7 @@
 ## 8. Human Resources — **PARTIAL / FUTURE**
 
 - **Evidence:** `HR` app role exists in the seed; HR functional surface is live (`/leave-requests`, `/attendance`, `/payroll`, `SalaryStructure`, `PayrollRun`, `/careers`). **No seeded `HR` department** and no HR business-partner position.
-- **Recommendation:** keep HR work under existing roles; create a department only when an HR owner is hired. **Recruiting/contracts/orders are modeled in code** (`backend/src/modules/hr/**`, contract models `JobRequisition`/`Candidate`/`Offer`/`Contract`/`SalesOrder`); the additive migration `20261123040000_hr_recruiting_contracts_orders` is **not applied live** and needs approval. Performance/offboarding remain unmodeled.
+- **Recommendation:** keep HR work under existing roles; create a department only when an HR owner is hired. **Recruiting/contracts/orders are modeled in code** (`backend/src/modules/hr/**`, contract models `JobRequisition`/`Candidate`/`Offer`/`Contract`/`SalesOrder`); the additive migration `20261123040000_hr_recruiting_contracts_orders` is **not applied live** and needs approval. Performance reviews, goals, training records, directory privacy and offboarding are also modeled and mounted at `/v1/hr/performance/*` from the additive `20261123060000_phase2_delivery_slices` migration (also local-only).
 
 ## 9. Finance — **FUTURE as a department; command surface is live**
 

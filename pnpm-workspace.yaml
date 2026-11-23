@@ -32,6 +32,10 @@ overrides:
   # Same scoped approach for the @vercel/nft glob/minimatch chain.
   "glob@13": 14.0.2
   "minimatch@10": 11.0.1
+  # Dev-only @flydotio/dockerfile tree: only Diff.createPatch() and
+  # ShellQuote.parse() are used, both unchanged in the patched releases.
+  "@flydotio/dockerfile>diff": 8.0.3
+  "@flydotio/dockerfile>shell-quote": 1.11.0
 
 allowBuilds:
   bcrypt: true

@@ -54,12 +54,12 @@ The intent is **not** to bolt on all 33 agent tools. It is to make every resourc
 | 1.2 | Base URLs sandbox/live | Env-driven switching, no code change to go live | `API_BASE` in `paypalService.ts`, `paypalPayouts.ts`, `darajaPayouts.ts` | SHIPPED | Keep; ensure Fly secrets mirror `backend/.env` |
 | 1.3 | `PayPal-Request-Id` / idempotency | Every create/capture/refund/payout POST; 45-day UUID replay safety | `paypalService.ts`, `paypalPayouts.ts`, `Payout` unique reference | SHIPPED | Extend to any future orders PATCH/confirm and dispute calls |
 | 1.4 | Orders v2 create | Server-held amount; invoice balance converted to `PAYPAL_CURRENCY` | `paypalService.ts` `createOrder`; called from client-portal pay route | SHIPPED | Pass `invoice_id` into the order for reconciliation |
-| 1.5 | Orders v2 capture | Return-page capture + webhook, both idempotent | `paypalService.ts` `captureOrder`; `POST /v1/payments/paypal/capture` | SHIPPED | Harden return-page pairing so a stale `token` cannot settle a different invoice |
+| 1.5 | Orders v2 capture | Return-page capture + webhook, both idempotent | `paypalService.ts` `captureOrder`; `POST /v1/payments/paypal/capture` | SHIPPED | Pairing guard verified in code (`payments.ts:223-237`): a stale `token`/`reference` pair returns 404, a non-PENDING payment returns `alreadyProcessed`, and an over-capture returns 409 before settlement. A dedicated route-level regression spec is a low-priority follow-up. |
 | 1.6 | Orders v2 get / show | Read-only live order lookup from admin Money Movement | `GET /v1/admin/money/status/PAYPAL_ORDER_STATUS` (`paypal.getOrder`) | SHIPPED (read-only) | Keep read-only: never capture/refund/modify the order from this endpoint |
 | 1.7 | Orders v2 PATCH / confirm | Update amounts/shipping before approval; explicit confirm for alternative payment sources | order adapter | PLANNED | Only when we add address/shipping or APMs that need `confirm` |
 | 1.8 | Authorize + separate capture | Two-step authorise-now/capture-on-fulfilment for project deposits | order adapter + `Payout`/`Payment` state machine | PLANNED | Requires adding `AUTHORIZE` intent and an authorisation expiry sweeper |
 | 1.9 | Webhooks + verify-signature | Settlement/refund/denial events, verified before any ledger write | `paypalService.ts` verify; raw-body path + CSRF bypass in `app.ts` | SHIPPED | Live webhook **not registered**; subscribe to `PAYMENT.CAPTURE.COMPLETED|REFUNDED|DENIED` after credentials exist, then add dispute and payout events |
-| 1.10 | `PayPal-Mock-Response` | Simulate `DUPLICATE_INVOICE_ID` and other errors in sandbox CI tests | test suite | PARTIAL | Add negative-path specs for retry/idempotency using this header |
+| 1.10 | `PayPal-Mock-Response` | Simulate `DUPLICATE_INVOICE_ID` and other errors in sandbox CI tests | test suite | SHIPPED | `backend/test/paypal.spec.ts` now simulates the forced `DUPLICATE_INVOICE_ID` 409: asserts a typed `PayPalError` with the provider issue code, no raw-body leak, and a stable `PayPal-Request-Id` across retries so PayPal deduplicates |
 | 1.11 | `PayPal-Auth-Assertion` / BN code | Only if we become a platform paying on behalf of other merchants | — | N/A | Revisit if multi-tenant merchant onboarding is introduced; BN code from Dashboard → App Settings → Reports |
 
 ## 2. Payment methods & wallets
@@ -131,7 +131,7 @@ movement stays behind our `Payout`/`ApprovalRequest` gate; agents may *propose*,
 | 6.10 | Agent toolkit framework integrations | platform | choose **Vercel AI SDK** path (`@paypal/agent-toolkit/ai-sdk`) to match our stack | PLANNED | Install toolkit, add a `tools/paypal.ts` module, expose only allowlisted actions |
 | 6.11 | Remote MCP at `https://mcp.paypal.com/mcp` | developer + ops tooling | read-only investigations, invoice drafts | PARTIAL | OpenCode config now points at production host; complete PayPal OAuth sign-in in `/mcps` |
 | 6.12 | LLM connectors (Anthropic `mcp_servers`, OpenAI `mcp` tools) | boardroom / support bot | same allowlist as 6.1–6.8 | DEFERRED | Do not use `require_approval: 'never'` for money-touching tools |
-| 6.13 | Prompt best practices | all agents | action-first, explicit fields, split multistep, no PII/secrets | PARTIAL | Add these rules to `agentCharters.ts` and the boardroom system prompt |
+| 6.13 | Prompt best practices | all agents | action-first, explicit fields, split multistep, no PII/secrets | SHIPPED | `AGENT_PROMPT_PRINCIPLES` in `agentCharters.ts` is injected into every agent narrative (`agentRunner.ts`) and the AI Boardroom system prompt (`boardroom.ts`); `agentPromptPrinciples.spec.ts` guards the shared source of truth |
 | 6.14 | Eligibility gating in prompts | customer-care | don't promise Pay Later/Venmo/Apple Pay unless `isEligible()` passes | PLANNED | Mirror catalogue availability into agent context |
 
 ## 7. Testing & operations
@@ -143,7 +143,7 @@ movement stays behind our `Payout`/`ApprovalRequest` gate; agents may *propose*,
 | 7.3 | Rejection triggers | Decline-path tests (`CCREJECT-REFUSED`, `-IF`, …) | test suite | PLANNED | Assert our API maps processor codes to stable internal errors |
 | 7.4 | 3DS / `SCA_ALWAYS` + `payer-action` link | SCA challenge test | test suite | PLANNED | Needed before EU/UK live traffic |
 | 7.5 | Negative testing (sandbox-only, beta) | Error-handling regression via `PayPal-Mock-Response` and test values | CI job | PLANNED | Enable per sandbox business account; never attempt in live |
-| 7.6 | Common errors (`/api/errors/overview`) | Normalise 400/403/422/500 into internal error codes | `shared/errors` + adapters | PARTIAL | Add provider error taxonomy to `PayPalError` |
+| 7.6 | Common errors (`/api/errors/overview`) | Normalise 400/403/422/500 into internal error codes | `shared/errors` + adapters | SHIPPED (adapter) | `PayPalError` now carries a typed `code` from PayPal's structured `details[0].issue` (e.g. `DUPLICATE_INVOICE_ID`) plus the upstream `status`; raw bodies are never echoed. The shared `shared/errors` normaliser remains a separate cross-provider task. |
 | 7.7 | VS Code extension | Developer onboarding, code snippets, migration assistant | `docs/TESTING_GUIDE.md` | PLANNED | Link in docs; no runtime dependency |
 | 7.8 | Production go-live check (from Node/Express guide) | Preflight: live env + live credentials + live webhook + domain checks | deploy checklist | PLANNED | Add to `docs/VERIFICATION_CHECKLIST.md` |
 

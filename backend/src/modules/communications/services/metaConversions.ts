@@ -15,7 +15,7 @@
 
 import { createHash } from 'crypto';
 import type { Db } from '../../../db';
-import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getConfig, getMetaGraphVersion } from '../../../shared/services/runtimeConfig';
 import { logAudit } from '../../../shared/services/audit';
 import { recordProviderEvent } from '../../../shared/services/providerEvents';
 import { ProviderConfigurationError } from './providerSecrets';
@@ -117,7 +117,7 @@ export async function sendMetaConversion(prisma: Db, input: MetaConversionInput)
   });
   if (recorded.deduped) return { sent: false, deduped: true, reason: 'DUPLICATE' };
 
-  const version = String(getConfig('META_GRAPH_VERSION') || 'v23.0').replace(/^\/+/, '');
+  const version = getMetaGraphVersion();
   const data: Record<string, unknown> = {
     event_name: input.eventName,
     event_time: Math.floor(Date.now() / 1000),

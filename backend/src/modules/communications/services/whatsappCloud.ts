@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getConfig, getMetaGraphVersion } from '../../../shared/services/runtimeConfig';
 
 export type WhatsAppSendTextInput = {
   accessToken: string;
@@ -17,7 +17,7 @@ export function verifyMetaSignature(rawBody: Buffer, signatureHeader: string | u
 }
 
 async function waPost(phoneNumberId: string, accessToken: string, payload: unknown) {
-  const version = getConfig('WHATSAPP_API_VERSION', 'v23.0');
+  const version = getMetaGraphVersion();
   const res = await fetch(`https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },

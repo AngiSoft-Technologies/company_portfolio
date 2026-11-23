@@ -8,6 +8,7 @@ import { getRedisUrl, redisConnectionOptions } from '../../../shared/services/re
 import { aiComplete, loadAIConfig } from '../../ai/services/aiProvider';
 import { AGENT_REGISTRY, ensureAgentsSeeded } from '../../agents/services/agentRegistry';
 import { getAgentRuntimeStatus } from '../../agents/services/agentStatus';
+import { AGENT_PROMPT_PRINCIPLES } from '../../agents/services/agentCharters';
 
 /**
  * AI Boardroom orchestration.
@@ -329,6 +330,7 @@ function systemPrompt(agentKey: string): string {
     '- Contracts, NDAs, legal letters, pricing, refunds, publishing, and personnel decisions require human approval. Say so when relevant.',
     '- If a fact is not in the supplied context, say it is not available instead of inventing it.',
     '- No preamble, no markdown headings, no self-description beyond your role.',
+    ...AGENT_PROMPT_PRINCIPLES.map((rule) => `- ${rule}`),
   ].join('\n');
 }
 

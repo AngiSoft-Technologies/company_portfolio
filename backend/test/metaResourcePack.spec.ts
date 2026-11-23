@@ -16,6 +16,13 @@ const { config, getConfigMock } = vi.hoisted(() => {
 
 vi.mock('../src/shared/services/runtimeConfig', () => ({
   getConfig: getConfigMock,
+  // Mirror the converged, pinned version resolver against the mock config map.
+  getMetaGraphVersion: () => {
+    const raw = String(
+      getConfigMock('META_GRAPH_VERSION') || getConfigMock('WHATSAPP_API_VERSION') || 'v23.0',
+    ).trim().replace(/^\/+/, '');
+    return /^v\d+(?:\.\d+)+$/.test(raw) ? raw : 'v23.0';
+  },
   CONFIG_REGISTRY: [],
   hasConfig: (key: string) => Boolean(getConfigMock(key)),
   loadRuntimeConfig: async () => undefined,
@@ -224,10 +231,18 @@ describe('Meta resource pack', () => {
       expect(getMetaFeatureFlags().capiConfigured).toBe(true);
     });
 
-    it('exposes the WhatsApp Graph version as a non-secret version string', () => {
+    it('exposes one converged, non-secret Graph version string', () => {
       expect(getMetaFeatureFlags().whatsappGraphVersion).toBe('v23.0');
+      // Legacy alias is honoured when the canonical key is unset.
       config.set('WHATSAPP_API_VERSION', 'v24.0');
       expect(getMetaFeatureFlags().whatsappGraphVersion).toBe('v24.0');
+      expect(getMetaFeatureFlags().graphVersion).toBe('v24.0');
+      // Canonical key wins and every caller sees the same value.
+      config.set('META_GRAPH_VERSION', 'v25.0');
+      expect(getMetaFeatureFlags().graphVersion).toBe('v25.0');
+      expect(getMetaFeatureFlags().whatsappGraphVersion).toBe('v25.0');
+      // Floating values are rejected — pin, don't float.
+      config.set('META_GRAPH_VERSION', 'latest');
       expect(getMetaFeatureFlags().graphVersion).toBe('v23.0');
     });
 

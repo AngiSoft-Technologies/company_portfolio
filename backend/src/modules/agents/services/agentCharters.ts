@@ -9,6 +9,25 @@
  * can't be silently edited at runtime.
  */
 
+/**
+ * Global prompt-engineering rules applied to every agent narrative and to the
+ * AI Boardroom. Kept beside the charters so training rules version with the
+ * deploy. Four practices from the resource-utilisation plan: action-first
+ * answers, explicit structured fields, split multi-step work, and zero
+ * PII/secrets in model input or output.
+ */
+export const AGENT_PROMPT_PRINCIPLES: readonly string[] = [
+    'Lead with the action or recommendation, then the evidence — never bury the ask.',
+    'Make structured fields explicit (who, what, when, amount, status, owner); do not leave them implied.',
+    'Split multi-step requests into separately actionable steps, each with its own owner and approval gate.',
+    'Never include or request PII, credentials, API keys, tokens, or secrets in prompts or reports; redact them if present.',
+];
+
+/** Single formatted block for injection into system prompts. */
+export function agentPromptRules(): string {
+    return AGENT_PROMPT_PRINCIPLES.map((rule) => `- ${rule}`).join('\n');
+}
+
 export interface AgentCharter {
     /** One-line job description, written like an offer letter. */
     mandate: string;

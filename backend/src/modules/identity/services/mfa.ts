@@ -1,4 +1,4 @@
-import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getConfig, getMetaGraphVersion } from '../../../shared/services/runtimeConfig';
 import crypto from 'crypto';
 import prisma from '../../../db';
 import { newId, ts, tsMs } from '../../../prisma/db';
@@ -78,7 +78,7 @@ async function sendWhatsapp(to: string, code: string): Promise<boolean> {
   const destination = normalizePhone(to);
 
   if (token && phoneId) {
-    const version = getConfig('WHATSAPP_API_VERSION', 'v23.0');
+    const version = getMetaGraphVersion();
     const templateName = getConfig('WHATSAPP_OTP_TEMPLATE_NAME');
     const language = getConfig('WHATSAPP_OTP_TEMPLATE_LANGUAGE', 'en');
     const body = templateName

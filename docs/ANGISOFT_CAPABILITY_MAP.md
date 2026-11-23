@@ -95,7 +95,7 @@ Cross-cutting: `shared/routes/{admin,health,runtime-config,approvals,webhookInbo
 
 1. **Permission seed not applied in production** — 16 legacy keys vs 213 in code; canonical keys stay ungranted until `npx prisma db seed` runs.
 2. **No live provider provisioning/money movement** — 0 `ProviderConnection`/`FinanceTransaction` rows; vault dry-run only.
-3. **Integration suite not run** — no disposable `TEST_DATABASE_URL`; mocked suite passes 66 files/606 tests with `integration.spec.ts` excluded.
+3. **Integration suite not run** — no disposable `TEST_DATABASE_URL`; mocked suite passes 67 files/613 tests with `integration.spec.ts` excluded.
 4. **Lighthouse budgets failing** — final local run after safe fixes scored 0.59 (LCP 1621.6ms pass / CLS 0.0028 pass / TBT 24670.7ms fail) on a saturated 2-CPU host; blank control already fails TBT at 477ms (`/tmp/opencode/lighthouse-final-safe-fixes.json`), deployed stale release worse. No pass claimed; the **mocked** authenticated admin route×theme matrix is green (82 routes × 3 themes, 246 checks in 18 chunks + 1 persistence test; E2E 30/30), while the **live authenticated** matrix still needs redeploy/credentials.
 5. **Security audit PARTIAL** — `SECURITY_AUDIT.md` points to `security/OWASP_AUDIT.md`; 0 exploit-validated findings, not signed off.
 6. **Chatbot spend limits / review UI — DONE (code):** burst/IP limiter, daily token + USD caps with fail-closed store, and the `/chat-conversations` review UI are shipped. **Deferred:** per-user/per-org spend ledger (no contradictory "Partial" claim in §2) and live provider-billing verification, which is external.

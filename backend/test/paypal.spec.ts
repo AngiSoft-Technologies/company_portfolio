@@ -210,6 +210,46 @@ describe('PayPal adapter', () => {
     expect(call[1].headers['PayPal-Request-Id']).toBe('INV-ABC-capture');
   });
 
+  it('handles a mocked DUPLICATE_INVOICE_ID error with a stable idempotency key and no raw-body leak', async () => {
+    // PayPal sandbox can force this via the `PayPal-Mock-Response` header.
+    fetchMock.mockImplementation(async (url: string, init: any) => {
+      const u = String(url);
+      if (u.includes('/v1/oauth2/token')) return json({ access_token: 'tok', expires_in: 3600 });
+      if (u.endsWith('/v2/checkout/orders') && init?.method === 'POST') {
+        return json({
+          name: 'UNPROCESSABLE_ENTITY',
+          message: 'The request cannot be processed',
+          details: [{ issue: 'DUPLICATE_INVOICE_ID', description: 'Invoice ID already in use' }],
+          secret_upstream_field: 'should-never-appear',
+        }, 409);
+      }
+      return json({}, 404);
+    });
+
+    const reference = 'INV-DUP-1';
+    const errors: any[] = [];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      errors.push(await paypal.createOrder({ amount: 10, currency: 'USD', reference }).catch((e) => e));
+    }
+    for (const err of errors) {
+      expect(err).toBeInstanceOf(paypal.PayPalError);
+      expect(err.status).toBe(409);
+      expect(err.code).toBe('DUPLICATE_INVOICE_ID');
+      expect(err.message).toContain('[DUPLICATE_INVOICE_ID]');
+      expect(err.message).toContain('Invoice ID already in use');
+      expect(err.message).not.toContain('should-never-appear');
+    }
+
+    const calls = fetchMock.mock.calls.filter(
+      ([url, init]: any[]) => String(url).endsWith('/v2/checkout/orders') && init?.method === 'POST',
+    );
+    expect(calls).toHaveLength(2);
+    // A retry of the same invoice reuses the same idempotency key, so PayPal
+    // deduplicates instead of creating a second order.
+    expect(calls[0][1].headers['PayPal-Request-Id']).toBe(reference);
+    expect(calls[1][1].headers['PayPal-Request-Id']).toBe(reference);
+  });
+
   it('looks up a capture read-only and refuses an empty capture id', async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (String(url).includes('/v1/oauth2/token')) return json({ access_token: 'tok', expires_in: 3600 });

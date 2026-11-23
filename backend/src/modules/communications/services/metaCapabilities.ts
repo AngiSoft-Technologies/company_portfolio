@@ -14,7 +14,7 @@
 
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
-import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getConfig, getMetaGraphVersion } from '../../../shared/services/runtimeConfig';
 import { logAudit } from '../../../shared/services/audit';
 import { ProviderCapabilityError } from './capabilities';
 import { ProviderConfigurationError } from './providerSecrets';
@@ -121,9 +121,9 @@ export function getMetaFeatureFlags() {
     threadsUserConfigured: Boolean(getConfig('THREADS_USER_ID')),
     appReviewGranted: getConfig('META_APP_REVIEW_GRANTED') === 'true',
     capiConfigured: capiConfigured(),
-    graphVersion: String(getConfig('META_GRAPH_VERSION') || 'v23.0'),
-    // Non-secret version string only — never a token or credential.
-    whatsappGraphVersion: String(getConfig('WHATSAPP_API_VERSION') || 'v23.0'),
+    // Non-secret pinned version string, shared by every Graph caller.
+    graphVersion: getMetaGraphVersion(),
+    whatsappGraphVersion: getMetaGraphVersion(),
     mcpEndpoints: {
       ads: allowlistedMcpEndpoint(META_MCP_ENDPOINTS['mcp.ads'].configKey, META_MCP_ENDPOINTS['mcp.ads'].url),
       social: allowlistedMcpEndpoint(META_MCP_ENDPOINTS['mcp.social'].configKey, META_MCP_ENDPOINTS['mcp.social'].url),
@@ -220,7 +220,7 @@ export async function ingestMetaLeadEvent(prisma: Db, payload: any, opts: { conn
       let fields = leadFields(value);
       if (!Object.keys(fields).length) {
         const token = getConfig('META_SYSTEM_USER_TOKEN');
-        const version = String(getConfig('META_GRAPH_VERSION') || 'v23.0');
+        const version = getMetaGraphVersion();
         const response = await fetch(`https://graph.facebook.com/${version}/${encodeURIComponent(leadgenId)}?fields=field_data,created_time,form_id,ad_id,campaign_id,page_id`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -287,7 +287,7 @@ export async function ingestMetaLeadEvent(prisma: Db, payload: any, opts: { conn
 // ─── Live Graph API operations ─────────────────────────────────────────────
 
 function graphBase(): string {
-  const version = String(getConfig('META_GRAPH_VERSION') || 'v23.0').replace(/^\/+/, '');
+  const version = getMetaGraphVersion();
   return `https://graph.facebook.com/${version}`;
 }
 

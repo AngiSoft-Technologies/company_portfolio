@@ -2,7 +2,7 @@
 
 import type { Db } from '../../../db';
 import { newId, ts } from '../../../prisma/db';
-import { getConfig } from '../../../shared/services/runtimeConfig';
+import { getConfig, getMetaGraphVersion } from '../../../shared/services/runtimeConfig';
 import { assertCapability, type CommunicationProvider } from './capabilities';
 import { ProviderConfigurationError, readProviderSecret } from './providerSecrets';
 import { ingestInboundMessage } from './conversations';
@@ -164,7 +164,7 @@ async function metaToken(prisma: Db, connectionId: string): Promise<string> {
 }
 
 function graphBase(): string {
-  const version = String(getConfig('META_GRAPH_VERSION') || 'v23.0').replace(/^\/+/, '');
+  const version = getMetaGraphVersion();
   return `https://graph.facebook.com/${version}`;
 }
 

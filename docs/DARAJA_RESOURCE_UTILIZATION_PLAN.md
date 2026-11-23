@@ -232,7 +232,7 @@ registered Daraja URLs necessarily carry it as a query parameter and must
   confirmations, HTTPS STK callback validation, redacted upstream errors, QR
   code validation, result hints, `MPESA_BALANCE`, STK recovery, booking deposits
   and explicit-consent Meta CAPI dispatch.
-- The full mocked backend suite passes **66 files / 606 tests** (no skips in the
+- The full mocked backend suite passes **67 files / 613 tests** (no skips in the
   final run); `test/integration.spec.ts` still needs a real disposable
   `TEST_DATABASE_URL` and is not claimed here. Backend `tsc --noEmit`,
   workspace typechecks, both production builds, `pnpm lint`, the i18n suite and

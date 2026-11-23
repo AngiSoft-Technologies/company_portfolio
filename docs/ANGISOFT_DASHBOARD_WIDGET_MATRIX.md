@@ -7,7 +7,7 @@
 > - ✅ Keys aligned to canonical registry (`analytics.view`, `administration.audit`).
 > - ✅ `assignmentCounts` present in the versioned `effective-access` payload.
 > - ✅ Empty-widget rule live: permission held with zero assignments → `EmptyState` + "create first …" CTA (canonical §8 supersedes the original `assignmentCounts > 0` filter pseudo-code).
-> - ❌ Production `Permission` seed still missing (16 legacy keys vs 211 in code) — see `PRODUCTION_READINESS.md`.
+> - ❌ Production `Permission` seed still missing (16 legacy keys vs 213 in code) — see `PRODUCTION_READINESS.md`.
 
 ## Gap closure ledger (verified against live code 2026-11-23)
 
@@ -20,7 +20,7 @@
 | Widget generation from permissions | **CLOSED** | `deriveWidgets()` filters `WIDGET_CATALOGUE` by granted permission (or SUPER_ADMIN) at `staff-dashboard.ts:164-167`; `Workspace.tsx:111-181` renders server-provided widget IDs. |
 | Empty-widget rule (permission held, zero assignments) | **CLOSED** | `Workspace.tsx:166` sets `isEmpty` when the matching count is 0 and renders `EmptyState` with a "create first …" CTA (`:181`) — never silently hidden. This supersedes the original "filter by `assignmentCounts > 0`" pseudo-code in this document; canonical §8 is authoritative. |
 | Versioned widget payload consumed by admin shell | **CLOSED** | `EffectiveAccessProvider` / `useCan()` in `frontend/admin/src/lib/permissions.tsx`; nav groups hide when no permission, DENY is final. |
-| Production permission seed | **OPEN BLOCKER** | Live `Permission` table has 16 legacy keys vs 211 in code (2026-11-23 Neon MCP check). Widget grants derived from role/preset rows will be incomplete until `npx prisma db seed` runs. |
+| Production permission seed | **OPEN BLOCKER** | Live `Permission` table has 16 legacy keys vs 213 in code (2026-11-23 Neon MCP check). Widget grants derived from role/preset rows will be incomplete until `npx prisma db seed` runs. |
 | Admin route×theme sweep against live backend | **PARTIAL (live) / DONE (mocked)** | Web public routes verified dark+light; all 82 guarded admin routes now swept under 3 themes in the mocked browser matrix (246 checks, E2E 30/30). Live auth/backend sweep still pending redeploy/credentials (`ANGISOFT_CAPABILITY_MAP.md` §6). |
 
 Widgets are **generated from effective access**, never from `if role === 'STAFF'`.

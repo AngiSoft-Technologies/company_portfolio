@@ -55,9 +55,13 @@ export function isSupportedPayPalCurrency(value: unknown): boolean {
 }
 
 export class PayPalError extends Error {
-  constructor(message: string, public readonly status = 502) {
+  /** Stable provider issue code when PayPal supplied one (error taxonomy). */
+  public readonly code?: string;
+
+  constructor(message: string, public readonly status = 502, code?: string) {
     super(message);
     this.name = 'PayPalError';
+    this.code = code ? String(code).slice(0, 60) : undefined;
   }
 }
 
@@ -250,9 +254,17 @@ async function api<T = any>(
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
     // Use only structured error fields; raw upstream bodies may leak secrets.
+    // The provider issue code is a stable machine-readable taxonomy (e.g.
+    // DUPLICATE_INVOICE_ID) so callers can branch without parsing prose.
+    const issue = data?.details?.[0]?.issue;
     const detail = data?.details?.[0]?.description || data?.message;
     const message = detail ? String(detail).slice(0, 300) : `HTTP ${res.status}`;
-    throw new PayPalError(`PayPal ${method} ${path} failed (${res.status}): ${message}`, res.status);
+    const code = issue ? String(issue).slice(0, 60) : undefined;
+    throw new PayPalError(
+      `PayPal ${method} ${path} failed (${res.status})${code ? ` [${code}]` : ''}: ${message}`,
+      res.status,
+      code,
+    );
   }
   return { status: res.status, data: data as T };
 }

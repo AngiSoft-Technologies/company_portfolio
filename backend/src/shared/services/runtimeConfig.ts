@@ -245,6 +245,32 @@ export function hasConfig(key: string): boolean {
   return Boolean(getConfig(key));
 }
 
+/** Read without registry defaults — used when a default would mask a fallback. */
+function getRawConfig(key: string): string {
+  const stored = store.get(key);
+  if (stored === undefined) return envFallback(key);
+  if (stored === PLACEHOLDER_SECRET) return '';
+  return stored;
+}
+
+const META_GRAPH_VERSION_PATTERN = /^v\d+(?:\.\d+)+$/;
+const DEFAULT_META_GRAPH_VERSION = 'v23.0';
+
+/**
+ * Single effective Meta Graph API version for every caller.
+ *
+ * `META_GRAPH_VERSION` is canonical; `WHATSAPP_API_VERSION` is a legacy alias
+ * honoured only when the canonical key is unset. Values are pinned to `vN.N`
+ * form — floating values such as `latest` are rejected so a Meta quarterly
+ * release cannot silently change payload shapes in production.
+ */
+export function getMetaGraphVersion(): string {
+  const configured = String(
+    getRawConfig('META_GRAPH_VERSION') || getRawConfig('WHATSAPP_API_VERSION') || DEFAULT_META_GRAPH_VERSION,
+  ).trim().replace(/^\/+/, '');
+  return META_GRAPH_VERSION_PATTERN.test(configured) ? configured : DEFAULT_META_GRAPH_VERSION;
+}
+
 function isEncryptedSecret(value: unknown): value is EncryptedSecret {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Record<string, unknown>;
