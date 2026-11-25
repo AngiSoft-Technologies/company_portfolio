@@ -9,7 +9,7 @@
   # (angisoft.co.ke/v1/*) via the proxy below. A cross-origin absolute base
   # would stop the browser sending the SameSite=Strict refresh cookie.
   # Netlify UI env vars override this file — keep it unset there too.
-  VITE_CDN_BASE_URL = "https://cdn.angisoft.co.ke"
+  VITE_CDN_BASE_URL = "https://cdn1.angisoft.co.ke/company-portfolio"
   VITE_SOCKET_URL = "https://api.angisoft.co.ke"
 
 [functions]
@@ -42,7 +42,7 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: https://cdn.angisoft.co.ke https://i.ytimg.com https://unpkg.com https://*.basemaps.cartocdn.com; media-src 'self' data: blob: https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https://api.angisoft.co.ke wss://api.angisoft.co.ke; script-src-attr 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: https://cdn1.angisoft.co.ke https://i.ytimg.com https://unpkg.com https://*.basemaps.cartocdn.com; media-src 'self' data: blob: https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https://api.angisoft.co.ke wss://api.angisoft.co.ke; script-src-attr 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=(), midi=(), accelerometer=(), gyroscope=(), magnetometer=()"

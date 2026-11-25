@@ -9,7 +9,7 @@ const normalizeOrigin = (origin?: string) => {
 // resolving through the CDN.
 const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_BASE_URL as string) || '';
 const CDN_ORIGIN = normalizeOrigin(import.meta.env.VITE_CDN_BASE_URL as string) ||
-  (import.meta.env.PROD ? 'https://cdn.angisoft.co.ke' : API_ORIGIN);
+  (import.meta.env.PROD ? 'https://cdn1.angisoft.co.ke/company-portfolio' : API_ORIGIN);
 
 export const API_BASE_URL = API_ORIGIN ? `${API_ORIGIN}/v1` : '/v1';
 export const ASSET_BASE_URL = CDN_ORIGIN;

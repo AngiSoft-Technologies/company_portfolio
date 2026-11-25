@@ -14,11 +14,15 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
  *   S3_ACCESS_KEY / AWS_ACCESS_KEY_ID       key id (Tigris: tid_...)
  *   S3_SECRET_KEY / AWS_SECRET_ACCESS_KEY   secret (Tigris: tsec_...)
  *   S3_BUCKET / BUCKET_NAME bucket name
+ *   S3_KEY_PREFIX          optional key prefix (folder) prepended to every object
+ *                          key, e.g. 'company-portfolio' stores objects under
+ *                          <prefix>/<key>. Logical keys used across the app stay
+ *                          unprefixed; the prefix is applied at the S3 boundary.
  *   S3_FORCE_PATH_STYLE    '1'/'true' forces path-style addressing; default is
  *                          enabled for custom endpoints (safe for AWS/R2/Tigris),
  *                          0 disables (virtual-hosted style).
  *   S3_PUBLIC_BASE_URL     public CDN base for public objects (custom domain,
- *                          e.g. https://cdn.angisoft.co.ke). Optional — when unset
+ *                          e.g. https://cdn1.angisoft.co.ke). Optional — when unset
  *                          and the bucket was created via `fly storage create`, it
  *                          defaults to https://<bucket>.t3.tigrisbucket.io.
  *
@@ -48,6 +52,17 @@ function bucketName() {
     return env('S3_BUCKET') || env('BUCKET_NAME');
 }
 
+/** Normalized 'prefix/' (or '' when unset) applied to every object key. */
+function keyPrefix() {
+    const raw = env('S3_KEY_PREFIX').replace(/^\/+|\/+$/g, '');
+    return raw ? `${raw}/` : '';
+}
+
+/** Logical app key → actual object key inside the bucket. */
+function toObjectKey(key: string) {
+    return `${keyPrefix()}${key.replace(/^\/+/, '')}`;
+}
+
 function region() {
     return env('S3_REGION') || env('AWS_REGION') || 'auto';
 }
@@ -62,6 +77,16 @@ function isConfigured() {
     const secretKey = secretAccessKey();
     const bucket = bucketName();
     return Boolean(endpoint && accessKey && secretKey && bucket);
+}
+
+/**
+ * Tigris buckets serve public objects only when the object carries a
+ * public-read ACL (bucket-level "public" alone does not make new uploads
+ * readable). Returns the canned ACL to merge into PutObject params, or an
+ * empty object for providers where ACLs are unsupported/ignored.
+ */
+function publicReadAcl() {
+    return isTigrisEndpoint(endpointUrl()) ? { ACL: 'public-read' as const } : {};
 }
 
 function resolveForcePathStyle() {
@@ -108,8 +133,9 @@ function publicBaseUrl(): string {
 /** Public CDN URL for a key, or the raw key path when no public base resolves. */
 export function toPublicUrl(key: string) {
     const base = publicBaseUrl();
-    if (!base) return `/${key.replace(/^\/+/, '')}`;
-    return `${base}/${key.replace(/^\/+/, '')}`;
+    const path = `${keyPrefix()}${key.replace(/^\/+/, '')}`;
+    if (!base) return `/${path}`;
+    return `${base}/${path}`;
 }
 
 const SAFE_KEY_PREFIXES = new Set([
@@ -151,14 +177,14 @@ function assertAllowedContentType(contentType: string, allowSvg = false): void {
 export async function generatePresignedPutUrl(key: string, contentType = 'application/octet-stream', expiresSeconds = 900) {
     assertSafeObjectKey(key);
     assertAllowedContentType(contentType);
-    const cmd = new PutObjectCommand({ Bucket: getBucket(), Key: key, ContentType: contentType });
+    const cmd = new PutObjectCommand({ Bucket: getBucket(), Key: toObjectKey(key), ContentType: contentType, ...publicReadAcl() });
     return getSignedUrl(client(), cmd, { expiresIn: expiresSeconds });
 }
 
 export async function generatePresignedGetUrl(key: string, filename = 'download', expiresSeconds = 300) {
     const cmd = new GetObjectCommand({
         Bucket: getBucket(),
-        Key: key,
+        Key: toObjectKey(key),
         ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`
     });
     return getSignedUrl(client(), cmd, { expiresIn: expiresSeconds });
@@ -172,10 +198,10 @@ export async function uploadObject(opts: { key: string; body: Buffer | Uint8Arra
     assertAllowedContentType(opts.contentType, opts.key.startsWith('blog-covers/'));
     const cmd = new PutObjectCommand({
         Bucket: getBucket(),
-        Key: opts.key,
+        Key: toObjectKey(opts.key),
         Body: opts.body,
         ContentType: opts.contentType,
-        ...(opts.publicRead ? { CacheControl: 'public, max-age=31536000, immutable' } : {})
+        ...(opts.publicRead ? { CacheControl: 'public, max-age=31536000, immutable', ...publicReadAcl() } : {})
     });
     await client().send(cmd);
     return opts.key;
@@ -184,13 +210,13 @@ export async function uploadObject(opts: { key: string; body: Buffer | Uint8Arra
 /** Fetch an object; the caller pipes `Body` (a readable stream) to the response. */
 export async function getObject(key: string) {
     if (!isConfigured()) throw new Error('S3 storage is not configured');
-    const cmd = new GetObjectCommand({ Bucket: getBucket(), Key: key });
+    const cmd = new GetObjectCommand({ Bucket: getBucket(), Key: toObjectKey(key) });
     return client().send(cmd);
 }
 
 export async function deleteObject(key: string) {
     if (!isConfigured()) throw new Error('S3 storage is not configured');
     const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
-    await client().send(new DeleteObjectCommand({ Bucket: getBucket(), Key: key }));
+    await client().send(new DeleteObjectCommand({ Bucket: getBucket(), Key: toObjectKey(key) }));
     return key;
 }

@@ -26,7 +26,7 @@ export const ANGISOFT_BRAND = {
   termsUrl: 'https://angisoft.co.ke/terms',
   get logoUrl() {
     return getConfig('EMAIL_LOGO_URL') ||
-      'https://cdn.angisoft.co.ke/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.png';
+      'https://cdn1.angisoft.co.ke/company-portfolio/public/images/Logos/AngiSoft_Dark_Background_Logo-removebg.png';
   },
   colors: {
     navy: '#07142B',

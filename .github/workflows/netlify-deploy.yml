@@ -76,7 +76,7 @@ jobs:
             - name: Build admin
               run: pnpm --filter angisoft-admin build
               env:
-                  VITE_CDN_BASE_URL: https://cdn.angisoft.co.ke
+                  VITE_CDN_BASE_URL: https://cdn1.angisoft.co.ke/company-portfolio
                   VITE_SOCKET_URL: https://api.angisoft.co.ke
 
             # Phase 5.5: deterministic, blocking bundle-size gate. Runs after

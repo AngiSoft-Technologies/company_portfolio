@@ -21,7 +21,7 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done.
 | Backend | Express + TypeScript (strict), Node ≥ 24, 15 domain modules (96 API mounts). Fly.io (Docker) — single `app` process group with scheduler (`backend/fly.toml`). |
 | Database | Prisma 8 + Neon Postgres (`backend/src/db.ts` singleton, Neon adapter). |
 | Payments | Stripe, PayPal, PayHero/Daraja and Paystack integrations (live credentials/provisioning pending). |
-| Files | Tigris (S3-compatible) public bucket via `@aws-sdk/client-s3`; CDN base `https://cdn.angisoft.co.ke` with legacy `/uploads/*` fallback redirect. |
+| Files | Tigris (S3-compatible) public bucket via `@aws-sdk/client-s3` (`angisoft-official`, `company-portfolio/` prefix); CDN base `https://cdn1.angisoft.co.ke` with legacy `/uploads/*` fallback redirect. |
 | AI | Multi-provider adapter done (`services/aiProvider.ts`), admin-configurable at `/admin/ai-config`. NVIDIA via OpenAI-compatible + status polling; also Anthropic, Google, Moonshot, Groq, etc. |
 | Async | `bullmq` + `ioredis` installed; small `queue/` + `workers/` (email, file processor, reconciliation). Redis keys removed previously. |
 | Observability | Sentry (`services/monitoring/sentry.ts`), structured logs (winston). |

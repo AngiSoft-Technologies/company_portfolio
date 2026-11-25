@@ -40,8 +40,8 @@ describe('toEmbedSrc — trusted hosts only', () => {
 
 describe('toSafeHttpUrl / isExternalMedia', () => {
   it('accepts normalised http(s) URLs only', () => {
-    expect(toSafeHttpUrl(' https://cdn.angisoft.co.ke/audio/episode.mp3 '))
-      .toBe('https://cdn.angisoft.co.ke/audio/episode.mp3');
+    expect(toSafeHttpUrl(' https://cdn1.angisoft.co.ke/audio/episode.mp3 '))
+      .toBe('https://cdn1.angisoft.co.ke/audio/episode.mp3');
     expect(toSafeHttpUrl('http://example.org/a.mp3')).toBe('http://example.org/a.mp3');
     expect(isExternalMedia('https://example.org/a.mp3')).toBe(true);
   });

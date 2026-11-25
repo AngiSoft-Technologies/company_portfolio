@@ -45,6 +45,7 @@ const MIME = {
 const env = (key) => process.env[key] || '';
 const endpoint = env('S3_ENDPOINT') || env('AWS_ENDPOINT_URL_S3') || env('S3_S3_R2_ENDPOINT') || env('S3_R2_ENDPOINT');
 const bucket = env('S3_BUCKET') || env('BUCKET_NAME');
+const keyPrefix = (env('S3_KEY_PREFIX').replace(/^\/+|\/+$/g, '') + '/').replace(/^\//, '');
 const rawForce = env('S3_FORCE_PATH_STYLE').toLowerCase();
 const forcePathStyle = rawForce ? rawForce === '1' || rawForce === 'true' || rawForce === 'yes' : !!endpoint;
 
@@ -78,7 +79,7 @@ async function uploadOne(full, attempt = 1) {
   const body = fs.readFileSync(full);
   const command = new PutObjectCommand({
     Bucket: bucket,
-    Key: rel,
+    Key: `${keyPrefix}${rel}`,
     Body: body,
     ContentType: MIME[ext] ?? 'application/octet-stream',
     CacheControl: 'public, max-age=31536000, immutable',
@@ -98,7 +99,7 @@ async function uploadOne(full, attempt = 1) {
 async function run() {
   const files = walk(ROOT);
   console.log(`bucket: ${bucket}  endpoint: ${endpoint || '(default s3)'}`);
-  console.log(`migrating ${files.length} files from ${ROOT} → key prefix "<rel>"`);
+  console.log(`migrating ${files.length} files from ${ROOT} → s3://${bucket}/${keyPrefix}<rel>`);
 
   const results = [];
   let cursor = 0;

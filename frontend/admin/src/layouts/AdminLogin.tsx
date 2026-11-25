@@ -6,7 +6,7 @@ import { apiRequest, consumePendingMfaSetup, setAccessToken, type MfaSetupPayloa
 
 const CDN_BASE = (
   (import.meta.env as Record<string, string | undefined>).VITE_CDN_BASE_URL ||
-  'https://cdn.angisoft.co.ke'
+  'https://cdn1.angisoft.co.ke/company-portfolio'
 ).replace(/\/+$/, '');
 
 const BRAND_ASSETS = {

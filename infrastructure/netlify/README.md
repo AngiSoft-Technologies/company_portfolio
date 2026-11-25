@@ -13,7 +13,7 @@ The effective Netlify configuration lives beside each application:
 
 The files in `infrastructure/netlify/` are synchronized deployment references. Netlify discovers the app-level files when each site's **Package directory** is set to the corresponding frontend directory, while the base directory remains the repository root.
 
-The web site owns `angisoft.co.ke` and `www.angisoft.co.ke`. The admin site owns `admin.angisoft.co.ke` and `www.admin.angisoft.co.ke`. Both sites use `https://api.angisoft.co.ke` and `https://cdn.angisoft.co.ke`.
+The web site owns `angisoft.co.ke` and `www.angisoft.co.ke`. The admin site owns `admin.angisoft.co.ke` and `www.admin.angisoft.co.ke`. Both sites use `https://api.angisoft.co.ke` and `https://cdn1.angisoft.co.ke/company-portfolio`.
 
 Both configurations proxy `/uploads/*` and `/v1/*` to the API before applying the SPA fallback. The `/v1/*` rule is duplicated in each app's `public/_redirects` so a build can never ship a stale SPA-only redirect table. The API can redirect legacy upload paths to the shared CDN. The preferred production setup is two separate Netlify sites.
 

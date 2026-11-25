@@ -9,8 +9,8 @@ The web and admin applications are separate Vite sites built from the pnpm works
 
 | Site | Netlify custom domains | API | Public CDN |
 | --- | --- | --- | --- |
-| Web | `angisoft.co.ke`, `www.angisoft.co.ke` | `https://api.angisoft.co.ke` | `https://cdn.angisoft.co.ke` |
-| Admin | `admin.angisoft.co.ke`, `www.admin.angisoft.co.ke` | `https://api.angisoft.co.ke` | `https://cdn.angisoft.co.ke` |
+| Web | `angisoft.co.ke`, `www.angisoft.co.ke` | `https://api.angisoft.co.ke` | `https://cdn1.angisoft.co.ke` |
+| Admin | `admin.angisoft.co.ke`, `www.admin.angisoft.co.ke` | `https://api.angisoft.co.ke` | `https://cdn1.angisoft.co.ke` |
 
 Both sites use the same Fly.io backend and Tigris CDN. Attach the two domain names to each matching Netlify site; do not point the admin site at the web project or vice versa.
 
@@ -25,7 +25,7 @@ Create or update two Netlify sites linked to this repository. Leave **Base direc
 
 The corresponding configuration files are `frontend/web/netlify.toml` and `frontend/admin/netlify.toml`. Netlify searches the package directory first, so these files apply to the corresponding site. The infrastructure copies are in `infrastructure/netlify/`.
 
-Both sites use Node.js 24. `VITE_SOCKET_URL` is set to `https://api.angisoft.co.ke` so both frontends reach the shared backend over Socket.IO. `VITE_CDN_BASE_URL` points the web site at `https://cdn.angisoft.co.ke`. **`VITE_API_BASE_URL` is deliberately not set** — see §Routing below for why that matters. These are public browser configuration values, not secrets.
+Both sites use Node.js 24. `VITE_SOCKET_URL` is set to `https://api.angisoft.co.ke` so both frontends reach the shared backend over Socket.IO. `VITE_CDN_BASE_URL` points both sites at `https://cdn1.angisoft.co.ke/company-portfolio` (CDN origin + bucket key prefix). **`VITE_API_BASE_URL` is deliberately not set** — see §Routing below for why that matters. These are public browser configuration values, not secrets.
 
 ## Backend and CDN
 
@@ -35,7 +35,7 @@ The Fly.io app must allow all four production frontend origins in `CORS_ORIGIN` 
 https://angisoft.co.ke,https://www.angisoft.co.ke,https://admin.angisoft.co.ke,https://www.admin.angisoft.co.ke
 ```
 
-Set `S3_PUBLIC_BASE_URL=https://cdn.angisoft.co.ke` on Fly.io. The API remains the compatibility route for existing `/uploads/*` URLs; public storage responses are served by the shared CDN.
+Set `S3_PUBLIC_BASE_URL=https://cdn1.angisoft.co.ke` on Fly.io. The API remains the compatibility route for existing `/uploads/*` URLs; public storage responses are served by the shared CDN.
 
 ## Local build verification
 

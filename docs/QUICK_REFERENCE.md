@@ -18,7 +18,7 @@ Backend API:                        http://localhost:5000/v1   (no /api alias; s
 Web:        https://angisoft.co.ke
 Admin:      https://admin.angisoft.co.ke
 API:        https://api.angisoft.co.ke/v1   (browser apps call same-origin /v1/* via the Netlify proxy; see docs/NETLIFY.md §Routing)
-CDN uploads: https://cdn.angisoft.co.ke       (Tigris bucket)
+CDN uploads: https://cdn1.angisoft.co.ke/company-portfolio  (Tigris `angisoft-official` bucket)
 ```
 
 ## 🧭 Admin app routes (`frontend/admin`, all lazy-loaded)

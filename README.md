@@ -24,7 +24,7 @@ robust-portfolio/
 | Frontend (web) | React 19, Vite 8.3.8 (`@vitejs/plugin-react` 6.3.0), Tailwind CSS 4, MUI 7 | Netlify (`angisoft.co.ke`) |
 | Frontend (admin) | React 19, Vite 8.3.8 (`@vitejs/plugin-react` 6.3.0), Tailwind CSS 4, MUI 7 | Netlify (`admin.angisoft.co.ke`) |
 | Backend | Express, TypeScript, Prisma 8 ORM, Neon PostgreSQL | Fly.io (Docker, `company-portfolio`) |
-| Storage | Tigris (S3-compatible) `my-company-portfolio` bucket | `cdn.angisoft.co.ke` |
+| Storage | Tigris (S3-compatible) `angisoft-official` bucket (`company-portfolio/` prefix) | `cdn1.angisoft.co.ke` |
 | Payments | Stripe, PayPal, PayHero/Daraja and Paystack integrations (live credentials/provisioning pending) | — |
 | AI | Neon AI Gateway (OpenAI, Anthropic, Gemini, etc.) | — |
 | Email | Zoho Mail SMTP | — |
