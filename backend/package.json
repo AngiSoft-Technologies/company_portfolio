@@ -24,7 +24,7 @@
     "test": "vitest",
     "test:mocked": "TEST_DATABASE_URL='postgresql://dummy:dummy@127.0.0.1:5432/dummy?sslmode=disable' vitest run --exclude test/integration.spec.ts",
     "seed:showcase": "ts-node prisma/seed-showcase.ts",
-    "build:vercel": "esbuild vercel-entry.ts --bundle --platform=node --format=esm --target=node24 --packages=external --banner:js=\"import { createRequire as __vcr } from 'node:module'; const require = __vcr(import.meta.url);\" --outfile=api/index.js"
+    "build:vercel": "esbuild vercel-entry.ts --bundle --platform=node --format=esm --target=node24 --packages=external --banner:js=\"import { createRequire as __vcr } from 'node:module'; const require = __vcr(import.meta.url);\" --outfile=api/index.mjs"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
