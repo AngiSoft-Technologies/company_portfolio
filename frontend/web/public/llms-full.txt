@@ -74,7 +74,7 @@ Industry-tailored solution pages live under https://www.angisoft.co.ke/solutions
 
 - LinkedIn company page: https://www.linkedin.com/company/angisoft-technologies
 - GitHub organization: https://github.com/AngiSoft-Technologies
-- X / Twitter: https://twitter.com/angisofttech and https://x.com/AngiSoftTech
+- X / Twitter: https://x.com/angisofttech
 - Facebook: https://www.facebook.com/angisofttechnologies
 - Instagram: https://www.instagram.com/angisofttech
 - YouTube: https://youtube.com/@angisofttechnologies

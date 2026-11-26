@@ -14,12 +14,12 @@ const SITE_URL = 'https://www.angisoft.co.ke'
 const SITE_NAME = 'AngiSoft Technologies'
 const ORG_ID = `${SITE_URL}/#organization`
 
-// Official social profiles — mirrored in public/llms.txt.
+// Official social profiles — mirrored in public/llms.txt. X/Twitter is
+// unified on x.com/angisofttech (the handle family used across profiles).
 const SOCIAL_PROFILES = [
   'https://www.linkedin.com/company/angisoft-technologies',
   'https://github.com/AngiSoft-Technologies',
-  'https://twitter.com/angisofttech',
-  'https://x.com/AngiSoftTech',
+  'https://x.com/angisofttech',
   'https://www.facebook.com/angisofttechnologies',
   'https://www.instagram.com/angisofttech',
   'https://youtube.com/@angisofttechnologies',

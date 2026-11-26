@@ -6,7 +6,7 @@ import SocialIcon from "../cards/SocialIcon";
 const socialMediaLinks = [
     { icon: 'fab fa-linkedin-in', link: 'https://www.linkedin.com/company/angisoft-technologies', label: 'LinkedIn' },
     { icon: 'fab fa-github', link: 'https://github.com/AngiSoft-Technologies', label: 'GitHub' },
-    { icon: 'fab fa-twitter', link: 'https://twitter.com/angisofttech', label: 'Twitter' },
+    { icon: 'fab fa-twitter', link: 'https://x.com/angisofttech', label: 'Twitter' },
     { icon: 'fab fa-facebook', link: 'https://www.facebook.com/angisofttechnologies', label: 'Facebook' },
     { icon: 'fab fa-instagram', link: 'https://www.instagram.com/angisofttech', label: 'Instagram' },
     { icon: 'fab fa-youtube', link: 'https://youtube.com/@angisofttechnologies', label: 'YouTube' },
