@@ -8,7 +8,7 @@ import { checkPasswordStrength } from '../../../modules/identity/utils/passwordP
 import { getEffectivePermissions } from '../../../modules/identity/services/effectivePermissions';
 import { PERMISSION_CATALOGUE } from './staff-access';
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: process.env.VERCEL ? '/tmp/uploads/' : 'uploads/' });
 
 const profileSelectFields = [
     'id',

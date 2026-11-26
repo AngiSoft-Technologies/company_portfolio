@@ -50503,7 +50503,7 @@ var BOOKING_UPLOAD_MIME_TYPES = /* @__PURE__ */ new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ]);
 var upload = multer({
-  dest: "uploads/",
+  dest: process.env.VERCEL ? "/tmp/uploads/" : "uploads/",
   limits: { fileSize: 10 * 1024 * 1024, files: 5 },
   fileFilter: (_req, file, cb) => {
     if (BOOKING_UPLOAD_MIME_TYPES.has(file.mimetype)) cb(null, true);
@@ -61242,7 +61242,7 @@ function staffAccessRouter() {
 }
 
 // src/modules/identity/routes/staff-dashboard.ts
-var upload2 = multer3({ dest: "uploads/" });
+var upload2 = multer3({ dest: process.env.VERCEL ? "/tmp/uploads/" : "uploads/" });
 var profileSelectFields = [
   "id",
   "firstName",

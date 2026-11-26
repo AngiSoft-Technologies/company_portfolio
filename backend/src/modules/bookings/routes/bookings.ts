@@ -47,7 +47,7 @@ const BOOKING_UPLOAD_MIME_TYPES = new Set([
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 const upload = multer({
-    dest: 'uploads/',
+    dest: process.env.VERCEL ? '/tmp/uploads/' : 'uploads/',
     limits: { fileSize: 10 * 1024 * 1024, files: 5 },
     fileFilter: (_req, file, cb) => {
         if (BOOKING_UPLOAD_MIME_TYPES.has(file.mimetype)) cb(null, true);
