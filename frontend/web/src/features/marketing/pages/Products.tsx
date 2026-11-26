@@ -9,6 +9,7 @@ import ProductListCta from '../components/product/ProductListCta';
 import ProductsSkeleton from '../components/product/ProductsSkeleton';
 import '@/styles/marketing/product/product-list.css';
 import { LoadingIndicator, VisualState } from '@angisoft/ui';
+import { JsonLd, productsItemListJsonLd } from '@/lib/seo';
 
 // Data-driven product listing. Mirrors the Product Detail architecture:
 // content is derived entirely from GET /v1/products (normalized by
@@ -27,6 +28,9 @@ const Products = () => {
 
     return (
         <main className={`product-list ${themeClass} ${stateClass}`}>
+            {!loading && !error && products.length > 0 && (
+                <JsonLd data={productsItemListJsonLd(products)} />
+            )}
             <ProductsHero />
 
             <section className="products-grid-section">

@@ -8,8 +8,22 @@ import { fileURLToPath } from 'node:url'
 import { PRERENDER_ROUTES, type RouteMeta } from './src/router/prerender.ts'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const SITE_URL = 'https://angisoft.co.ke'
+// Netlify 301s the apex to www — canonical URLs, sitemap locs and JSON-LD
+// must all use the final host.
+const SITE_URL = 'https://www.angisoft.co.ke'
 const SITE_NAME = 'AngiSoft Technologies'
+const ORG_ID = `${SITE_URL}/#organization`
+
+// Official social profiles — mirrored in public/llms.txt.
+const SOCIAL_PROFILES = [
+  'https://www.linkedin.com/company/angisoft-technologies',
+  'https://github.com/AngiSoft-Technologies',
+  'https://twitter.com/angisofttech',
+  'https://x.com/AngiSoftTech',
+  'https://www.facebook.com/angisofttechnologies',
+  'https://www.instagram.com/angisofttech',
+  'https://youtube.com/@angisofttechnologies',
+]
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -20,22 +34,58 @@ const pageJsonLd = (meta: RouteMeta) => ({
   name: meta.title,
   description: meta.description,
   url: `${SITE_URL}${meta.path === '/' ? '' : meta.path}`,
-  isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL },
+  isPartOf: { '@id': `${SITE_URL}/#website` },
 })
 
 const siteJsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': ORG_ID,
     name: SITE_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/android-chrome-512x512.png`,
+    email: 'info@angisoft.co.ke',
+    telephone: '+254710398690',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Nairobi',
+      addressCountry: 'KE',
+    },
+    sameAs: SOCIAL_PROFILES,
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: 'info@angisoft.co.ke',
+      telephone: '+254710398690',
+      areaServed: 'KE',
+      availableLanguage: ['English', 'Swahili'],
+    },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
     name: SITE_NAME,
     url: SITE_URL,
+    publisher: { '@id': ORG_ID },
+  },
+  // Flagship product family member on its own subdomain — declared here so
+  // crawlers and AI engines connect the product to the parent company.
+  {
+    '@context': 'https://schema.org',
+    '@type': 'MobileApplication',
+    '@id': `${SITE_URL}/#mboqara-android`,
+    name: 'MboQara for Android',
+    operatingSystem: 'Android',
+    applicationCategory: 'BusinessApplication',
+    url: 'https://mboqara.angisoft.co.ke',
+    installUrl: 'https://play.google.com/store/apps/details?id=ke.co.angisoft.mboqara',
+    downloadUrl: 'https://play.google.com/store/apps/details?id=ke.co.angisoft.mboqara',
+    description:
+      'AI career platform by AngiSoft Technologies: discover live jobs, score profile fit, prepare tailored application documents and track applications.',
+    author: { '@id': ORG_ID },
+    provider: { '@id': ORG_ID },
   },
 ]
 

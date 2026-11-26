@@ -11,6 +11,7 @@ import ProductRelated from '../components/product/ProductRelated';
 import ProductCta from '../components/product/ProductCta';
 import ProductSkeleton from '../components/product/ProductSkeleton';
 import '@/styles/marketing/product/product-detail.css';
+import { JsonLd, softwareApplicationJsonLd } from '@/lib/seo';
 
 // Modern, data-driven product landing page.
 // All content is derived from the canonical GET /v1/products/:slug response
@@ -41,6 +42,7 @@ const ProductDetail = () => {
 
     return (
         <main className="product-detail">
+            <JsonLd data={softwareApplicationJsonLd(product)} />
             <ProductHero product={product} />
             <ProductFeatures product={product} />
             <ProductGallery product={product} />

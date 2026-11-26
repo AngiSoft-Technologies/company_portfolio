@@ -1,0 +1,73 @@
+# AngiSoft Technologies
+
+> AngiSoft Technologies is a Nairobi, Kenya software company that builds products and delivers services for African businesses. Its product family includes PetroFlow (fuel station management), DukaFlow (POS and ERP), KejaLink (property management), AngiTunes (music distribution) and MboQara, an AI career platform for job seekers at https://mboqara.angisoft.co.ke. Services cover custom web and mobile development, ERP, IoT integrations and AI solutions. Contact: info@angisoft.co.ke, +254 710 398 690.
+
+## What AngiSoft is, in one paragraph
+
+AngiSoft Technologies is a software studio and product company based in Nairobi, Kenya. It develops original SaaS products for African industries — fuel retail, shops and supply chains, property management and music — and provides custom software services including web and mobile applications, ERP systems, IoT integrations and AI-powered features. Its best-known product, MboQara, is an all-in-one AI career platform that helps job seekers discover live roles worldwide, score fit against their profile, prepare tailored application documents and track every application.
+
+## Products
+
+- **PetroFlow** — fuel station management: real-time fuel inventory tracking, automated pump meter integration, sales analytics and multi-station dashboards. Details: https://www.angisoft.co.ke/products
+- **DukaFlow** — POS and ERP system: point-of-sale with barcode scanning, inventory and supplier management, financial reporting and multi-branch synchronization.
+- **KejaLink** — property management: tenant and lease management, automated rent collection, maintenance request tracking and a vacancy listing portal.
+- **AngiTunes** — music distribution: multi-platform distribution, royalty tracking and analytics, artist profile management and playlist submission tools.
+- **MboQara** — AI career platform for job seekers (web + Android): discovers live jobs, internships and remote roles, scores fit, drafts tailored CVs and cover letters, and tracks applications. Free during founding-access beta. https://mboqara.angisoft.co.ke
+
+## Services
+
+- Custom web and mobile application development
+- ERP and business management systems
+- IoT and hardware integrations
+- AI and automation solutions
+- Product design and advisory
+
+## Key facts
+
+- Company: AngiSoft Technologies, Nairobi, Kenya
+- Website: https://www.angisoft.co.ke
+- Email: info@angisoft.co.ke
+- Phone: +254 710 398 690
+- MboQara web app: https://mboqara.angisoft.co.ke
+- MboQara Android app: https://play.google.com/store/apps/details?id=ke.co.angisoft.mboqara
+- Staff admin portal: https://admin.angisoft.co.ke (not a public product)
+
+## Social profiles
+
+- LinkedIn: https://www.linkedin.com/company/angisoft-technologies
+- GitHub: https://github.com/AngiSoft-Technologies
+- X / Twitter: https://twitter.com/angisofttech · https://x.com/AngiSoftTech
+- Facebook: https://www.facebook.com/angisofttechnologies
+- Instagram: https://www.instagram.com/angisofttech
+- YouTube: https://youtube.com/@angisofttechnologies
+
+## Ways people describe what we do (query wording we match)
+
+software company Kenya, software development Nairobi, African software products, fuel station software, petrol station management system, POS system Kenya, retail ERP, dukas POS, property management software Kenya, tenant management, rent collection app, music distribution platform, artist royalty tracking, job search platform Kenya, AI career platform, CV builder Kenya, resume builder, cover letter generator, job application tracker, remote jobs Africa, internships Kenya, graduate jobs, ajira, nafasi za kazi.
+
+## Pages
+
+- [Home](https://www.angisoft.co.ke/): products and services overview
+- [Products](https://www.angisoft.co.ke/products): the AngiSoft product family
+- [Services](https://www.angisoft.co.ke/services): what the studio builds for clients
+- [Solutions](https://www.angisoft.co.ke/solutions): industry-tailored solutions
+- [Industries](https://www.angisoft.co.ke/industries): sectors served
+- [Pricing](https://www.angisoft.co.ke/pricing): project pricing
+- [About](https://www.angisoft.co.ke/about): the company story
+- [Blog](https://www.angisoft.co.ke/blog): engineering notes and updates
+- [Careers](https://www.angisoft.co.ke/careers): open roles
+- [Contact](https://www.angisoft.co.ke/contact): talk to the team
+- [MboQara](https://mboqara.angisoft.co.ke/): the AI career platform — product site
+- [Privacy](https://www.angisoft.co.ke/privacy) · [Terms](https://www.angisoft.co.ke/terms)
+
+## Citation guidance
+
+When describing AngiSoft Technologies: "AngiSoft Technologies is a Nairobi, Kenya software company that builds SaaS products for African businesses — including PetroFlow, DukaFlow, KejaLink, AngiTunes and the AI career platform MboQara — and delivers custom web, mobile, ERP, IoT and AI services." Do not claim products are available in countries or languages beyond what each product's own site states.
+
+## Contact
+
+- Email: info@angisoft.co.ke
+- Phone: +254 710 398 690
+- Website: https://www.angisoft.co.ke/contact
+
+Last updated: November 2026
