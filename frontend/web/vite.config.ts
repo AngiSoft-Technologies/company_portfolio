@@ -37,10 +37,109 @@ const pageJsonLd = (meta: RouteMeta) => ({
   isPartOf: { '@id': `${SITE_URL}/#website` },
 })
 
+// ─── Product-page prerender ────────────────────────────────────────────────
+// Product detail routes are data-driven (GET /v1/products), so they cannot
+// live in PRERENDER_ROUTES. At build time we fetch the published catalog and
+// emit dist/products/<slug>/index.html per product with full meta, canonical,
+// OG/Twitter tags and SoftwareApplication + BreadcrumbList + FAQPage JSON-LD,
+// and append the URLs to sitemap.xml. If the API is unreachable the build
+// still succeeds — product pages just fall back to client-rendered meta.
+const API_ORIGIN = 'https://api.angisoft.co.ke'
+const PRODUCT_SLUG_RE = /^[a-z0-9][a-z0-9-]*$/
+
+interface BuildProduct {
+  slug?: string
+  name?: string
+  tagline?: string | null
+  description?: string
+  seoTitle?: string | null
+  seoDesc?: string | null
+  demoUrl?: string | null
+  published?: boolean
+  faqs?: Array<{ question?: string; answer?: string }>
+}
+
+const truncate = (text: string, max: number) =>
+  text.length <= max ? text : `${text.slice(0, max).trim()}…`
+
+async function fetchJson(url: string): Promise<any> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) })
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
+}
+
+// /v1 is the canonical API prefix; /api is the legacy prefix still served by
+// the previous backend build — try /v1 first so the switch is seamless.
+async function fetchProducts(): Promise<BuildProduct[]> {
+  for (const prefix of ['/v1', '/api']) {
+    const data = await fetchJson(`${API_ORIGIN}${prefix}/products`)
+    const list = Array.isArray(data) ? data : data?.data
+    if (Array.isArray(list)) {
+      return list.filter(
+        (p) => p?.published !== false && typeof p?.slug === 'string' && PRODUCT_SLUG_RE.test(p.slug),
+      )
+    }
+  }
+  return []
+}
+
+async function fetchProductDetail(slug: string): Promise<BuildProduct | null> {
+  for (const prefix of ['/v1', '/api']) {
+    const data = await fetchJson(`${API_ORIGIN}${prefix}/products/${slug}`)
+    if (data && !data.error) return data
+  }
+  return null
+}
+
+const productDescription = (p: BuildProduct) =>
+  p.seoDesc || p.tagline || truncate(p.description || '', 160) || `${p.name} by AngiSoft Technologies`
+
+const productJsonLd = (p: BuildProduct, path: string, faqs: BuildProduct['faqs']) => {
+  const url = /^https?:\/\//i.test(p.demoUrl || '') ? p.demoUrl : `${SITE_URL}${path}`
+  const nodes: object[] = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: p.name,
+      description: productDescription(p),
+      url,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      author: { '@id': ORG_ID },
+      provider: { '@id': ORG_ID },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Products', item: `${SITE_URL}/products` },
+        { '@type': 'ListItem', position: 3, name: p.name, item: `${SITE_URL}${path}` },
+      ],
+    },
+  ]
+  const validFaqs = (faqs || []).filter((f) => f?.question && f?.answer)
+  if (validFaqs.length) {
+    nodes.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: validFaqs.map((f) => ({
+        '@type': 'Question',
+        name: f.question,
+        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      })),
+    })
+  }
+  return nodes
+}
+
 const siteJsonLd = [
   {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': ['Organization', 'LocalBusiness'],
     '@id': ORG_ID,
     name: SITE_NAME,
     url: SITE_URL,
@@ -89,7 +188,7 @@ const siteJsonLd = [
   },
 ]
 
-function injectMeta(html: string, meta: RouteMeta): string {
+function injectMeta(html: string, meta: RouteMeta, extraJsonLd: object[] = []): string {
   const url = `${SITE_URL}${meta.path === '/' ? '' : meta.path}`
   const title = escapeHtml(meta.title)
   const description = escapeHtml(meta.description)
@@ -107,7 +206,7 @@ function injectMeta(html: string, meta: RouteMeta): string {
     `<meta name="twitter:card" content="summary">`,
     `<meta name="twitter:title" content="${title}">`,
     `<meta name="twitter:description" content="${description}">`,
-    `<script type="application/ld+json">${JSON.stringify(meta.path === '/' ? siteJsonLd : pageJsonLd(meta))}</script>`,
+    `<script type="application/ld+json">${JSON.stringify(meta.path === '/' ? siteJsonLd : [pageJsonLd(meta), ...extraJsonLd])}</script>`,
   ].join('\n    ')
 
   if (out.includes('</head>')) {
@@ -130,7 +229,7 @@ function prerenderPlugin(): Plugin {
   return {
     name: 'angisoft-prerender-meta',
     apply: 'build',
-    closeBundle() {
+    async closeBundle() {
       const distDir = path.resolve(here, 'dist')
       const indexPath = path.join(distDir, 'index.html')
       if (!fs.existsSync(indexPath)) return
@@ -147,21 +246,47 @@ function prerenderPlugin(): Plugin {
         fs.writeFileSync(path.join(routeDir, 'index.html'), html)
       }
 
+      // Data-driven product pages: fetch the published catalog and emit one
+      // prerendered HTML + sitemap entry per product slug.
+      const productPaths: string[] = []
+      const products = await fetchProducts()
+      for (const product of products) {
+        const slug = product.slug as string
+        const productPath = `/products/${slug}`
+        const detail = (await fetchProductDetail(slug)) || product
+        const meta: RouteMeta = {
+          path: productPath,
+          title: product.seoTitle || `${product.name} — ${SITE_NAME}`,
+          description: productDescription(detail),
+        }
+        const html = injectMeta(
+          template,
+          meta,
+          productJsonLd(detail, productPath, detail.faqs),
+        )
+        const routeDir = path.join(distDir, 'products', slug)
+        fs.mkdirSync(routeDir, { recursive: true })
+        fs.writeFileSync(path.join(routeDir, 'index.html'), html)
+        productPaths.push(productPath)
+      }
+
       const seen = new Set<string>()
-      const sitemapUrls = PRERENDER_ROUTES.filter((meta) => {
-        if (seen.has(meta.path)) return false
-        seen.add(meta.path)
-        return true
-      }).map((meta) => {
-        const priority = meta.path === '/' ? '1.0' : /privacy|terms|consent/.test(meta.path) ? '0.3' : '0.8'
-        return [
-          '  <url>',
-          `    <loc>${escapeHtml(`${SITE_URL}${meta.path}`)}</loc>`,
-          '    <changefreq>weekly</changefreq>',
-          `    <priority>${priority}</priority>`,
-          '  </url>',
-        ].join('\n')
-      })
+      const sitemapUrls = [...PRERENDER_ROUTES.map((r) => r.path), ...productPaths]
+        .filter((p) => {
+          if (seen.has(p)) return false
+          seen.add(p)
+          return true
+        })
+        .map((p) => {
+          const priority = p === '/' ? '1.0' : /privacy|terms|consent/.test(p) ? '0.3' : '0.8'
+          return [
+            '  <url>',
+            `    <loc>${escapeHtml(`${SITE_URL}${p}`)}</loc>`,
+            '    <changefreq>weekly</changefreq>',
+            `    <priority>${priority}</priority>`,
+            '  </url>',
+          ].join('\n')
+        })
       const sitemap = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',

@@ -65,3 +65,30 @@ export function productsItemListJsonLd(products: Array<Parameters<typeof softwar
         })),
     };
 }
+
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: items.map((item, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: item.name,
+            item: `${SITE_URL}${item.path}`,
+        })),
+    };
+}
+
+export function faqJsonLd(faqs: Array<{ question?: string; answer?: string }>) {
+    const valid = (faqs || []).filter((f) => f?.question && f?.answer);
+    if (!valid.length) return null;
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: valid.map((f) => ({
+            '@type': 'Question',
+            name: f.question,
+            acceptedAnswer: { '@type': 'Answer', text: f.answer },
+        })),
+    };
+}
