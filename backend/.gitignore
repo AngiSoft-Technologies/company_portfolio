@@ -2,4 +2,3 @@ node_modules
 .env
 dist
 /.remember
-api/index.js
