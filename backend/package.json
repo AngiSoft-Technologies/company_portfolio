@@ -23,7 +23,8 @@
     "extract:about-default": "node scripts/extract-about-default.mjs",
     "test": "vitest",
     "test:mocked": "TEST_DATABASE_URL='postgresql://dummy:dummy@127.0.0.1:5432/dummy?sslmode=disable' vitest run --exclude test/integration.spec.ts",
-    "seed:showcase": "ts-node prisma/seed-showcase.ts"
+    "seed:showcase": "ts-node prisma/seed-showcase.ts",
+    "build:vercel": "esbuild vercel-entry.ts --bundle --platform=node --format=esm --target=node24 --packages=external --banner:js=\"import { createRequire as __vcr } from 'node:module'; const require = __vcr(import.meta.url);\" --outfile=api/index.js"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -82,7 +83,8 @@
     "supertest": "^7.1.4",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "esbuild": "0.28.2"
   },
   "engines": {
     "node": "24.x"
